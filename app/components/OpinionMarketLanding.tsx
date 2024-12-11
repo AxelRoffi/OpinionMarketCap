@@ -63,7 +63,7 @@ export const OpinionMarketLanding: React.FC = () => {
         },
         body: JSON.stringify({
           email: email,
-          publication_id: 'YOUR_PUBLICATION_ID',
+          publication_id: process.env.NEXT_PUBLIC_BEEHIIV_PUBLICATION_ID,
           reactivate_existing: true
         })
       });
