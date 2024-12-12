@@ -50,21 +50,23 @@ export const OpinionMarketLanding: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://api.beehiiv.com/v2/subscriptions', {
+      const response = await fetch('https://api.beehiiv.com/v2/publications/pub_04278a10-fd19-436b-94e7-5ab8a44e3bc9/subscriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_BEEHIIV_API_KEY}`
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_BEEHIIV_API_KEY}`, // This needs to be your actual API key
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           email: email,
-          publication_id: process.env.NEXT_PUBLIC_BEEHIIV_PUBLICATION_ID,
-          reactivate_existing: true
+          reactivate_existing: true,
+          utm_source: 'website'
         })
       });
 
@@ -72,15 +74,18 @@ export const OpinionMarketLanding: React.FC = () => {
         setSubmitStatus('success');
         setEmail('');
       } else {
+        const errorData = await response.json();
+        console.error('Subscription error:', errorData);
         setSubmitStatus('error');
       }
     } catch (error) {
+      console.error('Subscription error:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSubmitStatus('idle'), 3000);
     }
-  };
+};
 
   const styles = {
     container: {
@@ -191,7 +196,12 @@ export const OpinionMarketLanding: React.FC = () => {
     { id: 2, question: "Greatest NFT project?", currentAnswer: "BAYC", price: "1850", change: -5.2, volume: "82K", owner: "punk.base.eth" },
     { id: 3, question: "Best Pizza in NY?", currentAnswer: "Grimaldi's", price: "3200", change: 25.8, volume: "151K", owner: "nyc.base.eth" },
     { id: 4, question: "Most trusted crypto-exchange?", currentAnswer: "Binance", price: "4100", change: 12.3, volume: "203K", owner: "trader.base.eth" },
-    { id: 5, question: "Best Hip Hop Album ever?", currentAnswer: "Illmatic", price: "2800", change: -8.4, volume: "95K", owner: "beats.base.eth" }
+    { id: 5, question: "Best Hip Hop Album ever?", currentAnswer: "Illmatic", price: "2800", change: -8.4, volume: "95K", owner: "beats.base.eth" },
+    { id: 6, question: "Most beautiful city?", currentAnswer: "Paris", price: "3600", change: 18.9, volume: "178K", owner: "travel.base.eth" },
+    { id: 7, question: "Best watch brand?", currentAnswer: "Rolex", price: "5200", change: 22.1, volume: "245K", owner: "luxe.base.eth" },
+    { id: 8, question: "Most iconic luxury brand?", currentAnswer: "Louis Vuitton", price: "4800", change: -3.7, volume: "192K", owner: "fashion.base.eth" },
+    { id: 9, question: "Best SF movie ever?", currentAnswer: "Blade Runner", price: "2900", change: 9.6, volume: "134K", owner: "film.base.eth" },
+    { id: 10, question: "Goat of Basketball?", currentAnswer: "Jordan", price: "4500", change: 16.2, volume: "215K", owner: "nba.base.eth" }
   ];
 
   return (
@@ -317,12 +327,12 @@ export const OpinionMarketLanding: React.FC = () => {
           <h2 style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', marginBottom: '48px' }}>
             How It Works
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', margin: '0 auto', maxWidth: '960px', justifyContent: 'center', }}>
             {/* Card 1: Change Opinions */}
             <Card>
               <CardContent>
                 <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' }}>
-                  Change Opinions
+                  Buy & Sell Opinions
                 </h3>
                 <p style={{ fontSize: '20px', color: '#666', marginBottom: '24px' }}>
                   Buy the right to change opinions using USDC
@@ -334,7 +344,8 @@ export const OpinionMarketLanding: React.FC = () => {
                   fontSize: '16px',
                   color: '#666'
                 }}>
-                  Example: If someone changes your opinion for 1000 USDC, you receive 950 USDC (95%)
+                  Example: If someone changes your opinion for 1000 USDC, you receive 950 USDC (95%).
+                  
                 </div>
               </CardContent>
             </Card>
@@ -367,10 +378,10 @@ export const OpinionMarketLanding: React.FC = () => {
             <Card>
               <CardContent>
                 <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' }}>
-                  Add Question and make a passive income
+                  Create Opinion Market & Make a Passive Income 4EVER !!
                 </h3>
                 <p style={{ fontSize: '20px', color: '#666' }}>
-                  First phase, only admin adds question. Soon, users can add questions for a fee and earn 4% on each
+                  Phase 1, only admin adds opinion market. Phase 2 users can add opinion markets for a fee and earn 4% on each trade.
                 </p>
               </CardContent>
             </Card>
