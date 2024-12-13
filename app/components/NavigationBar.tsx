@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { ConnectWallet } from '@thirdweb-dev/react';
 import { Bell, Moon, Sun, Menu, X, Plus } from 'lucide-react';
 import {
@@ -31,9 +32,9 @@ const NavigationBar = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo and brand */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
               <span className="text-xl font-bold text-blue-600">OpinionMarketCap</span>
-            </a>
+              </Link>
           </div>
 
           {/* Desktop Navigation */}

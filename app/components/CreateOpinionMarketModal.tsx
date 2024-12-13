@@ -58,7 +58,7 @@ export default function CreateOpinionMarketModal({ isOpen, onClose, onSubmit }: 
                     <ul className="list-disc list-inside space-y-1">
                       <li>Maximum 50 characters</li>
                       <li>Must be a question</li>
-                      <li>"?" will be added automatically if missing</li>
+                      <li>&quot;?&quot; will be added automatically if missing</li>
                       <li>Keep it clear and specific</li>
                     </ul>
                   </div>
