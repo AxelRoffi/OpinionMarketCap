@@ -40,13 +40,13 @@ const NavigationBar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </div>
 
