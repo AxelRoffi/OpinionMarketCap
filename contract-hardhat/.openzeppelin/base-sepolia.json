@@ -1,0 +1,1263 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x839cF5aaD7A7d1d929ADB4Eef58ec653d37238F4",
+      "txHash": "0x2dc653edb2d31809066474ad008d5c5027b663900e46054887eb583931da118d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x02aF95CfE2d669F45eA04CA72E3957b006628f69",
+      "txHash": "0xf65a02a61908eeeb8c48cbb2e6ddaf06984fe3850da349425f6a6ccffe9c0560",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1C00589dC7722A339F81ef1e6Bb282902096c78a",
+      "txHash": "0x522353ba585de512d47c7da5c55b1c55d2bd020de96aad313a33db934904bb27",
+      "kind": "uups"
+    },
+    {
+      "address": "0xE0A14eB6FcfC9E301De3D2dC97BFf42003187900",
+      "txHash": "0x4c8f0653ba838e1d01d048f48e42bc35ac4c655f4d0bd77fec932df66441d8d2",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4768EbA2702b162f3E015608d8579D4e9C9f991b",
+      "txHash": "0x2a6399760ffb318da4c735ddb95dfd41549e2dabbb48f6d5c20e956b2c06a95b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7764d8cD5a76a3509fb6dAad9C4ac1b8800F98fa",
+      "txHash": "0xa06e89ec9cda3496b8a60b9a4ca1a8d4df5840bf17c7fab405779b4d46463836",
+      "kind": "uups"
+    },
+    {
+      "address": "0x42785b24fc527B031A8e83f845e37cB827416791",
+      "txHash": "0xf87d1092fa69d003454e8853b6b59bab18c975fa3d81a24fcf4f8be25fafa6f9",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "b1edc3d0492d485816923159337c62f6fa8fcdf0fee12ce369228df0d4e4f2ff": {
+      "address": "0x025139CB35A0cAC9dcE4aE9eE24C362448C35cC7",
+      "txHash": "0xf496381f83e1a7508cf3ec2515aa892cc23e40fff651f651d0fc74336082cab3",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "isPublicCreationEnabled",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:50"
+          },
+          {
+            "label": "nextOpinionId",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:51"
+          },
+          {
+            "label": "usdcToken",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IERC20)2520",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:52"
+          },
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:53"
+          },
+          {
+            "label": "accumulatedFees",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:54"
+          },
+          {
+            "label": "totalAccumulatedFees",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:55"
+          },
+          {
+            "label": "userLastBlock",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:56"
+          },
+          {
+            "label": "userTradesInBlock",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:57"
+          },
+          {
+            "label": "userLastTradeBlock",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:58"
+          },
+          {
+            "label": "userLastTradeTime",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:59"
+          },
+          {
+            "label": "userLastTradePrice",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:60"
+          },
+          {
+            "label": "opinions",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_uint256,t_struct(Opinion)3414_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:82"
+          },
+          {
+            "label": "answerHistory",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)3423_storage)dyn_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:83"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)24_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)34_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)357_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)421_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)24_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_struct(AnswerHistory)3423_storage)dyn_storage": {
+            "label": "struct OpinionMarket.AnswerHistory[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)2520": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)3423_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.AnswerHistory[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Opinion)3414_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.Opinion)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AnswerHistory)3423_storage": {
+            "label": "struct OpinionMarket.AnswerHistory",
+            "members": [
+              {
+                "label": "answer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(Opinion)3414_storage": {
+            "label": "struct OpinionMarket.Opinion",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "question",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "creator",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "currentPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "currentAnswer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "currentAnswerOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "totalVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              }
+            ],
+            "numberOfBytes": "256"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "1096e2ca672564a8ad4b62261b4e76d6c9889b17f7f328d2f7fa24eb942a2377": {
+      "address": "0xCBB8f0797074c6f4D8D71f122c53141947f41db2",
+      "txHash": "0x6764368cfc77048d95932d6b8005811bae00119340ba02796a4d91efa408381b",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "isPublicCreationEnabled",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:50"
+          },
+          {
+            "label": "nextOpinionId",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:51"
+          },
+          {
+            "label": "usdcToken",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IERC20)1868",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:52"
+          },
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:53"
+          },
+          {
+            "label": "accumulatedFees",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:54"
+          },
+          {
+            "label": "totalAccumulatedFees",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:55"
+          },
+          {
+            "label": "userLastBlock",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:56"
+          },
+          {
+            "label": "userTradesInBlock",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:57"
+          },
+          {
+            "label": "userLastTradeBlock",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:58"
+          },
+          {
+            "label": "userLastTradeTime",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:59"
+          },
+          {
+            "label": "userLastTradePrice",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:60"
+          },
+          {
+            "label": "opinions",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_uint256,t_struct(Opinion)2708_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:83"
+          },
+          {
+            "label": "answerHistory",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)2717_storage)dyn_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:84"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)24_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)34_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)357_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)421_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)24_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_struct(AnswerHistory)2717_storage)dyn_storage": {
+            "label": "struct OpinionMarket.AnswerHistory[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)1868": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)2717_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.AnswerHistory[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Opinion)2708_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.Opinion)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AnswerHistory)2717_storage": {
+            "label": "struct OpinionMarket.AnswerHistory",
+            "members": [
+              {
+                "label": "answer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(Opinion)2708_storage": {
+            "label": "struct OpinionMarket.Opinion",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "question",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "creator",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "currentPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "nextPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "currentAnswer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "currentAnswerOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "totalVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              }
+            ],
+            "numberOfBytes": "288"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "d71285a38b70a9dde4803e1ce65e7a8d1a35a6e95bf7de3c4819d9a07dac33a7": {
+      "address": "0x9E0F359ba97D414CBDf47b1545C88F7d13fe25Bb",
+      "txHash": "0xb16890d79feb55e0a9e52a2e9b72826d7ca6df994f2f2bf6e3558af9c5feab68",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "isPublicCreationEnabled",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:50"
+          },
+          {
+            "label": "nextOpinionId",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:51"
+          },
+          {
+            "label": "usdcToken",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IERC20)1868",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:52"
+          },
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:53"
+          },
+          {
+            "label": "accumulatedFees",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:54"
+          },
+          {
+            "label": "totalAccumulatedFees",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:55"
+          },
+          {
+            "label": "userLastBlock",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:56"
+          },
+          {
+            "label": "userTradesInBlock",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:57"
+          },
+          {
+            "label": "userLastTradeBlock",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:58"
+          },
+          {
+            "label": "userLastTradeTime",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:59"
+          },
+          {
+            "label": "userLastTradePrice",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:60"
+          },
+          {
+            "label": "opinions",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_uint256,t_struct(Opinion)2708_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:83"
+          },
+          {
+            "label": "answerHistory",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)2717_storage)dyn_storage)",
+            "contract": "OpinionMarket",
+            "src": "contracts/core/OpinionMarket.sol:84"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)24_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)34_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)357_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)421_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)24_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_struct(AnswerHistory)2717_storage)dyn_storage": {
+            "label": "struct OpinionMarket.AnswerHistory[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20)1868": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(AnswerHistory)2717_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.AnswerHistory[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Opinion)2708_storage)": {
+            "label": "mapping(uint256 => struct OpinionMarket.Opinion)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AnswerHistory)2717_storage": {
+            "label": "struct OpinionMarket.AnswerHistory",
+            "members": [
+              {
+                "label": "answer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(Opinion)2708_storage": {
+            "label": "struct OpinionMarket.Opinion",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "question",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "creator",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "currentPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "nextPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "currentAnswer",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "currentAnswerOwner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "totalVolume",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              }
+            ],
+            "numberOfBytes": "288"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)24_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:40",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "cli": {
+        "network": "base-sepolia",
+        "chainId": 84532
+    },
+    "contracts": {
+        "OpinionMarket": {
+            "contractName": "OpinionMarket",
+            "constructorParams": [],
+            "initializerFunction": "initialize",
+            "initializerArgs": [
+                "0x5dEaC602762362FE5f135FA5904351916053cF70"
+            ]
+        }
+    }
+}

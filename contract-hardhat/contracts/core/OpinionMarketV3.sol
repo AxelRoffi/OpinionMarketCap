@@ -8,8 +8,8 @@ contract OpinionMarketV3 is OpinionMarketV2 {
     uint256 public newVariable;
     mapping(address => uint256) public userReputationScores;
 
-    // Reduce gap by 2 since we used two slots
-    uint256[45] private __gap;
+    // Reduce gap further to account for new pool variables in the base contract
+    uint256[40] private __gap;
 
     // Function to test storage
     function setNewVariable(uint256 value) external {

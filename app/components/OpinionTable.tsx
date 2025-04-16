@@ -1,18 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
+import { ConnectButton } from '@coinbase/onchainkit';
+import { createPublicClient, http, parseAbi, formatUnits } from 'viem';
+import { baseSepolia } from 'viem/chains';
 
+// Contract information
+const contractAddress = '0x42785b24fc527B031A8e83f845e37cB827416791';
+
+// Define ABI for the specific functions we need
+const abi = parseAbi([
+  'function nextOpinionId() external view returns (uint256)',
+  'function opinions(uint256 opinionId) external view returns (uint256 id, string question, address creator, uint256 currentPrice, uint256 nextPrice, bool isActive, string currentAnswer, address currentAnswerOwner, uint256 totalVolume)',
+  'function getAnswerHistory(uint256 opinionId) external view returns (tuple(string answer, address owner, uint256 price, uint256 timestamp)[])'
+]);
+
+// Modified to match contract's Opinion structure
 type Opinion = {
-  id: number;
+  id: bigint;
   question: string;
-  answer: string;
-  price: string;
-  owner: string;
-  priceChange: number;
-  volume: string;
-  lastPrice: string;
+  creator: string;
+  currentPrice: bigint;
+  nextPrice: bigint;
+  isActive: boolean;
+  currentAnswer: string;
+  currentAnswerOwner: string;
+  totalVolume: bigint;
+  lastPrice?: bigint;
+  priceChange?: number;
 };
 
 type SortConfig = {
@@ -20,44 +37,130 @@ type SortConfig = {
   direction: 'asc' | 'desc';
 };
 
-const mockOpinions: Opinion[] = [
-  {
-    id: 1,
-    question: "Best blockchain?",
-    answer: "Ethereum",
-    price: "0.1 ETH",
-    lastPrice: "0.08 ETH",
-    priceChange: 25.0,
-    volume: "1.5 ETH",
-    owner: "0x1234...5678"
-  },
-  {
-    id: 2,
-    question: "Most innovative crypto project?",
-    answer: "Bitcoin",
-    price: "0.2 ETH",
-    lastPrice: "0.25 ETH",
-    priceChange: -20.0,
-    volume: "2.8 ETH",
-    owner: "0x8765...4321"
-  },
-  {
-    id: 3,
-    question: "Best NFT marketplace?",
-    answer: "OpenSea",
-    price: "0.15 ETH",
-    lastPrice: "0.15 ETH",
-    priceChange: 0,
-    volume: "0.9 ETH",
-    owner: "0x9876...1234"
-  }
-];
-
 export default function OpinionTable() {
+  const [opinions, setOpinions] = useState<Opinion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: null,
     direction: 'asc'
   });
+
+  // Check wallet connection using window.ethereum
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        try {
+          const accounts = await (window as any).ethereum.request({
+            method: 'eth_accounts'
+          });
+          setConnected(accounts.length > 0);
+        } catch (error) {
+          console.error('Error checking connection:', error);
+          setConnected(false);
+        }
+      }
+    };
+
+    checkConnection();
+
+    // Listen for account changes
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      (window as any).ethereum.on('accountsChanged', (accounts: string[]) => {
+        setConnected(accounts.length > 0);
+      });
+    }
+
+    return () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        (window as any).ethereum.removeListener('accountsChanged', () => {});
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    async function fetchOpinions() {
+      try {
+        setLoading(true);
+        
+        // Create a client to interact with the blockchain
+        const client = createPublicClient({
+          chain: baseSepolia,
+          transport: http('https://sepolia.base.org')
+        });
+        
+        // Get the total number of opinions
+        const nextId = await client.readContract({
+          address: contractAddress,
+          abi,
+          functionName: 'nextOpinionId',
+        }) as bigint;
+        
+        // Fetch all opinions (starting from ID 1)
+        const opinionPromises = [];
+        for (let i = 1; i < Number(nextId); i++) {
+          opinionPromises.push(
+            client.readContract({
+              address: contractAddress,
+              abi,
+              functionName: 'opinions',
+              args: [BigInt(i)],
+            })
+          );
+        }
+        
+        const fetchedOpinions = await Promise.all(opinionPromises);
+        
+        // Fetch history for each opinion to calculate price change
+        const opinionsWithHistory = await Promise.all(
+          fetchedOpinions.map(async (opinion) => {
+            // Handle both tuple and object responses
+            const typedOpinion = opinion as Opinion;
+            
+            if (typedOpinion.isActive) {
+              try {
+                const history = await client.readContract({
+                  address: contractAddress,
+                  abi,
+                  functionName: 'getAnswerHistory',
+                  args: [typedOpinion.id],
+                }) as { answer: string; owner: string; price: bigint; timestamp: bigint }[];
+                
+                // Calculate price change if we have enough history
+                if (history.length > 1) {
+                  const currentPrice = typedOpinion.currentPrice;
+                  const lastPrice = history[history.length - 2].price;
+                  
+                  // Calculate percentage change
+                  const priceChange = currentPrice > lastPrice
+                    ? Number(((currentPrice - lastPrice) * BigInt(10000)) / lastPrice) / 100
+                    : -Number(((lastPrice - currentPrice) * BigInt(10000)) / lastPrice) / 100;
+                  
+                  return { 
+                    ...typedOpinion, 
+                    lastPrice, 
+                    priceChange 
+                  };
+                }
+              } catch (error) {
+                console.error(`Error fetching history for opinion ${typedOpinion.id}:`, error);
+              }
+            }
+            
+            return typedOpinion;
+          })
+        );
+        
+        setOpinions(opinionsWithHistory.filter(o => o.isActive));
+      } catch (error) {
+        console.error('Error fetching opinions:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchOpinions();
+  }, [connected]);
 
   const handleSort = (key: keyof Opinion) => {
     setSortConfig(current => ({
@@ -66,23 +169,48 @@ export default function OpinionTable() {
     }));
   };
 
-  const sortedOpinions = [...mockOpinions].sort((a, b) => {
+  const sortedOpinions = [...opinions].sort((a, b) => {
     if (!sortConfig.key) return 0;
-    if (a[sortConfig.key] < b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
+    
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+    
+    // Handle different types of values
+    if (typeof aValue === 'bigint' && typeof bValue === 'bigint') {
+      return sortConfig.direction === 'asc' 
+        ? aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+        : aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
     }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
+    
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
     }
-    return 0;
+    
+    // String comparison
+    const aStr = String(aValue);
+    const bStr = String(bValue);
+    return sortConfig.direction === 'asc' 
+      ? aStr.localeCompare(bStr) 
+      : bStr.localeCompare(aStr);
   });
 
+  // Format price from wei to USDC (6 decimals)
+  const formatPrice = (price: bigint) => {
+    return formatUnits(price, 6);
+  };
+
+  if (loading) return <div className="text-center py-8">Loading opinions...</div>;
+  
+  if (opinions.length === 0) {
+    return <div className="text-center py-8">No opinions found. Create the first one!</div>;
+  }
+  
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            {['question', 'answer', 'price', 'priceChange', 'volume', 'owner', 'actions'].map((key) => (
+            {['question', 'currentAnswer', 'currentPrice', 'priceChange', 'totalVolume', 'currentAnswerOwner', 'actions'].map((key) => (
               <th
                 key={key}
                 onClick={() => key !== 'actions' && handleSort(key as keyof Opinion)}
@@ -91,7 +219,12 @@ export default function OpinionTable() {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  {key === 'priceChange' ? '24h %' : key.charAt(0).toUpperCase() + key.slice(1)}
+                  {key === 'priceChange' ? '24h %' : 
+                   key === 'currentPrice' ? 'Price' :
+                   key === 'currentAnswer' ? 'Answer' :
+                   key === 'currentAnswerOwner' ? 'Owner' :
+                   key === 'totalVolume' ? 'Volume' :
+                   key.charAt(0).toUpperCase() + key.slice(1)}
                   {sortConfig.key === key && (
                     sortConfig.direction === 'asc' ? 
                       <ArrowUpIcon className="h-4 w-4" /> : 
@@ -104,7 +237,7 @@ export default function OpinionTable() {
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
           {sortedOpinions.map((opinion) => (
-            <tr key={opinion.id} className="hover:bg-gray-50">
+            <tr key={String(opinion.id)} className="hover:bg-gray-50">
               <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                 <Link 
                   href={`/opinions/${opinion.id}`}
@@ -114,26 +247,29 @@ export default function OpinionTable() {
                 </Link>
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
-                {opinion.answer}
+                {opinion.currentAnswer}
               </td>
               <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                {opinion.price}
+                {formatPrice(opinion.currentPrice)} USDC
               </td>
               <td className={`px-6 py-4 text-sm font-medium ${
+                !opinion.priceChange ? 'text-gray-500' :
                 opinion.priceChange >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
-                {opinion.priceChange > 0 ? '+' : ''}{opinion.priceChange.toFixed(1)}%
+                {opinion.priceChange !== undefined 
+                  ? `${opinion.priceChange > 0 ? '+' : ''}${opinion.priceChange.toFixed(1)}%` 
+                  : 'N/A'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                {opinion.volume}
+                {formatPrice(opinion.totalVolume)} USDC
               </td>
               <td className="px-6 py-4 text-sm text-gray-500 font-mono">
-                {opinion.owner}
+                {`${opinion.currentAnswerOwner.slice(0, 6)}...${opinion.currentAnswerOwner.slice(-4)}`}
               </td>
               <td className="px-6 py-4 text-sm">
-                <button className="inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 font-medium text-blue-600 hover:bg-blue-100 transition-colors">
+                <Link href={`/opinions/${opinion.id}`} className="inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 font-medium text-blue-600 hover:bg-blue-100 transition-colors">
                   Buy Opinion
-                </button>
+                </Link>
               </td>
             </tr>
           ))}

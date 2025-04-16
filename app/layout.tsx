@@ -1,7 +1,8 @@
 'use client';
 
 import localFont from "next/font/local";
-import { ThirdwebProvider } from "@thirdweb-dev/react";
+import { OnchainKitProvider } from "@coinbase/onchainkit";
+import { baseSepolia } from "viem/chains"; // Import Base Sepolia chain
 import "./globals.css";
 
 const geistSans = localFont({
@@ -16,6 +17,23 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+// OnchainKit configuration
+const onchainConfig = {
+  wallets: {
+    coinbase: true,
+    metaMask: true,
+    walletConnect: true
+  },
+  chains: [
+    {
+      name: 'Base Sepolia',
+      id: baseSepolia.id, 
+      rpcUrl: 'https://sepolia.base.org'
+    }
+  ],
+  appName: 'OpinionMarketCap'
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,9 +47,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThirdwebProvider activeChain="base">
+        <OnchainProvider config={onchainConfig}>
           {children}
-        </ThirdwebProvider>
+        </OnchainProvider>
       </body>
     </html>
   );
