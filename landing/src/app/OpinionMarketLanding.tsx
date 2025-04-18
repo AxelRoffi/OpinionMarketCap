@@ -1,6 +1,7 @@
 'use client'
 
 import React, { CSSProperties, useEffect } from 'react';
+import Link from 'next/link';
 
 const OpinionMarketLanding = () => {
   // Theme toggle functionality
@@ -59,12 +60,13 @@ const OpinionMarketLanding = () => {
             <a href='#pools' className='text-secondary hover:text-purple-500'>Opinion Pools</a>
             <a href='#google-alternative' className='text-secondary hover:text-purple-500'>Beyond Google</a>
             <a href='#creators' className='text-secondary hover:text-purple-500'>For Creators</a>
+            <Link href="/whitepaper" className='text-secondary hover:text-purple-500'>OMC White Paper</Link>
             <div className='theme-toggle' id='theme-toggle'>
               <i className='fas fa-moon text-secondary'></i>
             </div>
           </nav>
           <button className='bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition'>
-            Connect Wallet
+            Connect Wallet (inactive)
           </button>
         </div>
       </header>
@@ -99,14 +101,14 @@ const OpinionMarketLanding = () => {
               Trade Opinions, <span className='gradient-text'>Not Just Tokens</span>
             </h1>
             <p className='text-xl text-secondary mb-10'>
-              The first decentralized marketplace where opinions have real value. Buy answers, earn fees, and build your reputation in the marketplace of ideas. Welcome to <span className='font-semibold'>OMC</span>!
+              The first decentralized marketplace where opinions have real value. Buy answers, earn fees, and build your reputation in the marketplace of ideas. Welcome to <span className='font-semibold'>OMC</span>!(DUMMY DATA)
             </p>
             <div className='flex flex-col md:flex-row justify-center gap-4'>
               <button className='btn-primary'>
-                <i className='fas fa-rocket mr-2'></i> Start Trading Opinions
+                <i className='fas fa-rocket mr-2'></i> Start Trading Opinions (inactive)
               </button>
               <button className='btn-secondary'>
-                <i className='fas fa-plus-circle mr-2'></i> Create a Question
+                <i className='fas fa-plus-circle mr-2'></i> Create a Question (inactive)
               </button>
             </div>
           </div>
@@ -194,7 +196,7 @@ const OpinionMarketLanding = () => {
 <section className='py-20'>
   <div className='container mx-auto px-6'>
     <div className='max-w-6xl mx-auto'>
-      <h2 className='text-3xl font-bold mb-8'>Trending <span className='gradient-text'>Questions</span></h2>
+      <h2 className='text-3xl font-bold mb-8'>Trending <span className='gradient-text'>Questions (Demo)</span></h2>
       
       <div className='card overflow-hidden shadow-lg'>
         <div className='overflow-x-auto'>
@@ -206,7 +208,7 @@ const OpinionMarketLanding = () => {
       <th className='px-6 py-4 text-left font-semibold text-sm'>Owner</th>
       <th className='px-6 py-4 text-left font-semibold text-sm'>Price</th>
       <th className='px-6 py-4 text-left font-semibold text-sm'>24h Change</th>
-      <th className='px-6 py-4 text-left font-semibold text-sm'>Action</th>
+      <th className='px-6 py-4 text-left font-semibold text-sm'>Action(inactive)</th>
     </tr>
   </thead>
   <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
@@ -656,7 +658,7 @@ const OpinionMarketLanding = () => {
       
       <div className='flex justify-center mt-8'>
         <button className='btn-primary'>
-          <i className='fas fa-plus-circle mr-2'></i> View All Questions
+          <i className='fas fa-plus-circle mr-2'></i> View All Questions(inactive)
         </button>
       </div>
     </div>
@@ -673,7 +675,7 @@ const OpinionMarketLanding = () => {
             </p>
             <br></br>
             <p className='text-xl text-secondary'>
-              With time and its economic mechanism, OMC would get bigger && bigger with user-generated questions and its valuable answers <span className='font-semibold'>and would challenge Google in terms of search for access to valuable information.</span>
+            Through our economic model, OMC will evolve from a question marketplace into a direct competitor to Google <span className='font-semibold'>offering a transparent alternative where information is ranked by actual monetary value instead of hidden algorithms.</span>
             </p>
           </div>
           
@@ -757,7 +759,7 @@ const OpinionMarketLanding = () => {
           
           <div className='max-w-2xl mx-auto mt-16 text-center'>
             <p className='text-2xl font-bold text-purple-600 dark:text-purple-400 mb-6'>
-              'The future of search isn't PageRank, it's DollarRank'
+              'The future of search isn't PageRank, it's MoneyRank'
             </p>
             <button className='btn-primary'>
               <i className='fas fa-lightbulb mr-2'></i> See How OMC Replaces Google
@@ -870,7 +872,7 @@ const OpinionMarketLanding = () => {
                   <div className='flex justify-between items-start mb-3'>
                     <div>
                       <span className='badge badge-trending mr-2'>TRENDING⚡</span>
-                      <h4 className='font-medium'>Web3 Gaming Future Pool</h4>
+                      <h4 className='font-medium'>Web3 Gaming Future ?</h4>
                     </div>
                     <div className='text-right'>
                       <p className='text-lg font-bold'>$956 <span className='text-xs text-secondary'>/ $1,230</span></p>
@@ -884,7 +886,7 @@ const OpinionMarketLanding = () => {
                   <div className='bg-white dark:bg-gray-700 p-2 rounded mb-2 text-sm'>
                     <strong>Proposed Answer:</strong> 'Immutable X and Ronin'
                   </div>
-                  <button className='w-full py-2 bg-purple-600 rounded text-sm font-medium text-white hover:bg-purple-700 transition'>Contribute to Pool</button>
+                  <button className='w-full py-2 bg-purple-600 rounded text-sm font-medium text-white hover:bg-purple-700 transition'>Contribute to Pool(inactive)</button>
                 </div>
               </div>
             </div>
@@ -990,7 +992,7 @@ const OpinionMarketLanding = () => {
                 </div>
                 
                 <button className='w-full py-3 bg-purple-600 rounded font-medium text-white hover:bg-purple-700 transition'>
-                  <i className='fas fa-plus-circle mr-2'></i> Create Your First Question
+                  <i className='fas fa-plus-circle mr-2'></i> Create Your First Question (inactive)
                 </button>
               </div>
             </div>
