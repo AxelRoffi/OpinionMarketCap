@@ -5,45 +5,7 @@ import Link from 'next/link';
 
 const OpinionMarketLanding = () => {
   // Theme toggle functionality
-  useEffect(() => {
-    const htmlElement = document.documentElement;
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = themeToggle?.querySelector('i');
-    
-    // Check for saved theme preference or respect OS preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      htmlElement.classList.remove('light');
-      htmlElement.classList.add('dark');
-      if (themeIcon) {
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
-      }
-    }
-    
-    // Toggle theme on click
-    themeToggle?.addEventListener('click', () => {
-      if (htmlElement.classList.contains('dark')) {
-        htmlElement.classList.remove('dark');
-        htmlElement.classList.add('light');
-        if (themeIcon) {
-          themeIcon.classList.remove('fa-sun');
-          themeIcon.classList.add('fa-moon');
-        }
-        localStorage.setItem('theme', 'light');
-      } else {
-        htmlElement.classList.remove('light');
-        htmlElement.classList.add('dark');
-        if (themeIcon) {
-          themeIcon.classList.remove('fa-moon');
-          themeIcon.classList.add('fa-sun');
-        }
-        localStorage.setItem('theme', 'dark');
-      }
-    });
-  }, []);
+
 
   return (
     <div className='light'>
@@ -61,9 +23,7 @@ const OpinionMarketLanding = () => {
             <a href='#google-alternative' className='text-secondary hover:text-purple-500'>Beyond Google</a>
             <a href='#creators' className='text-secondary hover:text-purple-500'>For Creators</a>
             <Link href="/whitepaper" className='text-secondary hover:text-purple-500'>OMC White Paper</Link>
-            <div className='theme-toggle' id='theme-toggle'>
-              <i className='fas fa-moon text-secondary'></i>
-            </div>
+            
           </nav>
           <button className='bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition'>
             Connect Wallet (inactive)
