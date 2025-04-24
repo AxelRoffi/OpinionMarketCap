@@ -60,11 +60,8 @@ describe("04: Answer Submission & Fee Distribution", () => {
         const receipt = await tx.wait();
         const event = receipt?.logs.find((log: any) => log.topics[0] === opinionMarket.interface.getEvent("OpinionCreated")?.topicHash);
         if (!event) throw new Error("OpinionCreated event not found");
-        
-        const parsedLog = opinionMarket.interface.parseLog(event as any);
-        if (!parsedLog || !parsedLog.args) throw new Error("Failed to parse log or args are missing");
-        
-        return parsedLog.args.id as bigint;
+        const args = opinionMarket.interface.parseLog(event as any)?.args;
+        return args.id;
     }
 
     // Declare variables to hold fixture results

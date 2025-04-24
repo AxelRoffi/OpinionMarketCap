@@ -1,27 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// Selective imports only for what we need
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./OpinionMarketErrors.sol";
 
-/**
- * @title OpinionMarket
- * @dev A decentralized platform for exchanging opinions, where users can buy the right to answer questions.
- * The contract is UUPS upgradeable, uses role-based access control, and includes security and gas optimizations.
- */
 contract OpinionMarket is
     Initializable,
     OwnableUpgradeable,
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable,
     AccessControlUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    OpinionMarketErrors
 {
     using SafeERC20 for IERC20;
 
@@ -31,25 +28,26 @@ contract OpinionMarket is
     }
 
     // --- CONSTANTS ---
-    uint256 public constant MAX_QUESTION_LENGTH = 50;
-    uint256 public constant MAX_ANSWER_LENGTH = 40;
-    uint256 public constant MINIMUM_PRICE = 1_000_000; // 1 USDC (6 decimals)
-    uint256 public constant PLATFORM_FEE_PERCENT = 2; // 2%
-    uint256 public constant CREATOR_FEE_PERCENT = 3; // 3%
-    uint256 public constant ABSOLUTE_MAX_PRICE_CHANGE = 200; // 200%
-    uint256 public constant MAX_TRADES_PER_BLOCK = 3;
-    uint256 public constant RAPID_TRADE_WINDOW = 30 seconds; // Short window for MEV protection
+    uint256 public constant MAX_QUESTION_LENGTH = 100;
+    uint256 public constant MAX_ANSWER_LENGTH = 100;
     uint256 public constant MAX_LINK_LENGTH = 256;
     uint256 public constant MAX_IPFS_HASH_LENGTH = 64;
-    uint256 public constant QUESTION_CREATION_FEE = 1_000_000; // 1 USDC (6 decimals)
-    uint256 public constant INITIAL_ANSWER_PRICE = 2_000_000; // 2 USDC (6 decimals)
+    uint256 public constant MAX_POOL_NAME_LENGTH = 50;
 
-    // --- POOL CONSTANTS ---
-    uint256 public constant MAX_POOL_NAME_LENGTH = 30;
-    uint256 public constant POOL_CREATION_FEE = 50 * 10 ** 6; // 50 USDC
-    uint256 public constant POOL_CONTRIBUTION_FEE = 1 * 10 ** 6; // 1 USDC
-    uint256 public constant MIN_POOL_DURATION = 1 days;
-    uint256 public constant MAX_POOL_DURATION = 30 days;
+    // --- STATE VARIABLES  ---
+
+    uint256 public minimumPrice;
+    uint256 public platformFeePercent;
+    uint256 public creatorFeePercent;
+    uint256 public absoluteMaxPriceChange;
+    uint256 public maxTradesPerBlock;
+    uint256 public rapidTradeWindow;
+    uint256 public questionCreationFee;
+    uint256 public initialAnswerPrice;
+    uint256 public poolCreationFee;
+    uint256 public poolContributionFee;
+    uint256 public minPoolDuration;
+    uint256 public maxPoolDuration;
 
     // --- ROLES ---
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -57,16 +55,16 @@ contract OpinionMarket is
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
 
-    // --- STATE VARIABLES ---
-    bool public isPublicCreationEnabled; // Toggle for public opinion creation
-    uint256 public nextOpinionId; // Tracks next opinion ID
-    IERC20 public usdcToken; // USDC token for payments
-    uint256 private nonce; // Nonce for random number generation
-    mapping(address => uint256) public accumulatedFees; // Accumulated fees per user
-    uint256 public totalAccumulatedFees; // Total fees accumulated
-    mapping(address => uint256) private userLastBlock; // Last block a user traded
-    mapping(address => uint256) private userTradesInBlock; // Trades per user in current block
-    mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock; // Last trade block per user per opinion
+    // --- STATE VARIABLES --
+    bool public isPublicCreationEnabled;
+    uint256 public nextOpinionId;
+    IERC20 public usdcToken;
+    uint256 private nonce;
+    mapping(address => uint256) public accumulatedFees;
+    uint256 public totalAccumulatedFees;
+    mapping(address => uint256) private userLastBlock;
+    mapping(address => uint256) private userTradesInBlock;
+    mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock;
     mapping(address => mapping(uint256 => uint256)) private userLastTradeTime;
     mapping(address => mapping(uint256 => uint256)) private userLastTradePrice;
 
@@ -82,24 +80,24 @@ contract OpinionMarket is
 
     // --- STRUCTS ---
     struct Opinion {
-        uint256 id; // Unique opinion ID
-        string question; // Opinion question (max 50 chars)
-        address creator; // Opinion creator
-        uint256 lastPrice; // Current price to submit an answer
-        uint256 nextPrice; // Next price for submitting an answer
-        bool isActive; // Opinion status
-        string currentAnswer; // Current answer (max 40 chars)
-        address currentAnswerOwner; // Owner of current answer
-        uint256 totalVolume; // Total volume of trades
-        string ipfsHash; // IPFS hash pointing to an image (max 64 chars)
-        string link; // Associated URL (max 256 chars)
+        uint256 id;
+        string question;
+        address creator;
+        uint256 lastPrice;
+        uint256 nextPrice;
+        bool isActive;
+        string currentAnswer;
+        address currentAnswerOwner;
+        uint256 totalVolume;
+        string ipfsHash;
+        string link;
     }
 
     struct AnswerHistory {
-        string answer; // Historical answer
-        address owner; // Answer owner
-        uint256 price; // Price paid
-        uint256 timestamp; // Submission timestamp
+        string answer;
+        address owner;
+        uint256 price;
+        uint256 timestamp;
     }
 
     enum PoolStatus {
@@ -110,15 +108,15 @@ contract OpinionMarket is
     }
 
     struct PoolInfo {
-        uint256 id; // Unique pool ID
-        uint256 opinionId; // Opinion this pool is for
-        string proposedAnswer; // Answer the pool is proposing
-        uint256 totalAmount; // Total USDC contributed
-        uint256 deadline; // Timestamp when pool expires
-        address creator; // Pool creator
-        PoolStatus status; // Current pool status
-        string name; // Pool name (max 30 chars)
-        string ipfsHash; // Pool image IPFS hash
+        uint256 id;
+        uint256 opinionId;
+        string proposedAnswer;
+        uint256 totalAmount;
+        uint256 deadline;
+        address creator;
+        PoolStatus status;
+        string name;
+        string ipfsHash;
     }
 
     struct PoolContribution {
@@ -127,51 +125,8 @@ contract OpinionMarket is
     }
 
     // --- MAPPINGS ---
-    mapping(uint256 => Opinion) public opinions; // Opinion ID to Opinion data
-    mapping(uint256 => AnswerHistory[]) public answerHistory; // Opinion ID to answer history
-
-    // --- ERRORS ---
-    error ContractPaused();
-    error ContractNotPaused();
-    error WithdrawalFailed();
-    error EmptyString();
-    error InvalidQuestionLength();
-    error InvalidAnswerLength();
-    error InvalidPrice();
-    error UnauthorizedCreator();
-    error OpinionNotActive();
-    error TransferFailed();
-    error OpinionNotFound();
-    error InsufficientAllowance(uint256 required, uint256 provided);
-    error OneTradePerBlock();
-    error PriceChangeExceedsLimit(uint256 increase, uint256 limit);
-    error MaxTradesPerBlockExceeded(uint256 current, uint256 max);
-    error NoFeesToClaim();
-    error InvalidLinkLength();
-    error InvalidIpfsHashLength();
-    error InvalidIpfsHashFormat();
-    error OpinionAlreadyActive();
-    error SameOwner();
-
-    // --- POOL ERRORS ---
-    error PoolInvalidOpinionId(uint256 opinionId);
-    error PoolSameAnswerAsCurrentAnswer(uint256 opinionId, string answer);
-    error PoolDeadlineTooShort(uint256 deadline, uint256 minDuration);
-    error PoolDeadlineTooLong(uint256 deadline, uint256 maxDuration);
-    error PoolInitialContributionTooLow(uint256 provided, uint256 minimum);
-    error PoolInvalidProposedAnswer();
-    error PoolInvalidPoolId(uint256 poolId);
-    error PoolNotActive(uint256 poolId, uint8 status);
-    error PoolDeadlinePassed(uint256 poolId, uint256 deadline);
-    error PoolContributionTooLow(uint256 provided, uint256 minimum);
-    error PoolInsufficientFunds(uint256 current, uint256 target);
-    error PoolExecutionFailed(uint256 poolId);
-    error PoolAlreadyExecuted(uint256 poolId);
-    error PoolNoContribution(uint256 poolId, address user);
-    error PoolNotExpired(uint256 poolId, uint256 deadline);
-    error PoolAlreadyRefunded(uint256 poolId, address user);
-    error PoolInvalidNameLength();
-    error PoolAlreadyFunded(uint256 poolId);
+    mapping(uint256 => Opinion) public opinions;
+    mapping(uint256 => AnswerHistory[]) public answerHistory;
 
     // --- EVENTS ---
     event OpinionCreated(
@@ -267,11 +222,21 @@ contract OpinionMarket is
         uint256 rewardAmount
     );
 
+    // --- EVENTS FOR STATE VARIABLE UPDATES ---
+    event MinimumPriceUpdated(uint256 newPrice);
+    event PlatformFeePercentUpdated(uint256 newPercent);
+    event CreatorFeePercentUpdated(uint256 newPercent);
+    event MaxPriceChangeUpdated(uint256 newPercent);
+    event MaxTradesPerBlockUpdated(uint256 newCount);
+    event RapidTradeWindowUpdated(uint256 newWindow);
+    event QuestionCreationFeeUpdated(uint256 newFee);
+    event InitialAnswerPriceUpdated(uint256 newPrice);
+    event PoolCreationFeeUpdated(uint256 newFee);
+    event PoolContributionFeeUpdated(uint256 newFee);
+    event MinPoolDurationUpdated(uint256 newDuration);
+    event MaxPoolDurationUpdated(uint256 newDuration);
+
     // --- INITIALIZATION ---
-    /**
-     * @dev Initializes the contract with the USDC token address and sets up roles.
-     * @param _usdcToken Address of the USDC token contract.
-     */
     function initialize(address _usdcToken) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
@@ -291,21 +256,31 @@ contract OpinionMarket is
             usdcToken = IERC20(_usdcToken);
         }
 
+        // Initialize configurable values
+        minimumPrice = 1_000_000;
+        platformFeePercent = 2;
+        creatorFeePercent = 3;
+        absoluteMaxPriceChange = 200;
+        maxTradesPerBlock = 3;
+        rapidTradeWindow = 30 seconds;
+        questionCreationFee = 1_000_000;
+        initialAnswerPrice = 2_000_000;
+
+        // Initialize pool settings
+        poolCreationFee = 5 * 10 ** 6;
+        poolContributionFee = 1 * 10 ** 6;
+        minPoolDuration = 1 days;
+        maxPoolDuration = 30 days;
+
         nextOpinionId = 1;
     }
 
     // --- UPGRADE AUTHORIZATION ---
-    /**
-     * @dev Authorizes contract upgrades, restricted to the owner.
-     */
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyOwner {}
 
     // --- ROLE MANAGEMENT ---
-    /**
-     * @dev Grants a role to an account, restricted to DEFAULT_ADMIN_ROLE.
-     */
     function grantRole(
         bytes32 role,
         address account
@@ -314,9 +289,6 @@ contract OpinionMarket is
         emit RoleGranted(role, account);
     }
 
-    /**
-     * @dev Revokes a role from an account, restricted to DEFAULT_ADMIN_ROLE.
-     */
     function revokeRole(
         bytes32 role,
         address account
@@ -325,20 +297,107 @@ contract OpinionMarket is
         emit RoleRevoked(role, account);
     }
 
+    // --- SETTER FUNCTIONS FOR CONFIGURABLE PARAMETERS ---
+    function setMinimumPrice(uint256 _newPrice) external onlyRole(ADMIN_ROLE) {
+        require(_newPrice >= 100_000, "Price too low");
+        require(_newPrice <= 10_000_000, "Price too high");
+        minimumPrice = _newPrice;
+        emit MinimumPriceUpdated(_newPrice);
+    }
+
+    function setPlatformFeePercent(
+        uint256 _newPercent
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newPercent <= 10, "Fee too high");
+        platformFeePercent = _newPercent;
+        emit PlatformFeePercentUpdated(_newPercent);
+    }
+
+    function setCreatorFeePercent(
+        uint256 _newPercent
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newPercent <= 10, "Fee too high");
+        creatorFeePercent = _newPercent;
+        emit CreatorFeePercentUpdated(_newPercent);
+    }
+
+    function setMaxPriceChange(
+        uint256 _newPercent
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newPercent >= 50, "Change too low");
+        require(_newPercent <= 500, "Change too high");
+        absoluteMaxPriceChange = _newPercent;
+        emit MaxPriceChangeUpdated(_newPercent);
+    }
+
+    function setMaxTradesPerBlock(
+        uint256 _newCount
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newCount >= 1, "Count too low");
+        require(_newCount <= 10, "Count too high");
+        maxTradesPerBlock = _newCount;
+        emit MaxTradesPerBlockUpdated(_newCount);
+    }
+
+    function setRapidTradeWindow(
+        uint256 _newWindow
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newWindow >= 5, "Window too short");
+        require(_newWindow <= 300, "Window too long");
+        rapidTradeWindow = _newWindow;
+        emit RapidTradeWindowUpdated(_newWindow);
+    }
+
+    function setQuestionCreationFee(
+        uint256 _newFee
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newFee <= 10_000_000, "Fee too high");
+        questionCreationFee = _newFee;
+        emit QuestionCreationFeeUpdated(_newFee);
+    }
+
+    function setInitialAnswerPrice(
+        uint256 _newPrice
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newPrice >= 100_000, "Price too low");
+        require(_newPrice <= 10_000_000, "Price too high");
+        initialAnswerPrice = _newPrice;
+        emit InitialAnswerPriceUpdated(_newPrice);
+    }
+
+    function setPoolCreationFee(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
+        require(_newFee <= 100_000_000, "Fee too high");
+        poolCreationFee = _newFee;
+        emit PoolCreationFeeUpdated(_newFee);
+    }
+
+    function setPoolContributionFee(
+        uint256 _newFee
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newFee <= 10_000_000, "Fee too high");
+        poolContributionFee = _newFee;
+        emit PoolContributionFeeUpdated(_newFee);
+    }
+
+    function setMinPoolDuration(
+        uint256 _newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newDuration >= 1 hours, "Duration too short");
+        require(_newDuration <= 7 days, "Duration too long");
+        minPoolDuration = _newDuration;
+        emit MinPoolDurationUpdated(_newDuration);
+    }
+
+    function setMaxPoolDuration(
+        uint256 _newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_newDuration >= 7 days, "Duration too short");
+        require(_newDuration <= 90 days, "Duration too long");
+        maxPoolDuration = _newDuration;
+        emit MaxPoolDurationUpdated(_newDuration);
+    }
+
     // --- CORE MECHANICS ---
-
-    /**
-     * @dev Internal implementation of opinion creation
-     * @dev Creates a new opinion with a question, initial answer, IPFS hash, and link.
-     * @param question The opinion question.
-     * @param initialAnswer The initial answer.
-     * @param ipfsHash The IPFS hash for an image.
-     * @param link The external URL link.
-     */
-    /**
-     *
-     */
-
     function createOpinion(
         string calldata question,
         string calldata initialAnswer
@@ -350,12 +409,13 @@ contract OpinionMarket is
         _validateBasicOpinionParams(question, initialAnswer);
 
         // Set creation fee and initial price
-        uint256 initialPrice = MINIMUM_PRICE;
+        uint256 creationFee = questionCreationFee;
+        uint256 initialPrice = initialAnswerPrice;
 
         // Check allowance
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < initialPrice)
-            revert InsufficientAllowance(initialPrice, allowance);
+        if (allowance < creationFee)
+            revert InsufficientAllowance(creationFee, allowance);
 
         // Calculate fees
         (uint256 platformFee, uint256 creatorFee) = _calculateFees(
@@ -371,10 +431,9 @@ contract OpinionMarket is
             initialPrice
         );
 
-        // Handle transfers
-        usdcToken.safeTransferFrom(msg.sender, address(this), initialPrice);
-        usdcToken.safeTransfer(owner(), platformFee);
-        usdcToken.safeTransfer(msg.sender, creatorFee);
+        // Handle transfers - just the creation fee
+        usdcToken.safeTransferFrom(msg.sender, address(this), creationFee);
+        usdcToken.safeTransfer(owner(), creationFee);
 
         // Emit events
         emit OpinionCreated(
@@ -394,13 +453,6 @@ contract OpinionMarket is
         emit FeesDistributed(opinionId, platformFee, creatorFee, 0, address(0));
     }
 
-    /**
-     * @dev Creates a new opinion with a question, initial answer, IPFS hash, and link.
-     * @param question The opinion question.
-     * @param initialAnswer The initial answer.
-     * @param ipfsHash The IPFS hash for an image.
-     * @param link The external URL link.
-     */
     function createOpinionWithExtras(
         string calldata question,
         string calldata initialAnswer,
@@ -414,7 +466,7 @@ contract OpinionMarket is
         _validateFullOpinionParams(question, initialAnswer, ipfsHash, link);
 
         // Set creation fee and initial price
-        uint256 initialPrice = MINIMUM_PRICE;
+        uint256 initialPrice = minimumPrice;
 
         // Check allowance
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
@@ -458,9 +510,6 @@ contract OpinionMarket is
         emit FeesDistributed(opinionId, platformFee, creatorFee, 0, address(0));
     }
 
-    /**
-     * @dev Creates a new pool to collectively fund an answer change
-     */
     function createPool(
         uint256 opinionId,
         string calldata proposedAnswer,
@@ -480,7 +529,7 @@ contract OpinionMarket is
         );
 
         // Calculate total required amount
-        uint256 totalRequired = POOL_CREATION_FEE + initialContribution;
+        uint256 totalRequired = poolCreationFee + initialContribution;
 
         // Check allowance
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
@@ -506,9 +555,6 @@ contract OpinionMarket is
         );
     }
 
-    /**
-     * @dev Allows users to contribute to an existing pool
-     */
     function contributeToPool(
         uint256 poolId,
         uint256 amount
@@ -517,7 +563,7 @@ contract OpinionMarket is
         uint256 actualAmount = _validatePoolContribution(poolId, amount);
 
         // Add contribution fee
-        uint256 totalRequired = actualAmount + POOL_CONTRIBUTION_FEE;
+        uint256 totalRequired = actualAmount + poolContributionFee;
 
         // Check allowance
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
@@ -531,7 +577,7 @@ contract OpinionMarket is
         usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
 
         // Handle the fee distribution among three parties
-        _handleContributionFee(opinionId, poolId, POOL_CONTRIBUTION_FEE);
+        _handleContributionFee(opinionId, poolId, poolContributionFee);
 
         // Check if pool has reached target price and execute if so
         _checkAndExecutePoolIfReady(poolId, opinionId);
@@ -564,9 +610,6 @@ contract OpinionMarket is
         emit FeesAccumulated(poolCreator, poolCreatorShare);
     }
 
-    /**
-     * @dev Internal function to execute a pool when target price is reached
-     */
     function _executePool(uint256 poolId) internal {
         // Get pool and validate status
         PoolInfo storage pool = pools[poolId];
@@ -588,9 +631,6 @@ contract OpinionMarket is
         _processPoolExecution(poolId, opinionId, targetPrice);
     }
 
-    /**
-     * @dev Process the actual pool execution
-     */
     function _processPoolExecution(
         uint256 poolId,
         uint256 opinionId,
@@ -600,8 +640,8 @@ contract OpinionMarket is
         Opinion storage opinion = opinions[opinionId];
 
         // Calculate fees
-        uint256 platformFee = (targetPrice * PLATFORM_FEE_PERCENT) / 100;
-        uint256 creatorFee = (targetPrice * CREATOR_FEE_PERCENT) / 100;
+        uint256 platformFee = (targetPrice * platformFeePercent) / 100;
+        uint256 creatorFee = (targetPrice * creatorFeePercent) / 100;
         uint256 ownerAmount = targetPrice - platformFee - creatorFee;
 
         // Track the current owner to distribute fees
@@ -647,9 +687,6 @@ contract OpinionMarket is
         );
     }
 
-    /**
-     * @dev Emit all events related to pool execution
-     */
     function _emitPoolExecutionEvents(
         uint256 poolId,
         uint256 opinionId,
@@ -685,11 +722,6 @@ contract OpinionMarket is
         emit PoolCreatorBadgeAwarded(pool.creator, poolId);
     }
 
-    /**
-     * @dev Checks if a pool has expired and updates its status
-     * @param poolId The ID of the pool to check
-     * @return Whether the pool is expired
-     */
     function checkPoolExpiry(uint256 poolId) public returns (bool) {
         if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
 
@@ -717,10 +749,6 @@ contract OpinionMarket is
         return false;
     }
 
-    /**
-     * @dev Allows contributor to withdraw their funds from an expired pool
-     * @param poolId The ID of the expired pool
-     */
     function withdrawFromExpiredPool(
         uint256 poolId
     ) external nonReentrant whenNotPaused {
@@ -760,11 +788,6 @@ contract OpinionMarket is
         emit PoolRefundIssued(poolId, msg.sender, userContribution);
     }
 
-    /**
-     * @dev Extends the deadline of a pool
-     * @param poolId The ID of the pool to extend
-     * @param newDeadline The new deadline timestamp
-     */
     function extendPoolDeadline(
         uint256 poolId,
         uint256 newDeadline
@@ -803,13 +826,6 @@ contract OpinionMarket is
         emit PoolExtended(poolId, newDeadline, msg.sender);
     }
 
-    /**
-     * @dev Distributes rewards when a pool-owned answer is purchased
-     * This function is called internally from submitAnswer when buying a pool-owned answer
-     * @param opinionId The ID of the opinion
-     * @param purchasePrice The price paid for the answer
-     * @param buyer The address of the buyer
-     */
     function _distributePoolRewards(
         uint256 opinionId,
         uint256 purchasePrice,
@@ -845,8 +861,8 @@ contract OpinionMarket is
         if (!foundPool) return;
 
         // Calculate owner amount (after platform and creator fees)
-        uint256 platformFee = (purchasePrice * PLATFORM_FEE_PERCENT) / 100;
-        uint256 creatorFee = (purchasePrice * CREATOR_FEE_PERCENT) / 100;
+        uint256 platformFee = (purchasePrice * platformFeePercent) / 100;
+        uint256 creatorFee = (purchasePrice * creatorFeePercent) / 100;
         uint256 rewardAmount = purchasePrice - platformFee - creatorFee;
 
         // Get pool contributors and their contribution amounts
@@ -888,11 +904,6 @@ contract OpinionMarket is
         );
     }
 
-    /**
-     * @dev Submits a new answer to an opinion, transferring ownership.
-     * @param opinionId The ID of the opinion.
-     * @param answer The new answer.
-     */
     function submitAnswer(
         uint256 opinionId,
         string calldata answer
@@ -925,8 +936,8 @@ contract OpinionMarket is
         if (allowance < price) revert InsufficientAllowance(price, allowance);
 
         // Calculate standard fees
-        uint256 platformFee = (price * PLATFORM_FEE_PERCENT) / 100;
-        uint256 creatorFee = (price * CREATOR_FEE_PERCENT) / 100;
+        uint256 platformFee = (price * platformFeePercent) / 100;
+        uint256 creatorFee = (price * creatorFeePercent) / 100;
         uint256 ownerAmount = price - platformFee - creatorFee;
 
         // Apply MEV penalty for rapid trading within window
@@ -934,7 +945,7 @@ contract OpinionMarket is
 
         if (
             lastTradeTime > 0 &&
-            block.timestamp - lastTradeTime < RAPID_TRADE_WINDOW
+            block.timestamp - lastTradeTime < rapidTradeWindow
         ) {
             // Calculate potential profit & redirect to platform
             uint256 lastTradePrice = userLastTradePrice[msg.sender][opinionId];
@@ -1007,38 +1018,26 @@ contract OpinionMarket is
     }
 
     // --- SECURITY FEATURES ---
-    /**
-     * @dev Checks and updates the number of trades per block per user.
-     */
     function _checkAndUpdateTradesInBlock() internal {
         if (userLastBlock[msg.sender] != block.number) {
             userTradesInBlock[msg.sender] = 1;
             userLastBlock[msg.sender] = block.number;
         } else {
             userTradesInBlock[msg.sender]++;
-            if (userTradesInBlock[msg.sender] > MAX_TRADES_PER_BLOCK) {
+            if (userTradesInBlock[msg.sender] > maxTradesPerBlock) {
                 revert MaxTradesPerBlockExceeded(
                     userTradesInBlock[msg.sender],
-                    MAX_TRADES_PER_BLOCK
+                    maxTradesPerBlock
                 );
             }
         }
     }
 
-    /**
-     * @dev Prevents trading the same opinion multiple times in one block.
-     * @param opinionId The ID of the opinion.
-     */
     function _checkTradeAllowed(uint256 opinionId) internal {
         if (userLastTradeBlock[msg.sender][opinionId] == block.number)
             revert OneTradePerBlock();
         userLastTradeBlock[msg.sender][opinionId] = block.number;
     }
-
-    /**
-     * @dev Validates that an IPFS hash is properly formatted.
-     * @param _ipfsHash The IPFS hash to validate.
-     */
 
     function _validateIpfsHash(string memory _ipfsHash) internal pure {
         bytes memory ipfsHashBytes = bytes(_ipfsHash);
@@ -1057,27 +1056,21 @@ contract OpinionMarket is
         }
     }
 
-    /**
-     * @dev Validates that price changes do not exceed the maximum allowed.
-     */
     function _validatePriceChange(
         uint256 lastPrice,
         uint256 newPrice
-    ) internal pure {
+    ) internal view {
         if (newPrice > lastPrice) {
             uint256 increase = ((newPrice - lastPrice) * 100) / lastPrice;
-            if (increase > ABSOLUTE_MAX_PRICE_CHANGE) {
+            if (increase > absoluteMaxPriceChange) {
                 revert PriceChangeExceedsLimit(
                     increase,
-                    ABSOLUTE_MAX_PRICE_CHANGE
+                    absoluteMaxPriceChange
                 );
             }
         }
     }
 
-    /**
-     * @dev Validates basic opinion creation parameters (without IPFS hash and link).
-     */
     function _validateBasicOpinionParams(
         string memory question,
         string memory initialAnswer
@@ -1093,9 +1086,6 @@ contract OpinionMarket is
             revert InvalidAnswerLength();
     }
 
-    /**
-     * @dev Validates full opinion creation parameters including IPFS hash and link.
-     */
     function _validateFullOpinionParams(
         string memory question,
         string memory initialAnswer,
@@ -1119,20 +1109,14 @@ contract OpinionMarket is
         }
     }
 
-    /**
-     * @dev Calculates fees for opinion creation.
-     */
     function _calculateFees(
         uint256 price
-    ) internal pure returns (uint256 platformFee, uint256 creatorFee) {
-        platformFee = (price * PLATFORM_FEE_PERCENT) / 100;
-        creatorFee = (price * CREATOR_FEE_PERCENT) / 100;
+    ) internal view returns (uint256 platformFee, uint256 creatorFee) {
+        platformFee = (price * platformFeePercent) / 100;
+        creatorFee = (price * creatorFeePercent) / 100;
         return (platformFee, creatorFee);
     }
 
-    /**
-     * @dev Creates the opinion record in storage.
-     */
     function _createOpinionRecord(
         string memory question,
         string memory initialAnswer,
@@ -1146,8 +1130,8 @@ contract OpinionMarket is
         opinion.id = opinionId;
         opinion.question = question;
         opinion.creator = msg.sender;
-        opinion.lastPrice = initialPrice; // Changed from currentPrice to lastPrice
-        opinion.nextPrice = initialPrice;
+        opinion.lastPrice = initialPrice;
+        opinion.nextPrice = _calculateNextPrice(initialPrice);
         opinion.isActive = true;
         opinion.currentAnswer = initialAnswer;
         opinion.currentAnswerOwner = msg.sender;
@@ -1167,11 +1151,6 @@ contract OpinionMarket is
         return opinionId;
     }
 
-    /**
-     * @dev Calculates the next price with a random adjustment (-20% to +99%).
-     * @param lastPrice The current price.
-     * @return newPrice The calculated next price.
-     */
     function _calculateNextPrice(uint256 lastPrice) internal returns (uint256) {
         bytes32 randomness = keccak256(
             abi.encodePacked(
@@ -1209,7 +1188,7 @@ contract OpinionMarket is
             uint256 reduction = (lastPrice * uint256(-adjustment)) / 100;
             newPrice = lastPrice > reduction
                 ? lastPrice - reduction
-                : MINIMUM_PRICE;
+                : minimumPrice;
         } else {
             // Handle positive adjustment
             newPrice = (lastPrice * (100 + uint256(adjustment))) / 100;
@@ -1220,16 +1199,11 @@ contract OpinionMarket is
             newPrice = lastPrice + 1;
         }
 
-        newPrice = newPrice < MINIMUM_PRICE ? MINIMUM_PRICE : newPrice;
+        newPrice = newPrice < minimumPrice ? minimumPrice : newPrice;
         _validatePriceChange(lastPrice, newPrice);
         return newPrice;
     }
 
-    /**
-     * @dev Estimates a price based on current price (used for backwards compatibility)
-     * @param lastPrice The current price
-     * @return An estimated next price
-     */
     function _estimateNextPrice(
         uint256 lastPrice
     ) internal pure returns (uint256) {
@@ -1237,9 +1211,6 @@ contract OpinionMarket is
         return (lastPrice * 130) / 100;
     }
 
-    /**
-     * @dev Validates pool creation parameters
-     */
     function _validatePoolCreationParams(
         uint256 opinionId,
         string calldata proposedAnswer,
@@ -1275,10 +1246,10 @@ contract OpinionMarket is
             revert PoolSameAnswerAsCurrentAnswer(opinionId, proposedAnswer);
 
         // Validate deadline
-        if (deadline <= block.timestamp + MIN_POOL_DURATION)
-            revert PoolDeadlineTooShort(deadline, MIN_POOL_DURATION);
-        if (deadline > block.timestamp + MAX_POOL_DURATION)
-            revert PoolDeadlineTooLong(deadline, MAX_POOL_DURATION);
+        if (deadline <= block.timestamp + minPoolDuration)
+            revert PoolDeadlineTooShort(deadline, minPoolDuration);
+        if (deadline > block.timestamp + maxPoolDuration)
+            revert PoolDeadlineTooLong(deadline, maxPoolDuration);
 
         // For pool creation, we can use a lower minimum (1 USDC instead of 10)
         // Still prevents completely trivial pool creation while being more reasonable
@@ -1292,9 +1263,6 @@ contract OpinionMarket is
             );
     }
 
-    /**
-     * @dev Creates a pool record and assigns ID
-     */
     function _createPoolRecord(
         uint256 opinionId,
         string calldata proposedAnswer,
@@ -1336,9 +1304,6 @@ contract OpinionMarket is
         return poolId;
     }
 
-    /**
-     * @dev Handles fund transfers for pool creation
-     */
     function _handlePoolCreationFunds(
         uint256 opinionId,
         uint256 poolId,
@@ -1352,8 +1317,8 @@ contract OpinionMarket is
         usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
 
         // Split creation fee equally
-        uint256 platformShare = POOL_CREATION_FEE / 2;
-        uint256 creatorShare = POOL_CREATION_FEE - platformShare;
+        uint256 platformShare = poolCreationFee / 2;
+        uint256 creatorShare = poolCreationFee - platformShare;
 
         // Transfer platform share
         usdcToken.safeTransfer(owner(), platformShare);
@@ -1377,10 +1342,6 @@ contract OpinionMarket is
         );
     }
 
-    /**
-     * @dev Validates a pool contribution and returns the adjusted contribution amount if needed
-     * @return The actual contribution amount (adjusted if necessary)
-     */
     function _validatePoolContribution(
         uint256 poolId,
         uint256 amount
@@ -1415,19 +1376,11 @@ contract OpinionMarket is
         }
 
         // Ensure non-zero contribution (1 wei minimum)
-        // We've removed the MINIMUM_POOL_CONTRIBUTION check here
-        // since we'll charge a fee for each contribution instead
         if (actualAmount == 0) revert PoolContributionTooLow(actualAmount, 1);
-
-        // We don't check allowance here anymore since that will be handled
-        // in the contributeToPool function where we add the fee
 
         return actualAmount;
     }
 
-    /**
-     * @dev Updates pool state for a contribution
-     */
     function _updatePoolForContribution(
         uint256 poolId,
         uint256 amount
@@ -1458,9 +1411,6 @@ contract OpinionMarket is
         return pool.opinionId;
     }
 
-    /**
-     * @dev Checks if pool is ready to execute and does so if conditions are met
-     */
     function _checkAndExecutePoolIfReady(
         uint256 poolId,
         uint256 opinionId
@@ -1483,9 +1433,6 @@ contract OpinionMarket is
         }
     }
 
-    /**
-     * @dev Allows users to claim their accumulated fees.
-     */
     function claimAccumulatedFees() external nonReentrant whenNotPaused {
         uint256 amount = accumulatedFees[msg.sender];
         if (amount == 0) revert NoFeesToClaim();
@@ -1498,32 +1445,19 @@ contract OpinionMarket is
     }
 
     // --- ADMIN FEATURES ---
-    /**
-     * @dev Pauses the contract, restricted to OPERATOR_ROLE.
-     */
     function pause() external onlyRole(OPERATOR_ROLE) {
         _pause();
     }
 
-    /**
-     * @dev Unpauses the contract, restricted to OPERATOR_ROLE.
-     */
     function unpause() external onlyRole(OPERATOR_ROLE) {
         _unpause();
     }
 
-    /**
-     * @dev Toggles public creation of opinions, restricted to ADMIN_ROLE.
-     */
     function togglePublicCreation() external onlyRole(ADMIN_ROLE) {
         isPublicCreationEnabled = !isPublicCreationEnabled;
         emit PublicCreationToggled(isPublicCreationEnabled);
     }
 
-    /**
-     * @dev Deactivates an opinion, restricted to MODERATOR_ROLE.
-     * @param opinionId The ID of the opinion to deactivate.
-     */
     function deactivateOpinion(
         uint256 opinionId
     ) external onlyRole(MODERATOR_ROLE) {
@@ -1532,10 +1466,6 @@ contract OpinionMarket is
         emit OpinionDeactivated(opinionId);
     }
 
-    /**
-     * @dev Reactivates a previously deactivated opinion, restricted to MODERATOR_ROLE.
-     * @param opinionId The ID of the opinion to reactivate.
-     */
     function reactivateOpinion(
         uint256 opinionId
     ) external onlyRole(MODERATOR_ROLE) {
@@ -1552,10 +1482,6 @@ contract OpinionMarket is
         emit OpinionReactivated(opinionId);
     }
 
-    /**
-     * @dev Withdraws tokens in an emergency, restricted to MODERATOR_ROLE and owner when paused.
-     * @param token The token to withdraw.
-     */
     function emergencyWithdraw(address token) external nonReentrant whenPaused {
         // Check if caller is owner OR has MODERATOR_ROLE
         if (msg.sender != owner() && !hasRole(MODERATOR_ROLE, msg.sender)) {
@@ -1569,12 +1495,6 @@ contract OpinionMarket is
     }
 
     // --- VIEW FUNCTIONS ---
-    /**
-     *
-     * @dev Returns the answer history for an opinion.
-     * @param opinionId The ID of the opinion.
-     * @return AnswerHistory array.
-     */
     function getAnswerHistory(
         uint256 opinionId
     ) external view returns (AnswerHistory[] memory) {
@@ -1582,47 +1502,26 @@ contract OpinionMarket is
         return answerHistory[opinionId];
     }
 
-    /**
-     * @dev Returns the number of trades for an opinion.
-     * @param opinionId The ID of the opinion.
-     * @return Number of trades.
-     */
     function getTradeCount(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         return answerHistory[opinionId].length;
     }
 
-    /**
-     * @dev Returns total creator gain for an opinion.
-     * @param opinionId The ID of the opinion.
-     * @return Total creator gain in USDC.
-     */
     function getCreatorGain(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         Opinion storage opinion = opinions[opinionId];
-        // Creator fee is CREATOR_FEE_PERCENT% of the total volume
-        return (opinion.totalVolume * CREATOR_FEE_PERCENT) / 100;
+        return (opinion.totalVolume * creatorFeePercent) / 100;
     }
 
-    /**
-     * @dev Returns the remaining trades a user can make in the current block.
-     * @param user The user's address.
-     * @return Number of remaining trades.
-     */
     function getRemainingBlockTrades(
         address user
     ) external view returns (uint256) {
         if (userLastBlock[user] != block.number) {
-            return MAX_TRADES_PER_BLOCK;
+            return maxTradesPerBlock;
         }
-        return MAX_TRADES_PER_BLOCK - userTradesInBlock[user];
+        return maxTradesPerBlock - userTradesInBlock[user];
     }
 
-    /**
-     * @dev Returns the exact price required to submit the next answer
-     * @param opinionId The ID of the opinion
-     * @return The exact price in USDC (6 decimals)
-     */
     function getNextPrice(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         Opinion storage opinion = opinions[opinionId];
@@ -1636,9 +1535,6 @@ contract OpinionMarket is
         return opinion.nextPrice;
     }
 
-    /**
-     * @dev Returns all contributor addresses for a pool
-     */
     function getPoolContributors(
         uint256 poolId
     ) external view returns (address[] memory) {
@@ -1646,9 +1542,6 @@ contract OpinionMarket is
         return poolContributors[poolId];
     }
 
-    /**
-     * @dev Returns all pools for a specific opinion
-     */
     function getOpinionPools(
         uint256 opinionId
     ) external view returns (uint256[] memory) {
@@ -1656,9 +1549,6 @@ contract OpinionMarket is
         return opinionPools[opinionId];
     }
 
-    /**
-     * @dev Returns detailed information about a pool
-     */
     function getPoolDetails(
         uint256 poolId
     )
@@ -1693,7 +1583,6 @@ contract OpinionMarket is
         }
     }
 
-    // Add a new function to set the USDC token address
     function setUsdcToken(address _usdcToken) external onlyRole(ADMIN_ROLE) {
         require(address(usdcToken) == address(0), "USDC already set");
         require(_usdcToken != address(0), "Invalid USDC address");

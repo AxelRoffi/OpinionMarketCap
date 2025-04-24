@@ -20,11 +20,18 @@ contract OpinionMarketV2 is OpinionMarket {
         if (answerBytes.length > MAX_ANSWER_LENGTH)
             revert InvalidAnswerLength();
 
-        uint256 price = _calculateNextPrice(opinion.lastPrice);
+        // Use the stored next price instead of calculating it on the fly
+        uint256 price = opinion.nextPrice;
 
-        // Calculate fees
-        uint256 platformFee = (price * PLATFORM_FEE_PERCENT) / 100;
-        uint256 creatorFee = (price * CREATOR_FEE_PERCENT) / 100;
+        // If nextPrice is 0 (for older opinions before this update),
+        // calculate it using the current price
+        if (price == 0) {
+            price = _calculateNextPrice(opinion.lastPrice);
+        }
+
+        // Calculate fees using state variables instead of constants
+        uint256 platformFee = (price * platformFeePercent) / 100;
+        uint256 creatorFee = (price * creatorFeePercent) / 100;
         uint256 ownerAmount = price - platformFee - creatorFee;
 
         // Process payment and distribute fees using regular ERC20 methods
