@@ -36,7 +36,7 @@ interface OpinionMarketErrors {
     error PoolNotActive(uint256 poolId, uint8 status);
     error PoolDeadlinePassed(uint256 poolId, uint256 deadline);
     error PoolContributionTooLow(uint256 provided, uint256 minimum);
-    error PoolInsufficientFunds(uint256 current, uint256 target);
+    error PoolInsufficientFunds();
     error PoolExecutionFailed(uint256 poolId);
     error PoolAlreadyExecuted(uint256 poolId);
     error PoolNoContribution(uint256 poolId, address user);

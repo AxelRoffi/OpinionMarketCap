@@ -6,14 +6,19 @@ import "./OpinionMarket.sol";
 contract OpinionMarketV2 is OpinionMarket {
     // Storage gap for future upgrades
     uint256[50] private __gap;
+    using SafeERC20 for IERC20;
 
     // Keep the existing implementation but update it for compatibility
     function submitAnswer(
         uint256 opinionId,
         string calldata answer
     ) external override nonReentrant whenNotPaused {
+        _checkAndUpdateTradesInBlock();
+        _checkTradeAllowed(opinionId);
+
         Opinion storage opinion = opinions[opinionId];
         if (!opinion.isActive) revert OpinionNotActive();
+        if (opinion.currentAnswerOwner == msg.sender) revert SameOwner();
 
         bytes memory answerBytes = bytes(answer);
         if (answerBytes.length == 0) revert EmptyString();
@@ -29,44 +34,52 @@ contract OpinionMarketV2 is OpinionMarket {
             price = _calculateNextPrice(opinion.lastPrice);
         }
 
-        // Calculate fees using state variables instead of constants
-        uint256 platformFee = (price * platformFeePercent) / 100;
-        uint256 creatorFee = (price * creatorFeePercent) / 100;
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < price) revert InsufficientAllowance(price, allowance);
+
+        // Calculate standard fees
+        (uint256 platformFee, uint256 creatorFee) = CalculationLibrary
+            .calculateFees(price, platformFeePercent, creatorFeePercent);
         uint256 ownerAmount = price - platformFee - creatorFee;
 
-        // Process payment and distribute fees using regular ERC20 methods
-        if (!usdcToken.transferFrom(msg.sender, address(this), price)) {
-            revert TransferFailed();
+        // Apply MEV penalty for rapid trading within window
+        uint256 lastTradeTime = userLastTradeTime[msg.sender][opinionId];
+
+        if (
+            lastTradeTime > 0 &&
+            block.timestamp - lastTradeTime < rapidTradeWindow
+        ) {
+            // Calculate potential profit & redirect to platform
+            uint256 lastTradePrice = userLastTradePrice[msg.sender][opinionId];
+
+            if (lastTradePrice > 0 && ownerAmount > lastTradePrice) {
+                uint256 potentialProfit = ownerAmount - lastTradePrice;
+                platformFee += potentialProfit;
+                ownerAmount -= potentialProfit;
+            } else {
+                // If no profit, still apply a higher fee to discourage MEV
+                uint256 mevPenalty = (price * 20) / 100; // 20% penalty
+                if (mevPenalty > ownerAmount) {
+                    mevPenalty = ownerAmount / 2; // Ensure some payment to previous owner
+                }
+                platformFee += mevPenalty;
+                ownerAmount -= mevPenalty;
+            }
         }
 
-        // Send fees
-        if (!usdcToken.transfer(owner(), platformFee)) revert TransferFailed();
+        // Update last trade info for future checks
+        userLastTradeTime[msg.sender][opinionId] = block.timestamp;
+        userLastTradePrice[msg.sender][opinionId] = ownerAmount;
 
-        // Update for compatibility with the new fee accumulation system
         address creator = opinion.creator;
         address currentAnswerOwner = opinion.currentAnswerOwner;
 
-        // Instead of direct transfer, accumulate fees
+        // Always accumulate fees - regardless of whether it's the same owner
         accumulatedFees[creator] += creatorFee;
-        if (currentAnswerOwner != address(0)) {
-            accumulatedFees[currentAnswerOwner] += ownerAmount;
-        }
+        accumulatedFees[currentAnswerOwner] += ownerAmount;
         totalAccumulatedFees += creatorFee + ownerAmount;
 
-        emit FeesAccumulated(creator, creatorFee);
-        if (currentAnswerOwner != address(0)) {
-            emit FeesAccumulated(currentAnswerOwner, ownerAmount);
-        }
-
-        emit FeesDistributed(
-            opinionId,
-            platformFee,
-            creatorFee,
-            ownerAmount,
-            currentAnswerOwner
-        );
-
-        // Update answer history
+        // Record answer history
         answerHistory[opinionId].push(
             AnswerHistory({
                 answer: answer,
@@ -78,13 +91,26 @@ contract OpinionMarketV2 is OpinionMarket {
 
         // Update opinion state
         opinion.currentAnswer = answer;
-        opinion.currentAnswerOwner = msg.sender;
+        opinion.currentAnswerOwner = msg.sender; // Always update owner, even if it's the same person
         opinion.lastPrice = price;
         opinion.totalVolume += price;
 
-        // Add for compatibility with the Pool feature
+        // Calculate and store the next price for future answers
         opinion.nextPrice = _calculateNextPrice(price);
 
+        // Token transfers
+        usdcToken.safeTransferFrom(msg.sender, address(this), price);
+        usdcToken.safeTransfer(owner(), platformFee);
+
+        emit FeesAccumulated(creator, creatorFee);
+        emit FeesAccumulated(currentAnswerOwner, ownerAmount);
+        emit FeesDistributed(
+            opinionId,
+            platformFee,
+            creatorFee,
+            ownerAmount,
+            currentAnswerOwner
+        );
         emit AnswerSubmitted(opinionId, answer, msg.sender, price);
     }
 }
