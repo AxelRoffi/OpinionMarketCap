@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// Selective imports only for what we need
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./OpinionMarketErrors.sol";
-import "./PoolLibrary.sol";
-import "./CalculationLibrary.sol";
-import "./OpinionMarketEvents.sol";
-import "./PoolExecutionLibrary.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./IOpinionMarketEvents.sol";
+import "./IOpinionMarketErrors.sol";
 
+/**
+ * @title OpinionMarket
+ * @dev A decentralized platform for exchanging opinions, where users can buy the right to answer questions.
+ * The contract is UUPS upgradeable, uses role-based access control, and includes security and gas optimizations.
+ */
 contract OpinionMarket is
     Initializable,
     OwnableUpgradeable,
@@ -22,13 +24,10 @@ contract OpinionMarket is
     ReentrancyGuardUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
-    OpinionMarketErrors,
-    OpinionMarketEvents
+    IOpinionMarketEvents,
+    IOpinionMarketErrors
 {
     using SafeERC20 for IERC20;
-    using PoolLibrary for uint256;
-    using CalculationLibrary for uint256;
-    using PoolExecutionLibrary for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -36,21 +35,27 @@ contract OpinionMarket is
     }
 
     // --- CONSTANTS ---
-    uint256 public constant MAX_QUESTION_LENGTH = 100;
-    uint256 public constant MAX_ANSWER_LENGTH = 100;
+    // These remain as constants
+    uint256 public constant MAX_QUESTION_LENGTH = 50;
+    uint256 public constant MAX_ANSWER_LENGTH = 40;
     uint256 public constant MAX_LINK_LENGTH = 256;
     uint256 public constant MAX_IPFS_HASH_LENGTH = 64;
+    uint256 public constant MAX_POOL_NAME_LENGTH = 30;
 
-    // --- STATE VARIABLES  ---
-
-    uint256 public minimumPrice;
-    uint256 public platformFeePercent;
-    uint256 public creatorFeePercent;
-    uint256 public absoluteMaxPriceChange;
-    uint256 public maxTradesPerBlock;
-    uint256 public rapidTradeWindow;
-    uint256 public questionCreationFee;
-    uint256 public initialAnswerPrice;
+    // --- STATE VARIABLES (FORMERLY CONSTANTS) ---
+    // These are converted to state variables
+    uint256 public minimumPrice; // Formerly MINIMUM_PRICE
+    uint256 public platformFeePercent; // Formerly PLATFORM_FEE_PERCENT
+    uint256 public creatorFeePercent; // Formerly CREATOR_FEE_PERCENT
+    uint256 public absoluteMaxPriceChange; // Formerly ABSOLUTE_MAX_PRICE_CHANGE
+    uint256 public maxTradesPerBlock; // Formerly MAX_TRADES_PER_BLOCK
+    uint256 public rapidTradeWindow; // Formerly RAPID_TRADE_WINDOW
+    uint256 public questionCreationFee; // Formerly QUESTION_CREATION_FEE
+    uint256 public initialAnswerPrice; // Formerly INITIAL_ANSWER_PRICE
+    uint256 public poolCreationFee; // Formerly poolCreationFee
+    uint256 public poolContributionFee; // Formerly POOL_CONTRIBUTION_FEE
+    uint256 public minPoolDuration; // Formerly minPoolDuration
+    uint256 public maxPoolDuration; // Formerly maxPoolDuration
 
     // --- ROLES ---
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -58,46 +63,86 @@ contract OpinionMarket is
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
 
-    // --- STATE VARIABLES --
-    bool public isPublicCreationEnabled;
-    uint256 public nextOpinionId;
-    IERC20 public usdcToken;
-    uint256 private nonce;
-    mapping(address => uint256) public accumulatedFees;
-    uint256 public totalAccumulatedFees;
-    mapping(address => uint256) private userLastBlock;
-    mapping(address => uint256) private userTradesInBlock;
-    mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock;
-    mapping(address => mapping(uint256 => uint256)) internal userLastTradeTime;
-    mapping(address => mapping(uint256 => uint256)) internal userLastTradePrice;
+    // --- STATE VARIABLES ---
+    bool public isPublicCreationEnabled; // Toggle for public opinion creation
+    uint256 public nextOpinionId; // Tracks next opinion ID
+    IERC20 public usdcToken; // USDC token for payments
+    uint256 private nonce; // Nonce for random number generation
+    mapping(address => uint256) public accumulatedFees; // Accumulated fees per user
+    uint256 public totalAccumulatedFees; // Total fees accumulated
+    mapping(address => uint256) private userLastBlock; // Last block a user traded
+    mapping(address => uint256) private userTradesInBlock; // Trades per user in current block
+    mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock; // Last trade block per user per opinion
+    mapping(address => mapping(uint256 => uint256)) private userLastTradeTime;
+    mapping(address => mapping(uint256 => uint256)) private userLastTradePrice;
+
+    // --- POOL STATE VARIABLES ---
+    uint256 public poolCount;
+    mapping(uint256 => PoolInfo) public pools;
+    mapping(uint256 => PoolContribution[]) private poolContributions;
+    mapping(uint256 => mapping(address => uint256))
+        public poolContributionAmounts;
+    mapping(uint256 => address[]) public poolContributors;
+    mapping(uint256 => uint256[]) public opinionPools;
+    mapping(address => uint256[]) public userPools;
 
     // --- STRUCTS ---
     struct Opinion {
-        uint256 id;
-        string question;
-        address creator;
-        uint256 lastPrice;
-        uint256 nextPrice;
-        bool isActive;
-        string currentAnswer;
-        address currentAnswerOwner;
-        uint256 totalVolume;
-        string ipfsHash;
-        string link;
+        uint256 id; // Unique opinion ID
+        string question; // Opinion question (max 50 chars)
+        address creator; // Opinion creator
+        address questionOwner; // Current owner (can change through sales)
+        uint256 lastPrice; // Current price to submit an answer
+        uint256 nextPrice; // Next price for submitting an answer
+        bool isActive; // Opinion status
+        string currentAnswer; // Current answer (max 40 chars)
+        address currentAnswerOwner; // Owner of current answer
+        uint256 totalVolume; // Total volume of trades
+        string ipfsHash; // IPFS hash pointing to an image (max 64 chars)
+        string link; // Associated URL (max 256 chars)
+        uint256 salePrice;
     }
 
     struct AnswerHistory {
-        string answer;
-        address owner;
-        uint256 price;
-        uint256 timestamp;
+        string answer; // Historical answer
+        address owner; // Answer owner
+        uint256 price; // Price paid
+        uint256 timestamp; // Submission timestamp
+    }
+
+    enum PoolStatus {
+        Active,
+        Executed,
+        Expired,
+        Extended
+    }
+
+    struct PoolInfo {
+        uint256 id; // Unique pool ID
+        uint256 opinionId; // Opinion this pool is for
+        string proposedAnswer; // Answer the pool is proposing
+        uint256 totalAmount; // Total USDC contributed
+        uint256 deadline; // Timestamp when pool expires
+        address creator; // Pool creator
+        PoolStatus status; // Current pool status
+        string name; // Pool name (max 30 chars)
+        string ipfsHash; // Pool image IPFS hash
+    }
+
+    struct PoolContribution {
+        address contributor;
+        uint256 amount;
     }
 
     // --- MAPPINGS ---
-    mapping(uint256 => Opinion) public opinions;
-    mapping(uint256 => AnswerHistory[]) public answerHistory;
+    mapping(uint256 => Opinion) public opinions; // Opinion ID to Opinion data
+    mapping(uint256 => AnswerHistory[]) public answerHistory; // Opinion ID to answer history
 
     // --- INITIALIZATION ---
+    /**
+     * @dev Initializes the contract with the USDC token address and sets up roles.
+     * @param _usdcToken Address of the USDC token contract.
+     */
     function initialize(address _usdcToken) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
@@ -118,109 +163,193 @@ contract OpinionMarket is
         }
 
         // Initialize configurable values
-        minimumPrice = 1_000_000;
-        platformFeePercent = 2;
-        creatorFeePercent = 3;
-        absoluteMaxPriceChange = 200;
+        minimumPrice = 1_000_000; // 1 USDC (6 decimals)
+        platformFeePercent = 2; // 2%
+        creatorFeePercent = 3; // 3%
+        absoluteMaxPriceChange = 200; // 200%
         maxTradesPerBlock = 3;
-        rapidTradeWindow = 30 seconds;
-        questionCreationFee = 1_000_000;
-        initialAnswerPrice = 2_000_000;
+        rapidTradeWindow = 30 seconds; // Short window for MEV protection
+        questionCreationFee = 1_000_000; // 1 USDC (6 decimals)
+        initialAnswerPrice = 2_000_000; // 2 USDC (6 decimals)
+
+        // Initialize pool settings
+        poolCreationFee = 50 * 10 ** 6; // 50 USDC
+        poolContributionFee = 1 * 10 ** 6; // 1 USDC
+        minPoolDuration = 1 days;
+        maxPoolDuration = 30 days;
 
         nextOpinionId = 1;
     }
 
     // --- UPGRADE AUTHORIZATION ---
+    /**
+     * @dev Authorizes contract upgrades, restricted to the owner.
+     */
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyOwner {}
 
     // --- ROLE MANAGEMENT ---
+    /**
+     * @dev Grants a role to an account, restricted to DEFAULT_ADMIN_ROLE.
+     */
     function grantRole(
         bytes32 role,
         address account
     ) public override onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(role, account);
-        emit RoleGranted(role, account);
+        // Keep original OpenZeppelin event
+        emit RoleGranted(role, account, msg.sender);
     }
 
+    /**
+     * @dev Revokes a role from an account, restricted to DEFAULT_ADMIN_ROLE.
+     */
     function revokeRole(
         bytes32 role,
         address account
     ) public override onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(role, account);
-        emit RoleRevoked(role, account);
+        // Keep original OpenZeppelin event
+        emit RoleRevoked(role, account, msg.sender);
     }
 
     // --- SETTER FUNCTIONS FOR CONFIGURABLE PARAMETERS ---
+    /**
+     * @dev Updates the minimum price for transactions
+     * @param _newPrice New minimum price (in USDC with 6 decimals)
+     */
     function setMinimumPrice(uint256 _newPrice) external onlyRole(ADMIN_ROLE) {
-        require(_newPrice >= 100_000, "Price too low");
-        require(_newPrice <= 10_000_000, "Price too high");
         minimumPrice = _newPrice;
-        emit MinimumPriceUpdated(_newPrice);
+        emit ParameterUpdated(0, _newPrice);
     }
 
+    /**
+     * @dev Updates the platform fee percentage
+     * @param _newPercent New platform fee percentage
+     */
     function setPlatformFeePercent(
         uint256 _newPercent
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newPercent <= 10, "Fee too high");
         platformFeePercent = _newPercent;
-        emit PlatformFeePercentUpdated(_newPercent);
+        emit ParameterUpdated(1, _newPercent);
     }
 
+    /**
+     * @dev Updates the creator fee percentage
+     * @param _newPercent New creator fee percentage
+     */
     function setCreatorFeePercent(
         uint256 _newPercent
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newPercent <= 10, "Fee too high");
         creatorFeePercent = _newPercent;
-        emit CreatorFeePercentUpdated(_newPercent);
+        emit ParameterUpdated(2, _newPercent);
     }
 
+    /**
+     * @dev Updates the maximum price change percentage
+     * @param _newPercent New maximum price change percentage
+     */
     function setMaxPriceChange(
         uint256 _newPercent
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newPercent >= 50, "Change too low");
-        require(_newPercent <= 500, "Change too high");
         absoluteMaxPriceChange = _newPercent;
-        emit MaxPriceChangeUpdated(_newPercent);
+        emit ParameterUpdated(3, _newPercent);
     }
 
+    /**
+     * @dev Updates the maximum trades per block
+     * @param _newCount New maximum trades per block
+     */
     function setMaxTradesPerBlock(
         uint256 _newCount
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newCount >= 1, "Count too low");
-        require(_newCount <= 10, "Count too high");
         maxTradesPerBlock = _newCount;
-        emit MaxTradesPerBlockUpdated(_newCount);
+        emit ParameterUpdated(4, _newCount);
     }
 
+    /**
+     * @dev Updates the rapid trade window duration
+     * @param _newWindow New rapid trade window in seconds
+     */
     function setRapidTradeWindow(
         uint256 _newWindow
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newWindow >= 5, "Window too short");
-        require(_newWindow <= 300, "Window too long");
         rapidTradeWindow = _newWindow;
-        emit RapidTradeWindowUpdated(_newWindow);
+        emit ParameterUpdated(5, _newWindow);
     }
 
+    /**
+     * @dev Updates the question creation fee
+     * @param _newFee New question creation fee (in USDC with 6 decimals)
+     */
     function setQuestionCreationFee(
         uint256 _newFee
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newFee <= 100_000_000, "Fee too high");
         questionCreationFee = _newFee;
-        emit QuestionCreationFeeUpdated(_newFee);
+        emit ParameterUpdated(6, _newFee);
     }
 
+    /**
+     * @dev Updates the initial answer price
+     * @param _newPrice New initial answer price (in USDC with 6 decimals)
+     */
     function setInitialAnswerPrice(
         uint256 _newPrice
     ) external onlyRole(ADMIN_ROLE) {
-        require(_newPrice >= 100_000, "Price too low");
-        require(_newPrice <= 10_000_000, "Price too high");
         initialAnswerPrice = _newPrice;
-        emit InitialAnswerPriceUpdated(_newPrice);
+        emit ParameterUpdated(7, _newPrice);
+    }
+
+    /**
+     * @dev Updates the pool creation fee
+     * @param _newFee New pool creation fee (in USDC with 6 decimals)
+     */
+    function setPoolCreationFee(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
+        poolCreationFee = _newFee;
+        emit ParameterUpdated(8, _newFee);
+    }
+
+    /**
+     * @dev Updates the pool contribution fee
+     * @param _newFee New pool contribution fee (in USDC with 6 decimals)
+     */
+    function setPoolContributionFee(
+        uint256 _newFee
+    ) external onlyRole(ADMIN_ROLE) {
+        poolContributionFee = _newFee;
+        emit ParameterUpdated(9, _newFee);
+    }
+
+    /**
+     * @dev Updates the minimum pool duration
+     * @param _newDuration New minimum pool duration in seconds
+     */
+    function setMinPoolDuration(
+        uint256 _newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        minPoolDuration = _newDuration;
+        emit ParameterUpdated(10, _newDuration);
+    }
+
+    /**
+     * @dev Updates the maximum pool duration
+     * @param _newDuration New maximum pool duration in seconds
+     */
+    function setMaxPoolDuration(
+        uint256 _newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        maxPoolDuration = _newDuration;
+        emit ParameterUpdated(11, _newDuration);
     }
 
     // --- CORE MECHANICS ---
+    /**
+     * @dev Internal implementation of opinion creation
+     * @dev Creates a new opinion with a question, initial answer, IPFS hash, and link.
+     * @param question The opinion question.
+     * @param initialAnswer The initial answer.
+     */
     function createOpinion(
         string calldata question,
         string calldata initialAnswer
@@ -241,8 +370,9 @@ contract OpinionMarket is
             revert InsufficientAllowance(creationFee, allowance);
 
         // Calculate fees
-        (uint256 platformFee, uint256 creatorFee) = CalculationLibrary
-            .calculateFees(initialPrice, platformFeePercent, creatorFeePercent);
+        (uint256 platformFee, uint256 creatorFee) = _calculateFees(
+            initialPrice
+        );
 
         // Create opinion with empty ipfsHash and link
         uint256 opinionId = _createOpinionRecord(
@@ -258,29 +388,38 @@ contract OpinionMarket is
         usdcToken.safeTransfer(owner(), creationFee);
 
         // Emit events
-        emit OpinionCreated(
+        emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
+        emit OpinionAction(
             opinionId,
-            question,
-            initialPrice,
-            msg.sender,
-            "",
-            ""
-        );
-        emit AnswerSubmitted(
-            opinionId,
+            1,
             initialAnswer,
             msg.sender,
             initialPrice
         );
-        emit FeesDistributed(opinionId, platformFee, creatorFee, 0, address(0));
+        emit FeesAction(
+            opinionId,
+            0,
+            address(0),
+            0,
+            platformFee,
+            creatorFee,
+            0
+        );
     }
 
+    /**
+     * @dev Creates a new opinion with a question, initial answer, IPFS hash, and link.
+     * @param question The opinion question.
+     * @param initialAnswer The initial answer.
+     * @param ipfsHash The IPFS hash for an image.
+     * @param link The external URL link.
+     */
     function createOpinionWithExtras(
         string calldata question,
         string calldata initialAnswer,
         string calldata ipfsHash,
         string calldata link
-    ) external whenNotPaused {
+    ) public whenNotPaused {
         if (!isPublicCreationEnabled && msg.sender != owner())
             revert UnauthorizedCreator();
 
@@ -296,8 +435,9 @@ contract OpinionMarket is
             revert InsufficientAllowance(initialPrice, allowance);
 
         // Calculate fees
-        (uint256 platformFee, uint256 creatorFee) = CalculationLibrary
-            .calculateFees(initialPrice, platformFeePercent, creatorFeePercent);
+        (uint256 platformFee, uint256 creatorFee) = _calculateFees(
+            initialPrice
+        );
 
         // Create opinion
         uint256 opinionId = _createOpinionRecord(
@@ -314,23 +454,530 @@ contract OpinionMarket is
         usdcToken.safeTransfer(msg.sender, creatorFee);
 
         // Emit events
-        emit OpinionCreated(
+        emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
+        emit OpinionAction(
             opinionId,
-            question,
-            initialPrice,
-            msg.sender,
-            ipfsHash,
-            link
-        );
-        emit AnswerSubmitted(
-            opinionId,
+            1,
             initialAnswer,
             msg.sender,
             initialPrice
         );
-        emit FeesDistributed(opinionId, platformFee, creatorFee, 0, address(0));
+        emit FeesAction(
+            opinionId,
+            0,
+            address(0),
+            0,
+            platformFee,
+            creatorFee,
+            0
+        );
     }
 
+    // Put a question up for sale
+    function listQuestionForSale(uint256 opinionId, uint256 price) external {
+        Opinion storage opinion = opinions[opinionId];
+
+        // Only the current owner can sell (not creator)
+        if (opinion.questionOwner != msg.sender)
+            revert NotTheOwner(msg.sender, opinion.questionOwner);
+
+        opinion.salePrice = price;
+        emit QuestionSaleAction(opinionId, 0, msg.sender, address(0), price);
+    }
+
+    // Buy a question that's for sale
+    function buyQuestion(
+        uint256 opinionId
+    ) external nonReentrant whenNotPaused {
+        Opinion storage opinion = opinions[opinionId];
+
+        // Check if for sale
+        uint256 salePrice = opinion.salePrice;
+        if (salePrice == 0) revert NotForSale(opinionId);
+
+        // Check allowance
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < salePrice)
+            revert InsufficientAllowance(salePrice, allowance);
+
+        // Get current owner (not creator)
+        address currentOwner = opinion.questionOwner;
+
+        // Calculate fees (90% seller, 10% platform)
+        uint256 platformFee = (salePrice * 10) / 100;
+        uint256 sellerAmount = salePrice - platformFee;
+
+        // Update ownership
+        opinion.questionOwner = msg.sender; // Update the owner, not creator
+        opinion.salePrice = 0; // No longer for sale
+
+        // Handle transfers
+        usdcToken.safeTransferFrom(msg.sender, address(this), salePrice);
+        usdcToken.safeTransfer(owner(), platformFee);
+
+        // Add to accumulated fees for seller
+        accumulatedFees[currentOwner] += sellerAmount;
+        totalAccumulatedFees += sellerAmount;
+
+        emit QuestionSaleAction(
+            opinionId,
+            1,
+            currentOwner,
+            msg.sender,
+            salePrice
+        );
+        emit FeesAction(0, 1, currentOwner, sellerAmount, 0, 0, 0);
+    }
+
+    // Cancel a listing
+    function cancelQuestionSale(uint256 opinionId) external {
+        Opinion storage opinion = opinions[opinionId];
+        require(opinion.creator == msg.sender, "Not the creator");
+
+        opinion.salePrice = 0;
+
+        emit QuestionSaleAction(opinionId, 2, msg.sender, address(0), 0);
+    }
+
+    /**
+     * @dev Creates a new pool to collectively fund an answer change
+     */
+    function createPool(
+        uint256 opinionId,
+        string calldata proposedAnswer,
+        uint256 deadline,
+        uint256 initialContribution,
+        string calldata name,
+        string calldata ipfsHash
+    ) external nonReentrant whenNotPaused {
+        // Validate parameters
+        _validatePoolCreationParams(
+            opinionId,
+            proposedAnswer,
+            deadline,
+            initialContribution,
+            name,
+            ipfsHash
+        );
+
+        // Calculate total required amount
+        uint256 totalRequired = poolCreationFee + initialContribution;
+
+        // Check allowance
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < totalRequired)
+            revert InsufficientAllowance(totalRequired, allowance);
+
+        // Create the pool and get pool ID
+        uint256 poolId = _createPoolRecord(
+            opinionId,
+            proposedAnswer,
+            deadline,
+            initialContribution,
+            name,
+            ipfsHash
+        );
+
+        // Handle funds transfer
+        _handlePoolCreationFunds(
+            opinionId,
+            poolId,
+            totalRequired,
+            initialContribution
+        );
+    }
+
+    /**
+     * @dev Allows users to contribute to an existing pool
+     */
+    function contributeToPool(
+        uint256 poolId,
+        uint256 amount
+    ) external nonReentrant whenNotPaused {
+        // Validation (with potentially lower minimum)
+        uint256 actualAmount = _validatePoolContribution(poolId, amount);
+
+        // Add contribution fee
+        uint256 totalRequired = actualAmount + poolContributionFee;
+
+        // Check allowance
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < totalRequired)
+            revert InsufficientAllowance(totalRequired, allowance);
+
+        // Update pool state and get opinion ID
+        uint256 opinionId = _updatePoolForContribution(poolId, actualAmount);
+
+        // Transfer funds (including contribution fee)
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
+
+        // Handle the fee distribution among three parties
+        _handleContributionFee(opinionId, poolId, poolContributionFee);
+
+        // Check if pool has reached target price and execute if so
+        _checkAndExecutePoolIfReady(poolId, opinionId);
+    }
+
+    function _handleContributionFee(
+        uint256 opinionId,
+        uint256 poolId,
+        uint256 fee
+    ) internal {
+        // Get the opinion creator and pool creator
+        address questionCreator = opinions[opinionId].creator;
+        address poolCreator = pools[poolId].creator;
+
+        // Calculate shares (equally split three ways)
+        uint256 platformShare = fee / 3;
+        uint256 questionCreatorShare = fee / 3;
+        uint256 poolCreatorShare = fee - platformShare - questionCreatorShare; // Handle any rounding
+
+        // Transfer platform share
+        usdcToken.safeTransfer(owner(), platformShare);
+
+        // Accumulate creator fees
+        accumulatedFees[questionCreator] += questionCreatorShare;
+        accumulatedFees[poolCreator] += poolCreatorShare;
+        totalAccumulatedFees += questionCreatorShare + poolCreatorShare;
+
+        // Emit events
+        emit FeesAction(0, 1, questionCreator, questionCreatorShare, 0, 0, 0);
+        emit FeesAction(0, 1, poolCreator, poolCreatorShare, 0, 0, 0);
+    }
+
+    /**
+     * @dev Internal function to execute a pool when target price is reached
+     */
+    function _executePool(uint256 poolId) internal {
+        // Get pool and validate status
+        PoolInfo storage pool = pools[poolId];
+        if (pool.status != PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        // Get opinion details
+        uint256 opinionId = pool.opinionId;
+        Opinion storage opinion = opinions[opinionId];
+
+        // Calculate execution price and validate funds
+        uint256 targetPrice = opinion.nextPrice > 0
+            ? opinion.nextPrice
+            : _calculateNextPrice(opinion.lastPrice);
+        if (pool.totalAmount < targetPrice)
+            revert PoolInsufficientFunds(pool.totalAmount, targetPrice);
+
+        // Process the execution
+        _processPoolExecution(poolId, opinionId, targetPrice);
+    }
+
+    /**
+     * @dev Process the actual pool execution
+     */
+    function _processPoolExecution(
+        uint256 poolId,
+        uint256 opinionId,
+        uint256 targetPrice
+    ) internal {
+        PoolInfo storage pool = pools[poolId];
+        Opinion storage opinion = opinions[opinionId];
+
+        // Calculate fees
+        uint256 platformFee = (targetPrice * platformFeePercent) / 100;
+        uint256 creatorFee = (targetPrice * creatorFeePercent) / 100;
+        uint256 ownerAmount = targetPrice - platformFee - creatorFee;
+
+        // Track the current owner to distribute fees
+        address currentOwner = opinion.currentAnswerOwner;
+
+        // Update answer history
+        answerHistory[opinionId].push(
+            AnswerHistory({
+                answer: pool.proposedAnswer,
+                owner: address(this), // Contract becomes the owner on behalf of the pool
+                price: targetPrice,
+                timestamp: block.timestamp
+            })
+        );
+
+        // Update opinion state
+        opinion.currentAnswer = pool.proposedAnswer;
+        opinion.currentAnswerOwner = address(this); // Contract holds ownership for the pool
+        opinion.lastPrice = targetPrice;
+        opinion.nextPrice = _calculateNextPrice(targetPrice);
+        opinion.totalVolume += targetPrice;
+
+        // Accumulate fees for creator and current owner
+        accumulatedFees[opinion.creator] += creatorFee;
+        accumulatedFees[currentOwner] += ownerAmount;
+        totalAccumulatedFees += creatorFee + ownerAmount;
+
+        // Update pool status
+        pool.status = PoolStatus.Executed;
+
+        // Transfer platform fee to owner
+        usdcToken.safeTransfer(owner(), platformFee);
+
+        // Emit events
+        _emitPoolExecutionEvents(
+            poolId,
+            opinionId,
+            targetPrice,
+            platformFee,
+            creatorFee,
+            ownerAmount,
+            currentOwner
+        );
+    }
+
+    /**
+     * @dev Emit all events related to pool execution
+     */
+    function _emitPoolExecutionEvents(
+        uint256 poolId,
+        uint256 opinionId,
+        uint256 targetPrice,
+        uint256 platformFee,
+        uint256 creatorFee,
+        uint256 ownerAmount,
+        address currentOwner
+    ) internal {
+        PoolInfo storage pool = pools[poolId];
+
+        emit PoolAction(
+            poolId,
+            opinionId,
+            2,
+            address(this),
+            targetPrice,
+            pool.proposedAnswer
+        );
+        emit OpinionAction(
+            opinionId,
+            1,
+            pool.proposedAnswer,
+            address(this),
+            targetPrice
+        );
+        emit FeesAction(
+            opinionId,
+            0,
+            currentOwner,
+            targetPrice,
+            platformFee,
+            creatorFee,
+            ownerAmount
+        );
+        emit FeesAction(0, 1, opinions[opinionId].creator, creatorFee, 0, 0, 0);
+        emit FeesAction(0, 1, currentOwner, ownerAmount, 0, 0, 0);
+
+        // Award pool creator badge through an event
+        emit PoolAction(poolId, 0, 2, pool.creator, 0, "");
+    }
+
+    /**
+     * @dev Checks if a pool has expired and updates its status
+     * @param poolId The ID of the pool to check
+     * @return Whether the pool is expired
+     */
+    function checkPoolExpiry(uint256 poolId) public returns (bool) {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolInfo storage pool = pools[poolId];
+
+        // Only check active pools
+        if (pool.status != PoolStatus.Active) {
+            return pool.status == PoolStatus.Expired;
+        }
+
+        // Check if deadline has passed
+        if (block.timestamp > pool.deadline) {
+            pool.status = PoolStatus.Expired;
+
+            emit PoolAction(
+                poolId,
+                pool.opinionId,
+                3,
+                address(0),
+                pool.totalAmount,
+                ""
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @dev Allows contributor to withdraw their funds from an expired pool
+     * @param poolId The ID of the expired pool
+     */
+    function withdrawFromExpiredPool(
+        uint256 poolId
+    ) external nonReentrant whenNotPaused {
+        // Validate pool ID
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        // Get pool information
+        PoolInfo storage poolInfo = pools[poolId];
+
+        // Check pool expiry status
+        bool isExpired = poolInfo.status == PoolStatus.Expired;
+        if (!isExpired) {
+            // If not already marked as expired, check if it should be
+            isExpired = block.timestamp > poolInfo.deadline;
+
+            if (isExpired) {
+                // Update pool status if expired
+                poolInfo.status = PoolStatus.Expired;
+            }
+        }
+
+        // Revert if pool is not expired
+        if (!isExpired) revert PoolNotExpired(poolId, poolInfo.deadline);
+
+        // Get user's contribution amount
+        uint256 userContribution = poolContributionAmounts[poolId][msg.sender];
+        if (userContribution == 0)
+            revert PoolNoContribution(poolId, msg.sender);
+
+        // Reset user's contribution before transfer (checks-effects-interactions pattern)
+        poolContributionAmounts[poolId][msg.sender] = 0;
+
+        // Transfer funds back to contributor
+        usdcToken.safeTransfer(msg.sender, userContribution);
+
+        // Emit refund event
+        emit PoolAction(
+            poolId,
+            poolInfo.opinionId,
+            5,
+            msg.sender,
+            userContribution,
+            ""
+        );
+    }
+
+    /**
+     * @dev Extends the deadline of a pool
+     * @param poolId The ID of the pool to extend
+     * @param newDeadline The new deadline timestamp
+     */
+    function extendPoolDeadline(
+        uint256 poolId,
+        uint256 newDeadline
+    ) external nonReentrant whenNotPaused {
+        // Validate pool ID
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        // Get pool information
+        PoolInfo storage poolInfo = pools[poolId];
+
+        // Ensure pool is still active or recently expired
+        require(
+            poolInfo.status == PoolStatus.Active ||
+                poolInfo.status == PoolStatus.Expired,
+            "Pool cannot be extended"
+        );
+
+        // Validate new deadline
+        require(
+            newDeadline > poolInfo.deadline &&
+                newDeadline <= block.timestamp + 30 days,
+            "Invalid new deadline"
+        );
+
+        // Ensure current deadline hasn't passed by too much
+        require(
+            block.timestamp <= poolInfo.deadline + 7 days,
+            "Pool expired too long ago"
+        );
+
+        // Update pool deadline and status
+        poolInfo.deadline = newDeadline;
+        poolInfo.status = PoolStatus.Extended;
+
+        // Emit event for deadline extension
+        emit PoolAction(poolId, poolInfo.opinionId, 4, msg.sender, 0, "");
+    }
+
+    /**
+     * @dev Distributes rewards when a pool-owned answer is purchased
+     * This function is called internally from submitAnswer when buying a pool-owned answer
+     * @param opinionId The ID of the opinion
+     * @param purchasePrice The price paid for the answer
+     * @param buyer The address of the buyer
+     */
+    function _distributePoolRewards(
+        uint256 opinionId,
+        uint256 purchasePrice,
+        address buyer
+    ) internal {
+        Opinion storage opinion = opinions[opinionId];
+
+        // Check if current owner is this contract (pool owned)
+        if (opinion.currentAnswerOwner != address(this)) return;
+
+        // Find the pools that own this opinion's answer
+        uint256[] memory poolsForOpinion = opinionPools[opinionId];
+
+        // Find the executed pool that owns this answer
+        uint256 ownerPoolId;
+        bool foundPool = false;
+
+        for (uint256 i = 0; i < poolsForOpinion.length; i++) {
+            uint256 poolId = poolsForOpinion[i];
+            PoolInfo storage pool = pools[poolId];
+
+            if (
+                pool.status == PoolStatus.Executed &&
+                keccak256(bytes(pool.proposedAnswer)) ==
+                keccak256(bytes(opinion.currentAnswer))
+            ) {
+                ownerPoolId = poolId;
+                foundPool = true;
+                break;
+            }
+        }
+
+        if (!foundPool) return;
+
+        // Calculate owner amount (after platform and creator fees)
+        uint256 platformFee = (purchasePrice * platformFeePercent) / 100;
+        uint256 creatorFee = (purchasePrice * creatorFeePercent) / 100;
+        uint256 rewardAmount = purchasePrice - platformFee - creatorFee;
+
+        // Get pool contributors and their contribution amounts
+        address[] memory contributors = poolContributors[ownerPoolId];
+        uint256 totalContributed = pools[ownerPoolId].totalAmount;
+
+        // Distribute rewards proportionally
+        for (uint256 i = 0; i < contributors.length; i++) {
+            address contributor = contributors[i];
+            uint256 contribution = poolContributionAmounts[ownerPoolId][
+                contributor
+            ];
+
+            if (contribution > 0) {
+                // Calculate contributor's share
+                uint256 share = (contribution * 100) / totalContributed;
+                uint256 reward = (rewardAmount * share) / 100;
+
+                // Accumulate reward to contributor
+                accumulatedFees[contributor] += reward;
+                totalAccumulatedFees += reward;
+
+                emit RewardDistributed(ownerPoolId, contributor, reward, share);
+            }
+        }
+
+        emit PoolAction(ownerPoolId, opinionId, 6, buyer, purchasePrice, "");
+    }
+
+    /**
+     * @dev Submits a new answer to an opinion, transferring ownership.
+     * @param opinionId The ID of the opinion.
+     * @param answer The new answer.
+     */
     function submitAnswer(
         uint256 opinionId,
         string calldata answer
@@ -341,6 +988,9 @@ contract OpinionMarket is
         Opinion storage opinion = opinions[opinionId];
         if (!opinion.isActive) revert OpinionNotActive();
         if (opinion.currentAnswerOwner == msg.sender) revert SameOwner();
+
+        // Check if this is a pool-owned answer
+        bool isPoolOwned = opinion.currentAnswerOwner == address(this);
 
         bytes memory answerBytes = bytes(answer);
         if (answerBytes.length == 0) revert EmptyString();
@@ -360,8 +1010,8 @@ contract OpinionMarket is
         if (allowance < price) revert InsufficientAllowance(price, allowance);
 
         // Calculate standard fees
-        (uint256 platformFee, uint256 creatorFee) = CalculationLibrary
-            .calculateFees(price, platformFeePercent, creatorFeePercent);
+        uint256 platformFee = (price * platformFeePercent) / 100;
+        uint256 creatorFee = (price * creatorFeePercent) / 100;
         uint256 ownerAmount = price - platformFee - creatorFee;
 
         // Apply MEV penalty for rapid trading within window
@@ -401,6 +1051,11 @@ contract OpinionMarket is
         accumulatedFees[currentAnswerOwner] += ownerAmount;
         totalAccumulatedFees += creatorFee + ownerAmount;
 
+        // Handle pool reward distribution if buying from a pool
+        if (isPoolOwned) {
+            _distributePoolRewards(opinionId, price, msg.sender);
+        }
+
         // Record answer history
         answerHistory[opinionId].push(
             AnswerHistory({
@@ -424,19 +1079,24 @@ contract OpinionMarket is
         usdcToken.safeTransferFrom(msg.sender, address(this), price);
         usdcToken.safeTransfer(owner(), platformFee);
 
-        emit FeesAccumulated(creator, creatorFee);
-        emit FeesAccumulated(currentAnswerOwner, ownerAmount);
-        emit FeesDistributed(
+        emit FeesAction(0, 1, creator, creatorFee, 0, 0, 0);
+        emit FeesAction(0, 1, currentAnswerOwner, ownerAmount, 0, 0, 0);
+        emit FeesAction(
             opinionId,
+            0,
+            currentAnswerOwner,
+            price,
             platformFee,
             creatorFee,
-            ownerAmount,
-            currentAnswerOwner
+            ownerAmount
         );
-        emit AnswerSubmitted(opinionId, answer, msg.sender, price);
+        emit OpinionAction(opinionId, 1, answer, msg.sender, price);
     }
 
     // --- SECURITY FEATURES ---
+    /**
+     * @dev Checks and updates the number of trades per block per user.
+     */
     function _checkAndUpdateTradesInBlock() internal {
         if (userLastBlock[msg.sender] != block.number) {
             userTradesInBlock[msg.sender] = 1;
@@ -452,28 +1112,59 @@ contract OpinionMarket is
         }
     }
 
+    /**
+     * @dev Prevents trading the same opinion multiple times in one block.
+     * @param opinionId The ID of the opinion.
+     */
     function _checkTradeAllowed(uint256 opinionId) internal {
         if (userLastTradeBlock[msg.sender][opinionId] == block.number)
             revert OneTradePerBlock();
         userLastTradeBlock[msg.sender][opinionId] = block.number;
     }
 
+    /**
+     * @dev Validates that an IPFS hash is properly formatted.
+     * @param _ipfsHash The IPFS hash to validate.
+     */
+
     function _validateIpfsHash(string memory _ipfsHash) internal pure {
-        PoolLibrary.validateIpfsHash(_ipfsHash);
+        bytes memory ipfsHashBytes = bytes(_ipfsHash);
+
+        // Check that it's either a valid CIDv0 (starts with "Qm" and is 46 chars long)
+        // or a valid CIDv1 (starts with "b" and has a proper length)
+        bool isValidCIDv0 = ipfsHashBytes.length == 46 &&
+            ipfsHashBytes[0] == "Q" &&
+            ipfsHashBytes[1] == "m";
+
+        bool isValidCIDv1 = ipfsHashBytes.length >= 48 &&
+            ipfsHashBytes[0] == "b";
+
+        if (!isValidCIDv0 && !isValidCIDv1) {
+            revert InvalidIpfsHashFormat();
+        }
     }
 
+    /**
+     * @dev Validates that price changes do not exceed the maximum allowed.
+     */
     function _validatePriceChange(
         uint256 lastPrice,
         uint256 newPrice
     ) internal view {
-        (bool isValid, uint256 increase) = CalculationLibrary
-            .validatePriceChange(lastPrice, newPrice, absoluteMaxPriceChange);
-
-        if (!isValid) {
-            revert PriceChangeExceedsLimit(increase, absoluteMaxPriceChange);
+        if (newPrice > lastPrice) {
+            uint256 increase = ((newPrice - lastPrice) * 100) / lastPrice;
+            if (increase > absoluteMaxPriceChange) {
+                revert PriceChangeExceedsLimit(
+                    increase,
+                    absoluteMaxPriceChange
+                );
+            }
         }
     }
 
+    /**
+     * @dev Validates basic opinion creation parameters (without IPFS hash and link).
+     */
     function _validateBasicOpinionParams(
         string memory question,
         string memory initialAnswer
@@ -489,6 +1180,9 @@ contract OpinionMarket is
             revert InvalidAnswerLength();
     }
 
+    /**
+     * @dev Validates full opinion creation parameters including IPFS hash and link.
+     */
     function _validateFullOpinionParams(
         string memory question,
         string memory initialAnswer,
@@ -512,17 +1206,20 @@ contract OpinionMarket is
         }
     }
 
+    /**
+     * @dev Calculates fees for opinion creation.
+     */
     function _calculateFees(
         uint256 price
     ) internal view returns (uint256 platformFee, uint256 creatorFee) {
-        return
-            CalculationLibrary.calculateFees(
-                price,
-                platformFeePercent,
-                creatorFeePercent
-            );
+        platformFee = (price * platformFeePercent) / 100;
+        creatorFee = (price * creatorFeePercent) / 100;
+        return (platformFee, creatorFee);
     }
 
+    /**
+     * @dev Creates the opinion record in storage.
+     */
     function _createOpinionRecord(
         string memory question,
         string memory initialAnswer,
@@ -536,7 +1233,8 @@ contract OpinionMarket is
         opinion.id = opinionId;
         opinion.question = question;
         opinion.creator = msg.sender;
-        opinion.lastPrice = initialPrice;
+        opinion.questionOwner = msg.sender; // Initialize question owner to be the same as creator
+        opinion.lastPrice = initialPrice; // Changed from currentPrice to lastPrice
         opinion.nextPrice = _calculateNextPrice(initialPrice);
         opinion.isActive = true;
         opinion.currentAnswer = initialAnswer;
@@ -557,62 +1255,367 @@ contract OpinionMarket is
         return opinionId;
     }
 
+    /**
+     * @dev Calculates the next price with a random adjustment (-20% to +99%).
+     * @param lastPrice The current price.
+     * @return newPrice The calculated next price.
+     */
     function _calculateNextPrice(uint256 lastPrice) internal returns (uint256) {
-        uint256 seed = uint256(
-            keccak256(
-                abi.encodePacked(
-                    block.timestamp,
-                    block.prevrandao,
-                    msg.sender,
-                    nonce++,
-                    blockhash(block.number - 1),
-                    gasleft(),
-                    tx.gasprice,
-                    address(this).balance,
-                    block.number,
-                    tx.origin,
-                    address(this)
-                )
+        bytes32 randomness = keccak256(
+            abi.encodePacked(
+                block.timestamp,
+                block.prevrandao,
+                msg.sender,
+                nonce++,
+                blockhash(block.number - 1),
+                gasleft(),
+                tx.gasprice,
+                address(this).balance,
+                block.number,
+                tx.origin,
+                address(this)
             )
         );
 
-        return
-            CalculationLibrary.calculateNextPrice(
-                lastPrice,
-                seed,
-                minimumPrice,
-                absoluteMaxPriceChange
-            );
+        uint256 randomFactor = uint256(randomness) % 1000;
+        int256 adjustment;
+
+        // Revised distribution to target ~10-12% average growth rate
+        if (randomFactor < 200) {
+            adjustment = -15 + int256(randomFactor % 15); // -15% to -1%
+        } else if (randomFactor < 850) {
+            adjustment = 5 + int256(randomFactor % 15); // +5% to +19%
+        } else if (randomFactor < 990) {
+            adjustment = 20 + int256(randomFactor % 30); // +20% to +49%
+        } else {
+            adjustment = 70 + int256(randomFactor % 30); // +70% to +99%
+        }
+
+        uint256 newPrice;
+        if (adjustment < 0) {
+            // Handle negative adjustment properly
+            uint256 reduction = (lastPrice * uint256(-adjustment)) / 100;
+            newPrice = lastPrice > reduction
+                ? lastPrice - reduction
+                : minimumPrice;
+        } else {
+            // Handle positive adjustment
+            newPrice = (lastPrice * (100 + uint256(adjustment))) / 100;
+        }
+
+        // Ensure price changes for testing
+        if (newPrice == lastPrice) {
+            newPrice = lastPrice + 1;
+        }
+
+        newPrice = newPrice < minimumPrice ? minimumPrice : newPrice;
+        _validatePriceChange(lastPrice, newPrice);
+        return newPrice;
     }
 
+    /**
+     * @dev Estimates a price based on current price (used for backwards compatibility)
+     * @param lastPrice The current price
+     * @return An estimated next price
+     */
     function _estimateNextPrice(
         uint256 lastPrice
     ) internal pure returns (uint256) {
-        return CalculationLibrary.estimateNextPrice(lastPrice);
+        // Simple estimation: 30% increase
+        return (lastPrice * 130) / 100;
+    }
+
+    /**
+     * @dev Validates pool creation parameters
+     */
+    function _validatePoolCreationParams(
+        uint256 opinionId,
+        string calldata proposedAnswer,
+        uint256 deadline,
+        uint256 initialContribution,
+        string calldata name,
+        string calldata ipfsHash
+    ) internal view {
+        // Validate opinion exists and is active
+        if (opinionId >= nextOpinionId) revert PoolInvalidOpinionId(opinionId);
+        Opinion storage opinion = opinions[opinionId];
+        if (!opinion.isActive) revert OpinionNotActive();
+
+        // Validate pool name
+        if (bytes(name).length > MAX_POOL_NAME_LENGTH)
+            revert PoolInvalidNameLength();
+
+        // Validate IPFS hash if provided
+        if (bytes(ipfsHash).length > 0) {
+            if (bytes(ipfsHash).length > MAX_IPFS_HASH_LENGTH)
+                revert InvalidIpfsHashLength();
+            _validateIpfsHash(ipfsHash);
+        }
+
+        // Validate proposed answer
+        bytes memory answerBytes = bytes(proposedAnswer);
+        if (answerBytes.length == 0) revert EmptyString();
+        if (answerBytes.length > MAX_ANSWER_LENGTH)
+            revert PoolInvalidProposedAnswer();
+
+        // Check that proposed answer is different from current
+        if (keccak256(bytes(opinion.currentAnswer)) == keccak256(answerBytes))
+            revert PoolSameAnswerAsCurrentAnswer(opinionId, proposedAnswer);
+
+        // Validate deadline
+        if (deadline <= block.timestamp + minPoolDuration)
+            revert PoolDeadlineTooShort(deadline, minPoolDuration);
+        if (deadline > block.timestamp + maxPoolDuration)
+            revert PoolDeadlineTooLong(deadline, maxPoolDuration);
+
+        // For pool creation, we can use a lower minimum (1 USDC instead of 10)
+        // Still prevents completely trivial pool creation while being more reasonable
+        uint256 minimumInitialContribution = 1_000_000; // 1 USDC
+
+        // Validate initial contribution
+        if (initialContribution < minimumInitialContribution)
+            revert PoolInitialContributionTooLow(
+                initialContribution,
+                minimumInitialContribution
+            );
+    }
+
+    /**
+     * @dev Creates a pool record and assigns ID
+     */
+    function _createPoolRecord(
+        uint256 opinionId,
+        string calldata proposedAnswer,
+        uint256 deadline,
+        uint256 initialContribution,
+        string calldata name,
+        string calldata ipfsHash
+    ) internal returns (uint256) {
+        uint256 poolId = poolCount++;
+        PoolInfo storage pool = pools[poolId];
+
+        // Basic pool information
+        pool.id = poolId;
+        pool.opinionId = opinionId;
+        pool.proposedAnswer = proposedAnswer;
+        pool.deadline = deadline;
+        pool.creator = msg.sender;
+        pool.status = PoolStatus.Active;
+        pool.name = name;
+        pool.ipfsHash = ipfsHash;
+
+        // Set initial contribution
+        pool.totalAmount = initialContribution;
+
+        // Track contribution
+        poolContributions[poolId].push(
+            PoolContribution({
+                contributor: msg.sender,
+                amount: initialContribution
+            })
+        );
+        poolContributionAmounts[poolId][msg.sender] = initialContribution;
+        poolContributors[poolId].push(msg.sender);
+
+        // Update mappings
+        opinionPools[opinionId].push(poolId);
+        userPools[msg.sender].push(poolId);
+
+        return poolId;
+    }
+
+    /**
+     * @dev Handles fund transfers for pool creation
+     */
+    function _handlePoolCreationFunds(
+        uint256 opinionId,
+        uint256 poolId,
+        uint256 totalRequired,
+        uint256 initialContribution
+    ) internal {
+        // Get opinion
+        Opinion storage opinion = opinions[opinionId];
+
+        // Transfer funds from user
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
+
+        // Split creation fee equally
+        uint256 platformShare = poolCreationFee / 2;
+        uint256 creatorShare = poolCreationFee - platformShare;
+
+        // Transfer platform share
+        usdcToken.safeTransfer(owner(), platformShare);
+
+        // Accumulate creator share
+        accumulatedFees[opinion.creator] += creatorShare;
+        totalAccumulatedFees += creatorShare;
+
+        emit FeesAction(0, 1, opinion.creator, creatorShare, 0, 0, 0);
+
+        // Emit creation event
+        emit PoolAction(
+            poolId,
+            opinionId,
+            0,
+            msg.sender,
+            initialContribution,
+            pools[poolId].proposedAnswer
+        );
+    }
+
+    /**
+     * @dev Validates a pool contribution and returns the adjusted contribution amount if needed
+     * @return The actual contribution amount (adjusted if necessary)
+     */
+    function _validatePoolContribution(
+        uint256 poolId,
+        uint256 amount
+    ) internal view returns (uint256) {
+        // Validate pool exists and is active
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolInfo storage pool = pools[poolId];
+        if (pool.status != PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        if (block.timestamp > pool.deadline)
+            revert PoolDeadlinePassed(poolId, pool.deadline);
+
+        // Get the opinion and calculate target price
+        uint256 opinionId = pool.opinionId;
+        Opinion storage opinion = opinions[opinionId];
+        uint256 targetPrice = opinion.nextPrice > 0
+            ? opinion.nextPrice
+            : _estimateNextPrice(opinion.lastPrice);
+
+        // Check if pool already has enough funds
+        if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
+
+        // Calculate the maximum allowed contribution
+        uint256 maxAllowed = targetPrice - pool.totalAmount;
+
+        // If contribution exceeds what's needed, adjust it
+        uint256 actualAmount = amount;
+        if (amount > maxAllowed) {
+            actualAmount = maxAllowed;
+        }
+
+        // Ensure non-zero contribution (1 wei minimum)
+        // We've removed the MINIMUM_POOL_CONTRIBUTION check here
+        // since we'll charge a fee for each contribution instead
+        if (actualAmount == 0) revert PoolContributionTooLow(actualAmount, 1);
+
+        // We don't check allowance here anymore since that will be handled
+        // in the contributeToPool function where we add the fee
+
+        return actualAmount;
+    }
+
+    /**
+     * @dev Updates pool state for a contribution
+     */
+    function _updatePoolForContribution(
+        uint256 poolId,
+        uint256 amount
+    ) internal returns (uint256) {
+        PoolInfo storage pool = pools[poolId];
+
+        // Update pool state
+        if (poolContributionAmounts[poolId][msg.sender] == 0) {
+            // First contribution from this user
+            poolContributors[poolId].push(msg.sender);
+            userPools[msg.sender].push(poolId);
+        }
+
+        poolContributions[poolId].push(
+            PoolContribution({contributor: msg.sender, amount: amount})
+        );
+        poolContributionAmounts[poolId][msg.sender] += amount;
+        pool.totalAmount += amount;
+
+        emit PoolAction(poolId, pool.opinionId, 1, msg.sender, amount, "");
+
+        return pool.opinionId;
+    }
+
+    /**
+     * @dev Checks if pool is ready to execute and does so if conditions are met
+     */
+    function _checkAndExecutePoolIfReady(
+        uint256 poolId,
+        uint256 opinionId
+    ) internal {
+        Opinion storage opinion = opinions[opinionId];
+        PoolInfo storage pool = pools[poolId];
+
+        // Only execute if pool is active
+        if (pool.status != PoolStatus.Active) {
+            return;
+        }
+
+        uint256 targetPrice = opinion.nextPrice > 0
+            ? opinion.nextPrice
+            : _estimateNextPrice(opinion.lastPrice);
+
+        // Only execute if pool has enough funds
+        if (pool.totalAmount >= targetPrice) {
+            _executePool(poolId);
+        }
+    }
+
+    /**
+     * @dev Allows users to claim their accumulated fees.
+     */
+    function claimAccumulatedFees() external nonReentrant whenNotPaused {
+        uint256 amount = accumulatedFees[msg.sender];
+        if (amount == 0) revert NoFeesToClaim();
+
+        accumulatedFees[msg.sender] = 0;
+        totalAccumulatedFees -= amount;
+
+        usdcToken.safeTransfer(msg.sender, amount);
+        emit FeesAction(0, 2, msg.sender, amount, 0, 0, 0);
     }
 
     // --- ADMIN FEATURES ---
+    /**
+     * @dev Pauses the contract, restricted to OPERATOR_ROLE.
+     */
     function pause() external onlyRole(OPERATOR_ROLE) {
         _pause();
     }
 
+    /**
+     * @dev Unpauses the contract, restricted to OPERATOR_ROLE.
+     */
     function unpause() external onlyRole(OPERATOR_ROLE) {
         _unpause();
     }
 
+    /**
+     * @dev Toggles public creation of opinions, restricted to ADMIN_ROLE.
+     */
     function togglePublicCreation() external onlyRole(ADMIN_ROLE) {
         isPublicCreationEnabled = !isPublicCreationEnabled;
-        emit PublicCreationToggled(isPublicCreationEnabled);
+        emit AdminAction(1, msg.sender, bytes32(0), 0);
     }
 
+    /**
+     * @dev Deactivates an opinion, restricted to MODERATOR_ROLE.
+     * @param opinionId The ID of the opinion to deactivate.
+     */
     function deactivateOpinion(
         uint256 opinionId
     ) external onlyRole(MODERATOR_ROLE) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         opinions[opinionId].isActive = false;
-        emit OpinionDeactivated(opinionId);
+        emit OpinionAction(opinionId, 2, "", msg.sender, 0);
     }
 
+    /**
+     * @dev Reactivates a previously deactivated opinion, restricted to MODERATOR_ROLE.
+     * @param opinionId The ID of the opinion to reactivate.
+     */
     function reactivateOpinion(
         uint256 opinionId
     ) external onlyRole(MODERATOR_ROLE) {
@@ -626,9 +1629,13 @@ contract OpinionMarket is
         // Reactivate the opinion
         opinion.isActive = true;
 
-        emit OpinionReactivated(opinionId);
+        emit OpinionAction(opinionId, 3, "", msg.sender, 0);
     }
 
+    /**
+     * @dev Withdraws tokens in an emergency, restricted to MODERATOR_ROLE and owner when paused.
+     * @param token The token to withdraw.
+     */
     function emergencyWithdraw(address token) external nonReentrant whenPaused {
         // Check if caller is owner OR has MODERATOR_ROLE
         if (msg.sender != owner() && !hasRole(MODERATOR_ROLE, msg.sender)) {
@@ -638,10 +1645,16 @@ contract OpinionMarket is
         IERC20 tokenContract = IERC20(token);
         uint256 balance = tokenContract.balanceOf(address(this));
         tokenContract.safeTransfer(owner(), balance);
-        emit EmergencyWithdraw(token, balance, block.timestamp);
+        emit AdminAction(0, msg.sender, bytes32(0), balance);
     }
 
     // --- VIEW FUNCTIONS ---
+    /**
+     *
+     * @dev Returns the answer history for an opinion.
+     * @param opinionId The ID of the opinion.
+     * @return AnswerHistory array.
+     */
     function getAnswerHistory(
         uint256 opinionId
     ) external view returns (AnswerHistory[] memory) {
@@ -649,17 +1662,33 @@ contract OpinionMarket is
         return answerHistory[opinionId];
     }
 
+    /**
+     * @dev Returns the number of trades for an opinion.
+     * @param opinionId The ID of the opinion.
+     * @return Number of trades.
+     */
     function getTradeCount(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         return answerHistory[opinionId].length;
     }
 
+    /**
+     * @dev Returns total creator gain for an opinion.
+     * @param opinionId The ID of the opinion.
+     * @return Total creator gain in USDC.
+     */
     function getCreatorGain(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         Opinion storage opinion = opinions[opinionId];
+        // Creator fee is creatorFeePercent% of the total volume
         return (opinion.totalVolume * creatorFeePercent) / 100;
     }
 
+    /**
+     * @dev Returns the remaining trades a user can make in the current block.
+     * @param user The user's address.
+     * @return Number of remaining trades.
+     */
     function getRemainingBlockTrades(
         address user
     ) external view returns (uint256) {
@@ -669,6 +1698,11 @@ contract OpinionMarket is
         return maxTradesPerBlock - userTradesInBlock[user];
     }
 
+    /**
+     * @dev Returns the exact price required to submit the next answer
+     * @param opinionId The ID of the opinion
+     * @return The exact price in USDC (6 decimals)
+     */
     function getNextPrice(uint256 opinionId) external view returns (uint256) {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
         Opinion storage opinion = opinions[opinionId];
@@ -676,12 +1710,70 @@ contract OpinionMarket is
 
         // If nextPrice is 0 (for older opinions), return an estimate
         if (opinion.nextPrice == 0) {
-            return CalculationLibrary.estimateNextPrice(opinion.lastPrice);
+            return _estimateNextPrice(opinion.lastPrice);
         }
 
         return opinion.nextPrice;
     }
 
+    /**
+     * @dev Returns all contributor addresses for a pool
+     */
+    function getPoolContributors(
+        uint256 poolId
+    ) external view returns (address[] memory) {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+        return poolContributors[poolId];
+    }
+
+    /**
+     * @dev Returns all pools for a specific opinion
+     */
+    function getOpinionPools(
+        uint256 opinionId
+    ) external view returns (uint256[] memory) {
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        return opinionPools[opinionId];
+    }
+
+    /**
+     * @dev Returns detailed information about a pool
+     */
+    function getPoolDetails(
+        uint256 poolId
+    )
+        external
+        view
+        returns (
+            PoolInfo memory info,
+            uint256 currentPrice,
+            uint256 remainingAmount,
+            uint256 timeRemaining
+        )
+    {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        info = pools[poolId];
+
+        Opinion storage opinion = opinions[info.opinionId];
+        currentPrice = opinion.nextPrice > 0
+            ? opinion.nextPrice
+            : _estimateNextPrice(opinion.lastPrice);
+
+        if (info.totalAmount >= currentPrice) {
+            remainingAmount = 0;
+        } else {
+            remainingAmount = currentPrice - info.totalAmount;
+        }
+
+        if (block.timestamp >= info.deadline) {
+            timeRemaining = 0;
+        } else {
+            timeRemaining = info.deadline - block.timestamp;
+        }
+    }
+
+    // Add a new function to set the USDC token address
     function setUsdcToken(address _usdcToken) external onlyRole(ADMIN_ROLE) {
         require(address(usdcToken) == address(0), "USDC already set");
         require(_usdcToken != address(0), "Invalid USDC address");

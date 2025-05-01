@@ -1,8 +1,12 @@
-// ErrorsLib.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface OpinionMarketErrors {
+/**
+ * @title IOpinionMarketErrors
+ * @dev Interface for OpinionMarket custom errors
+ */
+interface IOpinionMarketErrors {
+    // General Errors
     error ContractPaused();
     error ContractNotPaused();
     error WithdrawalFailed();
@@ -24,8 +28,10 @@ interface OpinionMarketErrors {
     error InvalidIpfsHashFormat();
     error OpinionAlreadyActive();
     error SameOwner();
+    error NotTheOwner(address caller, address owner);
+    error NotForSale(uint256 opinionId);
 
-    // Pool errors
+    // Pool Errors
     error PoolInvalidOpinionId(uint256 opinionId);
     error PoolSameAnswerAsCurrentAnswer(uint256 opinionId, string answer);
     error PoolDeadlineTooShort(uint256 deadline, uint256 minDuration);
@@ -36,7 +42,7 @@ interface OpinionMarketErrors {
     error PoolNotActive(uint256 poolId, uint8 status);
     error PoolDeadlinePassed(uint256 poolId, uint256 deadline);
     error PoolContributionTooLow(uint256 provided, uint256 minimum);
-    error PoolInsufficientFunds();
+    error PoolInsufficientFunds(uint256 current, uint256 target);
     error PoolExecutionFailed(uint256 poolId);
     error PoolAlreadyExecuted(uint256 poolId);
     error PoolNoContribution(uint256 poolId, address user);

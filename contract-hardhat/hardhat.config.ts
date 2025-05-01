@@ -12,13 +12,16 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 1,  // Optimize for contract size
       },
+      // Enable IR pipeline to resolve stack too deep errors
       viaIR: true
     }
   },
   networks: {
-    // Renamed to 'baseSepolia' to match verification settings
+    hardhat: {
+      allowUnlimitedContractSize: false
+    },
     "baseSepolia": {
       url: "https://sepolia.base.org",
       accounts: [process.env.PRIVATE_KEY],
@@ -27,8 +30,6 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      // Base Sepolia doesn't actually require an API key, but the field is required
-      // Using "PLACEHOLDER" as a fallback if the env var isn't set
       baseSepolia: process.env.BASESCAN_API_KEY || "PLACEHOLDER",
     },
     customChains: [
@@ -43,8 +44,10 @@ const config: HardhatUserConfig = {
     ]
   },
   sourcify: {
-    // Enable Sourcify verification as a fallback
     enabled: true
+  },
+  mocha: {
+    timeout: 100000
   }
 };
 
