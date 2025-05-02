@@ -480,7 +480,10 @@ contract OpinionMarket is
     }
 
     // Put a question up for sale
-    function listQuestionForSale(uint256 opinionId, uint256 price) external {
+    function listQuestionForSale(
+        uint256 opinionId,
+        uint256 price
+    ) external whenNotPaused {
         Opinion storage opinion = opinions[opinionId];
 
         // Only the current owner can sell (not creator)

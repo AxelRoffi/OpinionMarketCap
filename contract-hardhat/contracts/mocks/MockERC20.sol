@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockERC20 is ERC20 {
     mapping(address => bool) public blockedAddresses;
+    uint8 private _decimals = 6;
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
 
@@ -14,6 +15,10 @@ contract MockERC20 is ERC20 {
 
     function blockAddress(address account) external {
         blockedAddresses[account] = true;
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
     }
 
     function unblockAddress(address account) external {

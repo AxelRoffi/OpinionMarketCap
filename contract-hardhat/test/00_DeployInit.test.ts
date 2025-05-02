@@ -1,127 +1,199 @@
-// test/00_DeployInit.test.ts
-
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { MockERC20, OpinionMarket, PriceCalculator } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { OpinionMarket, MockERC20 } from "../typechain-types"; // Adjust path if needed
 
-describe("00: Deployment & Initialization", () => {
-    // Type for our fixture return
-    type DeploymentFixture = {
-        opinionMarket: OpinionMarket;
-        usdc: MockERC20;
-        owner: HardhatEthersSigner;
-        user1: HardhatEthersSigner; // Include another user for context, though not strictly needed here
-    };
+describe("OpinionMarket - Deployment & Initialization", function () {
+  let opinionMarket: any; // Using any for the proxy to avoid typing issues
+  let priceCalculator: PriceCalculator;
+  let mockUSDC: MockERC20;
+  let owner: HardhatEthersSigner;
+  let admin: HardhatEthersSigner;
+  let moderator: HardhatEthersSigner;
+  let operator: HardhatEthersSigner;
+  let treasury: HardhatEthersSigner;
+  let user1: HardhatEthersSigner;
+  let user2: HardhatEthersSigner;
 
-    // Define the deployment fixture inline for this file
-    async function deployFixture(): Promise<DeploymentFixture> {
-        const [owner, user1] = await ethers.getSigners();
+  // Constants for testing
+  const ADMIN_ROLE = ethers.keccak256(ethers.toUtf8Bytes("ADMIN_ROLE"));
+  const MODERATOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MODERATOR_ROLE"));
+  const OPERATOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("OPERATOR_ROLE"));
+  const TREASURY_ROLE = ethers.keccak256(ethers.toUtf8Bytes("TREASURY_ROLE"));
 
-        // Deploy MockUSDC
-        // Assumes MockERC20.sol is in contracts/ and compiled
-        const MockERC20Factory = await ethers.getContractFactory("MockERC20", owner);
-        const usdc = await MockERC20Factory.deploy("Mock USDC", "mUSDC");
-        const usdcAddress = await usdc.getAddress();
-
-        // Deploy OpinionMarket through proxy
-        // Assumes OpinionMarket.sol is in contracts/ and compiled
-        const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", owner);
-        const opinionMarket = await upgrades.deployProxy(
-            OpinionMarketFactory,
-            [usdcAddress], // Args for initialize function
-            { initializer: "initialize", kind: "uups" }
-        ) as unknown as OpinionMarket;
-        const opinionMarketAddress = await opinionMarket.getAddress();
-
-        // Mint some mock USDC for the owner for potential future interactions
-        // (Not strictly needed for init tests, but good practice)
-        const initialMintAmount = ethers.parseUnits("1000000", 6); // 1M USDC
-        await usdc.mint(owner.address, initialMintAmount);
-        // Approve the market contract to spend owner's USDC (important for later tests)
-        await usdc.connect(owner).approve(opinionMarketAddress, initialMintAmount);
-
-        return { opinionMarket, usdc, owner, user1 };
-    }
-
-    // Declare variables to hold fixture results
-    let opinionMarket: OpinionMarket;
-    let usdc: MockERC20;
-    let owner: HardhatEthersSigner;
-    let DEFAULT_ADMIN_ROLE: string;
-    let ADMIN_ROLE: string;
-    let MODERATOR_ROLE: string;
-    let OPERATOR_ROLE: string;
-    let TREASURY_ROLE: string;
-
-    // Load fixture and fetch roles before each test in this block
-    beforeEach(async () => {
-        const deployment = await loadFixture(deployFixture);
-        opinionMarket = deployment.opinionMarket;
-        usdc = deployment.usdc;
-        owner = deployment.owner;
-
-        // Fetch role identifiers directly from the contract
-        DEFAULT_ADMIN_ROLE = await opinionMarket.DEFAULT_ADMIN_ROLE();
-        ADMIN_ROLE = await opinionMarket.ADMIN_ROLE();
-        MODERATOR_ROLE = await opinionMarket.MODERATOR_ROLE();
-        OPERATOR_ROLE = await opinionMarket.OPERATOR_ROLE();
-        TREASURY_ROLE = await opinionMarket.TREASURY_ROLE();
+  beforeEach(async function () {
+    // Get signers
+    [owner, admin, moderator, operator, treasury, user1, user2] = await ethers.getSigners();
+    
+    // Deploy MockERC20 for USDC
+    const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+    mockUSDC = await MockERC20Factory.deploy("USD Coin", "USDC") as MockERC20;
+    
+    // Deploy PriceCalculator library first
+    const PriceCalculatorFactory = await ethers.getContractFactory("PriceCalculator");
+    priceCalculator = await PriceCalculatorFactory.deploy() as PriceCalculator;
+    
+    // Link PriceCalculator library to OpinionMarket
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    // Now that the library is linked, proceed with deployment tests inside each test case
+  });
 
-    // --- Test Cases ---
-
-    it("Should set the deployer as the owner", async () => {
-        expect(await opinionMarket.owner()).to.equal(owner.address);
+  it("Should deploy correctly with USDC address", async function () {
+    // Deploy as proxy with USDC address, with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [await mockUSDC.getAddress()],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking'] // This is needed for libraries in upgradeable contracts
+      }
+    );
+    
+    // Verify deployment
+    expect(await opinionMarket.usdcToken()).to.equal(await mockUSDC.getAddress());
+    expect(await opinionMarket.owner()).to.equal(owner.address);
+  });
 
-    it("Should set the correct USDC token address during initialization", async () => {
-        expect(await opinionMarket.usdcToken()).to.equal(await usdc.getAddress());
+  it("Should initialize roles correctly", async function () {
+    // Deploy as proxy with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [await mockUSDC.getAddress()],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking']
+      }
+    );
+    
+    // Check all roles are granted to owner
+    expect(await opinionMarket.hasRole(ADMIN_ROLE, owner.address)).to.be.true;
+    expect(await opinionMarket.hasRole(MODERATOR_ROLE, owner.address)).to.be.true;
+    expect(await opinionMarket.hasRole(OPERATOR_ROLE, owner.address)).to.be.true;
+    expect(await opinionMarket.hasRole(TREASURY_ROLE, owner.address)).to.be.true;
+  });
 
-    it("Should initialize nextOpinionId to 1", async () => {
-        expect(await opinionMarket.nextOpinionId()).to.equal(1n); // Use 1n for bigint comparison
+  it("Should initialize state variables correctly", async function () {
+    // Deploy as proxy with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [await mockUSDC.getAddress()],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking']
+      }
+    );
+    
+    // Check initial values
+    expect(await opinionMarket.minimumPrice()).to.equal(1_000_000); // 1 USDC
+    expect(await opinionMarket.platformFeePercent()).to.equal(2);
+    expect(await opinionMarket.creatorFeePercent()).to.equal(3);
+    expect(await opinionMarket.absoluteMaxPriceChange()).to.equal(200);
+    expect(await opinionMarket.maxTradesPerBlock()).to.equal(3);
+    expect(await opinionMarket.rapidTradeWindow()).to.equal(30); // 30 seconds
+    expect(await opinionMarket.questionCreationFee()).to.equal(1_000_000); // 1 USDC
+    expect(await opinionMarket.initialAnswerPrice()).to.equal(2_000_000); // 2 USDC
+    expect(await opinionMarket.poolCreationFee()).to.equal(50_000_000); // 50 USDC
+    expect(await opinionMarket.poolContributionFee()).to.equal(1_000_000); // 1 USDC
+    expect(await opinionMarket.minPoolDuration()).to.equal(24 * 60 * 60); // 1 day
+    expect(await opinionMarket.maxPoolDuration()).to.equal(30 * 24 * 60 * 60); // 30 days
+    expect(await opinionMarket.nextOpinionId()).to.equal(1);
+    expect(await opinionMarket.isPublicCreationEnabled()).to.be.false;
+    expect(await opinionMarket.paused()).to.be.false;
+  });
 
-    it("Should initialize poolCount to 0", async () => {
-        expect(await opinionMarket.poolCount()).to.equal(0n); // Use 0n for bigint comparison
+  it("Should initialize with zero address and allow setting USDC later", async function () {
+    // Deploy with zero address, with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [ethers.ZeroAddress],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking']
+      }
+    );
+    
+    // Verify USDC is zero address
+    expect(await opinionMarket.usdcToken()).to.equal(ethers.ZeroAddress);
+    
+    // Set USDC token
+    await opinionMarket.setUsdcToken(await mockUSDC.getAddress());
+    
+    // Verify USDC is set
+    expect(await opinionMarket.usdcToken()).to.equal(await mockUSDC.getAddress());
+  });
 
-    it("Should initialize as unpaused", async () => {
-        expect(await opinionMarket.paused()).to.be.false;
+  it("Should not allow initialize to be called more than once", async function () {
+    // Deploy as proxy with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [await mockUSDC.getAddress()],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking']
+      }
+    );
+    
+    // Try to call initialize again
+    await expect(
+      opinionMarket.initialize(await mockUSDC.getAddress())
+    ).to.be.revertedWithCustomError(opinionMarket, "InvalidInitialization");
+  });
 
-    it("Should initialize public creation as disabled", async () => {
-        expect(await opinionMarket.isPublicCreationEnabled()).to.be.false;
+  it("Should not allow setUsdcToken if already set", async function () {
+    // Deploy as proxy with library linked
+    const OpinionMarketFactory = await ethers.getContractFactory("OpinionMarket", {
+      libraries: {
+        PriceCalculator: await priceCalculator.getAddress()
+      }
     });
-
-    it("Should grant DEFAULT_ADMIN_ROLE to the deployer", async () => {
-        expect(await opinionMarket.hasRole(DEFAULT_ADMIN_ROLE, owner.address)).to.be.true;
-    });
-
-    it("Should grant ADMIN_ROLE to the deployer", async () => {
-        expect(await opinionMarket.hasRole(ADMIN_ROLE, owner.address)).to.be.true;
-    });
-
-    it("Should grant MODERATOR_ROLE to the deployer", async () => {
-        expect(await opinionMarket.hasRole(MODERATOR_ROLE, owner.address)).to.be.true;
-    });
-
-    it("Should grant OPERATOR_ROLE to the deployer", async () => {
-        expect(await opinionMarket.hasRole(OPERATOR_ROLE, owner.address)).to.be.true;
-    });
-
-    it("Should grant TREASURY_ROLE to the deployer", async () => {
-        expect(await opinionMarket.hasRole(TREASURY_ROLE, owner.address)).to.be.true;
-    });
-
-    it("Should prevent re-initialization", async () => {
-        // Try calling initialize again directly on the implementation (or proxy if possible)
-        // This often requires getting the implementation address first if testing via proxy
-        // Or just check if the Initializable error is thrown
-        // Note: Direct re-init call might fail differently depending on proxy setup
-         await expect(opinionMarket.initialize(await usdc.getAddress()))
-            .to.be.revertedWith("Initializable: contract is already initialized"); // Standard OZ error
-    });
+    
+    opinionMarket = await upgrades.deployProxy(
+      OpinionMarketFactory,
+      [await mockUSDC.getAddress()],
+      { 
+        kind: 'uups',
+        unsafeAllow: ['external-library-linking']
+      }
+    );
+    
+    // Try to set USDC again
+    await expect(
+      opinionMarket.setUsdcToken(await mockUSDC.getAddress())
+    ).to.be.revertedWith("USDC already set");
+  });
 });

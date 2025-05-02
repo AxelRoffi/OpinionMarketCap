@@ -1,7 +1,9 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-verify";
+import "@nomicfoundation/hardhat-ethers";
+import "@openzeppelin/hardhat-upgrades";
+import "@typechain/hardhat";
 import "@nomicfoundation/hardhat-toolbox";
-import '@openzeppelin/hardhat-upgrades';
 import "hardhat-contract-sizer";
 import * as dotenv from "dotenv";
 
