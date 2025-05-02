@@ -541,7 +541,7 @@ contract OpinionMarket is
     // Cancel a listing
     function cancelQuestionSale(uint256 opinionId) external {
         Opinion storage opinion = opinions[opinionId];
-        require(opinion.creator == msg.sender, "Not the creator");
+        require(opinion.questionOwner == msg.sender, "Not the creator");
 
         opinion.salePrice = 0;
 
