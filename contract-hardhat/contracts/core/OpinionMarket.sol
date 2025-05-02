@@ -11,6 +11,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IOpinionMarketEvents.sol";
 import "./IOpinionMarketErrors.sol";
+import "./PriceCalculator.sol";
+using PriceCalculator for uint256;
 
 /**
  * @title OpinionMarket
@@ -75,6 +77,10 @@ contract OpinionMarket is
     mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock; // Last trade block per user per opinion
     mapping(address => mapping(uint256 => uint256)) private userLastTradeTime;
     mapping(address => mapping(uint256 => uint256)) private userLastTradePrice;
+    mapping(uint256 => uint256) private priceHistory;
+    // Track history counter and last trade timestamp in a single uint256
+    // First 8 bits: counter, Next 248 bits: timestamp
+    mapping(uint256 => uint256) private priceMetadata;
 
     // --- POOL STATE VARIABLES ---
     uint256 public poolCount;
@@ -661,7 +667,7 @@ contract OpinionMarket is
         // Calculate execution price and validate funds
         uint256 targetPrice = opinion.nextPrice > 0
             ? opinion.nextPrice
-            : _calculateNextPrice(opinion.lastPrice);
+            : _calculateNextPrice(opinionId, opinion.lastPrice);
         if (pool.totalAmount < targetPrice)
             revert PoolInsufficientFunds(pool.totalAmount, targetPrice);
 
@@ -702,7 +708,7 @@ contract OpinionMarket is
         opinion.currentAnswer = pool.proposedAnswer;
         opinion.currentAnswerOwner = address(this); // Contract holds ownership for the pool
         opinion.lastPrice = targetPrice;
-        opinion.nextPrice = _calculateNextPrice(targetPrice);
+        opinion.nextPrice = _calculateNextPrice(opinionId, targetPrice);
         opinion.totalVolume += targetPrice;
 
         // Accumulate fees for creator and current owner
@@ -1003,7 +1009,7 @@ contract OpinionMarket is
         // If nextPrice is 0 (for older opinions before this update),
         // calculate it using the current price
         if (price == 0) {
-            price = _calculateNextPrice(opinion.lastPrice);
+            price = _calculateNextPrice(opinionId, opinion.lastPrice);
         }
 
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
@@ -1073,7 +1079,7 @@ contract OpinionMarket is
         opinion.totalVolume += price;
 
         // Calculate and store the next price for future answers
-        opinion.nextPrice = _calculateNextPrice(price);
+        opinion.nextPrice = _calculateNextPrice(opinionId, price);
 
         // Token transfers
         usdcToken.safeTransferFrom(msg.sender, address(this), price);
@@ -1141,24 +1147,6 @@ contract OpinionMarket is
 
         if (!isValidCIDv0 && !isValidCIDv1) {
             revert InvalidIpfsHashFormat();
-        }
-    }
-
-    /**
-     * @dev Validates that price changes do not exceed the maximum allowed.
-     */
-    function _validatePriceChange(
-        uint256 lastPrice,
-        uint256 newPrice
-    ) internal view {
-        if (newPrice > lastPrice) {
-            uint256 increase = ((newPrice - lastPrice) * 100) / lastPrice;
-            if (increase > absoluteMaxPriceChange) {
-                revert PriceChangeExceedsLimit(
-                    increase,
-                    absoluteMaxPriceChange
-                );
-            }
         }
     }
 
@@ -1235,7 +1223,7 @@ contract OpinionMarket is
         opinion.creator = msg.sender;
         opinion.questionOwner = msg.sender; // Initialize question owner to be the same as creator
         opinion.lastPrice = initialPrice; // Changed from currentPrice to lastPrice
-        opinion.nextPrice = _calculateNextPrice(initialPrice);
+        opinion.nextPrice = _calculateNextPrice(opinionId, initialPrice);
         opinion.isActive = true;
         opinion.currentAnswer = initialAnswer;
         opinion.currentAnswerOwner = msg.sender;
@@ -1256,60 +1244,47 @@ contract OpinionMarket is
     }
 
     /**
-     * @dev Calculates the next price with a random adjustment (-20% to +99%).
-     * @param lastPrice The current price.
-     * @return newPrice The calculated next price.
+     * @dev Updates price history in a highly compact way
+     * Only 3 prices are tracked per opinion to minimize storage
      */
-    function _calculateNextPrice(uint256 lastPrice) internal returns (uint256) {
-        bytes32 randomness = keccak256(
-            abi.encodePacked(
-                block.timestamp,
-                block.prevrandao,
-                msg.sender,
-                nonce++,
-                blockhash(block.number - 1),
-                gasleft(),
-                tx.gasprice,
-                address(this).balance,
-                block.number,
-                tx.origin,
-                address(this)
-            )
+    function _updatePriceHistory(uint256 opinionId, uint256 newPrice) internal {
+        uint256 meta = priceMetadata[opinionId];
+        uint8 count = uint8(meta);
+
+        // Store timestamp in upper bits
+        priceMetadata[opinionId] =
+            (block.timestamp << 8) |
+            (count < 3 ? count + 1 : 3);
+
+        // Shift prices and add new one
+        uint256 history = priceHistory[opinionId];
+        history = (history << 80) & (~uint256(0) << 160);
+        history |= (newPrice & ((1 << 80) - 1));
+        priceHistory[opinionId] = history;
+    }
+
+    /**
+     * @dev Enhanced price calculation using market dynamics
+     * Extremely optimized for minimal bytecode size
+     */
+    function _calculateNextPrice(
+        uint256 opinionId,
+        uint256 lastPrice
+    ) internal returns (uint256) {
+        // Call library function
+        uint256 newPrice = PriceCalculator.calculateNextPrice(
+            opinionId,
+            lastPrice,
+            minimumPrice,
+            absoluteMaxPriceChange,
+            nonce++,
+            priceMetadata,
+            priceHistory
         );
 
-        uint256 randomFactor = uint256(randomness) % 1000;
-        int256 adjustment;
+        // Update price history (we need to keep this part in the main contract)
+        _updatePriceHistory(opinionId, newPrice);
 
-        // Revised distribution to target ~10-12% average growth rate
-        if (randomFactor < 200) {
-            adjustment = -15 + int256(randomFactor % 15); // -15% to -1%
-        } else if (randomFactor < 850) {
-            adjustment = 5 + int256(randomFactor % 15); // +5% to +19%
-        } else if (randomFactor < 990) {
-            adjustment = 20 + int256(randomFactor % 30); // +20% to +49%
-        } else {
-            adjustment = 70 + int256(randomFactor % 30); // +70% to +99%
-        }
-
-        uint256 newPrice;
-        if (adjustment < 0) {
-            // Handle negative adjustment properly
-            uint256 reduction = (lastPrice * uint256(-adjustment)) / 100;
-            newPrice = lastPrice > reduction
-                ? lastPrice - reduction
-                : minimumPrice;
-        } else {
-            // Handle positive adjustment
-            newPrice = (lastPrice * (100 + uint256(adjustment))) / 100;
-        }
-
-        // Ensure price changes for testing
-        if (newPrice == lastPrice) {
-            newPrice = lastPrice + 1;
-        }
-
-        newPrice = newPrice < minimumPrice ? minimumPrice : newPrice;
-        _validatePriceChange(lastPrice, newPrice);
         return newPrice;
     }
 

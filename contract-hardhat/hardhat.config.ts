@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
+import "hardhat-contract-sizer";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -42,6 +43,13 @@ const config: HardhatUserConfig = {
         }
       }
     ]
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: ['OpinionMarket'],
   },
   sourcify: {
     enabled: true
