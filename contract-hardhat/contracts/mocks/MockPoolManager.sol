@@ -1,70 +1,54 @@
-// contracts/mocks/MockPoolManager.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract MockPoolManager {
-    // Define enums and structs directly in the contract
-    enum PoolStatus {
-        Active,
-        Executed,
-        Expired,
-        Extended
+contract SimplePoolManager {
+    uint256 public poolId;
+    uint256 public opinionId;
+    uint256 public totalAmount;
+    uint256 public deadline;
+    uint256 public targetPrice;
+    uint8 public status; // 0: Active, 1: Executed, 2: Expired
+
+    constructor() {
+        poolId = 0;
+        status = 0;
     }
 
-    struct PoolInfo {
-        uint256 id;
-        uint256 opinionId;
-        string proposedAnswer;
-        uint96 totalAmount;
-        uint32 deadline;
-        address creator;
-        PoolStatus status;
-        string name;
-        string ipfsHash;
+    function createPool(
+        uint256 _opinionId,
+        uint256 _deadline,
+        uint256 _amount
+    ) external {
+        poolId = 1; // Always set to 1 for simplicity
+        opinionId = _opinionId;
+        deadline = _deadline;
+        totalAmount = _amount;
+        status = 0; // Active
     }
 
-    mapping(uint256 => PoolInfo) public pools;
-    mapping(uint256 => address[]) public poolContributors;
-    mapping(uint256 => uint256[]) public opinionPools;
-    uint256 public poolCount;
+    function addContribution(uint256 _amount) external {
+        totalAmount += _amount;
+    }
 
-    // Events for testing
-    event PoolCreated(
-        uint256 indexed poolId,
-        uint256 indexed opinionId,
-        string proposedAnswer,
-        address indexed creator
-    );
+    function setTargetPrice(uint256 _targetPrice) external {
+        targetPrice = _targetPrice;
+    }
 
-    // Implementation methods...
+    function executePool() external {
+        if (totalAmount >= targetPrice) {
+            status = 1; // Executed
+        }
+    }
 
-    function getPoolDetails(
-        uint256 poolId
-    )
+    function getPoolDetails()
         external
         view
-        returns (
-            PoolInfo memory info,
-            uint256 currentPrice,
-            uint256 remainingAmount,
-            uint256 timeRemaining
-        )
+        returns (uint256, uint256, uint256)
     {
-        info = pools[poolId];
-        currentPrice = 10 * 10 ** 6; // 10 USDC mock price
+        return (opinionId, deadline, totalAmount);
+    }
 
-        if (info.totalAmount >= currentPrice) {
-            remainingAmount = 0;
-        } else {
-            remainingAmount = currentPrice - info.totalAmount;
-        }
-
-        if (block.timestamp >= info.deadline) {
-            timeRemaining = 0;
-        } else {
-            timeRemaining = info.deadline - block.timestamp;
-        }
-
-        return (info, currentPrice, remainingAmount, timeRemaining);
+    function getPoolStatus() external view returns (uint8) {
+        return status;
     }
 }
