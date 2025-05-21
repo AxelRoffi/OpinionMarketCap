@@ -33,10 +33,62 @@ contract OpinionCore is
     using SafeERC20 for IERC20;
 
     // --- ROLES ---
+    // --- ROLES ---
+    /**
+     * @dev Administrative role for the core opinion system
+     * Accounts with this role can:
+     * - Update opinion creation price parameters
+     * - Configure interaction price dynamics
+     * - Set opinion and interaction cost limits
+     * - Manage fee distribution parameters
+     * - Update contract addresses for integrations (FeeManager, PoolManager)
+     * - Configure security parameters and thresholds
+     * - Pause/unpause specific core functionalities
+     * - Grant or revoke any roles in this contract
+     * - Update protocol-level settings and protocol upgrade parameters
+     * - Typically assigned to a multi-sig wallet or governance contract
+     */
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /**
+     * @dev Content moderation role
+     * Accounts with this role can:
+     * - Deactivate harmful or inappropriate opinions
+     * - Reactivate previously deactivated opinions
+     * - Flag opinions for review
+     * - Cannot create/modify opinions or change parameters (requires ADMIN_ROLE)
+     * - Only handles content moderation functions
+     * - Typically assigned to trusted community moderators
+     */
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
+
+    /**
+     * @dev Role exclusively for the OpinionMarket contract
+     * This role allows OpinionMarket to:
+     * - Create new opinions on behalf of users
+     * - Facilitate user interactions with opinions
+     * - Query opinion information and prices
+     * - Execute price updates based on interactions
+     * - Cannot modify system parameters (requires ADMIN_ROLE)
+     * - Cannot moderate content (requires MODERATOR_ROLE)
+     * - Should ONLY be granted to the OpinionMarket contract address
+     * - Serves as the primary entry point for user operations
+     */
     bytes32 public constant MARKET_CONTRACT_ROLE =
         keccak256("MARKET_CONTRACT_ROLE");
+
+    /**
+     * @dev Role exclusively for the PoolManager contract
+     * This role allows PoolManager to:
+     * - Update opinions through pool-based operations
+     * - Query opinion data needed for pool management
+     * - Execute collective opinion interactions via pools
+     * - Register pool contributions affecting opinion prices
+     * - Cannot create new opinions (requires MARKET_CONTRACT_ROLE)
+     * - Cannot modify system parameters (requires ADMIN_ROLE)
+     * - Should ONLY be granted to the PoolManager contract address
+     * - Facilitates collective opinion interactions via pool mechanisms
+     */
     bytes32 public constant POOL_MANAGER_ROLE = keccak256("POOL_MANAGER_ROLE");
 
     // --- CONSTANTS ---

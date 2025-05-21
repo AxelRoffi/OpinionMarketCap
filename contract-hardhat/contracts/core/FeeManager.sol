@@ -30,8 +30,38 @@ contract FeeManager is
     using SafeERC20 for IERC20;
 
     // --- ROLES ---
+    /**
+     * @dev Administrative role for the fee system
+     * Accounts with this role can:
+     * - Update fee percentages and parameters
+     * - Configure cooldown periods for withdrawals
+     * - Set MEV protection parameters
+     * - Update price impact thresholds
+     * - Configure any fee-related system settings
+     * - Grant or revoke other roles in this contract
+     */
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /**
+     * @dev Treasury operations role
+     * Accounts with this role can:
+     * - Withdraw accumulated protocol fees to the treasury
+     * - View fee statistics and accumulated amounts
+     * - Cannot modify fee parameters (requires ADMIN_ROLE)
+     * - Typically assigned to multi-sig wallet or DAO treasury
+     */
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
+
+    /**
+     * @dev Role exclusively for the OpinionCore contract
+     * This role allows OpinionCore to:
+     * - Register fees collected from opinion creation
+     * - Register fees collected from opinion interactions
+     * - Update MEV protection data
+     * - Access fee calculation functions
+     * - Cannot withdraw funds (requires TREASURY_ROLE)
+     * - Should ONLY be granted to the OpinionCore contract address
+     */
     bytes32 public constant CORE_CONTRACT_ROLE =
         keccak256("CORE_CONTRACT_ROLE");
 

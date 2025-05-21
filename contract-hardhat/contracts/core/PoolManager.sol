@@ -59,7 +59,32 @@ contract PoolManager is
     mapping(address => uint256[]) public userPools;
 
     // --- ROLES ---
+    // --- ROLES ---
+    /**
+     * @dev Administrative role for the pool management system
+     * Accounts with this role can:
+     * - Configure pool creation and contribution fees
+     * - Set minimum/maximum amounts for pool contributions
+     * - Update global pool parameters and thresholds
+     * - Configure time-based settings (deadlines, extension periods)
+     * - Enable or disable specific pool types
+     * - Define pool validation rules
+     * - Grant or revoke other roles in this contract
+     * - Update contract integrations and dependencies
+     */
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /**
+     * @dev Moderation role for pool operations
+     * Accounts with this role can:
+     * - Extend pool deadlines in exceptional cases
+     * - Cancel problematic or invalid pools
+     * - Force finalize pools under specific conditions
+     * - Moderate pool metadata and descriptions
+     * - Handle dispute resolution for pools
+     * - Cannot modify system parameters (requires ADMIN_ROLE)
+     * - Typically assigned to trusted community moderators or governance participants
+     */
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
     /// @custom:oz-upgrades-unsafe-allow constructor
