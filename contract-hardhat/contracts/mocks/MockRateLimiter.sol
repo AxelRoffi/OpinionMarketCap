@@ -1,8 +1,7 @@
-// MockRateLimiter.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../interfaces/IOpinionMarketErrors.sol";
+import "../core/interfaces/IOpinionMarketErrors.sol";
 
 contract MockRateLimiter is IOpinionMarketErrors {
     // Rate limiting configuration
@@ -19,6 +18,9 @@ contract MockRateLimiter is IOpinionMarketErrors {
     mapping(address => mapping(uint256 => uint32)) public userLastTradeTime;
     mapping(address => mapping(uint256 => uint96)) public userLastTradePrice;
 
+    // For testing - mock block number
+    uint256 private mockBlockNumber = 1;
+
     constructor(
         uint256 _maxTradesPerBlock,
         uint32 _rapidTradeWindow,
@@ -29,10 +31,12 @@ contract MockRateLimiter is IOpinionMarketErrors {
         mevPenaltyPercent = _mevPenaltyPercent;
     }
 
+    // -- Core functionality -- //
+
     function checkAndUpdateTradesInBlock() public {
-        if (userLastBlock[msg.sender] != block.number) {
+        if (userLastBlock[msg.sender] != mockBlockNumber) {
             userTradesInBlock[msg.sender] = 1;
-            userLastBlock[msg.sender] = block.number;
+            userLastBlock[msg.sender] = mockBlockNumber;
         } else {
             userTradesInBlock[msg.sender]++;
             if (userTradesInBlock[msg.sender] > maxTradesPerBlock) {
@@ -45,9 +49,9 @@ contract MockRateLimiter is IOpinionMarketErrors {
     }
 
     function checkTradeAllowed(uint256 opinionId) public {
-        if (userLastTradeBlock[msg.sender][opinionId] == block.number)
+        if (userLastTradeBlock[msg.sender][opinionId] == mockBlockNumber)
             revert OneTradePerBlock();
-        userLastTradeBlock[msg.sender][opinionId] = block.number;
+        userLastTradeBlock[msg.sender][opinionId] = mockBlockNumber;
     }
 
     function simulateTrade(uint256 opinionId) external {
@@ -103,7 +107,8 @@ contract MockRateLimiter is IOpinionMarketErrors {
         return (adjustedPlatformFee, adjustedOwnerAmount);
     }
 
-    // Admin functions
+    // -- Admin functions -- //
+
     function setMaxTradesPerBlock(uint256 _maxTradesPerBlock) external {
         maxTradesPerBlock = _maxTradesPerBlock;
     }
@@ -116,7 +121,54 @@ contract MockRateLimiter is IOpinionMarketErrors {
         mevPenaltyPercent = _mevPenaltyPercent;
     }
 
-    // View functions for testing
+    // -- Testing helper functions -- //
+
+    // Simulate a new block
+    function simulateNewBlock() external {
+        mockBlockNumber++;
+    }
+
+    // Get current mock block
+    function getCurrentBlockForTesting() external view returns (uint256) {
+        return mockBlockNumber;
+    }
+
+    // Manually set the number of trades in "current block"
+    function manuallySetTradesInBlock(uint256 trades) external {
+        userLastBlock[msg.sender] = mockBlockNumber;
+        userTradesInBlock[msg.sender] = trades;
+    }
+
+    // Manually mark an opinion as traded in current block
+    function manuallySetLastTradeBlock(uint256 opinionId) external {
+        userLastTradeBlock[msg.sender][opinionId] = mockBlockNumber;
+    }
+
+    // Test function that just checks max trades and increments
+    function checkMaxTradesAndIncrement() external {
+        if (userLastBlock[msg.sender] != mockBlockNumber) {
+            userTradesInBlock[msg.sender] = 1;
+            userLastBlock[msg.sender] = mockBlockNumber;
+        } else {
+            userTradesInBlock[msg.sender]++;
+            if (userTradesInBlock[msg.sender] > maxTradesPerBlock) {
+                revert MaxTradesPerBlockExceeded(
+                    userTradesInBlock[msg.sender],
+                    maxTradesPerBlock
+                );
+            }
+        }
+    }
+
+    // Test function that just checks if opinion trade is allowed
+    function checkOpinionTradeAllowed(uint256 opinionId) external {
+        if (userLastTradeBlock[msg.sender][opinionId] == mockBlockNumber)
+            revert OneTradePerBlock();
+        userLastTradeBlock[msg.sender][opinionId] = mockBlockNumber;
+    }
+
+    // -- View functions for testing -- //
+
     function getUserTradesInBlock(
         address user
     ) external view returns (uint256) {

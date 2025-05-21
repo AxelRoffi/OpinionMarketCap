@@ -88,6 +88,7 @@ library PriceCalculator {
     }
 
     // Prevent extreme volatility by checking price history
+    // Correction pour PriceCalculator.sol
     function _applyVolatilityDamper(
         uint256 opinionId,
         uint256 lastPrice,
@@ -98,30 +99,36 @@ library PriceCalculator {
         uint256 meta = priceMetadata[opinionId];
         uint8 count = uint8(meta);
 
-        // If we have at least 2 price data points, apply damping
+        // Si nous avons au moins 2 points de données de prix, appliquer l'amortissement
         if (count >= 2) {
             uint256 history = priceHistory[opinionId];
 
-            // Extract previous price (second most recent)
+            // Extraire le prix précédent (second plus récent)
             uint256 prevPrice = (history >> 80) & ((1 << 80) - 1);
 
-            // If there are extreme changes in both directions (zigzag)
+            // Si le prix précédent est zéro, retourner simplement le nouveau prix
+            if (prevPrice == 0) return newPrice;
+
+            // Si des changements extrêmes dans les deux directions (zigzag)
             bool lastChangeWasUp = prevPrice < lastPrice;
             bool newChangeIsUp = lastPrice < newPrice;
 
-            // If price is reversing direction with a large swing
+            // Si le prix inverse sa direction avec une grande oscillation
             if (lastChangeWasUp != newChangeIsUp) {
+                // Vérifier que le prix n'est pas zéro avant de faire la division
                 uint256 lastChangePercent = lastChangeWasUp
                     ? ((lastPrice - prevPrice) * 100) / prevPrice
-                    : ((prevPrice - lastPrice) * 100) / lastPrice;
+                    : ((prevPrice - lastPrice) * 100) /
+                        (lastPrice > 0 ? lastPrice : 1); // Éviter division par zéro
 
                 uint256 newChangePercent = newChangeIsUp
                     ? ((newPrice - lastPrice) * 100) / lastPrice
-                    : ((lastPrice - newPrice) * 100) / newPrice;
+                    : ((lastPrice - newPrice) * 100) /
+                        (newPrice > 0 ? newPrice : 1); // Éviter division par zéro
 
-                // If both changes were significant, reduce the amplitude
+                // Si les deux changements étaient significatifs, réduire l'amplitude
                 if (lastChangePercent > 30 && newChangePercent > 30) {
-                    // Dampen the change by 50%
+                    // Amortir le changement de 50%
                     if (newChangeIsUp) {
                         newPrice = lastPrice + ((newPrice - lastPrice) / 2);
                     } else {

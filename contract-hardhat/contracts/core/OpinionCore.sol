@@ -40,10 +40,10 @@ contract OpinionCore is
     bytes32 public constant POOL_MANAGER_ROLE = keccak256("POOL_MANAGER_ROLE");
 
     // --- CONSTANTS ---
-    uint256 public constant MAX_QUESTION_LENGTH = 50;
-    uint256 public constant MAX_ANSWER_LENGTH = 40;
-    uint256 public constant MAX_LINK_LENGTH = 256;
-    uint256 public constant MAX_IPFS_HASH_LENGTH = 64;
+    uint256 public constant MAX_QUESTION_LENGTH = 52;
+    uint256 public constant MAX_ANSWER_LENGTH = 52;
+    uint256 public constant MAX_LINK_LENGTH = 260;
+    uint256 public constant MAX_IPFS_HASH_LENGTH = 68;
 
     // --- STATE VARIABLES ---
     IERC20 public usdcToken;
