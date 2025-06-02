@@ -60,4 +60,23 @@ interface IPoolManager {
             uint96[] memory amounts,
             uint96 totalAmount
         );
+
+    // Early withdrawal functions
+    function withdrawFromPoolEarly(uint256 poolId) external;
+    
+    function getEarlyWithdrawalPreview(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 penalty,
+        uint96 userWillReceive,
+        bool canWithdraw
+    );
+    
+    function getEarlyWithdrawalBreakdown(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 totalPenalty,
+        uint96 treasuryReceives,
+        uint96 userReceives
+    );
+    
+    function canWithdrawEarly(uint256 poolId, address user) external view returns (bool possible, uint8 reason);
 }

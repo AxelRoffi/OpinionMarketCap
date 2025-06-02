@@ -67,6 +67,10 @@ contract FeeManager is
 
     // --- STATE VARIABLES ---
     IERC20 public usdcToken;
+    address public treasury;
+    address public pendingTreasury;
+    uint256 public treasuryChangeTimestamp;
+    uint256 public constant TREASURY_CHANGE_DELAY = 48 hours;
 
     // Fee parameters
     uint8 public platformFeePercent;
@@ -110,7 +114,16 @@ contract FeeManager is
      * @dev Initializes the contract with default fee parameters
      * @param _usdcToken Address of the USDC token contract
      */
-    function initialize(address _usdcToken) public initializer {
+
+    /**
+     * @dev Initializes the contract with default fee parameters
+     * @param _usdcToken Address of the USDC token contract
+     * @param _treasury Address of the treasury that receives platform fees
+     */
+    function initialize(
+        address _usdcToken,
+        address _treasury // 🆕 NOUVEAU PARAMÈTRE
+    ) public initializer {
         __AccessControl_init();
         __ReentrancyGuard_init();
         __Pausable_init();
@@ -127,9 +140,12 @@ contract FeeManager is
         rapidTradeWindow = 30 seconds;
         parameterUpdateCooldown = 1 days;
 
-        // Set USDC token
-        if (_usdcToken == address(0)) revert ZeroAddressNotAllowed();
+        // Set USDC token and treasury
+        if (_usdcToken == address(0) || _treasury == address(0))
+            revert ZeroAddressNotAllowed();
+
         usdcToken = IERC20(_usdcToken);
+        treasury = _treasury; // 🆕 SET TREASURY
     }
 
     // --- MODIFIER ---
@@ -188,9 +204,39 @@ contract FeeManager is
     }
 
     /**
+     * @dev Sets a new treasury address with timelock protection
+     * @param newTreasury The new treasury address to set after timelock
+     */
+    function setTreasury(address newTreasury) external onlyRole(ADMIN_ROLE) {
+        if (newTreasury == address(0)) revert ZeroAddressNotAllowed();
+        
+        pendingTreasury = newTreasury;
+        treasuryChangeTimestamp = block.timestamp + TREASURY_CHANGE_DELAY;
+        
+        emit TreasuryUpdated(treasury, newTreasury, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Confirms the treasury change after timelock period has elapsed
+     */
+    function confirmTreasuryChange() external onlyRole(ADMIN_ROLE) {
+        if (block.timestamp < treasuryChangeTimestamp) 
+            revert("Treasury: Timelock not elapsed");
+        if (pendingTreasury == address(0)) 
+            revert("Treasury: No pending treasury");
+        
+        address oldTreasury = treasury;
+        treasury = pendingTreasury;
+        pendingTreasury = address(0);
+        treasuryChangeTimestamp = 0;
+        
+        emit TreasuryUpdated(oldTreasury, treasury, msg.sender, block.timestamp);
+    }
+
+    /**
      * @dev Withdraws platform fees, restricted to TREASURY_ROLE
      * @param token Token to withdraw
-     * @param recipient Address to send tokens to
+     * @param recipient Address to send tokens to (must be treasury)
      */
     function withdrawPlatformFees(
         address token,
@@ -198,6 +244,8 @@ contract FeeManager is
     ) external override nonReentrant onlyRole(TREASURY_ROLE) {
         if (token == address(0) || recipient == address(0))
             revert ZeroAddressNotAllowed();
+        if (recipient != treasury) 
+            revert("Recipient must be treasury");
 
         IERC20 tokenContract = IERC20(token);
         uint96 balance = uint96(tokenContract.balanceOf(address(this)));

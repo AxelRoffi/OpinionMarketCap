@@ -62,4 +62,57 @@ library ValidationLibrary {
             return newTradesInBlock;
         }
     }
+
+    /**
+     * @dev Validates answer description (optional, max 120 chars)
+     * @param description Answer description (can be empty string)
+     */
+    function validateDescription(string memory description) internal pure {
+        bytes memory descriptionBytes = bytes(description);
+        
+        // Only check maximum length, empty string is allowed
+        if (descriptionBytes.length > 120) revert("Description too long");
+    }
+
+    /**
+     * @dev Validates opinion categories against available categories
+     * @param userCategories Categories selected by user (1-3 required)
+     * @param availableCategories Global available categories array
+     * 🚨 IMPOSED SIGNATURE - DO NOT MODIFY
+     */
+    function validateOpinionCategories(
+        string[] memory userCategories,
+        string[] storage availableCategories
+    ) internal view {
+        uint256 userLength = userCategories.length;
+        
+        // 1. Length validation - IMPOSED ORDER
+        if (userLength == 0) revert("NoCategoryProvided");
+        if (userLength > 3) revert("TooManyCategories");
+        
+        // 2. Duplicate check - OPTIMIZED for gas in creative freedom zone
+        for (uint256 i = 0; i < userLength; i++) {
+            for (uint256 j = i + 1; j < userLength; j++) {
+                if (keccak256(bytes(userCategories[i])) == keccak256(bytes(userCategories[j]))) {
+                    revert("DuplicateCategory");
+                }
+            }
+        }
+        
+        // 3. Existence check - OPTIMIZED for gas in creative freedom zone
+        uint256 availableLength = availableCategories.length;
+        for (uint256 i = 0; i < userLength; i++) {
+            bool found = false;
+            bytes32 userCatHash = keccak256(bytes(userCategories[i]));
+            
+            for (uint256 j = 0; j < availableLength; j++) {
+                if (userCatHash == keccak256(bytes(availableCategories[j]))) {
+                    found = true;
+                    break; // Gas optimization: early exit
+                }
+            }
+            
+            if (!found) revert("InvalidCategory");
+        }
+    }
 }

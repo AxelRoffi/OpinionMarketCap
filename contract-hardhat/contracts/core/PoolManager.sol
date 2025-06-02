@@ -36,6 +36,7 @@ contract PoolManager is
     IOpinionCore public opinionCore;
     IFeeManager public feeManager;
     IERC20 public usdcToken;
+    address public treasury;
 
     // Pool configuration
     uint96 public poolCreationFee;
@@ -99,6 +100,7 @@ contract PoolManager is
         address _opinionCore,
         address _feeManager,
         address _usdcToken,
+        address _treasury,
         address _admin
     ) public initializer {
         __AccessControl_init();
@@ -108,11 +110,13 @@ contract PoolManager is
         ValidationLibrary.validateAddress(_opinionCore);
         ValidationLibrary.validateAddress(_feeManager);
         ValidationLibrary.validateAddress(_usdcToken);
+        ValidationLibrary.validateAddress(_treasury);
         ValidationLibrary.validateAddress(_admin);
 
         opinionCore = IOpinionCore(_opinionCore);
         feeManager = IFeeManager(_feeManager);
         usdcToken = IERC20(_usdcToken);
+        treasury = _treasury;
 
         // Set initial configuration
         poolCreationFee = 50 * 10 ** 6; // 50 USDC
@@ -696,6 +700,7 @@ contract PoolManager is
         opinionCore.updateOpinionOnPoolExecution(
             opinionId,
             pool.proposedAnswer,
+            "", // Empty description for pool execution
             targetPrice
         );
 
@@ -774,5 +779,161 @@ contract PoolManager is
             msg.sender,
             block.timestamp
         );
+    }
+
+    // --- EARLY WITHDRAWAL FEATURE ---
+
+    /**
+     * @dev Allows contributor to withdraw early from pool with 10% penalty
+     * OBLIGATOIRE: Cette signature exacte
+     * @param poolId Pool ID to withdraw from
+     */
+    function withdrawFromPoolEarly(uint256 poolId) external nonReentrant {
+        // === CHECKS === (OBLIGATOIRE: Cet ordre exact de validations)
+        
+        // 1. Pool ID validation FIRST
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        
+        // 2. Pool status validation  
+        if (pool.status != PoolStructs.PoolStatus.Active) revert PoolNotActive(poolId, uint8(pool.status));
+        
+        // 3. Deadline validation
+        if (block.timestamp >= pool.deadline) revert PoolDeadlinePassed(poolId, pool.deadline);
+        
+        // 4. User contribution validation
+        uint96 userContribution = poolContributionAmounts[poolId][msg.sender];
+        if (userContribution == 0) revert PoolNoContribution(poolId, msg.sender);
+        
+        // === EFFECTS === (OBLIGATOIRE: State updates BEFORE transfers for reentrancy protection)
+        
+        // 5. Calculate penalty and splits (SECURITY FIX: Enhanced penalty, 100% treasury)
+        uint96 penalty = userContribution * 20 / 100;           // 🔒 20% total penalty (enhanced deterrent)
+        uint96 userAmount = userContribution - penalty;         // 80% vers user
+        // 🔒 SECURITY: 100% penalty vers treasury (ZERO creator incentive)
+        
+        // 6. Update state (OBLIGATOIRE: Reset user contribution BEFORE transfers)
+        poolContributionAmounts[poolId][msg.sender] = 0;
+        
+        // 7. Update pool total amount
+        pool.totalAmount -= userContribution;
+        
+        // === INTERACTIONS === (SECURITY FIX: Safe transfer pattern)
+        
+        // 8. Transfer to user (80%) - Enhanced penalty applied
+        usdcToken.safeTransfer(msg.sender, userAmount);
+        
+        // 9. Transfer to treasury (100% of penalty) - 🔒 SECURITY FIX: NO creator share
+        if (penalty > 0) {
+            usdcToken.safeTransfer(treasury, penalty);
+        }
+        
+        // 🔒 REMOVED: All creator penalty sharing logic eliminated
+        // 🔒 SECURITY: Zero incentive for gaming attacks
+        
+        // 10. Emit event (Updated with new penalty structure)
+        emit PoolEarlyWithdrawal(poolId, msg.sender, userContribution, penalty, userAmount, block.timestamp);
+    }
+
+    // --- HELPER VIEW FUNCTIONS (CREATIVE FREEDOM ZONE) ---
+
+    /**
+     * @dev Preview early withdrawal amounts for a user
+     * @param poolId Pool ID
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return penalty Total penalty amount (10%)
+     * @return userWillReceive Amount user will receive (90%)
+     * @return canWithdraw Whether withdrawal is currently possible
+     */
+    function getEarlyWithdrawalPreview(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 penalty,
+        uint96 userWillReceive,
+        bool canWithdraw
+    ) {
+        // Validate pool exists
+        if (poolId >= poolCount) {
+            return (0, 0, 0, false);
+        }
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        userContribution = poolContributionAmounts[poolId][user];
+        
+        // Calculate amounts if user has contribution
+        if (userContribution > 0) {
+            penalty = userContribution * 20 / 100;           // 🔒 20% total penalty (security fix)
+            userWillReceive = userContribution - penalty;    // 80% to user
+            
+            // Check if withdrawal is possible
+            canWithdraw = pool.status == PoolStructs.PoolStatus.Active && 
+                         block.timestamp < pool.deadline;
+        } else {
+            penalty = 0;
+            userWillReceive = 0;
+            canWithdraw = false;
+        }
+    }
+
+    /**
+     * @dev Get detailed penalty breakdown for early withdrawal (SECURITY FIX)
+     * @param poolId Pool ID  
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return totalPenalty Total penalty (20% - enhanced)
+     * @return treasuryReceives Treasury receives (100% of penalty)
+     * @return userReceives Amount user receives (80%)
+     */
+    function getEarlyWithdrawalBreakdown(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 totalPenalty,
+        uint96 treasuryReceives,
+        uint96 userReceives
+    ) {
+        if (poolId >= poolCount) {
+            return (0, 0, 0, 0);
+        }
+        
+        userContribution = poolContributionAmounts[poolId][user];
+        
+        if (userContribution > 0) {
+            totalPenalty = userContribution * 20 / 100;        // 🔒 20% total penalty (security fix)
+            treasuryReceives = totalPenalty;                   // 🔒 100% vers treasury (no creator share)
+            userReceives = userContribution - totalPenalty;    // 80% vers user
+        }
+    }
+
+    /**
+     * @dev Check if early withdrawal is possible for a user
+     * @param poolId Pool ID
+     * @param user User address
+     * @return possible Whether early withdrawal is possible
+     * @return reason Reason if not possible (0=possible, 1=invalid_pool, 2=not_active, 3=deadline_passed, 4=no_contribution)
+     */
+    function canWithdrawEarly(uint256 poolId, address user) external view returns (bool possible, uint8 reason) {
+        // Check pool exists
+        if (poolId >= poolCount) {
+            return (false, 1); // invalid_pool
+        }
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        
+        // Check pool status
+        if (pool.status != PoolStructs.PoolStatus.Active) {
+            return (false, 2); // not_active
+        }
+        
+        // Check deadline
+        if (block.timestamp >= pool.deadline) {
+            return (false, 3); // deadline_passed
+        }
+        
+        // Check user contribution
+        if (poolContributionAmounts[poolId][user] == 0) {
+            return (false, 4); // no_contribution
+        }
+        
+        return (true, 0); // possible
     }
 }

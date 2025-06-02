@@ -69,7 +69,6 @@ interface IOpinionMarketEvents {
 
     event FeeClaimed(address indexed user, uint256 amount, uint256 timestamp);
 
-    // Add to IOpinionMarketEvents.sol
     /**
      * @dev Emitted on fee-related actions:
      * actionType: 0 = fee calculation, 1 = fee accumulation, 2 = fee claiming
@@ -99,6 +98,39 @@ interface IOpinionMarketEvents {
      */
     event ParameterUpdated(uint8 indexed paramId, uint256 value);
 
+    // --- EXTENSION SLOTS EVENTS - IMPOSED SIGNATURES ---
+    /**
+     * @dev Emitted when a string extension is set for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    event OpinionStringExtensionSet(uint256 indexed opinionId, string key, string value);
+
+    /**
+     * @dev Emitted when a number extension is set for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    event OpinionNumberExtensionSet(uint256 indexed opinionId, string key, uint256 value);
+
+    /**
+     * @dev Emitted when a bool extension is set for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    event OpinionBoolExtensionSet(uint256 indexed opinionId, string key, bool value);
+
+    /**
+     * @dev Emitted when an address extension is set for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    event OpinionAddressExtensionSet(uint256 indexed opinionId, string key, address value);
+
     /**
      * @dev Emitted for administrative actions
      * @param actionType Action type
@@ -111,6 +143,20 @@ interface IOpinionMarketEvents {
         address indexed account,
         bytes32 data,
         uint256 amount
+    );
+
+    /**
+     * @dev Emitted when treasury address is updated
+     * @param oldTreasury Previous treasury address
+     * @param newTreasury New treasury address
+     * @param admin Admin who performed the update
+     * @param timestamp Block timestamp of the update
+     */
+    event TreasuryUpdated(
+        address indexed oldTreasury,
+        address indexed newTreasury,
+        address indexed admin,
+        uint256 timestamp
     );
 
     /**
@@ -272,6 +318,25 @@ interface IOpinionMarketEvents {
         uint256 oldValue,
         uint256 newValue,
         address indexed admin,
+        uint256 timestamp
+    );
+
+    /**
+     * @dev Emitted when a contributor withdraws early from a pool with penalty
+     * OBLIGATOIRE: Event pour early pool withdrawal
+     * @param poolId Pool ID
+     * @param contributor Address of the contributor withdrawing
+     * @param originalContribution Original contribution amount
+     * @param penaltyAmount Total penalty amount (10%)
+     * @param userReceived Amount received by user (90%)
+     * @param timestamp Withdrawal timestamp
+     */
+    event PoolEarlyWithdrawal(
+        uint256 indexed poolId,
+        address indexed contributor,
+        uint96 originalContribution,
+        uint96 penaltyAmount,
+        uint96 userReceived,
         uint256 timestamp
     );
 }

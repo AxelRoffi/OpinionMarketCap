@@ -14,12 +14,15 @@ library OpinionStructs {
         bool isActive;
         string question;
         string currentAnswer;
+        string currentAnswerDescription;     // 🆕 NEW FIELD
         string ipfsHash;
         string link;
+        string[] categories;                 // 🚨 IMPOSED - ADDED AT END ONLY
     }
 
     struct AnswerHistory {
         string answer;
+        string description;          // 🆕 NEW FIELD
         address owner;
         uint96 price;
         uint32 timestamp;

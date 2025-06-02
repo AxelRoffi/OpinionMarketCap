@@ -33,7 +33,6 @@ contract OpinionCore is
     using SafeERC20 for IERC20;
 
     // --- ROLES ---
-    // --- ROLES ---
     /**
      * @dev Administrative role for the core opinion system
      * Accounts with this role can:
@@ -96,14 +95,42 @@ contract OpinionCore is
     uint256 public constant MAX_ANSWER_LENGTH = 52;
     uint256 public constant MAX_LINK_LENGTH = 260;
     uint256 public constant MAX_IPFS_HASH_LENGTH = 68;
+    
+    // --- INITIAL PRICE RANGE CONSTANTS ---
+    uint96 public constant MIN_INITIAL_PRICE = 2_000_000;   // 2 USDC (6 decimals)
+    uint96 public constant MAX_INITIAL_PRICE = 100_000_000; // 100 USDC (6 decimals)
+    
+    // --- DESCRIPTION LENGTH CONSTANT ---
+    uint256 public constant MAX_DESCRIPTION_LENGTH = 120;
+    
+    // --- CATEGORIES CONSTANTS ---
+    uint256 public constant MAX_CATEGORIES_PER_OPINION = 3;
 
     // --- STATE VARIABLES ---
     IERC20 public usdcToken;
     IFeeManager public feeManager;
     IPoolManager public poolManager;
 
+    address public treasury;
+    address public pendingTreasury;
+    uint256 public treasuryChangeTimestamp;
+    uint256 public constant TREASURY_CHANGE_DELAY = 48 hours;
+    
     bool public isPublicCreationEnabled;
     uint256 public nextOpinionId;
+    
+    // --- CATEGORIES STORAGE ---
+    string[] public categories;
+
+    // --- EXTENSION SLOTS STORAGE - IMPOSED MAPPINGS ---
+    // OBLIGATOIRE: Utiliser mappings séparés (pas de modification struct Opinion)
+    mapping(uint256 => mapping(string => string)) public opinionStringExtensions;
+    mapping(uint256 => mapping(string => uint256)) public opinionNumberExtensions;  
+    mapping(uint256 => mapping(string => bool)) public opinionBoolExtensions;
+    mapping(uint256 => mapping(string => address)) public opinionAddressExtensions;
+
+    // OBLIGATOIRE: Tracking des extension keys par opinion
+    mapping(uint256 => string[]) public opinionExtensionKeys;
 
     // Security and rate limiting
     uint256 public maxTradesPerBlock;
@@ -136,7 +163,8 @@ contract OpinionCore is
     function initialize(
         address _usdcToken,
         address _feeManager,
-        address _poolManager
+        address _poolManager,
+        address _treasury // 🆕 NO
     ) public initializer {
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -151,12 +179,14 @@ contract OpinionCore is
         if (
             _usdcToken == address(0) ||
             _feeManager == address(0) ||
-            _poolManager == address(0)
+            _poolManager == address(0) ||
+            _treasury == address(0)
         ) revert ZeroAddressNotAllowed();
 
         usdcToken = IERC20(_usdcToken);
         feeManager = IFeeManager(_feeManager);
         poolManager = IPoolManager(_poolManager);
+        treasury = _treasury;
 
         // Initialize parameters
         nextOpinionId = 1;
@@ -166,6 +196,10 @@ contract OpinionCore is
         questionCreationFee = 1_000_000; // 1 USDC
         initialAnswerPrice = 2_000_000; // 2 USDC
         absoluteMaxPriceChange = 200; // 200%
+        
+        // 🚨 IMPOSED: Initialize default categories - EXACT LIST REQUIRED
+        categories = ["Crypto", "Politics", "Science", "Technology", "Sports", 
+                      "Entertainment", "Culture", "Web", "Social Media", "Other"];
     }
 
     // --- MODIFIERS ---
@@ -193,53 +227,66 @@ contract OpinionCore is
         _;
     }
 
-    // --- EXTERNAL FUNCTIONS ---
     /**
      * @dev Creates a new opinion
      * @param question The opinion question
-     * @param initialAnswer The initial answer
+     * @param answer The initial answer
+     * @param description The answer description (optional, max 120 chars)
+     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param opinionCategories Categories for the opinion (1-3 required)
      */
     function createOpinion(
         string calldata question,
-        string calldata initialAnswer
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories
     ) external override nonReentrant whenNotPaused {
+        // 1. Access control check FIRST - IMPOSED ORDER
         if (!isPublicCreationEnabled && !hasRole(ADMIN_ROLE, msg.sender))
             revert UnauthorizedCreator();
 
-        // Validate basic parameters
+        // 2. Categories validation BEFORE other validations - IMPOSED ORDER
+        ValidationLibrary.validateOpinionCategories(opinionCategories, categories);
+
+        // 3. Then existing validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionParams(
             question,
-            initialAnswer,
+            answer,
             MAX_QUESTION_LENGTH,
             MAX_ANSWER_LENGTH
         );
+        
+        // Validate description (optional)
+        ValidationLibrary.validateDescription(description);
 
-        // Check allowance
+        // 🚨 CRITICAL: Validate initialPrice range (2-100 USDC inclusive)
+        if (initialPrice < MIN_INITIAL_PRICE || initialPrice > MAX_INITIAL_PRICE) {
+            revert InvalidInitialPrice();
+        }
+
+        // Check allowance for initialPrice
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < questionCreationFee)
-            revert InsufficientAllowance(questionCreationFee, allowance);
+        if (allowance < initialPrice)
+            revert InsufficientAllowance(initialPrice, allowance);
 
-        // Create opinion with empty ipfsHash and link
+        // Create opinion record with user-chosen initialPrice
         uint256 opinionId = _createOpinionRecord(
             question,
-            initialAnswer,
+            answer,
+            description,
             "",
             "",
-            initialAnswerPrice
+            initialPrice,
+            opinionCategories
         );
 
-        // Handle transfers - just the creation fee
+        // 🚨 CRITICAL FINANCIAL FLOW: 100% to treasury, NO SPLITS
         usdcToken.safeTransferFrom(
             msg.sender,
-            address(this),
-            questionCreationFee
+            treasury,
+            initialPrice
         );
-
-        // Send creation fee to the dao/platform
-        address treasury = hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
-            ? msg.sender
-            : _msgSender();
-        usdcToken.safeTransfer(treasury, questionCreationFee);
 
         // Emit events
         emit OpinionAction(
@@ -247,40 +294,53 @@ contract OpinionCore is
             0,
             question,
             msg.sender,
-            initialAnswerPrice
+            initialPrice
         );
         emit OpinionAction(
             opinionId,
             1,
-            initialAnswer,
+            answer,
             msg.sender,
-            initialAnswerPrice
+            initialPrice
         );
     }
 
     /**
      * @dev Creates a new opinion with IPFS hash and link
      * @param question The opinion question
-     * @param initialAnswer The initial answer
+     * @param answer The initial answer
+     * @param description The answer description (optional, max 120 chars)
+     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param opinionCategories Categories for the opinion (1-3 required)
      * @param ipfsHash The IPFS hash for an image
      * @param link The external URL link
      */
     function createOpinionWithExtras(
         string calldata question,
-        string calldata initialAnswer,
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories,
         string calldata ipfsHash,
         string calldata link
     ) external override nonReentrant whenNotPaused {
+        // 1. Access control check FIRST - IMPOSED ORDER
         if (!isPublicCreationEnabled && !hasRole(ADMIN_ROLE, msg.sender))
             revert UnauthorizedCreator();
 
-        // Validate parameters
+        // 2. Categories validation BEFORE other validations - IMPOSED ORDER
+        ValidationLibrary.validateOpinionCategories(opinionCategories, categories);
+
+        // 3. Then existing validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionParams(
             question,
-            initialAnswer,
+            answer,
             MAX_QUESTION_LENGTH,
             MAX_ANSWER_LENGTH
         );
+        
+        // Validate description (optional)
+        ValidationLibrary.validateDescription(description);
 
         // Validate IPFS hash and link
         bytes memory ipfsHashBytes = bytes(ipfsHash);
@@ -295,36 +355,33 @@ contract OpinionCore is
             _validateIpfsHash(ipfsHash);
         }
 
-        // Check allowance
+        // 🚨 CRITICAL: Validate initialPrice range (2-100 USDC inclusive)
+        if (initialPrice < MIN_INITIAL_PRICE || initialPrice > MAX_INITIAL_PRICE) {
+            revert InvalidInitialPrice();
+        }
+
+        // Check allowance for initialPrice
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < initialAnswerPrice)
-            revert InsufficientAllowance(initialAnswerPrice, allowance);
+        if (allowance < initialPrice)
+            revert InsufficientAllowance(initialPrice, allowance);
 
-        // Calculate fees using FeeManager
-        OpinionStructs.FeeDistribution memory fees = feeManager.calculateFees(
-            initialAnswerPrice
-        );
-
-        // Create opinion
+        // Create opinion with user-chosen initialPrice
         uint256 opinionId = _createOpinionRecord(
             question,
-            initialAnswer,
+            answer,
+            description,
             ipfsHash,
             link,
-            initialAnswerPrice
+            initialPrice,
+            opinionCategories
         );
 
-        // Handle transfers
+        // 🚨 CRITICAL FINANCIAL FLOW: 100% to treasury, NO SPLITS
         usdcToken.safeTransferFrom(
             msg.sender,
-            address(this),
-            initialAnswerPrice
+            treasury,
+            initialPrice
         );
-
-        // Distribution of fees
-        // Platform fee (keep in contract for now)
-        // Creator fees accumulated
-        feeManager.accumulateFee(msg.sender, fees.creatorFee);
 
         // Emit events
         emit OpinionAction(
@@ -332,23 +389,14 @@ contract OpinionCore is
             0,
             question,
             msg.sender,
-            initialAnswerPrice
+            initialPrice
         );
         emit OpinionAction(
             opinionId,
             1,
-            initialAnswer,
+            answer,
             msg.sender,
-            initialAnswerPrice
-        );
-        emit FeesAction(
-            opinionId,
-            0,
-            address(0),
-            initialAnswerPrice,
-            fees.platformFee,
-            fees.creatorFee,
-            fees.ownerAmount
+            initialPrice
         );
     }
 
@@ -356,10 +404,12 @@ contract OpinionCore is
      * @dev Submits a new answer to an opinion
      * @param opinionId The ID of the opinion
      * @param answer The new answer
+     * @param description The answer description (optional, max 120 chars)
      */
     function submitAnswer(
         uint256 opinionId,
-        string calldata answer
+        string calldata answer,
+        string calldata description
     ) external override nonReentrant whenNotPaused {
         _checkAndUpdateTradesInBlock();
         _checkTradeAllowed(opinionId);
@@ -374,6 +424,9 @@ contract OpinionCore is
         if (answerBytes.length == 0) revert EmptyString();
         if (answerBytes.length > MAX_ANSWER_LENGTH)
             revert InvalidAnswerLength();
+            
+        // Validate description (optional)
+        ValidationLibrary.validateDescription(description);
 
         // Use the stored next price or calculate it
         uint96 price = opinion.nextPrice > 0
@@ -422,6 +475,7 @@ contract OpinionCore is
         answerHistory[opinionId].push(
             OpinionStructs.AnswerHistory({
                 answer: answer,
+                description: description,
                 owner: msg.sender,
                 price: price,
                 timestamp: uint32(block.timestamp)
@@ -430,6 +484,7 @@ contract OpinionCore is
 
         // Update opinion state
         opinion.currentAnswer = answer;
+        opinion.currentAnswerDescription = description;
         opinion.currentAnswerOwner = msg.sender;
         opinion.lastPrice = price;
         opinion.totalVolume += price;
@@ -439,8 +494,6 @@ contract OpinionCore is
 
         // Token transfers
         usdcToken.safeTransferFrom(msg.sender, address(this), price);
-
-        // No direct transfer here. Fees will be claimed separately.
 
         // Emit events
         emit FeesAction(
@@ -664,11 +717,13 @@ contract OpinionCore is
      * @dev Updates an opinion when a pool executes
      * @param opinionId The ID of the opinion
      * @param answer The new answer
+     * @param description The answer description
      * @param price The price paid
      */
     function updateOpinionOnPoolExecution(
         uint256 opinionId,
         string calldata answer,
+        string calldata description,
         uint256 price
     ) external override onlyPoolManager {
         if (opinionId >= nextOpinionId) revert OpinionNotFound();
@@ -680,6 +735,7 @@ contract OpinionCore is
         answerHistory[opinionId].push(
             OpinionStructs.AnswerHistory({
                 answer: answer,
+                description: description,
                 owner: address(poolManager),
                 price: uint96(price),
                 timestamp: uint32(block.timestamp)
@@ -688,6 +744,7 @@ contract OpinionCore is
 
         // Update opinion state
         opinion.currentAnswer = answer;
+        opinion.currentAnswerDescription = description;
         opinion.currentAnswerOwner = address(poolManager); // PoolManager becomes the owner
         opinion.lastPrice = uint96(price);
         opinion.totalVolume += uint96(price);
@@ -731,6 +788,7 @@ contract OpinionCore is
         initialAnswerPrice = _initialAnswerPrice;
         emit ParameterUpdated(7, _initialAnswerPrice);
     }
+
 
     /**
      * @dev Sets the maximum price change percentage
@@ -813,16 +871,95 @@ contract OpinionCore is
         _revokeRole(MARKET_CONTRACT_ROLE, contractAddress);
     }
 
+    /**
+     * @dev Sets a new treasury address with timelock protection
+     * @param newTreasury The new treasury address to set after timelock
+     */
+    function setTreasury(address newTreasury) external onlyRole(ADMIN_ROLE) {
+        if (newTreasury == address(0)) revert ZeroAddressNotAllowed();
+        
+        pendingTreasury = newTreasury;
+        treasuryChangeTimestamp = block.timestamp + TREASURY_CHANGE_DELAY;
+        
+        emit TreasuryUpdated(treasury, newTreasury, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Confirms the treasury change after timelock period has elapsed
+     */
+    function confirmTreasuryChange() external onlyRole(ADMIN_ROLE) {
+        if (block.timestamp < treasuryChangeTimestamp) 
+            revert("Treasury: Timelock not elapsed");
+        if (pendingTreasury == address(0)) 
+            revert("Treasury: No pending treasury");
+        
+        address oldTreasury = treasury;
+        treasury = pendingTreasury;
+        pendingTreasury = address(0);
+        treasuryChangeTimestamp = 0;
+        
+        emit TreasuryUpdated(oldTreasury, treasury, msg.sender, block.timestamp);
+    }
+
+    // --- CATEGORIES MANAGEMENT ---
+    /**
+     * @dev Adds a new category to available categories
+     * @param newCategory The new category to add
+     * 🚨 IMPOSED SIGNATURE - DO NOT MODIFY
+     */
+    function addCategoryToCategories(string calldata newCategory) external onlyRole(ADMIN_ROLE) {
+        // Check if category already exists - Gas optimized in creative freedom zone
+        bytes32 newCategoryHash = keccak256(bytes(newCategory));
+        uint256 length = categories.length;
+        
+        for (uint256 i = 0; i < length; i++) {
+            if (keccak256(bytes(categories[i])) == newCategoryHash) {
+                revert CategoryAlreadyExists();
+            }
+        }
+        
+        categories.push(newCategory);
+    }
+
+    // --- VIEW FUNCTIONS FOR CATEGORIES (Creative Freedom Zone) ---
+    /**
+     * @dev Returns all available categories
+     * @return Array of available category strings
+     */
+    function getAvailableCategories() external view returns (string[] memory) {
+        return categories;
+    }
+
+    /**
+     * @dev Returns categories for a specific opinion
+     * @param opinionId The opinion ID
+     * @return Array of category strings for the opinion
+     */
+    function getOpinionCategories(uint256 opinionId) external view returns (string[] memory) {
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        return opinions[opinionId].categories;
+    }
+
+    /**
+     * @dev Returns the total number of available categories
+     * @return The count of available categories
+     */
+    function getCategoryCount() external view returns (uint256) {
+        return categories.length;
+    }
+
     // --- INTERNAL FUNCTIONS ---
     /**
      * @dev Creates a new opinion record
      */
     function _createOpinionRecord(
         string memory question,
-        string memory initialAnswer,
+        string memory answer,
+        string memory description,
         string memory ipfsHash,
         string memory link,
-        uint96 initialPrice
+        uint96 initialPrice,
+        string[] calldata opinionCategories
     ) internal returns (uint256) {
         uint256 opinionId = nextOpinionId++;
         OpinionStructs.Opinion storage opinion = opinions[opinionId];
@@ -835,15 +972,20 @@ contract OpinionCore is
         );
         opinion.isActive = true;
         opinion.question = question;
-        opinion.currentAnswer = initialAnswer;
+        opinion.currentAnswer = answer;
+        opinion.currentAnswerDescription = description;
         opinion.currentAnswerOwner = msg.sender;
         opinion.totalVolume = initialPrice;
         opinion.ipfsHash = ipfsHash;
         opinion.link = link;
+        
+        // 🚨 IMPOSED: Store categories - AFTER existing fields
+        opinion.categories = opinionCategories;
 
         answerHistory[opinionId].push(
             OpinionStructs.AnswerHistory({
-                answer: initialAnswer,
+                answer: answer,
+                description: description,
                 owner: msg.sender,
                 price: initialPrice,
                 timestamp: uint32(block.timestamp)
@@ -975,5 +1117,283 @@ contract OpinionCore is
 
         tokenContract.safeTransfer(msg.sender, balance);
         emit AdminAction(0, msg.sender, bytes32(0), balance);
+    }
+
+    // --- EXTENSION SLOTS FUNCTIONS - IMPOSED SIGNATURES ---
+
+    /**
+     * @dev Validates extension key according to imposed regex pattern
+     * OBLIGATOIRE: ^[a-zA-Z0-9_]{1,32}$
+     * @param key The extension key to validate
+     * @return bool True if key is valid
+     */
+    function isValidExtensionKey(string memory key) internal pure returns (bool) {
+        bytes memory keyBytes = bytes(key);
+        
+        // Length check: 1-32 chars
+        if (keyBytes.length == 0 || keyBytes.length > 32) return false;
+        
+        // Character validation: alphanumeric + underscore only
+        for (uint i = 0; i < keyBytes.length; i++) {
+            uint8 char = uint8(keyBytes[i]);
+            bool isAlpha = (char >= 65 && char <= 90) || (char >= 97 && char <= 122);
+            bool isNumeric = (char >= 48 && char <= 57);
+            bool isUnderscore = (char == 95);
+            
+            if (!isAlpha && !isNumeric && !isUnderscore) return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * @dev Internal function to track extension keys (gas optimized)
+     * OBLIGATOIRE: Tracker les keys pour éviter doublons et permettre enumeration
+     * @param opinionId Opinion ID
+     * @param key Extension key to track
+     */
+    function _trackExtensionKey(uint256 opinionId, string memory key) internal {
+        string[] storage keys = opinionExtensionKeys[opinionId];
+        
+        // Gas optimization: Use keccak256 for comparison to avoid string copying
+        bytes32 keyHash = keccak256(bytes(key));
+        
+        // Check if key already exists
+        for (uint i = 0; i < keys.length; i++) {
+            if (keccak256(bytes(keys[i])) == keyHash) {
+                return; // Key already tracked, no need to add
+            }
+        }
+        
+        // Add new key
+        keys.push(key);
+    }
+
+    /**
+     * @dev Sets a string extension for an opinion
+     * OBLIGATOIRE: Cette signature exacte pour admin functions
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionStringExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        string calldata value
+    ) external onlyRole(ADMIN_ROLE) {
+        // 1. Access control FIRST (handled by onlyRole(ADMIN_ROLE))
+        
+        // 2. Opinion existence check
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        
+        // 3. Key validation
+        if (!isValidExtensionKey(key)) revert InvalidExtensionKey();
+        
+        // 4. Set extension
+        opinionStringExtensions[opinionId][key] = value;
+        
+        // 5. Track key (if new)
+        _trackExtensionKey(opinionId, key);
+        
+        // 6. Emit event
+        emit OpinionStringExtensionSet(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets a number extension for an opinion
+     * OBLIGATOIRE: Cette signature exacte pour admin functions
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionNumberExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        uint256 value
+    ) external onlyRole(ADMIN_ROLE) {
+        // 1. Access control FIRST (handled by onlyRole(ADMIN_ROLE))
+        
+        // 2. Opinion existence check
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        
+        // 3. Key validation
+        if (!isValidExtensionKey(key)) revert InvalidExtensionKey();
+        
+        // 4. Set extension
+        opinionNumberExtensions[opinionId][key] = value;
+        
+        // 5. Track key (if new)
+        _trackExtensionKey(opinionId, key);
+        
+        // 6. Emit event
+        emit OpinionNumberExtensionSet(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets a bool extension for an opinion
+     * OBLIGATOIRE: Cette signature exacte pour admin functions
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionBoolExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        bool value
+    ) external onlyRole(ADMIN_ROLE) {
+        // 1. Access control FIRST (handled by onlyRole(ADMIN_ROLE))
+        
+        // 2. Opinion existence check
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        
+        // 3. Key validation
+        if (!isValidExtensionKey(key)) revert InvalidExtensionKey();
+        
+        // 4. Set extension
+        opinionBoolExtensions[opinionId][key] = value;
+        
+        // 5. Track key (if new)
+        _trackExtensionKey(opinionId, key);
+        
+        // 6. Emit event
+        emit OpinionBoolExtensionSet(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets an address extension for an opinion
+     * OBLIGATOIRE: Cette signature exacte pour admin functions
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionAddressExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        address value
+    ) external onlyRole(ADMIN_ROLE) {
+        // 1. Access control FIRST (handled by onlyRole(ADMIN_ROLE))
+        
+        // 2. Opinion existence check
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+        
+        // 3. Key validation
+        if (!isValidExtensionKey(key)) revert InvalidExtensionKey();
+        
+        // 4. Set extension
+        opinionAddressExtensions[opinionId][key] = value;
+        
+        // 5. Track key (if new)
+        _trackExtensionKey(opinionId, key);
+        
+        // 6. Emit event
+        emit OpinionAddressExtensionSet(opinionId, key, value);
+    }
+
+    /**
+     * @dev Gets all extensions for an opinion
+     * OBLIGATOIRE: View function signature
+     * @param opinionId Opinion ID
+     * @return keys Array of extension keys
+     * @return stringValues Array of string values (corresponds to keys)
+     * @return numberValues Array of number values (corresponds to keys)
+     * @return boolValues Array of bool values (corresponds to keys)
+     * @return addressValues Array of address values (corresponds to keys)
+     */
+    function getOpinionExtensions(uint256 opinionId) external view returns (
+        string[] memory keys,
+        string[] memory stringValues,
+        uint256[] memory numberValues,
+        bool[] memory boolValues,
+        address[] memory addressValues
+    ) {
+        keys = opinionExtensionKeys[opinionId];
+        uint256 length = keys.length;
+        
+        // Initialize arrays
+        stringValues = new string[](length);
+        numberValues = new uint256[](length);
+        boolValues = new bool[](length);
+        addressValues = new address[](length);
+        
+        // Fill arrays with values for each key
+        for (uint256 i = 0; i < length; i++) {
+            string memory key = keys[i];
+            stringValues[i] = opinionStringExtensions[opinionId][key];
+            numberValues[i] = opinionNumberExtensions[opinionId][key];
+            boolValues[i] = opinionBoolExtensions[opinionId][key];
+            addressValues[i] = opinionAddressExtensions[opinionId][key];
+        }
+        
+        return (keys, stringValues, numberValues, boolValues, addressValues);
+    }
+
+    // --- OPTIONAL HELPER FUNCTIONS (CREATIVE FREEDOM ZONE) ---
+
+    /**
+     * @dev Gets a specific string extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionStringExtension(uint256 opinionId, string calldata key) external view returns (string memory) {
+        return opinionStringExtensions[opinionId][key];
+    }
+
+    /**
+     * @dev Gets a specific number extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionNumberExtension(uint256 opinionId, string calldata key) external view returns (uint256) {
+        return opinionNumberExtensions[opinionId][key];
+    }
+
+    /**
+     * @dev Gets a specific bool extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionBoolExtension(uint256 opinionId, string calldata key) external view returns (bool) {
+        return opinionBoolExtensions[opinionId][key];
+    }
+
+    /**
+     * @dev Gets a specific address extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionAddressExtension(uint256 opinionId, string calldata key) external view returns (address) {
+        return opinionAddressExtensions[opinionId][key];
+    }
+
+    /**
+     * @dev Checks if an opinion has a specific extension key
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return exists True if the key exists for this opinion
+     */
+    function hasOpinionExtension(uint256 opinionId, string calldata key) external view returns (bool) {
+        string[] memory keys = opinionExtensionKeys[opinionId];
+        bytes32 keyHash = keccak256(bytes(key));
+        
+        for (uint256 i = 0; i < keys.length; i++) {
+            if (keccak256(bytes(keys[i])) == keyHash) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * @dev Gets the number of extensions for an opinion
+     * @param opinionId Opinion ID
+     * @return count Number of extensions
+     */
+    function getOpinionExtensionCount(uint256 opinionId) external view returns (uint256) {
+        return opinionExtensionKeys[opinionId].length;
     }
 }

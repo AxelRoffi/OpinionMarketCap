@@ -57,12 +57,14 @@ contract OpinionMarket is
      * @param _opinionCore Address of the OpinionCore contract
      * @param _feeManager Address of the FeeManager contract
      * @param _poolManager Address of the PoolManager contract
+     * @param _treasury Address of the treasury that receives platform fees
      */
     function initialize(
         address _usdcToken,
         address _opinionCore,
         address _feeManager,
-        address _poolManager
+        address _poolManager,
+        address _treasury
     ) public initializer {
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -74,7 +76,8 @@ contract OpinionMarket is
             _usdcToken == address(0) ||
             _opinionCore == address(0) ||
             _feeManager == address(0) ||
-            _poolManager == address(0)
+            _poolManager == address(0) ||
+            _treasury == address(0)
         ) revert ZeroAddressNotAllowed();
 
         // Setup roles
@@ -103,31 +106,46 @@ contract OpinionMarket is
     /**
      * @dev Creates a new opinion
      * @param question The opinion question
-     * @param initialAnswer The initial answer
+     * @param answer The initial answer
+     * @param description The answer description (optional, max 120 chars)
+     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param opinionCategories Categories for the opinion (1-3 required)
      */
     function createOpinion(
         string calldata question,
-        string calldata initialAnswer
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories
     ) external nonReentrant whenNotPaused {
-        opinionCore.createOpinion(question, initialAnswer);
+        opinionCore.createOpinion(question, answer, description, initialPrice, opinionCategories);
     }
 
     /**
      * @dev Creates a new opinion with IPFS hash and link
      * @param question The opinion question
-     * @param initialAnswer The initial answer
+     * @param answer The initial answer
+     * @param description The answer description (optional, max 120 chars)
+     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param opinionCategories Categories for the opinion (1-3 required)
      * @param ipfsHash The IPFS hash for an image
      * @param link The external URL link
      */
     function createOpinionWithExtras(
         string calldata question,
-        string calldata initialAnswer,
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories,
         string calldata ipfsHash,
         string calldata link
     ) external nonReentrant whenNotPaused {
         opinionCore.createOpinionWithExtras(
             question,
-            initialAnswer,
+            answer,
+            description,
+            initialPrice,
+            opinionCategories,
             ipfsHash,
             link
         );
@@ -137,12 +155,14 @@ contract OpinionMarket is
      * @dev Submits a new answer to an opinion
      * @param opinionId The ID of the opinion
      * @param answer The new answer
+     * @param description The answer description (optional, max 120 chars)
      */
     function submitAnswer(
         uint256 opinionId,
-        string calldata answer
+        string calldata answer,
+        string calldata description
     ) external nonReentrant whenNotPaused {
-        opinionCore.submitAnswer(opinionId, answer);
+        opinionCore.submitAnswer(opinionId, answer, description);
     }
 
     /**
@@ -195,6 +215,176 @@ contract OpinionMarket is
         uint256 opinionId
     ) external onlyRole(MODERATOR_ROLE) {
         opinionCore.reactivateOpinion(opinionId);
+    }
+
+    // --- CATEGORIES FUNCTIONS ---
+    /**
+     * @dev Adds a new category to available categories
+     * @param newCategory The new category to add
+     */
+    function addCategoryToCategories(string calldata newCategory) external onlyRole(ADMIN_ROLE) {
+        opinionCore.addCategoryToCategories(newCategory);
+    }
+
+    /**
+     * @dev Returns all available categories
+     * @return Array of available category strings
+     */
+    function getAvailableCategories() external view returns (string[] memory) {
+        return opinionCore.getAvailableCategories();
+    }
+
+    /**
+     * @dev Returns categories for a specific opinion
+     * @param opinionId The opinion ID
+     * @return Array of category strings for the opinion
+     */
+    function getOpinionCategories(uint256 opinionId) external view returns (string[] memory) {
+        return opinionCore.getOpinionCategories(opinionId);
+    }
+
+    // --- EXTENSION SLOTS FUNCTIONS ---
+
+    /**
+     * @dev Sets a string extension for an opinion (admin only)
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionStringExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        string calldata value
+    ) external onlyRole(ADMIN_ROLE) {
+        opinionCore.setOpinionStringExtension(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets a number extension for an opinion (admin only)
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionNumberExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        uint256 value
+    ) external onlyRole(ADMIN_ROLE) {
+        opinionCore.setOpinionNumberExtension(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets a bool extension for an opinion (admin only)
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionBoolExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        bool value
+    ) external onlyRole(ADMIN_ROLE) {
+        opinionCore.setOpinionBoolExtension(opinionId, key, value);
+    }
+
+    /**
+     * @dev Sets an address extension for an opinion (admin only)
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @param value Extension value
+     */
+    function setOpinionAddressExtension(
+        uint256 opinionId, 
+        string calldata key, 
+        address value
+    ) external onlyRole(ADMIN_ROLE) {
+        opinionCore.setOpinionAddressExtension(opinionId, key, value);
+    }
+
+    /**
+     * @dev Gets all extensions for an opinion
+     * @param opinionId Opinion ID
+     * @return keys Array of extension keys
+     * @return stringValues Array of string values
+     * @return numberValues Array of number values
+     * @return boolValues Array of bool values
+     * @return addressValues Array of address values
+     */
+    function getOpinionExtensions(uint256 opinionId) external view returns (
+        string[] memory keys,
+        string[] memory stringValues,
+        uint256[] memory numberValues,
+        bool[] memory boolValues,
+        address[] memory addressValues
+    ) {
+        return opinionCore.getOpinionExtensions(opinionId);
+    }
+
+    /**
+     * @dev Gets a specific string extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionStringExtension(uint256 opinionId, string calldata key) external view returns (string memory) {
+        return opinionCore.getOpinionStringExtension(opinionId, key);
+    }
+
+    /**
+     * @dev Gets a specific number extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionNumberExtension(uint256 opinionId, string calldata key) external view returns (uint256) {
+        return opinionCore.getOpinionNumberExtension(opinionId, key);
+    }
+
+    /**
+     * @dev Gets a specific bool extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionBoolExtension(uint256 opinionId, string calldata key) external view returns (bool) {
+        return opinionCore.getOpinionBoolExtension(opinionId, key);
+    }
+
+    /**
+     * @dev Gets a specific address extension for an opinion
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return value Extension value
+     */
+    function getOpinionAddressExtension(uint256 opinionId, string calldata key) external view returns (address) {
+        return opinionCore.getOpinionAddressExtension(opinionId, key);
+    }
+
+    /**
+     * @dev Checks if an opinion has a specific extension key
+     * @param opinionId Opinion ID
+     * @param key Extension key
+     * @return exists True if the key exists
+     */
+    function hasOpinionExtension(uint256 opinionId, string calldata key) external view returns (bool) {
+        return opinionCore.hasOpinionExtension(opinionId, key);
+    }
+
+    /**
+     * @dev Gets the number of extensions for an opinion
+     * @param opinionId Opinion ID
+     * @return count Number of extensions
+     */
+    function getOpinionExtensionCount(uint256 opinionId) external view returns (uint256) {
+        return opinionCore.getOpinionExtensionCount(opinionId);
+    }
+
+    /**
+     * @dev Returns the total number of available categories
+     * @return The count of available categories
+     */
+    function getCategoryCount() external view returns (uint256) {
+        return opinionCore.getCategoryCount();
     }
 
     // --- POOL FUNCTIONS ---
@@ -257,6 +447,61 @@ contract OpinionMarket is
         uint256 newDeadline
     ) external nonReentrant whenNotPaused {
         poolManager.extendPoolDeadline(poolId, newDeadline);
+    }
+
+    /**
+     * @dev Allows contributor to withdraw early from pool with 20% penalty (SECURITY FIX)
+     * @param poolId Pool ID to withdraw from
+     */
+    function withdrawFromPoolEarly(uint256 poolId) external nonReentrant whenNotPaused {
+        poolManager.withdrawFromPoolEarly(poolId);
+    }
+
+    /**
+     * @dev Preview early withdrawal amounts for a user (SECURITY FIX)
+     * @param poolId Pool ID
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return penalty Total penalty amount (20% - enhanced)
+     * @return userWillReceive Amount user will receive (80%)
+     * @return canWithdraw Whether withdrawal is currently possible
+     */
+    function getEarlyWithdrawalPreview(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 penalty,
+        uint96 userWillReceive,
+        bool canWithdraw
+    ) {
+        return poolManager.getEarlyWithdrawalPreview(poolId, user);
+    }
+
+    /**
+     * @dev Get detailed penalty breakdown for early withdrawal (SECURITY FIX)
+     * @param poolId Pool ID  
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return totalPenalty Total penalty (20% - enhanced)
+     * @return treasuryReceives Treasury receives (100% of penalty)
+     * @return userReceives Amount user receives (80%)
+     */
+    function getEarlyWithdrawalBreakdown(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 totalPenalty,
+        uint96 treasuryReceives,
+        uint96 userReceives
+    ) {
+        return poolManager.getEarlyWithdrawalBreakdown(poolId, user);
+    }
+
+    /**
+     * @dev Check if early withdrawal is possible for a user
+     * @param poolId Pool ID
+     * @param user User address
+     * @return possible Whether early withdrawal is possible
+     * @return reason Reason if not possible (0=possible, 1=invalid_pool, 2=not_active, 3=deadline_passed, 4=no_contribution)
+     */
+    function canWithdrawEarly(uint256 poolId, address user) external view returns (bool possible, uint8 reason) {
+        return poolManager.canWithdrawEarly(poolId, user);
     }
 
     // --- FEE FUNCTIONS ---
@@ -406,6 +651,49 @@ contract OpinionMarket is
             abi.encodeWithSignature("togglePublicCreation()")
         );
         require(success, "Failed to toggle public creation");
+    }
+
+    // --- TREASURY MANAGEMENT ---
+    /**
+     * @dev Sets a new treasury address with timelock protection in OpinionCore
+     * @param newTreasury The new treasury address to set after timelock
+     */
+    function setTreasuryOpinionCore(address newTreasury) external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(opinionCore).call(
+            abi.encodeWithSignature("setTreasury(address)", newTreasury)
+        );
+        require(success, "Failed to set treasury in OpinionCore");
+    }
+
+    /**
+     * @dev Confirms the treasury change after timelock period in OpinionCore
+     */
+    function confirmTreasuryChangeOpinionCore() external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(opinionCore).call(
+            abi.encodeWithSignature("confirmTreasuryChange()")
+        );
+        require(success, "Failed to confirm treasury change in OpinionCore");
+    }
+
+    /**
+     * @dev Sets a new treasury address with timelock protection in FeeManager
+     * @param newTreasury The new treasury address to set after timelock
+     */
+    function setTreasuryFeeManager(address newTreasury) external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(feeManager).call(
+            abi.encodeWithSignature("setTreasury(address)", newTreasury)
+        );
+        require(success, "Failed to set treasury in FeeManager");
+    }
+
+    /**
+     * @dev Confirms the treasury change after timelock period in FeeManager
+     */
+    function confirmTreasuryChangeFeeManager() external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(feeManager).call(
+            abi.encodeWithSignature("confirmTreasuryChange()")
+        );
+        require(success, "Failed to confirm treasury change in FeeManager");
     }
 
     /**

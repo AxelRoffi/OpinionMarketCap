@@ -17,6 +17,15 @@ interface IOpinionMarketErrors {
     error EmptyString();
     error SameOwner();
     error NotForSale(uint256 opinionId);
+    error InvalidInitialPrice();
+    error InvalidDescriptionLength();
+    
+    // Category errors - IMPOSED SIGNATURES
+    error NoCategoryProvided();
+    error TooManyCategories();
+    error InvalidCategory();
+    error DuplicateCategory();
+    error CategoryAlreadyExists();
 
     // Fee errors
     error InsufficientAllowance(uint256 required, uint256 provided);
@@ -43,6 +52,9 @@ interface IOpinionMarketErrors {
     error PoolAlreadyRefunded(uint256 poolId, address user);
     error PoolAlreadyFunded(uint256 poolId);
     error PoolInvalidNameLength();
+
+    // Extension errors - IMPOSED SIGNATURES
+    error InvalidExtensionKey();
 
     // Security/rate limiting errors
     error MaxTradesPerBlockExceeded(uint256 trades, uint256 maxTrades);
