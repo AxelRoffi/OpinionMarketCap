@@ -222,7 +222,7 @@ contract OpinionCore is
         isPublicCreationEnabled = false;
         maxTradesPerBlock = 3;
         minimumPrice = 1_000_000; // 1 USDC (6 decimals)
-        questionCreationFee = 1_000_000; // 1 USDC
+        questionCreationFee = 5_000_000; // 5 USDC
         initialAnswerPrice = 2_000_000; // 2 USDC
         absoluteMaxPriceChange = 200; // 200%
         

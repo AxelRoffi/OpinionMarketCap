@@ -19,7 +19,7 @@ contract MockPoolTester {
     }
 
     // Configuration
-    uint256 public poolCreationFee = 50 * 10 ** 6; // 50 USDC
+    uint256 public poolCreationFee = 5 * 10 ** 6; // 5 USDC
     uint256 public minPoolDuration = 24 * 60 * 60; // 1 day
     uint256 public maxPoolDuration = 30 * 24 * 60 * 60; // 30 days
     uint256 public maxPoolNameLength = 30;

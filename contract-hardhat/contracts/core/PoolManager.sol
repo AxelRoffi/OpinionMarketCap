@@ -119,7 +119,7 @@ contract PoolManager is
         treasury = _treasury;
 
         // Set initial configuration
-        poolCreationFee = 50 * 10 ** 6; // 50 USDC
+        poolCreationFee = 5 * 10 ** 6; // 5 USDC
         poolContributionFee = 1 * 10 ** 6; // 1 USDC
         minPoolDuration = 1 days;
         maxPoolDuration = 30 days;
