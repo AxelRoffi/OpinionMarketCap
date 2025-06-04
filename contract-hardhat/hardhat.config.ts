@@ -23,7 +23,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: false
+      allowUnlimitedContractSize: true  // Allow large contracts for testing
     },
     "baseSepolia": {
       url: "https://sepolia.base.org",

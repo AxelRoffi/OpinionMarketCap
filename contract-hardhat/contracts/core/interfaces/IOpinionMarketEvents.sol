@@ -339,4 +339,136 @@ interface IOpinionMarketEvents {
         uint96 userReceived,
         uint256 timestamp
     );
+    
+    // === 🛡️ BOT DETECTION EVENTS ===
+    
+    /**
+     * @dev Emitted when bot detection is enabled/disabled
+     * @param enabled Whether bot detection is enabled
+     * @param admin Admin who toggled the setting
+     */
+    event BotDetectionToggled(
+        bool enabled,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when an admin manually flags/unflags a trader
+     * @param trader Trader address
+     * @param flaggedAsBot Whether trader is flagged as bot
+     * @param suspicionLevel New suspicion level (0-4)
+     * @param admin Admin who performed the action
+     */
+    event AdminTraderFlagged(
+        address indexed trader,
+        bool flaggedAsBot,
+        uint8 suspicionLevel,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when an admin resets trader bot detection data
+     * @param trader Trader address
+     * @param admin Admin who performed the reset
+     */
+    event AdminTraderReset(
+        address indexed trader,
+        address indexed admin
+    );
+    
+    // === 🔥 ENHANCED MEV PROTECTION EVENTS ===
+    
+    /**
+     * @dev Emitted when enhanced MEV protection is enabled/disabled
+     * @param enabled Whether enhanced MEV protection is enabled
+     * @param admin Admin who toggled the setting
+     */
+    event EnhancedMevProtectionToggled(
+        bool enabled,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when an admin manually adjusts a user's MEV risk level
+     * @param user User address
+     * @param oldLevel Previous risk level
+     * @param newLevel New risk level
+     * @param reason Reason for adjustment
+     * @param admin Admin who performed the adjustment
+     */
+    event AdminMevRiskAdjusted(
+        address indexed user,
+        uint8 oldLevel,
+        uint8 newLevel,
+        string reason,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when an admin resets a user's MEV profile
+     * @param user User address
+     * @param admin Admin who performed the reset
+     */
+    event AdminMevProfileReset(
+        address indexed user,
+        address indexed admin
+    );
+    
+    // === 🔒 INPUT VALIDATION HARDENING EVENTS ===
+    
+    /**
+     * @dev Emitted when validation hardening is enabled/disabled
+     * @param enabled Whether validation hardening is enabled
+     * @param admin Admin who toggled the setting
+     */
+    event ValidationHardeningToggled(
+        bool enabled,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when validation warning occurs
+     * @param operation Operation that triggered warning
+     * @param gasUsed Gas consumed
+     * @param message Warning message
+     */
+    event ValidationWarning(
+        string operation,
+        uint256 gasUsed,
+        string message
+    );
+    
+    /**
+     * @dev Emitted when system recovers from emergency mode
+     * @param reason Reason for recovery
+     * @param admin Admin who performed recovery
+     */
+    event SystemRecovered(
+        string reason,
+        address indexed admin
+    );
+    
+    /**
+     * @dev Emitted when emergency shutdown is triggered
+     * @param trigger What triggered the shutdown
+     * @param severity Severity level (0-100)
+     * @param adminAction Required admin action
+     */
+    event EmergencyShutdownTriggered(
+        string trigger,
+        uint8 severity,
+        string adminAction
+    );
+    
+    /**
+     * @dev Emitted when data corruption is detected
+     * @param dataType Type of corrupted data
+     * @param corruptionLevel Level of corruption (0-100)
+     * @param recoverySteps Required recovery steps
+     */
+    event DataCorruptionDetected(
+        string dataType,
+        uint8 corruptionLevel,
+        string recoverySteps
+    );
 }
