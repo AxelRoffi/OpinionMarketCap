@@ -18,7 +18,10 @@ const config: HardhatUserConfig = {
         runs: 1,  // Optimize for contract size
       },
       // Enable IR pipeline to resolve stack too deep errors
-      viaIR: true
+      viaIR: true,
+      metadata: {
+        bytecodeHash: "none"
+      }
     }
   },
   networks: {
@@ -29,6 +32,11 @@ const config: HardhatUserConfig = {
       url: "https://sepolia.base.org",
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 1000000000,
+    },
+    "sepolia": {
+      url: "https://rpc.sepolia.org",
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 2000000000,
     }
   },
   etherscan: {

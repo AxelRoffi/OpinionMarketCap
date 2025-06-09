@@ -13,6 +13,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IOpinionCore.sol";
 import "./interfaces/IFeeManager.sol";
 import "./interfaces/IPoolManager.sol";
+import "./interfaces/IMonitoringManager.sol";
+import "./interfaces/ISecurityManager.sol";
 import "./interfaces/IOpinionMarketEvents.sol";
 import "./interfaces/IOpinionMarketErrors.sol";
 import "./structs/OpinionStructs.sol";
@@ -43,6 +45,8 @@ contract OpinionMarket is
     IOpinionCore public opinionCore;
     IFeeManager public feeManager;
     IPoolManager public poolManager;
+    IMonitoringManager public monitoringManager;
+    ISecurityManager public securityManager;
     IERC20 public usdcToken;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -57,6 +61,8 @@ contract OpinionMarket is
      * @param _opinionCore Address of the OpinionCore contract
      * @param _feeManager Address of the FeeManager contract
      * @param _poolManager Address of the PoolManager contract
+     * @param _monitoringManager Address of the MonitoringManager contract (optional)
+     * @param _securityManager Address of the SecurityManager contract (optional)
      * @param _treasury Address of the treasury that receives platform fees
      */
     function initialize(
@@ -64,6 +70,8 @@ contract OpinionMarket is
         address _opinionCore,
         address _feeManager,
         address _poolManager,
+        address _monitoringManager,
+        address _securityManager,
         address _treasury
     ) public initializer {
         __AccessControl_init();
@@ -71,7 +79,7 @@ contract OpinionMarket is
         __Pausable_init();
         __UUPSUpgradeable_init();
 
-        // Validate addresses
+        // Validate required addresses
         if (
             _usdcToken == address(0) ||
             _opinionCore == address(0) ||
@@ -92,6 +100,14 @@ contract OpinionMarket is
         opinionCore = IOpinionCore(_opinionCore);
         feeManager = IFeeManager(_feeManager);
         poolManager = IPoolManager(_poolManager);
+        
+        // Set optional modular contracts (can be zero address)
+        if (_monitoringManager != address(0)) {
+            monitoringManager = IMonitoringManager(_monitoringManager);
+        }
+        if (_securityManager != address(0)) {
+            securityManager = ISecurityManager(_securityManager);
+        }
     }
 
     // --- UPGRADE AUTHORIZATION ---
@@ -643,6 +659,28 @@ contract OpinionMarket is
     }
 
     /**
+     * @dev Updates the MonitoringManager contract address
+     * @param _monitoringManager New MonitoringManager address (can be zero to disable)
+     */
+    function setMonitoringManager(
+        address _monitoringManager
+    ) external onlyRole(ADMIN_ROLE) {
+        monitoringManager = _monitoringManager != address(0) ? IMonitoringManager(_monitoringManager) : IMonitoringManager(address(0));
+        emit ContractAddressUpdated(3, _monitoringManager);
+    }
+
+    /**
+     * @dev Updates the SecurityManager contract address
+     * @param _securityManager New SecurityManager address (can be zero to disable)
+     */
+    function setSecurityManager(
+        address _securityManager
+    ) external onlyRole(ADMIN_ROLE) {
+        securityManager = _securityManager != address(0) ? ISecurityManager(_securityManager) : ISecurityManager(address(0));
+        emit ContractAddressUpdated(4, _securityManager);
+    }
+
+    /**
      * @dev Toggles public creation of opinions
      */
     function togglePublicCreation() external onlyRole(ADMIN_ROLE) {
@@ -651,6 +689,55 @@ contract OpinionMarket is
             abi.encodeWithSignature("togglePublicCreation()")
         );
         require(success, "Failed to toggle public creation");
+    }
+
+    // --- MODULAR CONFIGURATION FUNCTIONS ---
+    /**
+     * @dev Sets the monitoring manager in OpinionCore
+     * @param _monitoringManager MonitoringManager address
+     */
+    function setOpinionCoreMonitoringManager(address _monitoringManager) external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(opinionCore).call(
+            abi.encodeWithSignature("setMonitoringManager(address)", _monitoringManager)
+        );
+        require(success, "Failed to set monitoring manager in OpinionCore");
+    }
+
+    /**
+     * @dev Sets the security manager in OpinionCore
+     * @param _securityManager SecurityManager address
+     */
+    function setOpinionCoreSecurityManager(address _securityManager) external onlyRole(ADMIN_ROLE) {
+        (bool success, ) = address(opinionCore).call(
+            abi.encodeWithSignature("setSecurityManager(address)", _securityManager)
+        );
+        require(success, "Failed to set security manager in OpinionCore");
+    }
+
+    /**
+     * @dev Enables or disables enhanced monitoring in MonitoringManager
+     * @param enabled Whether to enable enhanced monitoring
+     */
+    function setEnhancedMonitoring(bool enabled) external onlyRole(ADMIN_ROLE) {
+        if (address(monitoringManager) != address(0)) {
+            (bool success, ) = address(monitoringManager).call(
+                abi.encodeWithSignature("setEnhancedMonitoringEnabled(bool)", enabled)
+            );
+            require(success, "Failed to set enhanced monitoring");
+        }
+    }
+
+    /**
+     * @dev Enables or disables bot detection in SecurityManager
+     * @param enabled Whether to enable bot detection
+     */
+    function setBotDetection(bool enabled) external onlyRole(ADMIN_ROLE) {
+        if (address(securityManager) != address(0)) {
+            (bool success, ) = address(securityManager).call(
+                abi.encodeWithSignature("setBotDetectionEnabled(bool)", enabled)
+            );
+            require(success, "Failed to set bot detection");
+        }
     }
 
     // --- TREASURY MANAGEMENT ---
@@ -712,6 +799,18 @@ contract OpinionMarket is
         (bool success3, ) = address(poolManager).call(
             abi.encodeWithSignature("pause()")
         );
+        
+        // Try to pause modular contracts if they exist
+        if (address(monitoringManager) != address(0)) {
+            (bool success4, ) = address(monitoringManager).call(
+                abi.encodeWithSignature("pause()")
+            );
+        }
+        if (address(securityManager) != address(0)) {
+            (bool success5, ) = address(securityManager).call(
+                abi.encodeWithSignature("pause()")
+            );
+        }
 
         // Continue even if some fail (they might not all have pause functionality)
     }
@@ -732,6 +831,18 @@ contract OpinionMarket is
         (bool success3, ) = address(poolManager).call(
             abi.encodeWithSignature("unpause()")
         );
+        
+        // Try to unpause modular contracts if they exist
+        if (address(monitoringManager) != address(0)) {
+            (bool success4, ) = address(monitoringManager).call(
+                abi.encodeWithSignature("unpause()")
+            );
+        }
+        if (address(securityManager) != address(0)) {
+            (bool success5, ) = address(securityManager).call(
+                abi.encodeWithSignature("unpause()")
+            );
+        }
 
         // Continue even if some fail
     }
@@ -759,6 +870,18 @@ contract OpinionMarket is
         (bool success3, ) = address(poolManager).call(
             abi.encodeWithSignature("emergencyWithdraw(address)", token)
         );
+        
+        // Withdraw from modular contracts if they exist
+        if (address(monitoringManager) != address(0)) {
+            (bool success4, ) = address(monitoringManager).call(
+                abi.encodeWithSignature("emergencyWithdraw(address)", token)
+            );
+        }
+        if (address(securityManager) != address(0)) {
+            (bool success5, ) = address(securityManager).call(
+                abi.encodeWithSignature("emergencyWithdraw(address)", token)
+            );
+        }
 
         // Withdraw from this contract
         IERC20 tokenContract = IERC20(token);
