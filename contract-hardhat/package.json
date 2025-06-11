@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.0",
-    "@openzeppelin/contracts-upgradeable": "5.0.0"
+    "@openzeppelin/contracts-upgradeable": "5.0.0",
+    "framer-motion": "^12.16.0"
   }
 }
