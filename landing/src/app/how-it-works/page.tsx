@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
     const interval = setInterval(() => {
       setAccumulatedFees((prev) => {
         const increment = Math.random() * 0.5 + 0.1
-        return Math.min(prev + increment, 85.47)
+        return Math.min(prev + increment, 2847.32)
       })
     }, 2000)
 
@@ -221,7 +221,7 @@ export default function HowItWorksPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                HOW OPINIONMARKETCAP WORKS
+                HOW OpinionMarketCap WORKS
               </motion.span>
             </motion.h1>
 
@@ -317,7 +317,7 @@ export default function HowItWorksPage() {
                     THE PROBLEM: ENDLESS ONLINE DEBATES
                   </h3>
                   <p className="text-lg text-muted-foreground mb-4">
-                    "Goat of Soccer?" → Messi, Ronaldo, Zidane, Maradona, Pelé?
+                    "Goat of Soccer?" → Messi, Ronaldo, Zidane, Maradona, Pelé... ?
                   </p>
                   <p className="text-muted-foreground">
                     Online debates never settle anything. Just opinions flying around.
@@ -369,7 +369,7 @@ export default function HowItWorksPage() {
                   whileHover={{ scale: 1.02, rotateY: -2 }}
                 >
                   <h3 className="text-xl md:text-2xl font-bold mb-4 text-cyan-500">
-                    THE SOLUTION: OPINIONMARKETCAP SETTLES IT
+                    THE SOLUTION: OpinionMarketCap SETTLES IT
                   </h3>
                   <p className="text-lg text-muted-foreground mb-4">
                     The official answer = whoever paid the last price and claimed it
@@ -441,9 +441,9 @@ export default function HowItWorksPage() {
             transition={{ duration: 0.6, delay: 0.9 }}
             viewport={{ once: true }}
           >
-            <p className="text-xl md:text-2xl font-medium headline-cyan">
+            <div className="text-2xl md:text-4xl font-bold text-center mb-8 bg-gradient-to-r from-purple-600 via-cyan-500 to-orange-500 bg-clip-text text-transparent animate-pulse-glow">
               It's democracy, but with economic consequences.
-            </p>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -663,24 +663,24 @@ export default function HowItWorksPage() {
                                 <span className="text-xs text-muted-foreground/60">(optional)</span>
                               </span>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium text-orange-500 w-20">Link:</span>
-                              <span className="text-muted-foreground">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                              <span className="text-sm font-medium text-orange-500 sm:w-20">Link:</span>
+                              <span className="text-muted-foreground break-all">
                                 shop.chanel.com/n5 <span className="text-xs text-muted-foreground/60">(optional)</span>
                               </span>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium text-orange-500 w-20">Initial Price:</span>
-                              <div className="flex items-center gap-2">
-                                <div className="w-32 h-2 bg-muted rounded-full relative">
-                                  <div className="w-6 h-6 bg-orange-500 rounded-full absolute -top-2 left-4 shadow-lg animate-pulse-glow" />
-                                  <div className="absolute -top-8 left-4 text-xs font-bold text-orange-500">
-                                    15 USDC
-                                  </div>
-                                </div>
-                                <span className="text-xs text-muted-foreground">(2-100 USDC)</span>
-                                <span className="text-xs font-bold text-orange-500">you choose</span>
+                            <div className="mb-3">
+                              <span className="text-sm font-medium text-orange-500 block mb-2">Initial Price:</span>
+                              <div className="bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded-lg inline-block mb-2">
+                                <span className="font-bold text-green-700 dark:text-green-400">15 USDC</span>
                               </div>
+                              <div className="text-xs text-muted-foreground">
+                                <span>(2-100 USDC range) </span>
+                                <span className="font-bold text-orange-500">you choose</span>
+                              </div>
+                            </div>
+                            <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                              <span className="font-medium text-blue-600 dark:text-blue-400">💡 Pro tip:</span> Drive traffic towards your page to increase visibility and engagement
                             </div>
                           </div>
 
@@ -1044,7 +1044,7 @@ export default function HowItWorksPage() {
                 </h3>
 
                 <div className="space-y-6">
-                  {/* Month 1 - Creation */}
+                  {/* Day 1-3 - Creation */}
                   <motion.div
                     className="flex items-start gap-4 p-4 rounded-xl bg-muted/20 border border-yellow-500/20"
                     whileHover={{ scale: 1.02 }}
@@ -1054,13 +1054,13 @@ export default function HowItWorksPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">
-                        <span className="font-bold text-yellow-400">Month 1:</span> Create{" "}
+                        <span className="font-bold text-yellow-400">Day 1-3:</span> Create{" "}
                         <span className="font-bold text-cyan-400">"Best Productivity App for Remote Work?"</span>
                       </p>
                     </div>
                   </motion.div>
 
-                  {/* Month 2-6 - Growth */}
+                  {/* Day 4-15 - Growth */}
                   <motion.div
                     className="flex items-start gap-4 p-4 rounded-xl bg-muted/20 border border-emerald-500/20"
                     whileHover={{ scale: 1.02 }}
@@ -1070,7 +1070,7 @@ export default function HowItWorksPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-muted-foreground mb-3">
-                        <span className="font-bold text-emerald-400">Month 2-6:</span> Market it, build community, generate{" "}
+                        <span className="font-bold text-emerald-400">Day 4-15:</span> Market it, build community, generate{" "}
                         <span className="font-bold text-emerald-400">85 USDC</span> in fees
                       </p>
                       {/* Revenue Growth Visualization */}
@@ -1089,7 +1089,7 @@ export default function HowItWorksPage() {
                     </div>
                   </motion.div>
 
-                  {/* Month 7 - Sale */}
+                  {/* Day 16+ - Sale */}
                   <motion.div
                     className="flex items-start gap-4 p-4 rounded-xl bg-muted/20 border border-orange-500/20"
                     whileHover={{ scale: 1.02 }}
@@ -1099,7 +1099,7 @@ export default function HowItWorksPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">
-                        <span className="font-bold text-orange-400">Month 7:</span> Sell question for{" "}
+                        <span className="font-bold text-orange-400">Day 16+:</span> Sell question for{" "}
                         <span className="font-bold text-orange-400">500 USDC</span> to a productivity influencer
                       </p>
                     </div>
@@ -1381,7 +1381,7 @@ export default function HowItWorksPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">
-                      Answer "Best Investment Strategy?" costs <span className="font-bold text-red-400">150 USDC</span>{" "}
+                      Answer "Best Investment Strategy?" costs <span className="font-bold text-red-400">1500 USDC</span>{" "}
                       to change
                     </p>
                   </div>
@@ -1413,8 +1413,8 @@ export default function HowItWorksPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-muted-foreground mb-3">
-                      → <span className="font-bold text-purple-400">10 people</span> contribute 15 USDC each ={" "}
-                      <span className="font-bold text-emerald-400">150 USDC total</span>
+                      → <span className="font-bold text-purple-400">10 people</span> contribute 150 USDC each ={" "}
+                      <span className="font-bold text-emerald-400">1500 USDC total</span>
                     </p>
                     {/* Progress Bar */}
                     <div className="w-full bg-muted rounded-full h-3 relative overflow-hidden">
@@ -1426,7 +1426,7 @@ export default function HowItWorksPage() {
                         viewport={{ once: true }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                        150/150 USDC (100%)
+                        1500/1500 USDC (100%)
                       </div>
                     </div>
                   </div>
@@ -1553,7 +1553,7 @@ export default function HowItWorksPage() {
                     <li className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-cyan-500 mt-0.5 shrink-0" />
                       <span className="text-muted-foreground">
-                        2% platform fee • 3% creator fee • 95% to previous owner
+                        95% to previous owner • 3% creator fee • 2% platform fee
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -1765,14 +1765,14 @@ export default function HowItWorksPage() {
                     whileHover={{ scale: 1.02 }}
                   >
                     <span className="text-muted-foreground">Creator Fees:</span>
-                    <span className="font-bold text-emerald-400">23.45 USDC</span>
+                    <span className="font-bold text-emerald-400">782.15 USDC</span>
                   </motion.div>
                   <motion.div
                     className="flex justify-between items-center p-3 rounded-lg bg-muted/20 border border-cyan-500/20"
                     whileHover={{ scale: 1.02 }}
                   >
                     <span className="text-muted-foreground">Trading Profits:</span>
-                    <span className="font-bold text-cyan-400">18.72 USDC</span>
+                    <span className="font-bold text-cyan-400">624.30 USDC</span>
                   </motion.div>
                 </div>
                 <div className="space-y-4">
@@ -1781,7 +1781,7 @@ export default function HowItWorksPage() {
                     whileHover={{ scale: 1.02 }}
                   >
                     <span className="text-muted-foreground">Pool Rewards:</span>
-                    <span className="font-bold text-purple-400">5.66 USDC</span>
+                    <span className="font-bold text-purple-400">189.12 USDC</span>
                   </motion.div>
                   <motion.div
                     className="flex justify-between items-center p-3 rounded-lg bg-muted/20 border border-yellow-500/20"
@@ -1830,8 +1830,8 @@ export default function HowItWorksPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">
-                      <span className="font-bold text-emerald-400">Week 1:</span> Create 3 questions → Earn{" "}
-                      <span className="font-bold text-emerald-400">15 USDC</span> in creator fees
+                      <span className="font-bold text-emerald-400">Day 1-2:</span> Create 3 questions → Earn{" "}
+                      <span className="font-bold text-emerald-400">125 USDC</span> in creator fees
                     </p>
                   </div>
                 </motion.div>
@@ -1846,8 +1846,8 @@ export default function HowItWorksPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">
-                      <span className="font-bold text-cyan-400">Week 2:</span> Trade 5 answers → Earn{" "}
-                      <span className="font-bold text-cyan-400">47 USDC</span> in profits
+                      <span className="font-bold text-cyan-400">Day 3-4:</span> Trade 5 answers → Earn{" "}
+                      <span className="font-bold text-cyan-400">285 USDC</span> in profits
                     </p>
                   </div>
                 </motion.div>
@@ -1862,8 +1862,8 @@ export default function HowItWorksPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">
-                      <span className="font-bold text-purple-400">Week 3:</span> Pool rewards → Earn{" "}
-                      <span className="font-bold text-purple-400">23 USDC</span> from collaboration
+                      <span className="font-bold text-purple-400">Day 5-7:</span> Pool rewards → Earn{" "}
+                      <span className="font-bold text-purple-400">145 USDC</span> from collaboration
                     </p>
                   </div>
                 </motion.div>
@@ -1879,7 +1879,7 @@ export default function HowItWorksPage() {
                   <div>
                     <p className="text-muted-foreground">
                       <span className="font-bold text-yellow-400">Total accumulated:</span>{" "}
-                      <span className="font-bold text-yellow-400 text-xl">85 USDC</span> ready to claim anytime!
+                      <span className="font-bold text-yellow-400 text-xl">555 USDC</span> ready to claim anytime!
                     </p>
                   </div>
                 </motion.div>
@@ -2037,9 +2037,13 @@ export default function HowItWorksPage() {
                   <span className="text-lg font-medium">What makes a good question?</span>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-4 text-muted-foreground">
-                  Timeless debates work best: "Greatest Movie Ever?" "Most Important Invention?" But it also works for
-                  very specific questions like "Best sushi restaurant in Manhattan under $100?" Avoid deadline-based
-                  questions - they expire and lose value.
+                  Good questions are <span className="font-bold text-orange-500">timeless</span> and <span className="font-bold text-cyan-500">very specific</span>:
+                  <br/><br/>
+                  <span className="font-bold text-orange-500">• Timeless:</span> "Greatest Movie Ever?" "Most Important Invention?" - won't become outdated quickly
+                  <br/>
+                  <span className="font-bold text-cyan-500">• Very specific:</span> "Best sushi restaurant in Manhattan under $100?" - clear, unambiguous topics
+                  <br/><br/>
+                  Avoid deadline-based questions - they expire and lose value.
                 </AccordionContent>
               </AccordionItem>
 
@@ -2559,6 +2563,61 @@ export default function HowItWorksPage() {
           .headline-cyan,
           .headline-emerald {
             font-size: 2.5rem;
+          }
+          
+          /* Better mobile spacing */
+          .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+          }
+          
+          /* Mobile-friendly text sizes */
+          h1 {
+            font-size: 2rem !important;
+            line-height: 1.2;
+          }
+          
+          h2 {
+            font-size: 1.75rem !important;
+            line-height: 1.3;
+          }
+          
+          h3 {
+            font-size: 1.25rem !important;
+            line-height: 1.4;
+          }
+          
+          /* Improve card spacing on mobile */
+          .glass-card {
+            margin-bottom: 1rem;
+            padding: 1rem !important;
+          }
+          
+          /* Better button sizing */
+          .cta-leader,
+          .cta-trader {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+          }
+          
+          /* Prevent horizontal scroll */
+          .max-w-4xl,
+          .max-w-3xl,
+          .max-w-2xl {
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          
+          /* Better grid layouts on mobile */
+          .grid.md\\:grid-cols-2 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+          
+          .grid.md\\:grid-cols-3 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
           }
         }
       `}</style>

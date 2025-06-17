@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion, useMotionValue, useSpring } from "framer-motion"
-import { ArrowRight, BarChart2, Check, Crown, Layers, Lightbulb, Zap } from "lucide-react"
+import { ArrowRight, BarChart2, Check, Crown, Layers, Lightbulb, Menu, X, Zap } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,6 +15,7 @@ export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
   const [activePersona, setActivePersona] = useState<"leader" | "trader" | null>(null)
   const [email, setEmail] = useState("")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [particles, setParticles] = useState<
     Array<{
       id: number
@@ -163,9 +164,65 @@ export default function LandingPage() {
                 Connect Wallet
               </Button>
               <Button className="hidden md:flex hover:glow-cyan">Launch App</Button>
+              
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle mobile menu"
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </button>
             </div>
           </div>
         </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <motion.div
+            className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border/40 shadow-lg z-50"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <nav className="container mx-auto px-4 py-4">
+              <div className="flex flex-col space-y-4">
+                <Link
+                  href="/how-it-works"
+                  className="text-sm font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  How It Works
+                </Link>
+                <Link
+                  href="#features"
+                  className="text-sm font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Features
+                </Link>
+                <Link
+                  href="#testimonials"
+                  className="text-sm font-medium hover:text-primary transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Testimonials
+                </Link>
+                <div className="flex flex-col gap-3 pt-4 border-t border-border/40">
+                  <Button variant="outline" className="hover:glow-orange">
+                    Connect Wallet
+                  </Button>
+                  <Button className="hover:glow-cyan">Launch App</Button>
+                </div>
+              </div>
+            </nav>
+          </motion.div>
+        )}
       </header>
 
       {/* Hero Section */}
