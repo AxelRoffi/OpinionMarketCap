@@ -117,14 +117,6 @@ export default function HomePage() {
   const allOpinions: OpinionData[] = useMemo(() => {
     const opinions = [];
     
-    // Debug logging
-    console.log('Opinion 1 data:', opinion1.data);
-    console.log('Opinion 1 loading:', opinion1.isLoading);
-    console.log('Opinion 1 error:', opinion1.error);
-    console.log('Opinion 2 data:', opinion2.data);
-    console.log('Opinion 2 loading:', opinion2.isLoading);
-    console.log('Opinion 2 error:', opinion2.error);
-    
     // Add opinion 1 if loaded
     if (opinion1.data && !opinion1.isLoading && !opinion1.error) {
       opinions.push({
@@ -159,7 +151,6 @@ export default function HomePage() {
       });
     }
     
-    console.log('Final opinions array:', opinions);
     return opinions;
   }, [opinion1.data, opinion1.isLoading, opinion1.error, opinion2.data, opinion2.isLoading, opinion2.error]);
 
