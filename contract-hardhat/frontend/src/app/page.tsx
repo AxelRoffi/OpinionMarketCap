@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { CONTRACTS } from '@/lib/contracts';
+import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 import EnhancedSubmitModal from '@/components/EnhancedSubmitModal';
 
 // Smart contract categories
@@ -89,56 +89,18 @@ export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
 
-  const opinionAbi = [
-    {
-      inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
-      name: 'getOpinionDetails',
-      outputs: [
-        {
-          components: [
-            { internalType: 'uint96', name: 'lastPrice', type: 'uint96' },
-            { internalType: 'uint96', name: 'nextPrice', type: 'uint96' },
-            { internalType: 'uint96', name: 'totalVolume', type: 'uint96' },
-            { internalType: 'uint96', name: 'salePrice', type: 'uint96' },
-            { internalType: 'address', name: 'creator', type: 'address' },
-            { internalType: 'address', name: 'questionOwner', type: 'address' },
-            { internalType: 'address', name: 'currentAnswerOwner', type: 'address' },
-            { internalType: 'bool', name: 'isActive', type: 'bool' },
-            { internalType: 'string', name: 'question', type: 'string' },
-            { internalType: 'string', name: 'currentAnswer', type: 'string' },
-            { internalType: 'string', name: 'currentAnswerDescription', type: 'string' },
-            { internalType: 'string', name: 'ipfsHash', type: 'string' },
-            { internalType: 'string', name: 'link', type: 'string' },
-            { internalType: 'string[]', name: 'categories', type: 'string[]' },
-          ],
-          internalType: 'struct OpinionStructs.Opinion',
-          name: '',
-          type: 'tuple',
-        },
-      ],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [],
-      name: 'nextOpinionId',
-      outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-      stateMutability: 'view',
-      type: 'function',
-    }
-  ];
 
   // Get total opinion count
   const { data: nextOpinionId } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
-    abi: opinionAbi,
+    abi: OPINION_CORE_ABI,
     functionName: 'nextOpinionId',
   });
 
   // Get opinion 1: Goat of soccer
   const opinion1 = useReadContract({
     address: CONTRACTS.OPINION_CORE,
-    abi: opinionAbi,
+    abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
     args: [1n],
   });
@@ -146,7 +108,7 @@ export default function HomePage() {
   // Get opinion 2: Most beautiful city
   const opinion2 = useReadContract({
     address: CONTRACTS.OPINION_CORE,
-    abi: opinionAbi,
+    abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
     args: [2n],
   });
@@ -154,6 +116,14 @@ export default function HomePage() {
   // Process both opinions
   const allOpinions: OpinionData[] = useMemo(() => {
     const opinions = [];
+    
+    // Debug logging
+    console.log('Opinion 1 data:', opinion1.data);
+    console.log('Opinion 1 loading:', opinion1.isLoading);
+    console.log('Opinion 1 error:', opinion1.error);
+    console.log('Opinion 2 data:', opinion2.data);
+    console.log('Opinion 2 loading:', opinion2.isLoading);
+    console.log('Opinion 2 error:', opinion2.error);
     
     // Add opinion 1 if loaded
     if (opinion1.data && !opinion1.isLoading && !opinion1.error) {
@@ -189,6 +159,7 @@ export default function HomePage() {
       });
     }
     
+    console.log('Final opinions array:', opinions);
     return opinions;
   }, [opinion1.data, opinion1.isLoading, opinion1.error, opinion2.data, opinion2.isLoading, opinion2.error]);
 
