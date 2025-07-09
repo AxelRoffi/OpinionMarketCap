@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
-import EnhancedSubmitModal from '@/components/EnhancedSubmitModal';
+import { TradingModal } from '@/components/TradingModal';
 
 // Smart contract categories
 const SMART_CONTRACT_CATEGORIES = [
@@ -913,13 +913,11 @@ export default function HomePage() {
 
       {/* Enhanced Trade Modal */}
       {selectedOpinion && (
-        <EnhancedSubmitModal
+        <TradingModal
           isOpen={!!selectedOpinion}
           onClose={() => setSelectedOpinion(null)}
           opinionId={selectedOpinion.id}
-          question={selectedOpinion.question}
-          currentAnswer={selectedOpinion.currentAnswer}
-          nextPrice={selectedOpinion.nextPrice}
+          opinionData={selectedOpinion}
         />
       )}
     </div>
