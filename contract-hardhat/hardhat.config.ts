@@ -31,7 +31,7 @@ const config: HardhatUserConfig = {
     "baseSepolia": {
       url: "https://sepolia.base.org",
       accounts: [process.env.PRIVATE_KEY],
-      gasPrice: 1000000000,
+      gasPrice: 100000000, // Reduced gas price (0.1 gwei)
     },
     "sepolia": {
       url: "https://rpc.sepolia.org",

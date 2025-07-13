@@ -124,7 +124,7 @@ contract OpinionMarket is
      * @param question The opinion question
      * @param answer The initial answer
      * @param description The answer description (optional, max 120 chars)
-     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param initialPrice The initial price chosen by creator (1-100 USDC)
      * @param opinionCategories Categories for the opinion (1-3 required)
      */
     function createOpinion(
@@ -142,7 +142,7 @@ contract OpinionMarket is
      * @param question The opinion question
      * @param answer The initial answer
      * @param description The answer description (optional, max 120 chars)
-     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param initialPrice The initial price chosen by creator (1-100 USDC)
      * @param opinionCategories Categories for the opinion (1-3 required)
      * @param ipfsHash The IPFS hash for an image
      * @param link The external URL link

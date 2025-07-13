@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-07-12T13:40:36.720Z",
+  "proxyAddress": "0xB2D35055550e2D49E5b2C21298528579A8bF7D2f",
+  "newImplementation": "0x12D3E11a7f88A2BA6ab8cCe9756E55F556ECb56e",
+  "treasury": "0xFb7eF00D5C2a87d282F273632e834f9105795067",
+  "changes": {
+    "platformFees": "Now go directly to treasury (automatic)",
+    "creationFees": "Already go directly to treasury",
+    "withdrawal": "No manual withdrawal needed"
+  }
+}

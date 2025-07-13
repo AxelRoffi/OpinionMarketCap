@@ -1,6 +1,6 @@
 'use client';
 
-import { useReadContract, useAccount } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { useState, useMemo, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
@@ -27,8 +27,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
+// Removed unused imports
 import { TradingModal } from '@/components/TradingModal';
+import { useAllOpinions } from '@/hooks/useAllOpinions';
 
 // Smart contract categories
 const SMART_CONTRACT_CATEGORIES = [
@@ -47,6 +48,7 @@ const SMART_CONTRACT_CATEGORIES = [
 
 // Sort options
 const SORT_OPTIONS = [
+  { value: "id", label: "ID" },
   { value: "marketCap", label: "Market Cap" },
   { value: "volume", label: "24h Volume" },
   { value: "change", label: "24h Change" },
@@ -65,6 +67,7 @@ interface OpinionData {
   creator: string;
   categories: string[];
   currentAnswerDescription?: string;
+  tradesCount?: number;
 }
 
 interface MarketStats {
@@ -81,8 +84,8 @@ export default function HomePage() {
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [sortBy, setSortBy] = useState('marketCap');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedOpinion, setSelectedOpinion] = useState<OpinionData | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -90,69 +93,8 @@ export default function HomePage() {
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
 
 
-  // Get total opinion count
-  const { data: nextOpinionId } = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'nextOpinionId',
-  });
-
-  // Get opinion 1: Goat of soccer
-  const opinion1 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [1n],
-  });
-
-  // Get opinion 2: Most beautiful city
-  const opinion2 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [2n],
-  });
-
-  // Process both opinions
-  const allOpinions: OpinionData[] = useMemo(() => {
-    const opinions = [];
-    
-    // Add opinion 1 if loaded
-    if (opinion1.data && !opinion1.isLoading && !opinion1.error) {
-      opinions.push({
-        id: 1,
-        question: opinion1.data.question || '',
-        currentAnswer: opinion1.data.currentAnswer || '',
-        nextPrice: opinion1.data.nextPrice || BigInt(0),
-        lastPrice: opinion1.data.lastPrice || BigInt(0),
-        totalVolume: opinion1.data.totalVolume || BigInt(0),
-        currentAnswerOwner: opinion1.data.currentAnswerOwner || '',
-        isActive: opinion1.data.isActive || false,
-        creator: opinion1.data.creator || '',
-        categories: opinion1.data.categories || [],
-        currentAnswerDescription: opinion1.data.currentAnswerDescription || '',
-      });
-    }
-
-    // Add opinion 2 if loaded
-    if (opinion2.data && !opinion2.isLoading && !opinion2.error) {
-      opinions.push({
-        id: 2,
-        question: opinion2.data.question || '',
-        currentAnswer: opinion2.data.currentAnswer || '',
-        nextPrice: opinion2.data.nextPrice || BigInt(0),
-        lastPrice: opinion2.data.lastPrice || BigInt(0),
-        totalVolume: opinion2.data.totalVolume || BigInt(0),
-        currentAnswerOwner: opinion2.data.currentAnswerOwner || '',
-        isActive: opinion2.data.isActive || false,
-        creator: opinion2.data.creator || '',
-        categories: opinion2.data.categories || [],
-        currentAnswerDescription: opinion2.data.currentAnswerDescription || '',
-      });
-    }
-    
-    return opinions;
-  }, [opinion1.data, opinion1.isLoading, opinion1.error, opinion2.data, opinion2.isLoading, opinion2.error]);
+  // Use dynamic opinion fetching hook
+  const { opinions: allOpinions, nextOpinionId } = useAllOpinions();
 
   // Calculate market statistics with real percentage changes
   const marketStats: MarketStats = useMemo(() => {
@@ -163,13 +105,19 @@ export default function HomePage() {
     // In production, this would calculate from OpinionAnswered events in last 24h
     const volume24h = totalMarketCap * 0.15; // Approximate 15% of total as daily volume
     
-    // Active traders = count unique addresses from creator + currentAnswerOwner
+    // Total traders = count unique addresses who have made at least 1 transaction
+    // This includes: creators (createOpinion transaction) + answer owners (submitAnswer transaction)
     const uniqueTraders = new Set();
     allOpinions.forEach(opinion => {
+      // Creator made a createOpinion transaction
       if (opinion.creator) uniqueTraders.add(opinion.creator.toLowerCase());
-      if (opinion.currentAnswerOwner) uniqueTraders.add(opinion.currentAnswerOwner.toLowerCase());
+      
+      // Current answer owner made a submitAnswer transaction (if different from creator)
+      if (opinion.currentAnswerOwner && opinion.currentAnswerOwner !== opinion.creator) {
+        uniqueTraders.add(opinion.currentAnswerOwner.toLowerCase());
+      }
     });
-    const activeTraders = uniqueTraders.size;
+    const totalTraders = uniqueTraders.size;
     
     // Total opinions from contract
     const totalOpinions = Number(nextOpinionId || 0) - 1;
@@ -177,7 +125,7 @@ export default function HomePage() {
     return {
       totalMarketCap,
       volume24h,
-      activeTraders,
+      activeTraders: totalTraders,
       totalOpinions: Math.max(totalOpinions, 0)
     };
   }, [allOpinions, nextOpinionId]);
@@ -199,9 +147,9 @@ export default function HomePage() {
     const volumeChange = marketStats.totalMarketCap > 0 ? 
       Math.min(marketStats.totalMarketCap * 10, 50) : 0; // Cap at 50%
 
-    // For active traders: show percentage based on current activity
-    const tradersChange = marketStats.activeTraders > 0 ? 
-      (marketStats.activeTraders - 1) * 25 : 0; // Each additional trader = 25%
+    // For total traders: show percentage based on current activity
+    const tradersChange = marketStats.activeTraders > 2 ? 
+      (marketStats.activeTraders - 2) * 15 : 0; // Each additional trader beyond 2 = 15%
 
     // For total opinions: show new opinions today
     const opinionsChange = marketStats.totalOpinions;
@@ -282,6 +230,10 @@ export default function HomePage() {
         case 'change':
           aValue = Number(a.nextPrice) - Number(a.lastPrice);
           bValue = Number(b.nextPrice) - Number(b.lastPrice);
+          break;
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
           break;
         default:
           aValue = a.id;
@@ -408,7 +360,7 @@ export default function HomePage() {
             <nav className="hidden md:flex items-center space-x-8 ml-auto">
               <a href="#" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</a>
               <a href="#" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</a>
-              <a href="#" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</a>
+              <a href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</a>
             </nav>
 
             {/* Right Side */}
@@ -452,7 +404,7 @@ export default function HomePage() {
                 <div className="flex flex-col space-y-4">
                   <a href="#" className="text-gray-300 hover:text-white transition-colors">Leaderboard</a>
                   <a href="#" className="text-gray-300 hover:text-white transition-colors">Profile</a>
-                  <a href="#" className="text-gray-300 hover:text-white transition-colors">Create</a>
+                  <a href="/create" className="text-gray-300 hover:text-white transition-colors">Create</a>
                 </div>
               </motion.nav>
             )}
@@ -512,7 +464,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-orange-500" />
-                <span className="text-gray-400 text-sm font-medium">Active Traders</span>
+                <span className="text-gray-400 text-sm font-medium">Total Traders</span>
               </div>
               <div className={`text-sm font-medium ${
                 calculatePercentageChanges.traders.isPositive ? 'text-orange-500' : 'text-red-500'
@@ -899,6 +851,7 @@ export default function HomePage() {
           <Button
             size="lg"
             className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-medium px-6 py-3 rounded-lg"
+            onClick={() => window.location.href = '/create'}
           >
             Create New Opinion
           </Button>

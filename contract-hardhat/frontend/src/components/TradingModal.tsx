@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
 import { 
@@ -9,7 +9,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
-  Users, 
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -41,6 +40,7 @@ interface OpinionData {
   creator: string
   categories: string[]
   currentAnswerDescription?: string
+  tradesCount?: number // New field for trades count
 }
 
 interface TradingModalProps {
@@ -50,21 +50,48 @@ interface TradingModalProps {
   opinionData: OpinionData
 }
 
+// Enhanced error handling types
+interface ErrorState {
+  type: 'network' | 'contract' | 'wallet' | 'validation' | 'unknown'
+  message: string
+  retryable: boolean
+  details?: string
+}
+
+// Form data persistence
+interface FormData {
+  answer: string
+  description: string
+  externalLink: string
+  acceptedTerms: boolean
+}
+
 export function TradingModal({ isOpen, onClose, opinionId, opinionData }: TradingModalProps) {
   const { address } = useAccount()
   
-  // Form state
-  const [answer, setAnswer] = useState('')
-  const [description, setDescription] = useState('')
-  const [link, setLink] = useState('')
-  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  // Enhanced form state with persistence
+  const [formData, setFormData] = useState<FormData>({
+    answer: '',
+    description: '',
+    externalLink: '',
+    acceptedTerms: false
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [currentStep, setCurrentStep] = useState<'form' | 'approve' | 'submit' | 'success' | 'error'>('form')
+  const [errorState, setErrorState] = useState<ErrorState | null>(null)
+  const [useInfiniteApproval, setUseInfiniteApproval] = useState(true) // Default to infinite approval
+  
+  // Convenience accessors for form data
+  const { answer, description, externalLink: link, acceptedTerms } = formData
 
   // Character limits
   const ANSWER_LIMIT = 40
   const DESCRIPTION_LIMIT = 120
+  
+  // Conservative "infinite" approval amount - use a reasonable large number
+  // Equivalent to 1 million USDC (6 decimals) - should be enough for any reasonable use
+  const INFINITE_APPROVAL = BigInt('1000000000000') // 1 million USDC in wei (1M * 10^6)
 
   // Contract interactions
   const { data: balance } = useReadContract({
@@ -90,10 +117,10 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   const { isSuccess: isSubmitSuccess } = useWaitForTransactionReceipt({ hash: submitHash })
 
   // Format functions
-  const formatUSDC = (wei: bigint) => {
+  const formatUSDC = useCallback((wei: bigint) => {
     const usdc = Number(wei) / 1_000_000
     return `$${usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
+  }, [])
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -106,7 +133,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     return { percentage: Math.abs(percentage), isPositive: diff >= 0 }
   }
 
-  // Form validation
+  // Enhanced form validation with specific error messages
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
@@ -114,6 +141,8 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
       newErrors.answer = 'Answer is required'
     } else if (answer.length > ANSWER_LIMIT) {
       newErrors.answer = `Answer must be ${ANSWER_LIMIT} characters or less`
+    } else if (answer.trim().length < 3) {
+      newErrors.answer = 'Answer must be at least 3 characters'
     }
 
     if (description.length > DESCRIPTION_LIMIT) {
@@ -121,7 +150,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     }
 
     if (link && !isValidUrl(link)) {
-      newErrors.link = 'Please enter a valid URL'
+      newErrors.link = 'Please enter a valid URL (e.g., https://example.com)'
     }
 
     if (!acceptedTerms) {
@@ -129,8 +158,57 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     }
 
     setErrors(newErrors)
+    setErrorState(null) // Clear previous error state
     return Object.keys(newErrors).length === 0
   }
+
+  // Enhanced error handling
+  const handleError = useCallback((error: unknown, context: string) => {
+    console.error(`${context}:`, error)
+    
+    let errorState: ErrorState
+    
+    if ((error as Error)?.name === 'UserRejectedRequestError') {
+      errorState = {
+        type: 'wallet',
+        message: 'Transaction rejected by wallet',
+        retryable: true,
+        details: 'Please approve the transaction in your wallet to continue.'
+      }
+    } else if ((error as Error)?.message?.includes('insufficient funds')) {
+      errorState = {
+        type: 'wallet',
+        message: 'Insufficient funds for transaction',
+        retryable: false,
+        details: `You need ${formatUSDC(opinionData.nextPrice)} USDC plus gas fees.`
+      }
+    } else if ((error as Error)?.message?.includes('network')) {
+      errorState = {
+        type: 'network',
+        message: 'Network congestion detected',
+        retryable: true,
+        details: 'Please try again in a few moments.'
+      }
+    } else if ((error as Error)?.message?.includes('contract')) {
+      errorState = {
+        type: 'contract',
+        message: 'Smart contract error',
+        retryable: true,
+        details: (error as Error).message || 'The transaction could not be processed.'
+      }
+    } else {
+      errorState = {
+        type: 'unknown',
+        message: 'Transaction failed',
+        retryable: true,
+        details: 'An unexpected error occurred. Please try again.'
+      }
+    }
+    
+    setErrorState(errorState)
+    setCurrentStep('error')
+    setIsSubmitting(false)
+  }, [formatUSDC, opinionData.nextPrice])
 
   const isValidUrl = (string: string) => {
     try {
@@ -141,14 +219,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     }
   }
 
-  // Handle form submission
+  // Enhanced form submission with better error handling
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) return
-    if (!address) return
+    if (!address) {
+      setErrorState({
+        type: 'wallet',
+        message: 'Wallet not connected',
+        retryable: false,
+        details: 'Please connect your wallet to continue.'
+      })
+      return
+    }
 
     setIsSubmitting(true)
+    setErrorState(null)
     
     try {
       // Check if approval is needed
@@ -156,11 +243,12 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
       
       if (needsApproval) {
         setCurrentStep('approve')
+        const approvalAmount = useInfiniteApproval ? INFINITE_APPROVAL : opinionData.nextPrice
         await approveUSDC({
           address: USDC_ADDRESS,
           abi: USDC_ABI,
           functionName: 'approve',
-          args: [CONTRACTS.OPINION_CORE, opinionData.nextPrice]
+          args: [CONTRACTS.OPINION_CORE, approvalAmount]
         })
       } else {
         setCurrentStep('submit')
@@ -172,8 +260,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
         })
       }
     } catch (error) {
-      console.error('Transaction failed:', error)
-      setCurrentStep('error')
+      handleError(error, 'Form submission')
+    }
+  }
+
+  // Handle successful transaction
+  const handleTransactionSuccess = useCallback(() => {
+    resetForm() // Only clear form on success
+    setCurrentStep('success')
+    setIsSubmitting(false)
+  }, [])
+
+  // Handle form field updates with persistence
+  const updateFormField = (field: keyof FormData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    // Clear field-specific errors when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
@@ -181,35 +284,48 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   useEffect(() => {
     if (isApproveSuccess && currentStep === 'approve') {
       setCurrentStep('submit')
-      submitAnswer({
-        address: CONTRACTS.OPINION_CORE,
-        abi: OPINION_CORE_ABI,
-        functionName: 'submitAnswer',
-        args: [BigInt(opinionId), answer.trim(), description.trim()]
-      })
+      try {
+        submitAnswer({
+          address: CONTRACTS.OPINION_CORE,
+          abi: OPINION_CORE_ABI,
+          functionName: 'submitAnswer',
+          args: [BigInt(opinionId), answer.trim(), description.trim()]
+        })
+      } catch (error) {
+        handleError(error, 'Submit after approval')
+      }
     }
   }, [isApproveSuccess, currentStep, submitAnswer, opinionId, answer, description])
 
   // Handle submit success
   useEffect(() => {
     if (isSubmitSuccess && currentStep === 'submit') {
-      setCurrentStep('success')
-      setIsSubmitting(false)
+      handleTransactionSuccess()
     }
   }, [isSubmitSuccess, currentStep])
 
-  // Reset form when modal closes
+  // CRITICAL: Only reset form on SUCCESS or manual close (preserve data on error)
+  const resetForm = () => {
+    setFormData({
+      answer: '',
+      description: '',
+      externalLink: '',
+      acceptedTerms: false
+    })
+    setErrors({})
+    setErrorState(null)
+  }
+
   useEffect(() => {
     if (!isOpen) {
-      setAnswer('')
-      setDescription('')
-      setLink('')
-      setAcceptedTerms(false)
-      setErrors({})
+      // Only reset if not coming from an error state
+      if (currentStep !== 'error') {
+        resetForm()
+      }
       setCurrentStep('form')
       setIsSubmitting(false)
     }
-  }, [isOpen])
+  }, [isOpen, currentStep])
 
   // Calculate stats
   const change = calculateChange(opinionData.nextPrice, opinionData.lastPrice)
@@ -239,7 +355,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
             >
               <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-900 rounded-2xl border border-gray-700/50 shadow-2xl">
                 
-                {/* Header */}
+                {/* Header - UPDATED: Removed "Created by" */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
@@ -247,9 +363,6 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-white">Submit Your Answer</h2>
-                      <p className="text-sm text-gray-400">
-                        Created by {formatAddress(opinionData.creator)}
-                      </p>
                     </div>
                   </div>
                   <Button
@@ -262,22 +375,33 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                   </Button>
                 </div>
 
-                {/* Question Section */}
-                <div className="p-6 space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {opinionData.categories.map((category, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-400">
-                          {category}
-                        </Badge>
-                      ))}
+                {/* Question Section - NEW HIERARCHY */}
+                <div className="p-6 space-y-6">
+                  <div className="space-y-4">
+                    {/* Question Section */}
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">question</p>
+                      <div className="mb-3">
+                        <span className="text-lg font-bold text-white">{opinionData.question}</span>
+                        <span className="text-gray-400 text-lg"> created by {formatAddress(opinionData.creator)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-4">
+                        {opinionData.categories.map((category, index) => (
+                          <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-400">
+                            {category}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2">
-                      {opinionData.question}
-                    </h3>
-                    <p className="text-gray-400 text-sm">
-                      Current Answer: <span className="text-white font-medium">{opinionData.currentAnswer}</span>
-                    </p>
+                    
+                    {/* Answer Section */}
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">answer</p>
+                      <div className="mb-4">
+                        <span className="text-lg font-bold text-white">{opinionData.currentAnswer}</span>
+                        <span className="text-gray-400 text-lg"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Info Cards */}
@@ -327,13 +451,13 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     <Card className="bg-gray-800/50 border-gray-700/50">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          Current Owner
+                          <TrendingUp className="w-3 h-3" />
+                          Trades
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="text-sm font-bold text-white">
-                          {formatAddress(opinionData.currentAnswerOwner)}
+                        <div className="text-lg font-bold text-white">
+                          {opinionData.tradesCount || 0}
                         </div>
                       </CardContent>
                     </Card>
@@ -360,7 +484,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <Textarea
                           id="answer"
                           value={answer}
-                          onChange={(e) => setAnswer(e.target.value)}
+                          onChange={(e) => updateFormField('answer', e.target.value)}
                           placeholder="Enter your answer..."
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500 resize-none"
                           rows={3}
@@ -382,7 +506,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <Textarea
                           id="description"
                           value={description}
-                          onChange={(e) => setDescription(e.target.value)}
+                          onChange={(e) => updateFormField('description', e.target.value)}
                           placeholder="Add context or explanation..."
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500 resize-none"
                           rows={2}
@@ -405,12 +529,47 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           id="link"
                           type="url"
                           value={link}
-                          onChange={(e) => setLink(e.target.value)}
+                          onChange={(e) => updateFormField('externalLink', e.target.value)}
                           placeholder="https://example.com"
                           className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500"
                         />
                         <span className="text-red-400 text-sm">{errors.link}</span>
                       </div>
+
+                      {/* USDC Approval Info */}
+                      {needsApproval && (
+                        <Card className="bg-yellow-900/20 border-yellow-500/50">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-medium text-yellow-400 flex items-center gap-2">
+                              <Info className="w-4 h-4" />
+                              USDC Approval Required
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3 text-sm text-gray-300">
+                            <p>This is your first time trading. You need to approve USDC spending.</p>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="infinite-approval"
+                                checked={useInfiniteApproval}
+                                onCheckedChange={(checked) => setUseInfiniteApproval(checked as boolean)}
+                                className="border-gray-700 data-[state=checked]:bg-yellow-500"
+                              />
+                              <Label htmlFor="infinite-approval" className="text-sm text-gray-300">
+                                Large approval for future trades (1M USDC)
+                              </Label>
+                            </div>
+                            {useInfiniteApproval ? (
+                              <p className="text-xs text-yellow-400">
+                                ✅ Recommended: Approve 1 million USDC for all future trades
+                              </p>
+                            ) : (
+                              <p className="text-xs text-yellow-500">
+                                ⚠️ You&apos;ll need to approve each trade individually
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
 
                       {/* Trading Info */}
                       <Card className="bg-blue-900/20 border-blue-500/50">
@@ -424,7 +583,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           <p>• Submit your answer to become the new owner</p>
                           <p>• Pay {formatUSDC(opinionData.nextPrice)} to take ownership</p>
                           <p>• Previous owner receives the payment</p>
-                          <p>• Price increases with each trade</p>
+                          <p>• Price changes with each trade</p>
                         </CardContent>
                       </Card>
 
@@ -433,7 +592,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <Checkbox
                           id="terms"
                           checked={acceptedTerms}
-                          onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                          onCheckedChange={(checked) => updateFormField('acceptedTerms', checked as boolean)}
                           className="border-gray-700 data-[state=checked]:bg-emerald-500"
                         />
                         <Label htmlFor="terms" className="text-sm text-gray-400">
@@ -460,7 +619,10 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           disabled={!hasBalance || isSubmitting}
                           className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium disabled:opacity-50"
                         >
-                          {needsApproval ? 'Approve & Submit' : 'Submit & Trade'}
+                          {needsApproval 
+                            ? (useInfiniteApproval ? 'Approve Once & Submit' : 'Approve & Submit')
+                            : 'Submit & Trade'
+                          }
                         </Button>
                       </div>
                     </form>
@@ -511,17 +673,35 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     </div>
                   )}
 
-                  {/* Error State */}
+                  {/* Enhanced Error State */}
                   {currentStep === 'error' && (
                     <div className="text-center space-y-4">
                       <div className="w-16 h-16 mx-auto bg-red-500 rounded-full flex items-center justify-center">
                         <AlertCircle className="w-8 h-8 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-2">Transaction Failed</h3>
-                        <p className="text-gray-400 mb-4">
-                          Something went wrong. Please try again.
+                        <h3 className="text-lg font-bold text-white mb-2">
+                          {errorState?.message || 'Transaction Failed'}
+                        </h3>
+                        <p className="text-gray-400 mb-2">
+                          {errorState?.details || 'An unexpected error occurred.'}
                         </p>
+                        {errorState?.type === 'network' && (
+                          <Alert className="bg-yellow-900/20 border-yellow-500/50 mb-4">
+                            <AlertCircle className="w-4 h-4 text-yellow-400" />
+                            <AlertDescription className="text-yellow-400">
+                              Network congestion detected. Your transaction may take longer than usual.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {errorState?.type === 'wallet' && !errorState.retryable && (
+                          <Alert className="bg-red-900/20 border-red-500/50 mb-4">
+                            <AlertCircle className="w-4 h-4 text-red-400" />
+                            <AlertDescription className="text-red-400">
+                              Please check your wallet balance and try again.
+                            </AlertDescription>
+                          </Alert>
+                        )}
                         <div className="flex gap-4">
                           <Button
                             variant="outline"
@@ -530,13 +710,22 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           >
                             Cancel
                           </Button>
-                          <Button
-                            onClick={() => setCurrentStep('form')}
-                            className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
-                          >
-                            Try Again
-                          </Button>
+                          {errorState?.retryable && (
+                            <Button
+                              onClick={() => {
+                                setCurrentStep('form')
+                                setErrorState(null)
+                                setIsSubmitting(false)
+                              }}
+                              className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+                            >
+                              Try Again
+                            </Button>
+                          )}
                         </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          📝 Your form data has been preserved
+                        </p>
                       </div>
                     </div>
                   )}

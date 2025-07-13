@@ -20,3 +20,6 @@ This is a Hardhat-based smart contract project for OpinionMarketCap - a predicti
 - This is a modular smart contract system with role-based access control
 - Tests are numbered sequentially (00-20) for organized execution
 - The project uses OpenZeppelin for security patterns
+
+## Communication Guidelines
+- Always be straight to the point, do not overcomplicate

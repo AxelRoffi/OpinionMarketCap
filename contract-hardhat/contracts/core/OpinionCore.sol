@@ -97,7 +97,7 @@ contract OpinionCore is
     uint256 public constant MAX_IPFS_HASH_LENGTH = 68;
 
     // --- INITIAL PRICE RANGE CONSTANTS ---
-    uint96 public constant MIN_INITIAL_PRICE = 2_000_000; // 2 USDC (6 decimals)
+    uint96 public constant MIN_INITIAL_PRICE = 1_000_000; // 1 USDC (6 decimals)
     uint96 public constant MAX_INITIAL_PRICE = 100_000_000; // 100 USDC (6 decimals)
 
     // --- DESCRIPTION LENGTH CONSTANT ---
@@ -155,6 +155,11 @@ contract OpinionCore is
     // Core data structures
     mapping(uint256 => OpinionStructs.Opinion) public opinions;
     mapping(uint256 => OpinionStructs.AnswerHistory[]) public answerHistory;
+    
+    // Competition tracking for auction dynamics (ADDED AT END FOR UPGRADE SAFETY)
+    mapping(uint256 => address[]) private opinionTraders; // Track unique traders per opinion
+    mapping(uint256 => mapping(address => bool)) private hasTraded; // Track if address has traded this opinion
+    mapping(uint256 => uint256) private lastCompetitionReset; // Track when competition data was last reset
 
     // --- INITIALIZATION ---
     /**
@@ -245,7 +250,7 @@ contract OpinionCore is
      * @param question The opinion question
      * @param answer The initial answer
      * @param description The answer description (optional, max 120 chars)
-     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param initialPrice The initial price chosen by creator (1-100 USDC)
      * @param opinionCategories Categories for the opinion (1-3 required)
      */
     function createOpinion(
@@ -276,17 +281,23 @@ contract OpinionCore is
         // Validate description (optional)
         ValidationLibrary.validateDescription(description);
 
-        // 🚨 CRITICAL: Validate initialPrice range (2-100 USDC inclusive)
+        // 🚨 CRITICAL: Validate initialPrice range (1-100 USDC inclusive)
         if (
             initialPrice < MIN_INITIAL_PRICE || initialPrice > MAX_INITIAL_PRICE
         ) {
             revert InvalidInitialPrice();
         }
 
-        // Check allowance for initialPrice
+        // Calculate creation fee: 20% of initialPrice with 5 USDC minimum
+        uint96 creationFee = uint96((initialPrice * 20) / 100);
+        if (creationFee < 5_000_000) { // 5 USDC minimum
+            creationFee = 5_000_000;
+        }
+
+        // Check allowance for creation fee (not full initialPrice)
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < initialPrice)
-            revert InsufficientAllowance(initialPrice, allowance);
+        if (allowance < creationFee)
+            revert InsufficientAllowance(creationFee, allowance);
 
         // Create opinion record with user-chosen initialPrice
         uint256 opinionId = _createOpinionRecord(
@@ -299,8 +310,8 @@ contract OpinionCore is
             opinionCategories
         );
 
-        // 🚨 CRITICAL FINANCIAL FLOW: 100% to treasury, NO SPLITS
-        usdcToken.safeTransferFrom(msg.sender, treasury, initialPrice);
+        // 🚨 NEW FINANCIAL FLOW: Only charge creation fee to treasury
+        usdcToken.safeTransferFrom(msg.sender, treasury, creationFee);
 
         // Emit events
         emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
@@ -312,7 +323,7 @@ contract OpinionCore is
      * @param question The opinion question
      * @param answer The initial answer
      * @param description The answer description (optional, max 120 chars)
-     * @param initialPrice The initial price chosen by creator (2-100 USDC)
+     * @param initialPrice The initial price chosen by creator (1-100 USDC)
      * @param opinionCategories Categories for the opinion (1-3 required)
      * @param ipfsHash The IPFS hash for an image
      * @param link The external URL link
@@ -360,17 +371,23 @@ contract OpinionCore is
             _validateIpfsHash(ipfsHash);
         }
 
-        // 🚨 CRITICAL: Validate initialPrice range (2-100 USDC inclusive)
+        // 🚨 CRITICAL: Validate initialPrice range (1-100 USDC inclusive)
         if (
             initialPrice < MIN_INITIAL_PRICE || initialPrice > MAX_INITIAL_PRICE
         ) {
             revert InvalidInitialPrice();
         }
 
-        // Check allowance for initialPrice
+        // Calculate creation fee: 20% of initialPrice with 5 USDC minimum
+        uint96 creationFee = uint96((initialPrice * 20) / 100);
+        if (creationFee < 5_000_000) { // 5 USDC minimum
+            creationFee = 5_000_000;
+        }
+
+        // Check allowance for creation fee (not full initialPrice)
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < initialPrice)
-            revert InsufficientAllowance(initialPrice, allowance);
+        if (allowance < creationFee)
+            revert InsufficientAllowance(creationFee, allowance);
 
         // Create opinion with user-chosen initialPrice
         uint256 opinionId = _createOpinionRecord(
@@ -383,8 +400,8 @@ contract OpinionCore is
             opinionCategories
         );
 
-        // 🚨 CRITICAL FINANCIAL FLOW: 100% to treasury, NO SPLITS
-        usdcToken.safeTransferFrom(msg.sender, treasury, initialPrice);
+        // 🚨 NEW FINANCIAL FLOW: Only charge creation fee to treasury
+        usdcToken.safeTransferFrom(msg.sender, treasury, creationFee);
 
         // Emit events
         emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
@@ -451,6 +468,9 @@ contract OpinionCore is
         // Check if this is a pool-owned answer
         bool answerIsPoolOwned = currentAnswerOwner == address(poolManager);
 
+        // 🚀 SIMPLIFIED: Send platform fees directly to treasury
+        usdcToken.safeTransferFrom(msg.sender, treasury, platformFee);
+
         // Accumulate fees for creator and owner
         feeManager.accumulateFee(creator, creatorFee);
 
@@ -483,8 +503,9 @@ contract OpinionCore is
         // Calculate and store the next price for future answers
         opinion.nextPrice = uint96(_calculateNextPrice(opinionId, price));
 
-        // Token transfers
-        usdcToken.safeTransferFrom(msg.sender, address(this), price);
+        // Token transfers - remaining amount after platform fee already sent to treasury
+        uint96 remainingAmount = price - platformFee;
+        usdcToken.safeTransferFrom(msg.sender, address(this), remainingAmount);
 
         // Emit events
         emit FeesAction(
@@ -550,7 +571,9 @@ contract OpinionCore is
         opinion.salePrice = 0; // No longer for sale
 
         // Handle transfers
-        usdcToken.safeTransferFrom(msg.sender, address(this), salePrice);
+        // 🚀 SIMPLIFIED: Send platform fees directly to treasury
+        usdcToken.safeTransferFrom(msg.sender, treasury, platformFee);
+        usdcToken.safeTransferFrom(msg.sender, address(this), sellerAmount);
 
         // Accumulate fees for seller
         feeManager.accumulateFee(currentOwner, sellerAmount);
@@ -971,9 +994,9 @@ contract OpinionCore is
         opinion.creator = msg.sender;
         opinion.questionOwner = msg.sender;
         opinion.lastPrice = initialPrice;
-        opinion.nextPrice = uint96(
-            _calculateNextPrice(opinionId, initialPrice)
-        );
+        // ✅ FIX: nextPrice should equal initialPrice at creation
+        // The pricing algorithm only applies AFTER the first sale
+        opinion.nextPrice = initialPrice;
         opinion.isActive = true;
         opinion.question = question;
         opinion.currentAnswer = answer;
@@ -1026,16 +1049,56 @@ contract OpinionCore is
         uint256 opinionId,
         uint256 lastPrice
     ) internal returns (uint256) {
-        // Call library function
-        uint256 newPrice = PriceCalculator.calculateNextPrice(
-            opinionId,
-            lastPrice,
-            minimumPrice,
-            absoluteMaxPriceChange,
-            nonce++,
-            priceMetadata,
-            priceHistory
-        );
+        // 🎯 COMPETITION-AWARE PRICING: Detect auction dynamics for fair pricing
+        
+        // Track this trader as participating in this opinion
+        _updateCompetitionTracking(opinionId, msg.sender);
+        
+        // Check if there's competitive trading (2+ unique traders)
+        bool isCompetitive = _hasCompetitiveTrading(opinionId);
+        
+        uint256 newPrice;
+        
+        if (isCompetitive) {
+            // 🏆 COMPETITIVE AUCTION: Minimum growth floor when 2+ traders compete
+            // This ensures auction-style price increases, not decreases
+            uint256 randomSeed = uint256(keccak256(abi.encodePacked(
+                block.timestamp,
+                block.prevrandao,
+                opinionId,
+                lastPrice,
+                nonce++
+            )));
+            
+            // Guaranteed minimum 8-12% increase for competitive scenarios
+            uint256 increasePercent = 8 + (randomSeed % 5); // 8%, 9%, 10%, 11%, or 12%
+            uint256 increase = (lastPrice * increasePercent) / 100;
+            newPrice = lastPrice + increase;
+            
+        } else {
+            // 📊 MARKET REGIME PRICING: Use complex market simulation for non-competitive scenarios
+            // This allows for price volatility when there's no active competition
+            newPrice = PriceCalculator.calculateNextPrice(
+                opinionId,
+                lastPrice,
+                minimumPrice,
+                absoluteMaxPriceChange,
+                nonce++,
+                priceMetadata,
+                priceHistory
+            );
+        }
+
+        // Apply global safety limits
+        uint256 maxAllowedPrice = lastPrice + ((lastPrice * absoluteMaxPriceChange) / 100);
+        if (newPrice > maxAllowedPrice) {
+            newPrice = maxAllowedPrice;
+        }
+
+        // Ensure minimum price floor
+        if (newPrice < minimumPrice) {
+            newPrice = minimumPrice;
+        }
 
         // Update price history
         _updatePriceHistory(opinionId, newPrice);
@@ -1046,6 +1109,18 @@ contract OpinionCore is
     /**
      * @dev Estimates a next price based on current price
      */
+    function _estimateNextPrice(uint256 currentPrice) internal view returns (uint256) {
+        // Simple estimation: increase by 10-30% or use minimum price
+        uint256 increase = (currentPrice * (10 + (block.timestamp % 20))) / 100;
+        uint256 newPrice = currentPrice + increase;
+        
+        // Ensure it's at least the minimum price
+        if (newPrice < minimumPrice) {
+            newPrice = minimumPrice;
+        }
+        
+        return newPrice;
+    }
 
     /**
      * @dev Updates price history
@@ -1064,6 +1139,64 @@ contract OpinionCore is
         history = (history << 80) & (~uint256(0) << 160);
         history |= (newPrice & ((1 << 80) - 1));
         priceHistory[opinionId] = history;
+    }
+
+    /**
+     * @dev Updates competition tracking for auction dynamics detection
+     * @param opinionId The opinion being traded
+     * @param trader The current trader address
+     */
+    function _updateCompetitionTracking(uint256 opinionId, address trader) internal {
+        // Reset competition data every 24 hours to prevent stale data
+        if (block.timestamp - lastCompetitionReset[opinionId] > 86400) {
+            _resetCompetitionData(opinionId);
+        }
+        
+        // Add trader to opinion if not already tracked
+        if (!hasTraded[opinionId][trader]) {
+            opinionTraders[opinionId].push(trader);
+            hasTraded[opinionId][trader] = true;
+        }
+    }
+    
+    /**
+     * @dev Checks if there's competitive trading (2+ unique traders) for an opinion
+     * @param opinionId The opinion to check
+     * @return True if 2 or more unique traders are competing
+     */
+    function _hasCompetitiveTrading(uint256 opinionId) internal view returns (bool) {
+        return opinionTraders[opinionId].length >= 2;
+    }
+    
+    /**
+     * @dev Resets competition tracking data for an opinion
+     * @param opinionId The opinion to reset
+     */
+    function _resetCompetitionData(uint256 opinionId) internal {
+        // Clear the traders array
+        address[] storage traders = opinionTraders[opinionId];
+        for (uint256 i = 0; i < traders.length; i++) {
+            hasTraded[opinionId][traders[i]] = false;
+        }
+        delete opinionTraders[opinionId];
+        lastCompetitionReset[opinionId] = block.timestamp;
+    }
+
+    /**
+     * @dev Gets competition status for an opinion (view function for monitoring)
+     * @param opinionId The opinion to check
+     * @return isCompetitive Whether competition is currently active
+     * @return traderCount Number of unique traders competing
+     * @return traders Array of trader addresses
+     */
+    function getCompetitionStatus(uint256 opinionId) external view returns (
+        bool isCompetitive, 
+        uint256 traderCount, 
+        address[] memory traders
+    ) {
+        isCompetitive = _hasCompetitiveTrading(opinionId);
+        traderCount = opinionTraders[opinionId].length;
+        traders = opinionTraders[opinionId];
     }
 
     /**
