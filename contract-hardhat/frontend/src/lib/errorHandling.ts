@@ -21,7 +21,7 @@ export interface TransactionContext {
  * Comprehensive contract error parser that maps custom errors to user-friendly messages
  */
 export function parseContractError(error: unknown, context?: TransactionContext): ContractError {
-  const errorString = error?.message || error?.toString() || '';
+  const errorString = (error as Error)?.message || (error as Record<string, unknown>)?.toString() || '';
   
   // Custom error mappings based on smart contract definitions
   const customErrorMappings: Record<string, (context?: TransactionContext) => ContractError> = {

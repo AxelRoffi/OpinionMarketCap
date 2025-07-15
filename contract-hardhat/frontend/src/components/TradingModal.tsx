@@ -127,7 +127,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   }
 
   const calculateChange = (current: bigint, last: bigint) => {
-    if (last === 0n) return { percentage: 0, isPositive: true }
+    if (last === BigInt(0)) return { percentage: 0, isPositive: true }
     const diff = Number(current - last)
     const percentage = (diff / Number(last)) * 100
     return { percentage: Math.abs(percentage), isPositive: diff >= 0 }

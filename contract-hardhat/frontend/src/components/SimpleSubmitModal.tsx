@@ -56,15 +56,13 @@ export default function SimpleSubmitModal({
   // USDC approval transaction
   const { 
     writeContract: approveUSDC, 
-    data: approveHash,
-    isPending: isApprovePending 
+    data: approveHash
   } = useWriteContract();
 
   // Submit answer transaction
   const { 
     writeContract: submitAnswer, 
-    data: submitHash,
-    isPending: isSubmitPending 
+    data: submitHash
   } = useWriteContract();
 
   // Wait for approval transaction
@@ -111,8 +109,8 @@ export default function SimpleSubmitModal({
           args: [BigInt(opinionId), answer, description || ''],
         });
       }
-    } catch (error: any) {
-      setErrorMessage(error.message || 'Transaction failed');
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Transaction failed');
       setStep('error');
     }
   };

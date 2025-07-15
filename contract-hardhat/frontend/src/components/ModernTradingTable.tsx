@@ -6,10 +6,6 @@ import {
   TrendingDown, 
   Search, 
   Filter,
-  Eye,
-  ArrowUpDown,
-  ChevronUp,
-  ChevronDown,
   BarChart3
 } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -64,12 +60,6 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
   const [selectedTab, setSelectedTab] = useState('All Opinions');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOpinion, setSelectedOpinion] = useState<OpinionData | null>(null);
-  const [sortBy, setSortBy] = useState('marketCap');
-
-  const formatUSDC = (wei: bigint) => {
-    const usdc = Number(wei) / 1_000_000;
-    return `$${usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
 
   const formatLargeUSDC = (amount: number) => {
     if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
@@ -78,7 +68,7 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
   };
 
   const calculateChange = (current: bigint, last: bigint) => {
-    if (last === 0n) return { percentage: 0, isPositive: true };
+    if (last === BigInt(0)) return { percentage: 0, isPositive: true };
     const diff = Number(current - last);
     const percentage = (diff / Number(last)) * 100;
     return { percentage: Math.abs(percentage), isPositive: diff >= 0 };
@@ -255,7 +245,7 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
 
           {/* Table Body */}
           <div className="divide-y divide-gray-800">
-            {filteredOpinions.map((opinion, index) => {
+            {filteredOpinions.map((opinion) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
               const displayCategory = opinion.categories && opinion.categories.length > 0 
                 ? opinion.categories[0] 

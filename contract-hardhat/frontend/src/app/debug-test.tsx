@@ -55,7 +55,7 @@ export default function DebugTest() {
       }
     ],
     functionName: 'getOpinionDetails',
-    args: [1n],
+    args: [BigInt(1)],
   });
 
   // Test another getOpinionDetails call
@@ -93,7 +93,7 @@ export default function DebugTest() {
       }
     ],
     functionName: 'getOpinionDetails',
-    args: [1n],
+    args: [BigInt(1)],
   });
 
   return (

@@ -7,10 +7,8 @@ import {
   TrendingUp, 
   ArrowUp, 
   ArrowDown, 
-  MoreHorizontal,
   Check,
   Flame,
-  Zap,
   Sparkles,
   MessageCircle,
   ChevronUp,
@@ -100,7 +98,7 @@ const CopyButton = ({ text, label }: { text: string; label?: string }) => {
 
 const PriceChangeCell = ({ current, last }: { current: bigint; last: bigint }) => {
   const calculatePriceChange = (current: bigint, last: bigint) => {
-    if (last === 0n) return { change: 0, percentage: '+0.0%' };
+    if (last === BigInt(0)) return { change: 0, percentage: '+0.0%' };
     
     const diff = Number(current - last);
     const percentage = (diff / Number(last)) * 100;

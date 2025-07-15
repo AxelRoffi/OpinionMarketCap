@@ -31,24 +31,24 @@ export function useAllOpinions() {
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [1n],
-    query: { enabled: (nextOpinionId && Number(nextOpinionId) >= 2) }
+    args: [BigInt(1)],
+    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 2) }
   });
 
   const opinion2 = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [2n],
-    query: { enabled: (nextOpinionId && Number(nextOpinionId) >= 3) }
+    args: [BigInt(2)],
+    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 3) }
   });
 
   const opinion3 = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [3n],
-    query: { enabled: (nextOpinionId && Number(nextOpinionId) >= 4) }
+    args: [BigInt(3)],
+    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 4) }
   });
 
   // Add opinion 4 for future scalability
@@ -56,8 +56,8 @@ export function useAllOpinions() {
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [4n],
-    query: { enabled: (nextOpinionId && Number(nextOpinionId) >= 5) }
+    args: [BigInt(4)],
+    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 5) }
   });
 
   // Add opinion 5 for future scalability
@@ -65,8 +65,8 @@ export function useAllOpinions() {
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [5n],
-    query: { enabled: (nextOpinionId && Number(nextOpinionId) >= 6) }
+    args: [BigInt(5)],
+    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 6) }
   });
 
   // Process all opinion data
@@ -77,32 +77,32 @@ export function useAllOpinions() {
     console.log('Next Opinion ID:', nextOpinionId?.toString());
     
     // Helper function to add opinion
-    const addOpinion = (opinionQuery: { data: unknown; isLoading: boolean; error: unknown }, id: number) => {
+    const addOpinion = (opinionQuery: { data: Record<string, unknown> | undefined; isLoading: boolean; error: unknown }, id: number) => {
       if (opinionQuery.data && !opinionQuery.isLoading && !opinionQuery.error) {
         console.log(`✅ Adding Opinion ${id} to array`);
         console.log(`Opinion ${id} data:`, {
-          question: opinionQuery.data.question,
-          answer: opinionQuery.data.currentAnswer,
-          categories: opinionQuery.data.categories,
-          isActive: opinionQuery.data.isActive
+          question: opinionQuery.data?.question,
+          answer: opinionQuery.data?.currentAnswer,
+          categories: opinionQuery.data?.categories,
+          isActive: opinionQuery.data?.isActive
         });
         
         opinions.push({
           id,
-          question: opinionQuery.data.question || '',
-          currentAnswer: opinionQuery.data.currentAnswer || '',
-          nextPrice: opinionQuery.data.nextPrice || BigInt(0),
-          lastPrice: opinionQuery.data.lastPrice || BigInt(0),
-          totalVolume: opinionQuery.data.totalVolume || BigInt(0),
-          currentAnswerOwner: opinionQuery.data.currentAnswerOwner || '',
-          isActive: opinionQuery.data.isActive || false,
-          creator: opinionQuery.data.creator || '',
-          categories: opinionQuery.data.categories || [],
-          currentAnswerDescription: opinionQuery.data.currentAnswerDescription || '',
-          tradesCount: Math.ceil(Number(opinionQuery.data.totalVolume || BigInt(0)) / Number(opinionQuery.data.lastPrice || BigInt(1_000_000))),
+          question: String(opinionQuery.data?.question) || '',
+          currentAnswer: String(opinionQuery.data?.currentAnswer) || '',
+          nextPrice: (opinionQuery.data?.nextPrice as bigint) || BigInt(0),
+          lastPrice: (opinionQuery.data?.lastPrice as bigint) || BigInt(0),
+          totalVolume: (opinionQuery.data?.totalVolume as bigint) || BigInt(0),
+          currentAnswerOwner: String(opinionQuery.data?.currentAnswerOwner) || '',
+          isActive: Boolean(opinionQuery.data?.isActive) || false,
+          creator: String(opinionQuery.data?.creator) || '',
+          categories: (opinionQuery.data?.categories as string[]) || [],
+          currentAnswerDescription: String(opinionQuery.data?.currentAnswerDescription) || '',
+          tradesCount: Math.ceil(Number(opinionQuery.data?.totalVolume || BigInt(0)) / Number(opinionQuery.data?.lastPrice || BigInt(1_000_000))),
         });
       } else {
-        console.log(`❌ Opinion ${id} not added - Loading:`, opinionQuery.isLoading, 'Error:', opinionQuery.error?.message, 'HasData:', !!opinionQuery.data);
+        console.log(`❌ Opinion ${id} not added - Loading:`, opinionQuery.isLoading, 'Error:', (opinionQuery.error as Error)?.message, 'HasData:', !!opinionQuery.data);
       }
     };
 

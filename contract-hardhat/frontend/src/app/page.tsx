@@ -3,6 +3,7 @@
 import { useAccount } from 'wagmi';
 import { useState, useMemo, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useRouter } from 'next/navigation';
 import { 
   TrendingUp, 
   Search, 
@@ -79,6 +80,7 @@ interface MarketStats {
 
 export default function HomePage() {
   const { address } = useAccount();
+  const router = useRouter();
   console.log('Connected address:', address); // For debugging
   
   // State management
@@ -91,7 +93,6 @@ export default function HomePage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
-
 
   // Use dynamic opinion fetching hook
   const { opinions: allOpinions, nextOpinionId } = useAllOpinions();
@@ -259,7 +260,7 @@ export default function HomePage() {
   };
 
   const calculateChange = (current: bigint, last: bigint) => {
-    if (last === 0n) return { percentage: 0, isPositive: true };
+    if (last === BigInt(0)) return { percentage: 0, isPositive: true };
     const diff = Number(current - last);
     const percentage = (diff / Number(last)) * 100;
     return { percentage: Math.abs(percentage), isPositive: diff >= 0 };
@@ -648,7 +649,7 @@ export default function HomePage() {
                   style={{
                     gridTemplateColumns: "40px 1fr 180px 100px 80px 90px 80px 120px 120px"
                   }}
-                  onClick={() => setSelectedOpinion(opinion)}
+                  onClick={() => router.push(`/opinions/${opinion.id}`)}
                 >
                   {/* Mobile Layout */}
                   <div className="lg:hidden col-span-1 space-y-4">

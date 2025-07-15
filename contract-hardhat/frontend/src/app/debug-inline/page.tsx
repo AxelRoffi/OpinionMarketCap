@@ -18,8 +18,8 @@ export default function DebugInline() {
   const { data: opinion1, error: op1Error, isLoading: op1Loading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'opinions',
-    args: [1n],
+    functionName: 'getOpinionDetails',
+    args: [BigInt(1)],
   });
 
   return (

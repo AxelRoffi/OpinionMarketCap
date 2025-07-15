@@ -9,6 +9,7 @@ interface FormData {
   initialPrice: number
   description: string
   externalLink: string
+  tags: string[]
 }
 
 interface UseCreateFormReturn {
@@ -24,7 +25,8 @@ const initialFormData: FormData = {
   category: '',
   initialPrice: 5, // Default price
   description: '',
-  externalLink: ''
+  externalLink: '',
+  tags: []
 }
 
 export function useCreateForm(): UseCreateFormReturn {

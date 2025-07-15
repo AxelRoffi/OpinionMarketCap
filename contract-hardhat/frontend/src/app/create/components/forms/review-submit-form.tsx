@@ -100,9 +100,9 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
       name: (error as Error)?.name,
       message: (error as Error)?.message,
       stack: (error as Error)?.stack,
-      cause: (error as any)?.cause,
-      code: (error as any)?.code,
-      data: (error as any)?.data
+      cause: (error as Record<string, unknown>)?.cause,
+      code: (error as Record<string, unknown>)?.code,
+      data: (error as Record<string, unknown>)?.data
     })
     
     let errorState: ErrorState

@@ -1,7 +1,7 @@
 'use client';
 
 import { useReadContract, useAccount } from 'wagmi';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 
@@ -33,8 +33,8 @@ export default function SimplePage() {
   const { data: opinion1Data, error: opinion1Error, isLoading: opinion1Loading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'opinions',
-    args: [1n],
+    functionName: 'getOpinionDetails',
+    args: [BigInt(1)],
     query: { enabled: totalOpinions >= 1 }
   });
 
@@ -49,8 +49,8 @@ export default function SimplePage() {
   const { data: opinion2Data, error: opinion2Error, isLoading: opinion2Loading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'opinions',
-    args: [2n],
+    functionName: 'getOpinionDetails',
+    args: [BigInt(2)],
     query: { enabled: totalOpinions >= 2 }
   });
 
@@ -58,8 +58,8 @@ export default function SimplePage() {
   const { data: opinion3Data, error: opinion3Error, isLoading: opinion3Loading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'opinions',
-    args: [3n],
+    functionName: 'getOpinionDetails',
+    args: [BigInt(3)],
     query: { enabled: totalOpinions >= 3 }
   });
 
@@ -88,7 +88,7 @@ export default function SimplePage() {
           nextPrice: query.data.nextPrice,
           lastPrice: query.data.lastPrice,
           totalVolume: BigInt(0),
-          currentAnswerOwner: query.data.currentOwner,
+          currentAnswerOwner: query.data.currentAnswerOwner,
           isActive: query.data.isActive,
           creator: query.data.creator,
           categories: [],
@@ -179,7 +179,7 @@ export default function SimplePage() {
             
             {allOpinions.length > 0 && (
               <div className="mt-4 space-y-4">
-                {allOpinions.map((opinion) => (
+                {allOpinions.map((opinion) => opinion && (
                   <div key={opinion.id} className="border border-green-500 p-4 rounded bg-green-900/20">
                     <h3 className="font-semibold">Opinion {opinion.id}</h3>
                     <p>Question: {opinion.question}</p>

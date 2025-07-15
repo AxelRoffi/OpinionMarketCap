@@ -16,7 +16,7 @@ export function ContractDebug() {
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'getOpinionDetails',
-    args: [1n],
+    args: [BigInt(1)],
   })
 
   return (

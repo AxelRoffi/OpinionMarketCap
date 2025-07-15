@@ -92,14 +92,12 @@ export default function EnhancedSubmitModal({
   const { 
     writeContract: approveUSDC, 
     data: approveHash,
-    isPending: isApprovePending,
     error: approveError
   } = useWriteContract();
 
   const { 
     writeContract: submitAnswerTx, 
     data: submitHash,
-    isPending: isSubmitPending,
     error: submitError
   } = useWriteContract();
 
@@ -124,7 +122,7 @@ export default function EnhancedSubmitModal({
 
   // Enhanced custom error parsing
   const parseContractError = useCallback((error: unknown): ContractError => {
-    const errorString = error?.message || error?.toString() || '';
+    const errorString = (error as Error)?.message || (error as unknown)?.toString() || '';
     
     // Custom error mappings
     const errorMappings: Record<string, ContractError> = {
@@ -341,18 +339,19 @@ export default function EnhancedSubmitModal({
       // Refetch allowance and then proceed to submit
       refetchAllowance().then(() => {
         setStep('submit');
-        submitAnswerTx({
-          address: CONTRACTS.OPINION_CORE,
-          abi: OPINION_CORE_ABI,
-          functionName: 'submitAnswer',
-          args: [BigInt(opinionId), answer.trim(), description.trim()],
-        }).then(() => {
+        try {
+          submitAnswerTx({
+            address: CONTRACTS.OPINION_CORE,
+            abi: OPINION_CORE_ABI,
+            functionName: 'submitAnswer',
+            args: [BigInt(opinionId), answer.trim(), description.trim()],
+          });
           setStep('submitting');
-        }).catch((error) => {
+        } catch (error) {
           const contractError = parseContractError(error);
           setError(contractError);
           setStep('error');
-        });
+        }
       });
     }
   }, [isApproveSuccess, step, refetchAllowance, submitAnswerTx, opinionId, answer, description, parseContractError]);
