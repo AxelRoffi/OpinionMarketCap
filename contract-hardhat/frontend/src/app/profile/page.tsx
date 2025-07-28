@@ -3,6 +3,7 @@
 import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Copy, 
@@ -39,8 +40,16 @@ import { useUserPools, useWithdrawFromExpiredPool } from './hooks/use-withdraw-p
 import { ErrorBoundary } from './components/error-boundary';
 
 export default function ProfilePage() {
-  const { address } = useAccount();
+  const { address: connectedAddress } = useAccount();
   const { disconnect } = useDisconnect();
+  const searchParams = useSearchParams();
+  
+  // Get target address from URL parameter or use connected address
+  const targetAddress = searchParams.get('address') || connectedAddress;
+  const isOwnProfile = targetAddress === connectedAddress;
+  
+  // Debug logging
+  console.log('🔧 [PROFILE DEBUG] ProfilePage rendered with targetAddress:', targetAddress, 'isOwnProfile:', isOwnProfile);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -48,15 +57,15 @@ export default function ProfilePage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  const { stats, opinions, transactions, loading, error } = useUserProfile(address);
+  const { stats, opinions, transactions, loading, error } = useUserProfile(targetAddress);
   const { claimFees, isClaimingFees, claimSuccess, claimError, transactionHash } = useClaimFees();
-  const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(address);
+  const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(targetAddress);
   const { withdrawFromPool, isWithdrawing, withdrawTxHash, isWithdrawSuccess, pendingWithdraw } = useWithdrawFromExpiredPool();
 
   // Handle copy address
   const handleCopyAddress = async () => {
-    if (address) {
-      await navigator.clipboard.writeText(address);
+    if (targetAddress) {
+      await navigator.clipboard.writeText(targetAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -72,9 +81,9 @@ export default function ProfilePage() {
   };
 
   // Handle pool withdrawal
-  const handleWithdrawFromPool = async (poolId: number, contributionAmount: string) => {
+  const handleWithdrawFromPool = async (poolId: number, contributionAmount: string, isEarlyWithdrawal = false) => {
     try {
-      await withdrawFromPool(poolId, contributionAmount);
+      await withdrawFromPool(poolId, contributionAmount, isEarlyWithdrawal);
     } catch (error) {
       console.error('Pool withdrawal failed:', error);
     }
@@ -95,7 +104,8 @@ export default function ProfilePage() {
   }, [isWithdrawSuccess, pendingWithdraw, updatePoolAfterWithdrawal, refetchPools]);
 
 
-  if (!address) {
+  // Only require connection if trying to view own profile without address parameter
+  if (!targetAddress) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -215,9 +225,11 @@ export default function ProfilePage() {
               
               {/* Address Display */}
               <div>
-                <h1 className="text-2xl font-bold text-white">Your Profile</h1>
+                <h1 className="text-2xl font-bold text-white">
+                  {isOwnProfile ? 'Your Profile' : 'User Profile'}
+                </h1>
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-400">{formatAddress(address)}</span>
+                  <span className="text-gray-400">{formatAddress(targetAddress)}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -234,24 +246,32 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            {/* Settings and Disconnect Buttons */}
+            {/* Settings and Disconnect Buttons - Only show for own profile */}
             <div className="flex items-center space-x-3">
-              <ConnectButton />
-              <Button 
-                variant="outline" 
-                className="glass-input bg-transparent"
-                onClick={() => disconnect()}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Disconnect
-              </Button>
-              <Button 
-                variant="outline" 
-                className="glass-input bg-transparent"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
+              {isOwnProfile ? (
+                <>
+                  <ConnectButton />
+                  <Button 
+                    variant="outline" 
+                    className="glass-input bg-transparent"
+                    onClick={() => disconnect()}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Disconnect
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="glass-input bg-transparent"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                </>
+              ) : (
+                <div className="text-sm text-gray-400">
+                  Viewing {formatAddress(targetAddress)}
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -612,38 +632,40 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                  <Button 
-                    className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500"
-                    onClick={handleClaimFees}
-                    disabled={isClaimingFees || stats.accumulatedFees <= 0}
-                  >
-                    {isClaimingFees ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Claiming...
-                      </>
-                    ) : claimSuccess ? (
-                      <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Successfully Claimed!
-                      </>
-                    ) : (
-                      <>
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        Claim All Fees
-                      </>
-                    )}
-                  </Button>
+                  {isOwnProfile && (
+                    <Button 
+                      className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500"
+                      onClick={handleClaimFees}
+                      disabled={isClaimingFees || stats.accumulatedFees <= 0}
+                    >
+                      {isClaimingFees ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Claiming...
+                        </>
+                      ) : claimSuccess ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Successfully Claimed!
+                        </>
+                      ) : (
+                        <>
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Claim All Fees
+                        </>
+                      )}
+                    </Button>
+                  )}
                   
                   {/* Transaction Status for Earnings Tab */}
-                  {claimError && (
+                  {isOwnProfile && claimError && (
                     <div className="flex items-center justify-center space-x-2 text-red-400 mt-2">
                       <XCircle className="w-3 h-3" />
                       <span className="text-xs">{claimError?.message || 'Claim failed'}</span>
                     </div>
                   )}
                   
-                  {claimSuccess && transactionHash && (
+                  {isOwnProfile && claimSuccess && transactionHash && (
                     <div className="flex items-center justify-center space-x-2 text-emerald-400 mt-2">
                       <CheckCircle className="w-3 h-3" />
                       <span className="text-xs">Fees claimed!</span>
@@ -774,6 +796,11 @@ export default function ProfilePage() {
                               Refund Available
                             </Badge>
                           )}
+                          {pool.canWithdrawEarly && (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                              Early Withdrawal Available
+                            </Badge>
+                          )}
                         </div>
                         
                         <div className="text-gray-400 text-sm mb-2">
@@ -827,6 +854,30 @@ export default function ProfilePage() {
                               </>
                             )}
                           </Button>
+                        ) : pool.canWithdrawEarly && parseFloat(pool.contribution) > 0 ? (
+                          <div className="space-y-2">
+                            <Button
+                              size="sm"
+                              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 w-full"
+                              onClick={() => handleWithdrawFromPool(pool.id, pool.contribution, true)}
+                              disabled={isWithdrawing}
+                            >
+                              {isWithdrawing && pendingWithdraw?.poolId === pool.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Withdrawing...
+                                </>
+                              ) : (
+                                <>
+                                  <DollarSign className="w-4 h-4 mr-2" />
+                                  Early Withdraw
+                                </>
+                              )}
+                            </Button>
+                            <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-400">
+                              ⚠️ 20% penalty: You'll receive {pool.earlyWithdrawalReceive} USDC (penalty: {pool.earlyWithdrawalPenalty} USDC)
+                            </div>
+                          </div>
                         ) : parseFloat(pool.contribution) === 0 ? (
                           <Button
                             size="sm"

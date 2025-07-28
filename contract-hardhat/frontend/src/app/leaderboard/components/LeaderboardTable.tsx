@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronUp, ChevronDown, Trophy, Medal, Award, Info } from 'lucide-react';
 import { useEnhancedLeaderboardData, LeaderboardUser } from '@/hooks/useLeaderboardData';
 
@@ -10,6 +11,7 @@ type SortField = keyof LeaderboardUser;
 export function LeaderboardTable() {
   const [sortField, setSortField] = useState<SortField>('trueROI');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const router = useRouter();
 
   const { users: leaderboardUsers, isLoading } = useEnhancedLeaderboardData();
 
@@ -242,13 +244,19 @@ export function LeaderboardTable() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col">
-                    <div className="text-sm font-medium text-white">
+                    <button
+                      onClick={() => router.push(`/profile?address=${user.address}`)}
+                      className="text-sm font-medium text-white hover:text-blue-400 transition-colors cursor-pointer text-left"
+                    >
                       {user.username || formatAddress(user.address)}
-                    </div>
+                    </button>
                     {user.username && (
-                      <div className="text-xs text-gray-400">
+                      <button
+                        onClick={() => router.push(`/profile?address=${user.address}`)}
+                        className="text-xs text-gray-400 hover:text-blue-400 transition-colors cursor-pointer text-left"
+                      >
                         {formatAddress(user.address)}
-                      </div>
+                      </button>
                     )}
                   </div>
                 </td>
