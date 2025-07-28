@@ -15,12 +15,14 @@ import { OpinionActivity } from '../components/opinion-activity';
 import { OpinionStatsComponent, DetailedStats } from '../components/opinion-stats';
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { TradingModal } from '@/components/TradingModal';
+import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 
 export default function OpinionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { address } = useAccount();
   const [showTradingModal, setShowTradingModal] = useState(false);
+  const [showPoolCreationModal, setShowPoolCreationModal] = useState(false);
 
   const opinionId = parseInt(params.id as string);
   
@@ -53,6 +55,15 @@ export default function OpinionDetailPage() {
       return;
     }
     setShowTradingModal(true);
+  };
+
+  // Handle pool creation action
+  const handleCreatePool = () => {
+    if (!address) {
+      // Show connect wallet prompt
+      return;
+    }
+    setShowPoolCreationModal(true);
   };
 
   // Error state
@@ -89,6 +100,7 @@ export default function OpinionDetailPage() {
           opinion={opinion}
           onBack={handleBack}
           onTrade={handleTrade}
+          onCreatePool={handleCreatePool}
         />
 
         {/* Stats Cards */}
@@ -161,6 +173,22 @@ export default function OpinionDetailPage() {
             isActive: opinion.isActive,
           }}
           onClose={() => setShowTradingModal(false)}
+        />
+      )}
+
+      {/* Pool Creation Modal */}
+      {showPoolCreationModal && opinion && (
+        <CreatePoolModal
+          isOpen={showPoolCreationModal}
+          opinionId={opinion.id}
+          opinionData={{
+            id: opinion.id,
+            question: opinion.question,
+            currentAnswer: opinion.currentAnswer,
+            nextPrice: opinion.nextPrice,
+            category: opinion.categories[0] || 'General'
+          }}
+          onClose={() => setShowPoolCreationModal(false)}
         />
       )}
     </div>

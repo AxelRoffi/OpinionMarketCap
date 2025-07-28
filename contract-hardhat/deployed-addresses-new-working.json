@@ -8,7 +8,8 @@
     "usdcToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     "treasury": "0xFb7eF00D5C2a87d282F273632e834f9105795067",
     "mockFeeManager": "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3",
-    "mockPoolManager": "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3"
+    "mockPoolManager": "0x3B4584e690109484059D95d7904dD9fEbA246612",
+    "poolManager": "0x3B4584e690109484059D95d7904dD9fEbA246612"
   },
   "features": {
     "feeStructure": "20% with 5 USDC minimum",
@@ -30,5 +31,6 @@
   "usage": {
     "frontendShouldUse": "0xB2D35055550e2D49E5b2C21298528579A8bF7D2f",
     "contractType": "OpinionCore with PriceCalculator"
-  }
+  },
+  "poolManagerDeployedAt": "2025-07-21T16:23:25.060Z"
 }

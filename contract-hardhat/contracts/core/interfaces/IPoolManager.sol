@@ -16,6 +16,8 @@ interface IPoolManager {
 
     function contributeToPool(uint256 poolId, uint256 amount) external;
 
+    function completePool(uint256 poolId) external;
+
     function withdrawFromExpiredPool(uint256 poolId) external;
 
     function extendPoolDeadline(uint256 poolId, uint256 newDeadline) external;

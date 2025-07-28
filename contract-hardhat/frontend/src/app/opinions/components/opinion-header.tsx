@@ -6,18 +6,21 @@ import {
   TrendingDown, 
   Share2, 
   BookmarkPlus,
-  Zap
+  Zap,
+  Target
 } from 'lucide-react';
 import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
+import { ClickableAddress } from '@/components/ui/clickable-address';
 
 interface OpinionHeaderProps {
   opinion: OpinionDetail;
   onBack: () => void;
   onTrade: () => void;
+  onCreatePool: () => void;
 }
 
-export function OpinionHeader({ opinion, onBack, onTrade }: OpinionHeaderProps) {
+export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool }: OpinionHeaderProps) {
   const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
   const marketCap = Number(opinion.totalVolume) / 1_000_000;
 
@@ -63,9 +66,12 @@ export function OpinionHeader({ opinion, onBack, onTrade }: OpinionHeaderProps) 
             </h1>
             <div className="flex items-center space-x-2 text-gray-400 text-sm">
               <span>Created by</span>
-              <span className="text-emerald-400 hover:text-emerald-300 cursor-pointer">
+              <ClickableAddress 
+                address={opinion.creator}
+                className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
+              >
                 {formatAddress(opinion.creator)}
-              </span>
+              </ClickableAddress>
             </div>
           </div>
 
@@ -89,9 +95,12 @@ export function OpinionHeader({ opinion, onBack, onTrade }: OpinionHeaderProps) 
             )}
             <div className="flex items-center space-x-2 text-gray-400 text-sm">
               <span>Owned by</span>
-              <span className="text-emerald-400 hover:text-emerald-300 cursor-pointer">
+              <ClickableAddress 
+                address={opinion.currentAnswerOwner}
+                className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
+              >
                 {formatAddress(opinion.currentAnswerOwner)}
-              </span>
+              </ClickableAddress>
             </div>
           </div>
 
@@ -159,6 +168,16 @@ export function OpinionHeader({ opinion, onBack, onTrade }: OpinionHeaderProps) 
           >
             <Zap className="w-5 h-5 mr-2" />
             Trade This Opinion
+          </Button>
+
+          {/* Create Pool Button */}
+          <Button
+            onClick={onCreatePool}
+            variant="outline"
+            className="w-full border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
+          >
+            <Target className="w-5 h-5 mr-2" />
+            Create Pool
           </Button>
         </div>
       </div>

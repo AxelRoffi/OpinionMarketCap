@@ -471,6 +471,15 @@ contract OpinionCore is
         // 🚀 SIMPLIFIED: Send platform fees directly to treasury
         usdcToken.safeTransferFrom(msg.sender, treasury, platformFee);
 
+        // 🔧 FIX: Transfer user fees to FeeManager before accumulating
+        uint96 totalUserFees = creatorFee;
+        if (!answerIsPoolOwned) {
+            totalUserFees += ownerAmount;
+        }
+        if (totalUserFees > 0) {
+            usdcToken.safeTransferFrom(msg.sender, address(feeManager), totalUserFees);
+        }
+
         // Accumulate fees for creator and owner
         feeManager.accumulateFee(creator, creatorFee);
 
@@ -573,7 +582,8 @@ contract OpinionCore is
         // Handle transfers
         // 🚀 SIMPLIFIED: Send platform fees directly to treasury
         usdcToken.safeTransferFrom(msg.sender, treasury, platformFee);
-        usdcToken.safeTransferFrom(msg.sender, address(this), sellerAmount);
+        // 🔧 FIX: Transfer seller amount to FeeManager, not to this contract
+        usdcToken.safeTransferFrom(msg.sender, address(feeManager), sellerAmount);
 
         // Accumulate fees for seller
         feeManager.accumulateFee(currentOwner, sellerAmount);

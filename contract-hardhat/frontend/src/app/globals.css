@@ -33,6 +33,13 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
+.glass-input {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
 .border-gradient {
   border-image: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(59, 130, 246, 0.3)) 1;
 }

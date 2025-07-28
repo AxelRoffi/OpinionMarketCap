@@ -20,6 +20,7 @@ library PoolStructs {
         PoolStatus status;
         string name;
         string ipfsHash;
+        uint96 targetPrice;        // ✅ FIX: Store fixed target price at creation (moved to end for upgrade compatibility)
     }
 
     struct PoolContribution {

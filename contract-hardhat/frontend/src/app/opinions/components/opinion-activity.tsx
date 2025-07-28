@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { TradingActivity } from '../types/opinion-types';
 import { formatUSDC, formatAddress } from '../hooks/use-opinion-detail';
+import { ClickableAddress } from '@/components/ui/clickable-address';
 
 interface OpinionActivityProps {
   activity: TradingActivity[];
@@ -161,9 +162,12 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
                 {/* Activity Details */}
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-white font-medium">
+                    <ClickableAddress 
+                      address={item.user}
+                      className="text-white font-medium hover:text-emerald-400 cursor-pointer transition-colors"
+                    >
                       {formatAddress(item.user)}
-                    </span>
+                    </ClickableAddress>
                     <Badge
                       variant="secondary"
                       className={`text-xs ${

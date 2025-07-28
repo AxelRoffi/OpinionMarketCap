@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -25,6 +26,7 @@ contract PoolManager is
     Initializable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
     IPoolManager,
     IOpinionMarketEvents,
     IOpinionMarketErrors
@@ -191,8 +193,8 @@ contract PoolManager is
         // Handle funds transfer
         usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
 
-        // Process the creation fee
-        feeManager.handlePoolCreationFee(opinionId, poolId, poolCreationFee);
+        // Send creation fee directly to treasury (full treasury model)
+        usdcToken.safeTransfer(treasury, poolCreationFee);
 
         // Emit creation event
         emit PoolCreated(
@@ -226,9 +228,9 @@ contract PoolManager is
         if (block.timestamp > pool.deadline)
             revert PoolDeadlinePassed(poolId, pool.deadline);
 
-        // Calculate target price
+        // Use fixed target price (no longer dynamic)
         uint256 opinionId = pool.opinionId;
-        uint96 targetPrice = uint96(opinionCore.getNextPrice(opinionId));
+        uint96 targetPrice = pool.targetPrice; // ✅ FIX: Use stored fixed target price
 
         // Check if pool already has enough funds
         if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
@@ -256,12 +258,8 @@ contract PoolManager is
         // Transfer funds
         usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
 
-        // Handle fee
-        feeManager.handleContributionFee(
-            opinionId,
-            poolId,
-            poolContributionFee
-        );
+        // Handle fee - send to treasury instead of splitting
+        usdcToken.safeTransfer(treasury, poolContributionFee);
 
         // Emit contribution event
         emit PoolContribution(
@@ -274,6 +272,63 @@ contract PoolManager is
         );
 
         // Check if pool is ready to execute
+        _checkAndExecutePoolIfReady(poolId);
+    }
+
+    /**
+     * @dev Complete a pool by contributing the exact remaining amount
+     * @param poolId Pool ID to complete
+     */
+    function completePool(uint256 poolId) external nonReentrant {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Validate pool is active
+        if (pool.status != PoolStructs.PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        // Check deadline
+        if (block.timestamp > pool.deadline)
+            revert PoolDeadlinePassed(poolId, pool.deadline);
+
+        // Calculate exact remaining amount
+        uint96 targetPrice = pool.targetPrice;
+        if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
+        
+        uint96 remainingAmount = targetPrice - pool.totalAmount;
+        
+        // Ensure there's actually an amount to contribute
+        if (remainingAmount == 0) revert PoolAlreadyFunded(poolId);
+
+        // Calculate total with fee
+        uint96 totalRequired = remainingAmount + poolContributionFee;
+
+        // Check allowance
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < totalRequired)
+            revert InsufficientAllowance(totalRequired, allowance);
+
+        // Update pool state
+        _updatePoolForContribution(poolId, remainingAmount);
+
+        // Transfer funds
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
+
+        // Handle fee - send to treasury instead of splitting
+        usdcToken.safeTransfer(treasury, poolContributionFee);
+
+        // Emit contribution event
+        emit PoolContribution(
+            poolId,
+            pool.opinionId,
+            msg.sender,
+            remainingAmount,
+            pool.totalAmount,
+            block.timestamp
+        );
+
+        // Pool should be ready to execute now
         _checkAndExecutePoolIfReady(poolId);
     }
 
@@ -511,14 +566,14 @@ contract PoolManager is
 
         info = pools[poolId];
 
-        // Get target price
-        currentPrice = opinionCore.getNextPrice(info.opinionId);
+        // Use fixed target price (not dynamic current price)
+        currentPrice = info.targetPrice; // ✅ FIX: Return stored target price
 
         // Calculate remaining amount needed
-        if (info.totalAmount >= currentPrice) {
+        if (info.totalAmount >= info.targetPrice) {
             remainingAmount = 0;
         } else {
-            remainingAmount = currentPrice - info.totalAmount;
+            remainingAmount = info.targetPrice - info.totalAmount;
         }
 
         // Calculate time remaining
@@ -596,6 +651,7 @@ contract PoolManager is
         pool.opinionId = opinionId;
         pool.proposedAnswer = proposedAnswer;
         pool.totalAmount = uint96(initialContribution);
+        pool.targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ FIX: Store fixed target price
         pool.deadline = uint32(deadline);
         pool.creator = msg.sender;
         pool.status = PoolStructs.PoolStatus.Active;
@@ -664,7 +720,7 @@ contract PoolManager is
         }
 
         uint256 opinionId = pool.opinionId;
-        uint96 targetPrice = uint96(opinionCore.getNextPrice(opinionId));
+        uint96 targetPrice = pool.targetPrice; // ✅ FIX: Use stored fixed target price
 
         // Execute if enough funds
         if (pool.totalAmount >= targetPrice) {
@@ -936,4 +992,9 @@ contract PoolManager is
         
         return (true, 0); // possible
     }
+
+    /**
+     * @dev Authorize contract upgrades - only admin can upgrade
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
 }

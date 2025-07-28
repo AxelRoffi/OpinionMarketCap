@@ -19,7 +19,8 @@ import {
   Sun,
   Menu,
   X,
-  Zap
+  Zap,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 // Removed unused imports
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
+import { ClickableAddress } from '@/components/ui/clickable-address';
 
 // Smart contract categories
 const SMART_CONTRACT_CATEGORIES = [
@@ -270,6 +272,31 @@ export default function HomePage() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  // Get category badge color
+  const getCategoryColor = (category: string) => {
+    const colorMap: { [key: string]: string } = {
+      'Crypto': 'bg-orange-600 text-white hover:bg-orange-700',
+      'Politics': 'bg-red-600 text-white hover:bg-red-700',
+      'Science': 'bg-green-600 text-white hover:bg-green-700',
+      'Technology': 'bg-blue-600 text-white hover:bg-blue-700',
+      'Sports': 'bg-yellow-600 text-white hover:bg-yellow-700',
+      'Entertainment': 'bg-purple-600 text-white hover:bg-purple-700',
+      'Culture': 'bg-pink-600 text-white hover:bg-pink-700',
+      'Web': 'bg-cyan-600 text-white hover:bg-cyan-700',
+      'Social Media': 'bg-indigo-600 text-white hover:bg-indigo-700',
+      'Other': 'bg-gray-600 text-white hover:bg-gray-700'
+    };
+    return colorMap[category] || 'bg-gray-600 text-white hover:bg-gray-700';
+  };
+
+  // Get opinion link (placeholder - this would fetch from contract in real implementation)
+  const getOpinionLink = async (opinionId: number) => {
+    // TODO: Implement contract call to get opinion.link
+    // const opinionDetails = await contract.getOpinionDetails(opinionId);
+    // return opinionDetails.link;
+    return `https://opinion.market/${opinionId}`;
+  };
+
   // Handle sorting
   const handleSort = (column: string) => {
     setSortState(prev => ({
@@ -280,22 +307,49 @@ export default function HomePage() {
     setSortDirection(sortState.column === column && sortState.direction === 'desc' ? 'asc' : 'desc');
   };
 
-  // Generate trend-aware price history for charts
-  const generatePriceHistory = (opinion: OpinionData, change24h: { percentage: number; isPositive: boolean }) => {
-    const basePrice = Number(opinion.nextPrice) / 1_000_000;
-    const changePercent = change24h.percentage / 100;
+  // Generate realistic price history from initialPrice to current price
+  const generateRealPriceHistory = (opinion: OpinionData) => {
+    // TODO: In real implementation, this would fetch from contract.getAnswerHistory(opinionId)
+    // For now, we simulate realistic price evolution from initial to current
     
-    return Array.from({ length: 20 }, (_, i) => {
-      const progress = i / 19; // 0 to 1
-      const trendValue = change24h.isPositive 
-        ? basePrice * (1 - changePercent * 0.5 + changePercent * progress) // Upward trend
-        : basePrice * (1 + changePercent * 0.5 - changePercent * progress); // Downward trend
+    const currentPrice = Number(opinion.nextPrice) / 1_000_000;
+    const initialPrice = 5.0; // Most opinions start at 5 USDC
+    
+    const points = 20;
+    const history = [];
+    
+    // Calculate total growth from initial to current
+    const totalGrowth = currentPrice / initialPrice;
+    
+    for (let i = 0; i < points; i++) {
+      const progress = i / (points - 1); // 0 to 1
       
-      return {
-        timestamp: Date.now() - (19 - i) * 60000,
-        price: Math.max(trendValue + (Math.random() - 0.5) * basePrice * 0.05, 0.01) // Small random variation
-      };
-    });
+      // Simulate realistic price progression with some volatility
+      let price;
+      if (i === 0) {
+        price = initialPrice; // Start at initial price
+      } else if (i === points - 1) {
+        price = currentPrice; // End at current price
+      } else {
+        // Gradual progression with some realistic market volatility
+        const baseProgress = Math.pow(progress, 1.2); // Slightly accelerated growth curve
+        price = initialPrice * (1 + (totalGrowth - 1) * baseProgress);
+        
+        // Add some realistic volatility (±5%)
+        const volatility = (Math.sin(i * 0.7) * 0.03 + Math.random() * 0.02 - 0.01);
+        price *= (1 + volatility);
+        
+        // Ensure minimum price
+        price = Math.max(price, 0.1);
+      }
+      
+      history.push({
+        timestamp: Date.now() - (points - 1 - i) * 3600000, // Hourly intervals
+        price: price
+      });
+    }
+    
+    return history;
   };
 
   // Enhanced Mini Price Chart Component with trend colors
@@ -360,7 +414,8 @@ export default function HomePage() {
             {/* Desktop Navigation - Right aligned with green hover + bold */}
             <nav className="hidden md:flex items-center space-x-8 ml-auto">
               <a href="#" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</a>
-              <a href="#" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</a>
+              <a href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</a>
+              <a href="/profile" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</a>
               <a href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</a>
             </nav>
 
@@ -404,7 +459,8 @@ export default function HomePage() {
               >
                 <div className="flex flex-col space-y-4">
                   <a href="#" className="text-gray-300 hover:text-white transition-colors">Leaderboard</a>
-                  <a href="#" className="text-gray-300 hover:text-white transition-colors">Profile</a>
+                  <a href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</a>
+                  <a href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</a>
                   <a href="/create" className="text-gray-300 hover:text-white transition-colors">Create</a>
                 </div>
               </motion.nav>
@@ -586,14 +642,13 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Table Header - OPTIMIZED COLUMN SPACING */}
+          {/* Table Header - MODIFIED: REMOVED CATEGORY COLUMN */}
           <div className="hidden lg:grid gap-2 px-4 py-3 bg-gray-800/50 border-b border-gray-700/50" style={{
-            gridTemplateColumns: "40px 1fr 180px 100px 80px 90px 80px 120px 120px"
+            gridTemplateColumns: "40px 1fr 200px 80px 90px 80px 120px 120px"
           }}>
             <div className="text-white text-base font-bold text-center">#</div>
             <div className="text-white text-base font-bold">Question</div>
-            <div className="text-white text-base font-bold">Answer</div>
-            <div className="text-white text-base font-bold text-center">Category</div>
+            <div className="text-white text-base font-bold">🔗 Answer</div>
             <div 
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('price')}
@@ -645,13 +700,13 @@ export default function HomePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="grid grid-cols-1 lg:grid-cols-9 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
+                  className="grid grid-cols-1 lg:grid-cols-8 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
                   style={{
-                    gridTemplateColumns: "40px 1fr 180px 100px 80px 90px 80px 120px 120px"
+                    gridTemplateColumns: "40px 1fr 200px 80px 90px 80px 120px 120px"
                   }}
                   onClick={() => router.push(`/opinions/${opinion.id}`)}
                 >
-                  {/* Mobile Layout */}
+                  {/* Mobile Layout - MODIFIED: INTEGRATED BADGE IN QUESTION */}
                   <div className="lg:hidden col-span-1 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -659,39 +714,53 @@ export default function HomePage() {
                         {activeTab === 'trending' && <Flame className="w-4 h-4 text-orange-400" />}
                         {activeTab === 'featured' && <Star className="w-4 h-4 text-purple-400" />}
                       </div>
-                      <Badge 
-                        className="bg-blue-600 text-white hover:bg-blue-700 hover:bg-opacity-80 cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCategory(displayCategory);
-                          setActiveTab('all');
-                        }}
-                      >
-                        {displayCategory}
-                      </Badge>
                     </div>
                     
                     <div className="w-full">
                       <div className="text-white font-bold text-base mb-1 leading-tight">
                         {opinion.question}
                       </div>
-                      <div 
-                        className="text-gray-400 hover:text-emerald-500 text-xs mb-2 cursor-pointer transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Navigate to profile:', opinion.creator);
-                        }}
-                      >
-                        by {truncateAddress(opinion.creator)}
+                      <div className="text-xs mb-2">
+                        by <ClickableAddress 
+                          address={opinion.creator}
+                          className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                        >
+                          {truncateAddress(opinion.creator)}
+                        </ClickableAddress>
                       </div>
-                      <div className="text-white font-bold text-sm mb-2">
-                        Current: {opinion.currentAnswer}
+                      {/* Category Badge integrated in Question */}
+                      <div className="mt-1 mb-2">
+                        <Badge 
+                          className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCategory(displayCategory);
+                            setActiveTab('all');
+                          }}
+                        >
+                          {displayCategory}
+                        </Badge>
                       </div>
-                      <div className="text-gray-400 hover:text-emerald-500 text-xs cursor-pointer transition-colors" onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('Navigate to profile:', opinion.currentAnswerOwner);
-                      }}>
-                        by {truncateAddress(opinion.currentAnswerOwner)}
+                      <div className="text-white font-bold text-sm mb-2 flex items-center gap-2">
+                        <span 
+                          className="hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const link = await getOpinionLink(opinion.id);
+                            window.open(link, '_blank');
+                          }}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {opinion.currentAnswer}
+                        </span>
+                      </div>
+                      <div className="text-xs">
+                        by <ClickableAddress 
+                          address={opinion.currentAnswerOwner}
+                          className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                        >
+                          {truncateAddress(opinion.currentAnswerOwner)}
+                        </ClickableAddress>
                       </div>
                     </div>
                     
@@ -742,51 +811,60 @@ export default function HomePage() {
                       {activeTab === 'featured' && <Star className="w-3 h-3 text-purple-400 ml-1" />}
                     </div>
 
-                    {/* Question Column - FULL TEXT VISIBLE */}
+                    {/* Question Column - MODIFIED: WITH INTEGRATED BADGE */}
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
                         <div className="text-white font-bold text-base leading-tight mb-1">
                           {opinion.question}
                         </div>
-                        <div 
-                          className="text-gray-400 hover:text-emerald-500 text-xs cursor-pointer transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            console.log('Navigate to profile:', opinion.creator);
-                          }}
-                        >
-                          by {truncateAddress(opinion.creator)}
+                        <div className="text-xs mb-1">
+                          by <ClickableAddress 
+                            address={opinion.creator}
+                            className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                          >
+                            {truncateAddress(opinion.creator)}
+                          </ClickableAddress>
+                        </div>
+                        {/* Category Badge integrated under author */}
+                        <div className="mt-1">
+                          <Badge 
+                            size="sm"
+                            className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCategory(displayCategory);
+                              setActiveTab('all');
+                            }}
+                          >
+                            {displayCategory}
+                          </Badge>
                         </div>
                       </div>
                     </div>
 
-                    {/* Answer Column - COMPACT */}
+                    {/* Answer Column - MODIFIED: CLICKABLE WITH LINK ICON */}
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
-                        <div className="text-white font-bold text-sm leading-tight mb-1">
+                        <div 
+                          className="text-white font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const link = await getOpinionLink(opinion.id);
+                            window.open(link, '_blank');
+                          }}
+                        >
+                          <ExternalLink className="w-3 h-3" />
                           {opinion.currentAnswer}
                         </div>
-                        <div className="text-gray-400 hover:text-emerald-500 text-xs cursor-pointer transition-colors" onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Navigate to profile:', opinion.currentAnswerOwner);
-                        }}>
-                          by {truncateAddress(opinion.currentAnswerOwner)}
+                        <div className="text-xs">
+                          by <ClickableAddress 
+                            address={opinion.currentAnswerOwner}
+                            className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                          >
+                            {truncateAddress(opinion.currentAnswerOwner)}
+                          </ClickableAddress>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Category Column - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <Badge 
-                        className="bg-blue-600 text-white hover:bg-blue-700 hover:bg-opacity-80 cursor-pointer transition-colors duration-200 px-1.5 py-0.5 rounded text-xs font-medium"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCategory(displayCategory);
-                          setActiveTab('all');
-                        }}
-                      >
-                        {displayCategory.slice(0, 8)}{displayCategory.length > 8 ? '...' : ''}
-                      </Badge>
                     </div>
 
                     {/* Price - COMPACT */}
@@ -816,7 +894,7 @@ export default function HomePage() {
                     {/* Price Chart - RESPONSIVE */}
                     <div className="hidden lg:flex items-center justify-center min-h-[60px]">
                       <MiniPriceChart 
-                        priceHistory={generatePriceHistory(opinion, change)} 
+                        priceHistory={generateRealPriceHistory(opinion)} 
                         change24h={change}
                       />
                     </div>
