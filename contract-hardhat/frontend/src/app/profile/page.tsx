@@ -341,7 +341,7 @@ export default function ProfilePage() {
           <div className="text-sm text-gray-400 space-y-2">
             <div>Accumulated Fees: {stats.accumulatedFees} USDC</div>
             <div>FeeManager Contract: {CONTRACTS.FEE_MANAGER}</div>
-            <div>Connected Address: {address}</div>
+            <div>Connected Address: {targetAddress}</div>
           </div>
           
           {stats.accumulatedFees > 0 ? (
