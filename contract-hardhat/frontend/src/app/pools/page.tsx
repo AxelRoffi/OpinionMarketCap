@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Target, 
   DollarSign, 
@@ -12,17 +12,12 @@ import {
   Users,
   Eye,
   Plus,
-  Activity,
-  BarChart3,
-  Sun,
-  Moon,
-  Menu,
-  X
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -38,11 +33,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { PoolFilters, Pool } from './types/pool-types';
 import { usePools } from './hooks/usePools';
 import { useRouter } from 'next/navigation';
 import JoinPoolModal from './components/JoinPoolModal';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { TreasuryBalanceChecker } from '@/components/TreasuryBalanceChecker';
 import { useCompletePool } from './hooks/useCompletePool';
 
@@ -73,24 +66,6 @@ const getPoolStatus = (progress: number) => {
   return progress >= 95 ? 'about-to-execute' : 'active';
 };
 
-const getStatusConfig = (progress: number) => {
-  if (progress >= 95) {
-    return {
-      text: 'About to Execute',
-      className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-    };
-  }
-  return {
-    text: 'Active',
-    className: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-  };
-};
-
-const getProgressText = (progress: number) => {
-  if (progress >= 95) return 'Ready to execute';
-  if (progress >= 70) return 'Almost there';
-  return 'In progress';
-};
 
 // Stats Card Component - EXACT Layout
 const StatsCard = ({ 
@@ -150,10 +125,6 @@ export default function PoolsPage() {
   // Join Pool Modal states
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useState<any>(null);
-  
-  // Navigation states
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleJoinPool = (pool: any) => {
     setSelectedPool(pool);
@@ -248,77 +219,7 @@ export default function PoolsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header Navigation - EXACT MATCH */}
-      <header className="sticky top-0 z-50 border-b border-gray-700/40 backdrop-blur-sm bg-gray-900/80">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="w-8 h-8 text-emerald-500" />
-              <h1 className="text-xl font-bold text-white">
-                OpinionMarketCap
-              </h1>
-            </div>
-
-            {/* Desktop Navigation - Right aligned with green hover + bold */}
-            <nav className="hidden md:flex items-center space-x-8 ml-auto">
-              <a href="/" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Opinions</a>
-              <a href="/pools" className="text-emerald-500 font-bold">Pools</a>
-              <a href="/profile" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</a>
-              <a href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</a>
-            </nav>
-
-            {/* Right Side */}
-            <div className="flex items-center gap-4">
-              {/* Theme Toggle - ENABLED functionality with proper spacing */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="hidden md:flex bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-300 hover:text-white mx-4"
-              >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              
-              {/* Wallet Connection */}
-              <div className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">
-                <ConnectButton />
-              </div>
-              
-              {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden text-gray-300 hover:text-white"
-              >
-                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          <AnimatePresence>
-            {isMobileMenuOpen && (
-              <motion.nav
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="md:hidden mt-4 pt-4 border-t border-gray-700/40"
-              >
-                <div className="flex flex-col space-y-4">
-                  <a href="/" className="text-gray-300 hover:text-white transition-colors">Opinions</a>
-                  <a href="/pools" className="text-emerald-500 font-bold">Pools</a>
-                  <a href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</a>
-                  <a href="/create" className="text-gray-300 hover:text-white transition-colors">Create</a>
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      </header>
-
+    <>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
@@ -619,6 +520,6 @@ export default function PoolsPage() {
         {/* Treasury Balance Checker - Shows despite explorer errors */}
         <TreasuryBalanceChecker />
       </div>
-    </div>
+    </>
   );
 }
