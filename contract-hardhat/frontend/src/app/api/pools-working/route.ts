@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 const POOL_MANAGER_ADDRESS = '0x3B4584e690109484059D95d7904dD9fEbA246612';
 const POOL_MANAGER_ABI = [
   "function poolCount() view returns (uint256)",
-  "function pools(uint256) view returns (uint256, uint256, string, uint96, uint32, address, uint8, string, string)",
+  "function pools(uint256) view returns (uint256, uint256, string, uint96, uint32, address, uint8, string, string, uint96)",
   "function getPoolContributors(uint256) view returns (address[])"
 ];
 const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
     const contributors = await poolManager.getPoolContributors(poolId);
 
     // Transform data - matching the working test format
+    const totalAmount = BigInt(poolData[3]);
+    const targetPrice = BigInt(poolData[9]); // [9] is targetPrice
+    const remainingAmount = targetPrice > totalAmount ? targetPrice - totalAmount : 0n;
+    
     const transformedPool = {
       info: {
         id: poolData[0].toString(),
@@ -39,9 +43,10 @@ export async function POST(request: NextRequest) {
         deadline: Number(poolData[4]),
         status: Number(poolData[6]),
         name: poolData[7] || `Pool #${poolId}`,
+        targetPrice: poolData[9].toString(), // Add targetPrice to info
       },
-      currentPrice: poolData[3].toString(),
-      remainingAmount: "0",
+      currentPrice: poolData[9].toString(), // Use targetPrice as currentPrice for compatibility
+      remainingAmount: remainingAmount.toString(),
       contributorCount: contributors.length,
     };
 
@@ -66,24 +71,34 @@ export async function GET() {
 
     const pools = [];
     for (let i = 0; i < poolCount; i++) {
-      const poolData = await poolManager.pools(i);
-      const contributors = await poolManager.getPoolContributors(i);
-      
-      pools.push({
-        info: {
-          id: poolData[0].toString(),
-          opinionId: poolData[1].toString(),
-          creator: poolData[5],
-          proposedAnswer: poolData[2],
-          totalAmount: poolData[3].toString(),
-          deadline: Number(poolData[4]),
-          status: Number(poolData[6]),
-          name: poolData[7] || `Pool #${i}`,
-        },
-        currentPrice: poolData[3].toString(),
-        remainingAmount: "0",
-        contributorCount: contributors.length,
-      });
+      try {
+        const poolData = await poolManager.pools(i);
+        const contributors = await poolManager.getPoolContributors(i);
+        
+        const totalAmount = BigInt(poolData[3]);
+        const targetPrice = BigInt(poolData[9]); // [9] is targetPrice
+        const remainingAmount = targetPrice > totalAmount ? targetPrice - totalAmount : 0n;
+        
+        pools.push({
+          info: {
+            id: poolData[0].toString(),
+            opinionId: poolData[1].toString(),
+            creator: poolData[5],
+            proposedAnswer: poolData[2],
+            totalAmount: poolData[3].toString(),
+            deadline: Number(poolData[4]),
+            status: Number(poolData[6]),
+            name: poolData[7] || `Pool #${i}`,
+            targetPrice: poolData[9].toString(), // Add targetPrice to info
+          },
+          currentPrice: poolData[9].toString(), // Use targetPrice as currentPrice
+          remainingAmount: remainingAmount.toString(),
+          contributorCount: contributors.length,
+        });
+      } catch (error) {
+        console.error(`Error fetching pool ${i}:`, error);
+        // Skip corrupted pools but continue with others
+      }
     }
 
     return NextResponse.json({

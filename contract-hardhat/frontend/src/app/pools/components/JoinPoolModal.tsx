@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -27,6 +26,9 @@ import {
 } from '@/components/ui/dialog';
 import { useContributeToPool } from '../hooks/useContributeToPool';
 import { useUSDCBalance } from '@/hooks/useUSDCBalance';
+import usePoolCompletion from '@/hooks/usePoolCompletion';
+import useCompletePool from '@/hooks/useCompletePool';
+import { toast } from 'sonner';
 
 interface JoinPoolModalProps {
   isOpen: boolean;
@@ -56,27 +58,10 @@ const formatTimeLeft = (timestamp: number) => {
 
 export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalProps) {
   const [amount, setAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
-  // Hooks
-  const { 
-    contributeToPool, 
-    isContributing, 
-    error: contributeError, 
-    currentStep,
-    approveTxHash,
-    contributeTxHash,
-    isContributeSuccess 
-  } = useContributeToPool();
-  const { balance: usdcBalance, loading: balanceLoading } = useUSDCBalance();
-  
-  // Real PoolManager rules - USDC fees required
-  const CONTRIBUTION_FEE = 1; // 1 USDC per contribution
-  const EARLY_WITHDRAWAL_PENALTY = 20; // 20% penalty
-  
-  // Pool data with safe defaults
+  // Pool data with safe defaults (MUST be before hooks)
   const poolData = pool || {
     id: 0,
     name: 'Unknown Pool',
@@ -89,6 +74,77 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
     contributorCount: 0,
     progress: 0
   };
+  
+  // Hooks (called after poolData is defined)
+  const { 
+    contributeToPool, 
+    isContributing, 
+    error: contributeError, 
+    currentStep,
+    approveTxHash,
+    contributeTxHash,
+    isContributeSuccess 
+  } = useContributeToPool();
+  const { balance: usdcBalance, loading: balanceLoading } = useUSDCBalance();
+  
+  // Pool completion hooks - RE-ENABLED with SIMPLE approach
+  const { completionState } = usePoolCompletion(poolData.id);
+  const { completePool, isCompletingPool } = useCompletePool();
+  
+  // DEBUG: Log completion state for troubleshooting
+  console.log('🔍 POOL COMPLETION DEBUG:', {
+    poolId: poolData.id,
+    canUserComplete: completionState.canUserComplete,
+    remainingAmount: completionState.remainingAmount?.toString(),
+    completionCost: completionState.completionCost,
+    userUSDCBalance: completionState.userUSDCBalance?.toString(),
+    isCompletable: completionState.isCompletable,
+    completionStateKeys: Object.keys(completionState)
+  });
+  
+  const handleCompletePool = async () => {
+    console.log('🎯 COMPLETE POOL BUTTON CLICKED!');
+    console.log('🔍 Pre-check:', {
+      canUserComplete: workingCompletionState.canUserComplete,
+      remainingAmount: workingCompletionState.remainingAmount?.toString(),
+      isCompletingPool
+    });
+    
+    if (!workingCompletionState.canUserComplete) {
+      console.warn('❌ Cannot complete pool - canUserComplete is false');
+      toast.error('Cannot complete pool', {
+        description: 'Pool completion requirements not met',
+        duration: 3000,
+      });
+      return;
+    }
+    
+    try {
+      console.log('🚀 SIMPLE APPROACH: Completing pool with exact remaining amount:', {
+        poolId: poolData.id,
+        remainingAmount: workingCompletionState.remainingAmount.toString(),
+        remainingAmountFormatted: workingCompletionState.completionCost
+      });
+      
+      await completePool(poolData.id, workingCompletionState.remainingAmount);
+      
+      toast.success('🎉 Pool completed!', {
+        description: 'Pool has been successfully completed and answer promoted!',
+        duration: 5000,
+      });
+      
+    } catch (error: any) {
+      console.error('Pool completion error:', error);
+      toast.error('Failed to complete pool', {
+        description: error.message || 'Unknown error occurred',
+        duration: 5000,
+      });
+    }
+  };
+  
+  // Real PoolManager rules - USDC fees required
+  const CONTRIBUTION_FEE = 1; // 1 USDC per contribution
+  const EARLY_WITHDRAWAL_PENALTY = 20; // 20% penalty
 
   // Calculations
   const contributionAmount = parseFloat(amount) || 0;
@@ -96,16 +152,52 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
   const remainingNeeded = Math.max(0, poolData.targetPrice - poolData.currentAmount);
   const maxContribution = Math.min(remainingNeeded, Math.max(0, usdcBalance - CONTRIBUTION_FEE));
   
-  // Validations
-  const isAmountValid = contributionAmount > 0 && contributionAmount <= maxContribution;
-  const hasEnoughBalance = totalRequired <= usdcBalance;
+  // Ensure contribution doesn't exceed what's actually needed
+  const actualContribution = Math.min(contributionAmount, remainingNeeded);
+
+  // 🚀 SIMPLE FIX: Use the WORKING data from button validation instead of broken usePoolCompletion
+  const workingCompletionState = {
+    canUserComplete: remainingNeeded > 0 && remainingNeeded <= (usdcBalance - CONTRIBUTION_FEE) && !balanceLoading,
+    remainingAmount: BigInt(Math.round(remainingNeeded * 1_000_000)), // Convert to Wei (6 decimals)
+    completionCost: remainingNeeded.toFixed(2),
+    userUSDCBalance: BigInt(Math.round(usdcBalance * 1_000_000)),
+    isCompletable: remainingNeeded > 0 && poolData.targetPrice > poolData.currentAmount,
+  };
+  
+  console.log('🚀 WORKING COMPLETION STATE (using button validation data):', workingCompletionState);
+  
+  // Pool completion calculation
+  const wouldCompletePool = (poolData.currentAmount + contributionAmount) >= poolData.targetPrice;
+  
+  // Validations with floating-point tolerance - use actualContribution for validation
+  const FLOAT_TOLERANCE = 0.01; // Increased to 0.01 USDC tolerance for floating-point precision
+  const actualTotalRequired = actualContribution + CONTRIBUTION_FEE;
+  const isAmountValid = actualContribution > 0 && actualContribution <= (maxContribution + FLOAT_TOLERANCE);
+  const hasEnoughBalance = actualTotalRequired <= (usdcBalance + FLOAT_TOLERANCE);
   const canContribute = isAmountValid && hasEnoughBalance && !balanceLoading && !isContributing;
+  
+  // Debug logging for troubleshooting
+  console.log('Button validation debug:', {
+    contributionAmount,
+    actualContribution,
+    maxContribution,
+    remainingNeeded,
+    totalRequired,
+    actualTotalRequired,
+    usdcBalance,
+    isAmountValid,
+    hasEnoughBalance,
+    canContribute,
+    balanceLoading,
+    isContributing
+  });
 
   // Handle amount input
   const handleAmountChange = (value: string) => {
     const numValue = parseFloat(value);
-    if (numValue > maxContribution) {
-      setAmount(maxContribution.toString());
+    // Allow values up to maxContribution + small tolerance
+    if (numValue > (maxContribution + FLOAT_TOLERANCE)) {
+      setAmount(maxContribution.toFixed(2));
     } else {
       setAmount(value);
     }
@@ -119,7 +211,12 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
   const handleJoinPool = async () => {
     try {
       setError(null);
-      await contributeToPool(poolData.id, contributionAmount);
+      console.log('🎯 Contributing exact amount needed:', {
+        userInputAmount: contributionAmount,
+        actualContribution: actualContribution,
+        remainingNeeded: remainingNeeded
+      });
+      await contributeToPool(poolData.id, actualContribution);
     } catch (err: any) {
       console.error('Join pool error:', err);
       setError(err.message || 'Failed to join pool');
@@ -175,7 +272,54 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
         </DialogHeader>
 
         <div className="space-y-6 max-h-[70vh] overflow-y-auto">
-          {/* Pool Summary Section */}
+          {/* COMPLETE POOL SECTION - High Priority */}
+          {workingCompletionState.canUserComplete && (
+            <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-500/30">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <h3 className="font-semibold text-green-800 dark:text-green-200">
+                    🎯 You can complete this pool!
+                  </h3>
+                </div>
+                
+                <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                  Only <span className="font-bold">${workingCompletionState.completionCost}</span> needed to complete this pool.
+                  <span className="block text-xs mt-1 opacity-75">
+                    Any tiny overpayment becomes pool rewards ✨
+                  </span>
+                </p>
+                
+                <button
+                  onClick={handleCompletePool}
+                  disabled={isCompletingPool}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isCompletingPool ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Completing Pool...</span>
+                    </>
+                  ) : (
+                    `🚀 Complete Pool ($${workingCompletionState.completionCost})`
+                  )}
+                </button>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* OR SEPARATOR - Show only if completion is available */}
+          {workingCompletionState.canUserComplete && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-gray-800 px-2 text-gray-400">Or contribute any amount</span>
+              </div>
+            </div>
+          )}
+          {/* Pool Summary Section - Enhanced with real-time data */}
           <Card className="bg-gray-800/50 border-gray-700/40">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-400">Pool Summary</CardTitle>
@@ -191,8 +335,12 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                   <div>
-                    <p className="font-medium text-white">${formatNumber(poolData.currentAmount)}</p>
-                    <p className="text-gray-400">of ${formatNumber(poolData.targetPrice)}</p>
+                    <p className="font-medium text-white">
+                      ${formatNumber(completionState.currentAmount ? Number(completionState.currentAmount) / 1e6 : poolData.currentAmount)}
+                    </p>
+                    <p className="text-gray-400">
+                      of ${formatNumber(completionState.targetAmount ? Number(completionState.targetAmount) / 1e6 : poolData.targetPrice)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -212,7 +360,12 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-purple-400" />
                   <div>
-                    <p className="font-medium text-white">{poolData.progress.toFixed(1)}%</p>
+                    <p className="font-medium text-white">
+                      {completionState.targetAmount > 0n ? 
+                        ((Number(completionState.currentAmount) / Number(completionState.targetAmount)) * 100).toFixed(1) + '%' :
+                        poolData.progress.toFixed(1) + '%'
+                      }
+                    </p>
                     <p className="text-gray-400">Complete</p>
                   </div>
                 </div>
@@ -243,7 +396,57 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                   <span>Remaining needed: ${remainingNeeded.toFixed(2)}</span>
                   <span>Your balance: ${usdcBalance.toFixed(2)}</span>
                 </div>
+                
+                {/* Quick Actions */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setAmount((maxContribution / 2).toFixed(2))}
+                    className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md text-gray-300 hover:text-white transition-colors"
+                  >
+                    Half (${(maxContribution / 2).toFixed(2)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(maxContribution.toFixed(2))}
+                    className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md text-gray-300 hover:text-white transition-colors"
+                  >
+                    Max (${maxContribution.toFixed(2)})
+                  </button>
+                  {workingCompletionState.canUserComplete && (
+                    <button
+                      type="button"
+                      onClick={handleCompletePool}
+                      disabled={isCompletingPool}
+                      className="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 rounded-md text-white transition-colors flex items-center gap-1"
+                    >
+                      {isCompletingPool ? (
+                        <>
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                          Completing...
+                        </>
+                      ) : (
+                        `🚀 Complete Pool ($${workingCompletionState.completionCost})`
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Pool Completion Indicator */}
+              {wouldCompletePool && contributionAmount > 0 && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    <span className="text-emerald-500 font-medium text-sm">
+                      🎉 This contribution will complete the pool!
+                    </span>
+                  </div>
+                  <div className="text-xs text-emerald-400 mt-1">
+                    The pool will be executed and the answer will be promoted.
+                  </div>
+                </div>
+              )}
 
               {/* Pool Progress Visualization - Right after input */}
               {contributionAmount > 0 && (
@@ -251,7 +454,7 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-400">Pool Progress After Your Contribution</span>
                     <span className="text-sm text-white">
-                      {(((poolData.currentAmount + contributionAmount) / poolData.targetPrice) * 100).toFixed(1)}%
+                      {(((poolData.currentAmount + actualContribution) / poolData.targetPrice) * 100).toFixed(1)}%
                     </span>
                   </div>
                   
@@ -268,13 +471,13 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                         className="absolute top-0 h-3 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300"
                         style={{ 
                           left: `${Math.min((poolData.currentAmount / poolData.targetPrice) * 100, 100)}%`,
-                          width: `${Math.min((contributionAmount / poolData.targetPrice) * 100, 100 - (poolData.currentAmount / poolData.targetPrice) * 100)}%`
+                          width: `${Math.min((actualContribution / poolData.targetPrice) * 100, 100 - (poolData.currentAmount / poolData.targetPrice) * 100)}%`
                         }}
                       />
                     </div>
                     <div className="flex justify-between text-xs text-gray-400">
                       <span>Current: ${poolData.currentAmount.toFixed(2)}</span>
-                      <span className="text-emerald-400">+${contributionAmount.toFixed(2)} (You)</span>
+                      <span className="text-emerald-400">+${actualContribution.toFixed(2)} (You)</span>
                       <span>Target: ${poolData.targetPrice.toFixed(2)}</span>
                     </div>
                   </div>
@@ -283,7 +486,7 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-emerald-400 font-medium">Your Pool Share:</span>
                     <span className="text-emerald-300 font-bold">
-                      {((contributionAmount / poolData.targetPrice) * 100).toFixed(1)}%
+                      {((actualContribution / poolData.targetPrice) * 100).toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -352,6 +555,57 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
             </CardContent>
           </Card>
 
+          {/* Enhanced Pool Stats with Real-time Data */}
+          <Card className="bg-gray-800/50 border-gray-700/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-400">Pool Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Target:</span>
+                <span className="font-medium text-white">
+                  {completionState.targetAmount > 0n ? 
+                    `$${(Number(completionState.targetAmount) / 1e6).toFixed(2)}` :
+                    `$${poolData.targetPrice.toFixed(2)}`
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Current:</span>
+                <span className="font-medium text-white">
+                  {completionState.currentAmount > 0n ? 
+                    `$${(Number(completionState.currentAmount) / 1e6).toFixed(2)}` :
+                    `$${poolData.currentAmount.toFixed(2)}`
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Remaining:</span>
+                <span className="font-medium text-green-600">
+                  {completionState.remainingAmount > 0n ? 
+                    `$${(Number(completionState.remainingAmount) / 1e6).toFixed(2)}` :
+                    `$${remainingNeeded.toFixed(2)}`
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Your Balance:</span>
+                <span className="font-medium text-white">
+                  {completionState.userUSDCBalance > 0n ? 
+                    `$${(Number(completionState.userUSDCBalance) / 1e6).toFixed(2)}` :
+                    `$${usdcBalance.toFixed(2)}`
+                  }
+                </span>
+              </div>
+              {completionState.isExpired && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-red-400">Status:</span>
+                  <span className="font-medium text-red-400">Expired</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Transaction Summary */}
           {contributionAmount > 0 && (
             <Card className="bg-gray-800/50 border-gray-700/40">
@@ -364,16 +618,22 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
               <CardContent className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Your contribution:</span>
-                  <span className="text-white font-medium">${contributionAmount.toFixed(2)}</span>
+                  <span className="text-white font-medium">${actualContribution.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Platform fee:</span>
                   <span className="text-white">${CONTRIBUTION_FEE.toFixed(2)}</span>
                 </div>
+                {actualContribution !== contributionAmount && (
+                  <div className="flex justify-between text-xs text-yellow-400">
+                    <span>Amount adjusted:</span>
+                    <span>Pool only needs ${actualContribution.toFixed(2)}</span>
+                  </div>
+                )}
                 <hr className="border-gray-600" />
                 <div className="flex justify-between font-medium">
                   <span className="text-white">Total required:</span>
-                  <span className="text-white">${totalRequired.toFixed(2)}</span>
+                  <span className="text-white">${(actualContribution + CONTRIBUTION_FEE).toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -503,7 +763,7 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                 {currentStep === 'idle' && 'Processing...'}
               </div>
             ) : (
-              `Join Pool ($${totalRequired.toFixed(2)})`
+              `Join Pool ($${(actualContribution + CONTRIBUTION_FEE).toFixed(2)})`
             )}
           </Button>
         </div>

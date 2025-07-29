@@ -1,6 +1,9 @@
 // Contract addresses from deployment
 export const CONTRACTS = {
   OPINION_CORE: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f' as `0x${string}`,
+  FEE_MANAGER: '0xc8f879d86266C334eb9699963ca0703aa1189d8F' as `0x${string}`,
+  POOL_MANAGER: '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`,
+  USDC_TOKEN: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
 } as const;
 
 
@@ -104,3 +107,70 @@ export const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x$
 
 // Treasury address
 export const TREASURY_ADDRESS = '0xFb7eF00D5C2a87d282F273632e834f9105795067' as `0x${string}`;
+
+// FeeManager ABI for fee-related operations
+export const FEE_MANAGER_ABI = [
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getAccumulatedFees',
+    outputs: [{ name: '', type: 'uint96' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'claimAccumulatedFees',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+// PoolManager ABI for pool completion operations
+export const POOL_MANAGER_ABI = [
+  {
+    inputs: [{ internalType: 'uint256', name: 'poolId', type: 'uint256' }],
+    name: 'getPoolDetails',
+    outputs: [
+      {
+        components: [
+          { internalType: 'uint256', name: 'id', type: 'uint256' },
+          { internalType: 'uint256', name: 'opinionId', type: 'uint256' },
+          { internalType: 'string', name: 'proposedAnswer', type: 'string' },
+          { internalType: 'uint96', name: 'totalAmount', type: 'uint96' },
+          { internalType: 'uint32', name: 'deadline', type: 'uint32' },
+          { internalType: 'address', name: 'creator', type: 'address' },
+          { internalType: 'uint8', name: 'status', type: 'uint8' },
+          { internalType: 'string', name: 'name', type: 'string' },
+          { internalType: 'string', name: 'ipfsHash', type: 'string' },
+          { internalType: 'uint96', name: 'targetPrice', type: 'uint96' },
+        ],
+        internalType: 'struct PoolStructs.PoolInfo',
+        name: 'info',
+        type: 'tuple',
+      },
+      { internalType: 'uint256', name: 'currentPrice', type: 'uint256' },
+      { internalType: 'uint256', name: 'remainingAmount', type: 'uint256' },
+      { internalType: 'uint256', name: 'timeRemaining', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'poolId', type: 'uint256' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'contributeToPool',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'poolId', type: 'uint256' }],
+    name: 'completePool',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;

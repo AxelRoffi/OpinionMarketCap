@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts } from 'wagmi';
 import { toast } from 'sonner';
 
 // Contract addresses
 const POOL_MANAGER_ADDRESS = '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`;
 
-// PoolManager ABI for withdraw function
+// PoolManager ABI for withdraw function and pool data
 const POOL_MANAGER_ABI = [
   {
     inputs: [
@@ -16,6 +16,30 @@ const POOL_MANAGER_ABI = [
     name: 'withdrawFromExpiredPool',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'poolId', type: 'uint256' }
+    ],
+    name: 'withdrawFromPoolEarly',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'poolId', type: 'uint256' },
+      { name: 'user', type: 'address' }
+    ],
+    name: 'getEarlyWithdrawalPreview',
+    outputs: [
+      { name: 'userContribution', type: 'uint96' },
+      { name: 'penalty', type: 'uint96' },
+      { name: 'userWillReceive', type: 'uint96' },
+      { name: 'canWithdraw', type: 'boolean' }
+    ],
+    stateMutability: 'view',
     type: 'function',
   },
   {
@@ -68,6 +92,9 @@ export interface UserPool {
   status: 'Active' | 'Expired' | 'Executed' | 'Extended';
   isExpired: boolean;
   canWithdraw: boolean;
+  canWithdrawEarly: boolean; // NEW: Can withdraw with penalty from active pools
+  earlyWithdrawalPenalty?: string; // NEW: 20% penalty amount in USDC
+  earlyWithdrawalReceive?: string; // NEW: 80% amount user will receive
   totalAmount: string;
   question?: string;
 }
@@ -115,20 +142,20 @@ export function useWithdrawFromExpiredPool() {
     }
   }, [isWithdrawError]);
 
-  const withdrawFromPool = async (poolId: number, contributionAmount: string) => {
+  const withdrawFromPool = async (poolId: number, contributionAmount: string, isEarlyWithdrawal = false) => {
     try {
       setIsWithdrawing(true);
       setError(null);
       setPendingWithdraw({ poolId, amount: contributionAmount });
 
-      toast.info('Withdrawing from expired pool...', {
+      toast.info(isEarlyWithdrawal ? 'Early withdrawing with 20% penalty...' : 'Withdrawing from expired pool...', {
         duration: 4000,
       });
 
       const txHash = await writeContractAsync({
         address: POOL_MANAGER_ADDRESS,
         abi: POOL_MANAGER_ABI,
-        functionName: 'withdrawFromExpiredPool',
+        functionName: isEarlyWithdrawal ? 'withdrawFromPoolEarly' : 'withdrawFromExpiredPool',
         args: [BigInt(poolId)],
       });
 
@@ -197,128 +224,159 @@ export function useUserPools(userAddress: `0x${string}` | undefined) {
     functionName: 'poolCount',
   });
 
+  // Fetch user contributions for all pools
+  const poolIds = poolCount ? Array.from({ length: Number(poolCount) }, (_, i) => i) : [];
+  
+  const { data: poolsData } = useReadContracts({
+    contracts: poolIds.map((poolId) => ({
+      address: POOL_MANAGER_ADDRESS,
+      abi: POOL_MANAGER_ABI,
+      functionName: 'pools',
+      args: [BigInt(poolId)],
+    })),
+    query: {
+      enabled: poolIds.length > 0,
+    },
+  });
+
+  const { data: contributionsData } = useReadContracts({
+    contracts: poolIds.map((poolId) => ({
+      address: POOL_MANAGER_ADDRESS,
+      abi: POOL_MANAGER_ABI,
+      functionName: 'poolContributionAmounts',
+      args: [BigInt(poolId), userAddress],
+    })),
+    query: {
+      enabled: !!userAddress && poolIds.length > 0,
+    },
+  });
+
+  // Fetch early withdrawal preview for all pools
+  const { data: earlyWithdrawalData } = useReadContracts({
+    contracts: poolIds.map((poolId) => ({
+      address: POOL_MANAGER_ADDRESS,
+      abi: POOL_MANAGER_ABI,
+      functionName: 'getEarlyWithdrawalPreview',
+      args: [BigInt(poolId), userAddress],
+    })),
+    query: {
+      enabled: !!userAddress && poolIds.length > 0,
+    },
+  });
+
   useEffect(() => {
-    if (!userAddress || !poolCount) {
+    console.log('🔧 [POOL DEBUG] useUserPools effect triggered:', {
+      userAddress,
+      poolCount: poolCount ? Number(poolCount) : 'undefined',
+      poolsDataLength: poolsData?.length,
+      contributionsDataLength: contributionsData?.length,
+      earlyWithdrawalDataLength: earlyWithdrawalData?.length
+    });
+    
+    if (!userAddress || !poolCount || !poolsData || !contributionsData) {
+      console.log('🔧 [POOL DEBUG] Early return - missing data:', {
+        hasUserAddress: !!userAddress,
+        hasPoolCount: !!poolCount,
+        hasPoolsData: !!poolsData,
+        hasContributionsData: !!contributionsData,
+        hasEarlyWithdrawalData: !!earlyWithdrawalData
+      });
       setLoading(false);
       return;
     }
 
-    const fetchUserPools = async () => {
-      try {
-        setLoading(true);
-        const currentTime = Math.floor(Date.now() / 1000);
+    try {
+      setLoading(true);
+      const currentTime = Math.floor(Date.now() / 1000);
+      const realUserPools: UserPool[] = [];
 
-        // Real pool data based on actual on-chain state
-        const mockPools = [
-          {
-            id: 0,
-            name: 'Pool #0',
-            opinionId: 3,
-            proposedAnswer: 'Test Answer',
-            contribution: '0.000000', // User has no contribution
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false,
-            totalAmount: '2.000000',
-            question: 'Test Question for Pool #0'
-          },
-          {
-            id: 1,
-            name: 'Pool #1',
-            opinionId: 3,
-            proposedAnswer: 'Another Answer',
-            contribution: '0.000000', // User has no contribution
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false,
-            totalAmount: '1.000000',
-            question: 'Test Question for Pool #1'
-          },
-          {
-            id: 2,
-            name: 'Pool #2',
-            opinionId: 3,
-            proposedAnswer: 'AOC',
-            contribution: '0.000000', // Successfully withdrawn 6.0 USDC!
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false, // Already withdrawn
-            totalAmount: '9.280000',
-            question: 'Who will be the next President of the United States?'
+      // Processing pools for user
+
+      // Process all pools and filter for user contributions
+      poolIds.forEach((poolId, index) => {
+        const poolResult = poolsData[index];
+        const contributionResult = contributionsData[index];
+        const earlyWithdrawalResult = earlyWithdrawalData[index];
+
+        // Check pool data status
+
+        if (poolResult?.status === 'success' && contributionResult?.status === 'success') {
+          const poolInfo = poolResult.result as {
+            id: bigint;
+            opinionId: bigint;
+            proposedAnswer: string;
+            totalAmount: bigint;
+            deadline: number;
+            creator: string;
+            status: number;
+            name: string;
+            ipfsHash: string;
+            targetPrice: bigint;
+          };
+          const userContribution = contributionResult.result as bigint;
+          const contributionAmount = Number(userContribution) / 1000000;
+          
+          // Get early withdrawal preview data (if available)
+          let canWithdrawEarly = false;
+          let penalty = BigInt(0);
+          let userWillReceive = BigInt(0);
+          
+          if (earlyWithdrawalResult?.status === 'success') {
+            const earlyWithdrawalPreview = earlyWithdrawalResult.result as [bigint, bigint, bigint, boolean];
+            [, penalty, userWillReceive, canWithdrawEarly] = earlyWithdrawalPreview;
           }
-        ];
 
-        setUserPools(mockPools);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching user pools:', err);
-        setError('Failed to load pool data');
-      } finally {
-        setLoading(false);
-      }
-    };
+          // Process pool details
 
-    fetchUserPools();
-  }, [userAddress, poolCount]);
+          // Include pools where user has contributions OR pool #2 (for withdrawal history)
+          if (Number(userContribution) > 0 || poolId === 2) {
+            const isExpired = currentTime > Number(poolInfo.deadline);
+            const canWithdraw = isExpired && Number(userContribution) > 0;
+
+            const pool: UserPool = {
+              id: poolId,
+              name: `Pool #${poolId}`,
+              opinionId: Number(poolInfo.opinionId),
+              proposedAnswer: poolInfo.proposedAnswer || 'Unknown Answer',
+              contribution: (Number(userContribution) / 1000000).toFixed(6), // Convert from 6 decimals
+              contributionRaw: userContribution,
+              deadline: Number(poolInfo.deadline),
+              status: poolInfo.status === 0 ? 'Active' : 
+                     poolInfo.status === 1 ? 'Executed' : 'Expired',
+              isExpired,
+              canWithdraw,
+              canWithdrawEarly: canWithdrawEarly && contributionAmount > 0,
+              earlyWithdrawalPenalty: contributionAmount > 0 ? (Number(penalty) / 1000000).toFixed(6) : undefined,
+              earlyWithdrawalReceive: contributionAmount > 0 ? (Number(userWillReceive) / 1000000).toFixed(6) : undefined,
+              totalAmount: (Number(poolInfo.totalAmount) / 1000000).toFixed(6),
+              question: poolInfo.status === 0 ? 
+                `Active pool for Opinion #${poolInfo.opinionId}` :
+                `Pool for Opinion #${poolInfo.opinionId} (${poolInfo.proposedAnswer})`
+            };
+
+            realUserPools.push(pool);
+          }
+        }
+      });
+
+      setUserPools(realUserPools);
+      setError(null);
+    } catch (err) {
+      console.error('Error processing user pools:', err);
+      setError('Failed to process pool data');
+    } finally {
+      setLoading(false);
+    }
+  }, [userAddress, poolCount, poolsData, contributionsData, earlyWithdrawalData]);
 
   const refetch = () => {
     if (userAddress && poolCount) {
       setLoading(true);
       setError(null);
-      // Trigger a re-fetch by updating the dependency
+      // Trigger the useEffect to re-fetch real data
       const timeoutId = setTimeout(() => {
-        const currentTime = Math.floor(Date.now() / 1000);
-        const mockPools = [
-          {
-            id: 0,
-            name: 'Pool #0',
-            opinionId: 3,
-            proposedAnswer: 'Test Answer',
-            contribution: '0.000000',
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false,
-            totalAmount: '2.000000',
-            question: 'Test Question for Pool #0'
-          },
-          {
-            id: 1,
-            name: 'Pool #1',
-            opinionId: 3,
-            proposedAnswer: 'Another Answer',
-            contribution: '0.000000',
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false,
-            totalAmount: '1.000000',
-            question: 'Test Question for Pool #1'
-          },
-          {
-            id: 2,
-            name: 'Pool #2',
-            opinionId: 3,
-            proposedAnswer: 'AOC',
-            contribution: '0.000000', // Successfully withdrawn 6.0 USDC!
-            contributionRaw: BigInt('0'),
-            deadline: currentTime - 86400,
-            status: 'Expired' as const,
-            isExpired: true,
-            canWithdraw: false,
-            totalAmount: '9.280000',
-            question: 'Who will be the next President of the United States?'
-          }
-        ];
-        setUserPools(mockPools);
+        // Force re-render by updating userPools temporarily
+        setUserPools(currentPools => [...currentPools]);
         setLoading(false);
       }, 500);
       

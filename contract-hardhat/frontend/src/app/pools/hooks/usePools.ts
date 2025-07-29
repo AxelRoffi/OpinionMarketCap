@@ -25,7 +25,8 @@ const POOL_MANAGER_ABI = [
           { name: 'creator', type: 'address' },      // [5]
           { name: 'status', type: 'uint8' },         // [6]
           { name: 'name', type: 'string' },          // [7]
-          { name: 'ipfsHash', type: 'string' }       // [8]
+          { name: 'ipfsHash', type: 'string' },      // [8]
+          { name: 'targetPrice', type: 'uint96' }    // [9] - FIXED: Added missing targetPrice
         ],
         type: 'tuple',
       }
@@ -51,6 +52,34 @@ const POOL_MANAGER_ABI = [
     inputs: [],
     name: 'poolCount',
     outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'poolId', type: 'uint256' }],
+    name: 'getPoolDetails',
+    outputs: [
+      {
+        components: [
+          { internalType: 'uint256', name: 'id', type: 'uint256' },
+          { internalType: 'uint256', name: 'opinionId', type: 'uint256' },
+          { internalType: 'string', name: 'proposedAnswer', type: 'string' },
+          { internalType: 'uint96', name: 'totalAmount', type: 'uint96' },
+          { internalType: 'uint32', name: 'deadline', type: 'uint32' },
+          { internalType: 'address', name: 'creator', type: 'address' },
+          { internalType: 'uint8', name: 'status', type: 'uint8' },
+          { internalType: 'string', name: 'name', type: 'string' },
+          { internalType: 'string', name: 'ipfsHash', type: 'string' },
+          { internalType: 'uint96', name: 'targetPrice', type: 'uint96' },
+        ],
+        internalType: 'struct PoolStructs.PoolInfo',
+        name: 'info',
+        type: 'tuple',
+      },
+      { internalType: 'uint256', name: 'currentPrice', type: 'uint256' },
+      { internalType: 'uint256', name: 'remainingAmount', type: 'uint256' },
+      { internalType: 'uint256', name: 'timeRemaining', type: 'uint256' },
+    ],
     stateMutability: 'view',
     type: 'function',
   }

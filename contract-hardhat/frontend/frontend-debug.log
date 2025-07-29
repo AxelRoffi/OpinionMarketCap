@@ -1,0 +1,427 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.12:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1911ms
+ ○ Compiling /profile ...
+ ✓ Compiled /profile in 10.7s (10144 modules)
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+[ReferenceError: indexedDB is not defined]
+ ⨯ unhandledRejection: [ReferenceError: indexedDB is not defined]
+ ⨯ unhandledRejection:  [ReferenceError: indexedDB is not defined]
+[ReferenceError: indexedDB is not defined]
+ ⨯ unhandledRejection: [ReferenceError: indexedDB is not defined]
+ ⨯ unhandledRejection:  [ReferenceError: indexedDB is not defined]
+ GET /profile 200 in 11626ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 2.7s (5234 modules)
+ GET /favicon.ico 200 in 3351ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 2 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 2 times.
+ HEAD /profile 200 in 2750ms
+ GET /favicon.ico 200 in 5ms
+ ○ Compiling /pools ...
+ ✓ Compiled /pools in 2.9s (10290 modules)
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 3 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 3 times.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /pools 200 in 3410ms
+ GET /favicon.ico 200 in 19ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /pools 200 in 72ms
+ ○ Compiling /api/pools-working ...
+ ✓ Compiled /api/pools-working in 1677ms (10455 modules)
+ GET /api/pools-working 200 in 3139ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 4 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 4 times.
+ GET /profile 200 in 476ms
+ GET /favicon.ico 200 in 12ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 24ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /pools 200 in 181ms
+ GET /favicon.ico 200 in 55ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /pools 200 in 26ms
+ GET /api/pools-working 200 in 1400ms
+ ✓ Compiled in 2.8s (10276 modules)
+ GET /pools 200 in 75ms
+ ✓ Compiled in 1044ms (10276 modules)
+ GET /pools 200 in 49ms
+ ✓ Compiled in 1003ms (10276 modules)
+ GET /pools 200 in 27ms
+ ✓ Compiled in 1042ms (10276 modules)
+ GET /pools 200 in 30ms
+ ✓ Compiled in 1426ms (10276 modules)
+ GET /pools 200 in 88ms
+ ✓ Compiled in 1546ms (10276 modules)
+ GET /pools 200 in 28ms
+ ✓ Compiled in 968ms (10276 modules)
+ GET /pools 200 in 28ms
+ ✓ Compiled in 1116ms (10276 modules)
+ GET /pools 200 in 67ms
+ ✓ Compiled in 927ms (10276 modules)
+ GET /pools 200 in 26ms
+ ✓ Compiled in 3s (10276 modules)
+ GET /pools 200 in 62ms
+ ✓ Compiled in 1336ms (10276 modules)
+ GET /pools 200 in 60ms
+ ✓ Compiled in 1562ms (10276 modules)
+ GET /pools 200 in 56ms
+ ✓ Compiled in 1773ms (10276 modules)
+ GET /pools 200 in 32ms
+ ✓ Compiled in 835ms (10276 modules)
+ GET /pools 200 in 25ms
+ ✓ Compiled in 1040ms (10276 modules)
+ GET /pools 200 in 28ms
+ ✓ Compiled in 1038ms (10276 modules)
+ GET /pools 200 in 42ms
+ ✓ Compiled in 884ms (10276 modules)
+ GET /pools 200 in 32ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 5 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 5 times.
+ GET /pools 200 in 426ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /api/pools-working in 2.8s (5301 modules)
+ ✓ Compiled (5479 modules)
+ GET /favicon.ico 200 in 4212ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 6 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 6 times.
+ HEAD /pools 200 in 2092ms
+ GET /favicon.ico 200 in 5ms
+ GET /api/pools-working 200 in 3516ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.3s (10510 modules)
+Connected address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 7 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 7 times.
+ GET / 200 in 3805ms
+ GET /favicon.ico 200 in 26ms
+Connected address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD / 200 in 76ms
+ ○ Compiling /opinions/[id] ...
+ ✓ Compiled /opinions/[id] in 2s (10562 modules)
+ GET /opinions/1 200 in 2629ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 8 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 8 times.
+ GET /profile 200 in 477ms
+ GET /favicon.ico 200 in 34ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 32ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /pools 200 in 166ms
+ GET /favicon.ico 200 in 13ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /pools 200 in 44ms
+ GET /api/pools-working 200 in 1227ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /profile 200 in 72ms
+ GET /favicon.ico 200 in 13ms
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 32ms
+ ✓ Compiled in 3s (10385 modules)
+ GET /profile 200 in 83ms
+ ✓ Compiled in 1676ms (10385 modules)
+ GET /profile 200 in 44ms
+ ✓ Compiled in 1128ms (10385 modules)
+ GET /profile 200 in 50ms
+ ✓ Compiled in 1198ms (10385 modules)
+ GET /profile 200 in 41ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 9 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 9 times.
+ GET /profile 200 in 427ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 3.3s (5360 modules)
+ GET /favicon.ico 200 in 3422ms
+ GET /favicon.ico 200 in 19ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 10 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 10 times.
+ HEAD /profile 200 in 332ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /profile 200 in 85ms
+ GET /favicon.ico 200 in 16ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 51ms
+ GET /favicon.ico 200 in 11ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /profile 200 in 86ms
+ GET /favicon.ico 200 in 11ms
+ GET /favicon.ico 200 in 20ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 32ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ GET /profile 200 in 71ms
+ GET /favicon.ico 200 in 14ms
+ GET /favicon.ico 200 in 11ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 35ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.7s (10390 modules)
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 11 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 11 times.
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 3991ms
+ ✓ Compiled in 1771ms (10404 modules)
+ GET /profile 200 in 54ms
+ ✓ Compiled in 1622ms (10404 modules)
+ GET /profile 200 in 32ms
+ ✓ Compiled in 7.4s (10404 modules)
+ GET /profile 200 in 64ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 12 times.
+WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 12 times.
+ GET /profile 200 in 514ms
+ GET /favicon.ico 200 in 22ms
+ GET /favicon.ico 200 in 5ms
+🔧 [PROFILE DEBUG] ProfilePage rendered with address: undefined
+=== DYNAMIC OPINION FETCHING ===
+Next Opinion ID: undefined
+❌ Opinion 1 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 2 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 3 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 4 not added - Loading: false Error: undefined HasData: false
+❌ Opinion 5 not added - Loading: false Error: undefined HasData: false
+Final opinions array length: 0
+Final opinions array: []
+ HEAD /profile 200 in 33ms
+[?25h

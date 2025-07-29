@@ -126,6 +126,7 @@ export function useContributeToPool() {
       });
 
       // Convert to Wei (USDC has 6 decimals)
+      const contributionAmountWei = parseUnits(contributionAmount.toString(), 6);
       const totalRequiredWei = parseUnits(totalRequired.toString(), 6);
 
       console.log('🔧 Contract Parameters:', {
