@@ -1339,4 +1339,30 @@ The **OpinionMarketCap platform** now provides a complete, interactive user expe
 
 ---
 
+# Pool Data Corruption Fix - ABI Structure Resolution
+
+## Issue Identified
+- **Problem**: Pool completion feature failing due to ABI structure mismatch
+- **Error**: "Position out of bounds" when reading pool data from contract
+- **Root Cause**: Frontend ABI had `targetPrice` in wrong position (5 instead of 10)
+
+## Solution Implemented
+- **Fixed PoolManager ABI**: Moved `targetPrice` to correct struct position 10
+- **Updated API Endpoints**: Added missing `targetPrice` field in pool responses
+- **Enhanced Error Handling**: Graceful handling of corrupted pool data
+- **Resolved Data Flow**: Contract → API → Frontend now works correctly
+
+## Files Modified
+- `frontend/src/lib/contracts.ts` - Corrected POOL_MANAGER_ABI structure
+- `frontend/src/app/api/pools-working/route.ts` - Added targetPrice field
+- `frontend/src/app/pools/hooks/usePools.ts` - Updated ABI with getPoolDetails
+
+## Impact
+- ✅ Pool data now reads correctly from smart contract
+- ✅ Pool completion system foundation restored
+- ✅ API endpoints return accurate pool information
+- ✅ Frontend displays proper remaining amounts and target prices
+
+---
+
 Always update this file claude.md after each development session so this document is up to date
