@@ -10,6 +10,8 @@ interface OpinionData {
   lastPrice: bigint;
   totalVolume: bigint;
   currentAnswerOwner: string;
+  questionOwner: string;
+  salePrice: bigint;
   isActive: boolean;
   creator: string;
   categories: string[];
@@ -95,6 +97,8 @@ export function useAllOpinions() {
           lastPrice: (opinionQuery.data?.lastPrice as bigint) || BigInt(0),
           totalVolume: (opinionQuery.data?.totalVolume as bigint) || BigInt(0),
           currentAnswerOwner: String(opinionQuery.data?.currentAnswerOwner) || '',
+          questionOwner: String(opinionQuery.data?.questionOwner) || '',
+          salePrice: (opinionQuery.data?.salePrice as bigint) || BigInt(0),
           isActive: Boolean(opinionQuery.data?.isActive) || false,
           creator: String(opinionQuery.data?.creator) || '',
           categories: (opinionQuery.data?.categories as string[]) || [],

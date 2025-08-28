@@ -7,8 +7,10 @@ import {
   Share2, 
   BookmarkPlus,
   Zap,
-  Target
+  Target,
+  Tag
 } from 'lucide-react';
+import { useAccount } from 'wagmi';
 import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
 import { ClickableAddress } from '@/components/ui/clickable-address';
@@ -18,11 +20,24 @@ interface OpinionHeaderProps {
   onBack: () => void;
   onTrade: () => void;
   onCreatePool: () => void;
+  onListForSale: () => void;
+  onCancelListing: () => void;
 }
 
-export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool }: OpinionHeaderProps) {
+export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListForSale, onCancelListing }: OpinionHeaderProps) {
+  const { address } = useAccount();
   const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
   const marketCap = Number(opinion.totalVolume) / 1_000_000;
+
+  // Check if current user can list this question for sale
+  const canListForSale = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && 
+                         (opinion.salePrice === 0n || opinion.salePrice === undefined);
+  
+  // Check if question is currently for sale
+  const isForSale = opinion.salePrice > 0n;
+
+  // Check if current user can cancel this listing
+  const canCancelListing = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && isForSale;
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -179,6 +194,40 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool }: Opinio
             <Target className="w-5 h-5 mr-2" />
             Create Pool
           </Button>
+
+          {/* Question Marketplace Actions */}
+          {isForSale && (
+            <div className="w-full mt-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-emerald-400">
+                <Tag className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  Listed for {formatUSDC(opinion.salePrice)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {canListForSale && (
+            <Button
+              onClick={onListForSale}
+              variant="outline"
+              className="w-full border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
+            >
+              <Tag className="w-5 h-5 mr-2" />
+              List for Sale
+            </Button>
+          )}
+
+          {canCancelListing && (
+            <Button
+              onClick={onCancelListing}
+              variant="outline"
+              className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
+            >
+              <Tag className="w-5 h-5 mr-2" />
+              Cancel Listing
+            </Button>
+          )}
         </div>
       </div>
     </div>

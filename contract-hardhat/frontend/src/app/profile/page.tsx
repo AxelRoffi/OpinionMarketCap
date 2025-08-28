@@ -24,7 +24,9 @@ import {
   XCircle,
   Target,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Tag,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,9 +35,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile, useClaimFees, formatUSDC, formatPercentage, formatAddress, formatTimeAgo, CONTRACTS } from './hooks/use-user-profile';
 import { PortfolioPerformanceChart } from './components/portfolio-performance-chart';
 import { useUserPools, useWithdrawFromExpiredPool } from './hooks/use-withdraw-pool';
-import { ErrorBoundary } from './components/error-boundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ListForSaleModal from '@/components/modals/ListForSaleModal';
+import CancelListingModal from '@/components/modals/CancelListingModal';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { address: connectedAddress } = useAccount();
   const { disconnect } = useDisconnect();
   const searchParams = useSearchParams();
@@ -48,6 +52,9 @@ export default function ProfilePage() {
   console.log('🔧 [PROFILE DEBUG] ProfilePage rendered with targetAddress:', targetAddress, 'isOwnProfile:', isOwnProfile);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showListForSaleModal, setShowListForSaleModal] = useState(false);
+  const [showCancelListingModal, setShowCancelListingModal] = useState(false);
+  const [selectedOpinion, setSelectedOpinion] = useState<any>(null);
   
   const { stats, opinions, transactions, loading, error } = useUserProfile(targetAddress);
   const { claimFees, isClaimingFees, claimSuccess, claimError, transactionHash } = useClaimFees();
@@ -79,6 +86,18 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Pool withdrawal failed:', error);
     }
+  };
+
+  // Handle list for sale
+  const handleListForSale = (opinion: any) => {
+    setSelectedOpinion(opinion);
+    setShowListForSaleModal(true);
+  };
+
+  // Handle cancel listing
+  const handleCancelListing = (opinion: any) => {
+    setSelectedOpinion(opinion);
+    setShowCancelListingModal(true);
   };
 
   // Update UI when withdrawal succeeds
@@ -440,6 +459,14 @@ export default function ProfilePage() {
                     <div className="text-gray-400 text-sm mb-2">
                       Current Answer: {opinion.currentAnswer}
                     </div>
+                    {/* Marketplace Status */}
+                    {opinion.salePrice > 0 && (
+                      <div className="mb-2">
+                        <Badge className="bg-emerald-500/20 text-emerald-400">
+                          Listed for {formatUSDC(opinion.salePrice)}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-white font-bold text-lg">
@@ -469,6 +496,32 @@ export default function ProfilePage() {
                     >
                       Trade
                     </Button>
+                    {/* Marketplace Actions - Only for own profile and question owner */}
+                    {isOwnProfile && opinion.isQuestionOwner && (
+                      <>
+                        {opinion.salePrice === 0 ? (
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleListForSale(opinion)}
+                            className="border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-white"
+                          >
+                            <Tag className="w-4 h-4 mr-1" />
+                            List for Sale
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCancelListing(opinion)}
+                            className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel Listing
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -641,7 +694,6 @@ export default function ProfilePage() {
 
           {/* Pools Tab */}
           <TabsContent value="pools" className="space-y-4">
-            <ErrorBoundary>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-white">My Pool Contributions</h3>
               <Button
@@ -902,10 +954,65 @@ export default function ProfilePage() {
                 </Card>
               </div>
             )}
-            </ErrorBoundary>
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* List For Sale Modal */}
+      {showListForSaleModal && selectedOpinion && (
+        <ListForSaleModal
+          isOpen={showListForSaleModal}
+          opinionData={{
+            id: selectedOpinion.id,
+            question: selectedOpinion.question,
+            currentAnswer: selectedOpinion.currentAnswer,
+            nextPrice: selectedOpinion.nextPrice || BigInt(0),
+            lastPrice: selectedOpinion.lastPrice || BigInt(0),
+            totalVolume: selectedOpinion.totalVolume || BigInt(0),
+            questionOwner: selectedOpinion.questionOwner || connectedAddress || '',
+            salePrice: selectedOpinion.salePrice || BigInt(0),
+            isActive: selectedOpinion.isActive !== false,
+            creator: selectedOpinion.creator || connectedAddress || '',
+          }}
+          onClose={() => {
+            setShowListForSaleModal(false);
+            setSelectedOpinion(null);
+          }}
+          onSuccess={() => {
+            // Refresh the page to show updated sale status
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Cancel Listing Modal */}
+      {showCancelListingModal && selectedOpinion && (
+        <CancelListingModal
+          isOpen={showCancelListingModal}
+          opinionData={{
+            id: selectedOpinion.id,
+            question: selectedOpinion.question,
+            salePrice: selectedOpinion.salePrice || BigInt(0),
+            questionOwner: selectedOpinion.questionOwner || connectedAddress || '',
+          }}
+          onClose={() => {
+            setShowCancelListingModal(false);
+            setSelectedOpinion(null);
+          }}
+          onSuccess={() => {
+            // Refresh the page to show updated sale status
+            window.location.reload();
+          }}
+        />
+      )}
     </>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ErrorBoundary>
+      <ProfilePageContent />
+    </ErrorBoundary>
   );
 }

@@ -89,6 +89,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedOpinion, setSelectedOpinion] = useState<OpinionData | null>(null);
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
+  
 
   // Use dynamic opinion fetching hook
   const { opinions: allOpinions, nextOpinionId } = useAllOpinions();
@@ -282,6 +283,7 @@ export default function HomePage() {
     };
     return colorMap[category] || 'bg-gray-600 text-white hover:bg-gray-700';
   };
+
 
   // Get opinion link (placeholder - this would fetch from contract in real implementation)
   const getOpinionLink = async (opinionId: number) => {
@@ -876,6 +878,7 @@ export default function HomePage() {
           opinionData={selectedOpinion}
         />
       )}
+
     </>
   );
 }

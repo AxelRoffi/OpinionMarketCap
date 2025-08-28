@@ -69,6 +69,31 @@ export const OPINION_CORE_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  // Question marketplace functions
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'opinionId', type: 'uint256' },
+      { internalType: 'uint256', name: 'price', type: 'uint256' }
+    ],
+    name: 'listQuestionForSale',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
+    name: 'buyQuestion',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
+    name: 'cancelQuestionSale',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ] as const;
 
 // USDC Contract ABI (for approvals)

@@ -462,7 +462,8 @@ contract OpinionCore is
         // In a real implementation we'd need proper permissions
 
         // Gather important addresses for fee distribution
-        address creator = opinion.creator;
+        // 🔧 CRITICAL FIX: Use questionOwner (current owner) instead of creator (original creator)
+        address creator = opinion.questionOwner;  // This ensures fees go to current owner after transfers
         address currentAnswerOwner = opinion.currentAnswerOwner;
 
         // Check if this is a pool-owned answer

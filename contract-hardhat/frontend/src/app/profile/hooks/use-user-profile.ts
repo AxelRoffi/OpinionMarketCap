@@ -74,12 +74,14 @@ export interface UserOpinion {
   purchasePrice: number;
   pnl: number;
   pnlPercentage: number;
-  isOwner: boolean;
-  isCreator: boolean;
+  isOwner: boolean; // Owner of current answer
+  isCreator: boolean; // Original creator
+  isQuestionOwner: boolean; // Current question owner (for marketplace actions)
   categories: string[];
   timestamp: number;
   isActive: boolean;
   totalVolume: number;
+  salePrice: number;
 }
 
 export interface Transaction {
@@ -191,10 +193,12 @@ export function useUserProfile(userAddress?: string) {
 
       // Process each opinion to find user's involvement
       allOpinions.forEach((opinion) => {
-        const isOwner = opinion.currentAnswerOwner?.toLowerCase() === address.toLowerCase();
-        const isCreator = opinion.creator?.toLowerCase() === address.toLowerCase();
+        const isAnswerOwner = opinion.currentAnswerOwner?.toLowerCase() === address.toLowerCase();
+        const isOriginalCreator = opinion.creator?.toLowerCase() === address.toLowerCase();
+        const isQuestionOwner = opinion.questionOwner?.toLowerCase() === address.toLowerCase();
 
-        if (isOwner || isCreator) {
+        // Show opinion if user has any involvement
+        if (isAnswerOwner || isOriginalCreator || isQuestionOwner) {
           const currentValue = Number(opinion.nextPrice) / 1_000_000;
           const purchasePrice = Number(opinion.lastPrice) / 1_000_000;
           const pnl = currentValue - purchasePrice;
@@ -208,18 +212,20 @@ export function useUserProfile(userAddress?: string) {
             purchasePrice,
             pnl,
             pnlPercentage,
-            isOwner,
-            isCreator,
+            isOwner: isAnswerOwner, // Owner of the current answer
+            isCreator: isOriginalCreator, // Original creator
+            isQuestionOwner, // Current question owner (for marketplace actions)
             categories: opinion.categories,
             timestamp: Date.now() - (opinion.id * 86400000), // Simulate timestamps
             isActive: opinion.isActive,
             totalVolume: Number(opinion.totalVolume) / 1_000_000,
+            salePrice: Number(opinion.salePrice) / 1_000_000,
           });
 
           totalValue += currentValue;
           totalPnL += pnl;
 
-          if (isOwner) {
+          if (isAnswerOwner) {
             opinionsOwned++;
             if (pnl > 0) {
               wins++;
@@ -228,14 +234,17 @@ export function useUserProfile(userAddress?: string) {
             if (pnl > bestTrade) bestTrade = pnl;
           }
           
-          if (isCreator) {
+          if (isOriginalCreator) {
             opinionsCreated++;
-            // Simulate creator fees (3% of total volume)
+          }
+
+          // Creator fees now go to current question owner (after our smart contract fix)
+          if (isQuestionOwner) {
             creatorFees += (Number(opinion.totalVolume) / 1_000_000) * 0.03;
           }
 
           // Generate sample transactions
-          if (isOwner) {
+          if (isAnswerOwner) {
             userTransactions.push({
               id: `${opinion.id}-buy`,
               type: 'BUY',
@@ -249,7 +258,7 @@ export function useUserProfile(userAddress?: string) {
             });
           }
           
-          if (isCreator) {
+          if (isOriginalCreator) {
             userTransactions.push({
               id: `${opinion.id}-create`,
               type: 'CREATE',

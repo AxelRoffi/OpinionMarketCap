@@ -16,6 +16,8 @@ import { OpinionStatsComponent, DetailedStats } from '../components/opinion-stat
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { TradingModal } from '@/components/TradingModal';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
+import ListForSaleModal from '@/components/modals/ListForSaleModal';
+import CancelListingModal from '@/components/modals/CancelListingModal';
 
 export default function OpinionDetailPage() {
   const params = useParams();
@@ -23,6 +25,8 @@ export default function OpinionDetailPage() {
   const { address } = useAccount();
   const [showTradingModal, setShowTradingModal] = useState(false);
   const [showPoolCreationModal, setShowPoolCreationModal] = useState(false);
+  const [showListForSaleModal, setShowListForSaleModal] = useState(false);
+  const [showCancelListingModal, setShowCancelListingModal] = useState(false);
 
   const opinionId = parseInt(params.id as string);
   
@@ -66,6 +70,24 @@ export default function OpinionDetailPage() {
     setShowPoolCreationModal(true);
   };
 
+  // Handle list for sale action
+  const handleListForSale = () => {
+    if (!address) {
+      // Show connect wallet prompt
+      return;
+    }
+    setShowListForSaleModal(true);
+  };
+
+  // Handle cancel listing action
+  const handleCancelListing = () => {
+    if (!address) {
+      // Show connect wallet prompt
+      return;
+    }
+    setShowCancelListingModal(true);
+  };
+
   // Error state
   if (error) {
     return (
@@ -101,6 +123,8 @@ export default function OpinionDetailPage() {
           onBack={handleBack}
           onTrade={handleTrade}
           onCreatePool={handleCreatePool}
+          onListForSale={handleListForSale}
+          onCancelListing={handleCancelListing}
         />
 
         {/* Stats Cards */}
@@ -189,6 +213,48 @@ export default function OpinionDetailPage() {
             category: opinion.categories[0] || 'General'
           }}
           onClose={() => setShowPoolCreationModal(false)}
+        />
+      )}
+
+      {/* List For Sale Modal */}
+      {showListForSaleModal && opinion && (
+        <ListForSaleModal
+          isOpen={showListForSaleModal}
+          opinionData={{
+            id: opinion.id,
+            question: opinion.question,
+            currentAnswer: opinion.currentAnswer,
+            nextPrice: opinion.nextPrice,
+            lastPrice: opinion.lastPrice,
+            totalVolume: opinion.totalVolume,
+            questionOwner: opinion.questionOwner,
+            salePrice: opinion.salePrice,
+            isActive: opinion.isActive,
+            creator: opinion.creator,
+          }}
+          onClose={() => setShowListForSaleModal(false)}
+          onSuccess={() => {
+            // Refresh the page to show updated sale status
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Cancel Listing Modal */}
+      {showCancelListingModal && opinion && (
+        <CancelListingModal
+          isOpen={showCancelListingModal}
+          opinionData={{
+            id: opinion.id,
+            question: opinion.question,
+            salePrice: opinion.salePrice,
+            questionOwner: opinion.questionOwner,
+          }}
+          onClose={() => setShowCancelListingModal(false)}
+          onSuccess={() => {
+            // Refresh the page to show updated sale status
+            window.location.reload();
+          }}
         />
       )}
     </div>

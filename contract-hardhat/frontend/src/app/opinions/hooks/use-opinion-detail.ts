@@ -99,11 +99,13 @@ export function useOpinionDetail(opinionId: number) {
   const opinion: OpinionDetail | null = opinionData ? {
     id: opinionId,
     creator: opinionData.creator,
+    questionOwner: opinionData.questionOwner,
     currentAnswerOwner: opinionData.currentAnswerOwner,
     currentAnswer: opinionData.currentAnswer,
     currentAnswerDescription: opinionData.currentAnswerDescription,
     lastPrice: opinionData.lastPrice,
     nextPrice: opinionData.nextPrice,
+    salePrice: opinionData.salePrice,
     isActive: opinionData.isActive,
     totalVolume: opinionData.totalVolume,
     question: opinionData.question,

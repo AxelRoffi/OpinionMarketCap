@@ -33,6 +33,7 @@ export function GlobalNavbar() {
           <nav className="hidden md:flex items-center space-x-8 ml-auto">
             <Link href="/leaderboard" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</Link>
             <Link href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</Link>
+            <Link href="/marketplace" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Questions for Sale</Link>
             <Link href="/profile" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</Link>
             <Link href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</Link>
           </nav>
@@ -78,6 +79,7 @@ export function GlobalNavbar() {
               <div className="flex flex-col space-y-4">
                 <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                 <Link href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</Link>
+                <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">Questions for Sale</Link>
                 <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
                 <Link href="/create" className="text-gray-300 hover:text-white transition-colors">Create</Link>
               </div>

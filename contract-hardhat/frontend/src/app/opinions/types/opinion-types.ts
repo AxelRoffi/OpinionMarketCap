@@ -2,11 +2,13 @@
 export interface OpinionDetail {
   id: number;
   creator: string;
+  questionOwner: string;
   currentAnswerOwner: string;
   currentAnswer: string;
   currentAnswerDescription: string;
   lastPrice: bigint;
   nextPrice: bigint;
+  salePrice: bigint;
   isActive: boolean;
   totalVolume: bigint;
   question: string;
