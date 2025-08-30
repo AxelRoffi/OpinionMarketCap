@@ -100,8 +100,10 @@ export interface UserStats {
   totalValue: number;
   totalPnL: number;
   totalPnLPercentage: number;
+  totalInvested: number;
   opinionsOwned: number;
   opinionsCreated: number;
+  questionsCreated: number;
   totalTrades: number;
   winRate: number;
   accumulatedFees: number;
@@ -112,6 +114,7 @@ export interface UserStats {
   totalROI: number;
   creatorFees: number;
   tradingProfits: number;
+  marketShare: number;
 }
 
 export interface UserProfile {
@@ -131,8 +134,10 @@ export function useUserProfile(userAddress?: string) {
       totalValue: 0,
       totalPnL: 0,
       totalPnLPercentage: 0,
+      totalInvested: 0,
       opinionsOwned: 0,
       opinionsCreated: 0,
+      questionsCreated: 0,
       totalTrades: 0,
       winRate: 0,
       accumulatedFees: 0,
@@ -143,6 +148,7 @@ export function useUserProfile(userAddress?: string) {
       totalROI: 0,
       creatorFees: 0,
       tradingProfits: 0,
+      marketShare: 0,
     },
     opinions: [],
     transactions: [],
@@ -275,9 +281,14 @@ export function useUserProfile(userAddress?: string) {
       });
 
       const totalTrades = Number(tradeCount || 0);
+      const totalInvested = Math.max(0, totalValue - totalPnL);
       const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
-      const totalPnLPercentage = totalValue > 0 ? (totalPnL / (totalValue - totalPnL)) * 100 : 0;
-      totalROI = totalValue > 0 ? (totalPnL / totalValue) * 100 : 0;
+      const totalPnLPercentage = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+      totalROI = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+
+      // Calculate platform market share (simulate total platform TVL)
+      const platformTotalValue = 50000; // Simulate platform total
+      const marketShare = platformTotalValue > 0 ? (totalValue / platformTotalValue) * 100 : 0;
 
       // Calculate rank (simulate based on portfolio performance)
       const rankScore = totalValue + totalPnL;
@@ -288,8 +299,10 @@ export function useUserProfile(userAddress?: string) {
           totalValue,
           totalPnL,
           totalPnLPercentage,
+          totalInvested,
           opinionsOwned,
           opinionsCreated,
+          questionsCreated: opinionsCreated, // Same as opinionsCreated for now
           totalTrades,
           winRate,
           accumulatedFees: accumulatedFees ? Number(accumulatedFees) / 1_000_000 : 0,
@@ -300,6 +313,7 @@ export function useUserProfile(userAddress?: string) {
           totalROI,
           creatorFees,
           tradingProfits,
+          marketShare,
         },
         opinions: userOpinions.sort((a, b) => b.timestamp - a.timestamp),
         transactions: userTransactions.sort((a, b) => b.timestamp - a.timestamp),
@@ -350,25 +364,42 @@ export function useClaimFees() {
 }
 
 // Utility functions
-export function formatUSDC(value: number): string {
+export function formatUSDC(value: number | undefined | null): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '$0.00';
+  }
   return `$${value.toLocaleString(undefined, { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   })}`;
 }
 
-export function formatPercentage(value: number): string {
+export function formatPercentage(value: number | undefined | null): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return '+0.00%';
+  }
   const sign = value >= 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
 }
 
-export function formatAddress(address: string): string {
+export function formatAddress(address: string | undefined | null): string {
+  if (!address || typeof address !== 'string') {
+    return '0x0000...0000';
+  }
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export function formatTimeAgo(timestamp: number): string {
+export function formatTimeAgo(timestamp: number | undefined | null): string {
+  if (!timestamp || timestamp === 0) {
+    return 'Unknown';
+  }
+  
   const now = Date.now();
-  const diff = now - timestamp;
+  const timestampMs = timestamp > 10000000000 ? timestamp : timestamp * 1000; // Handle both ms and seconds
+  const diff = now - timestampMs;
+  
+  if (diff < 0) return 'In the future';
+  
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor(diff / (1000 * 60));
