@@ -7,6 +7,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useOpinionDetail } from '../hooks/use-opinion-detail';
 import { OpinionHeader } from '../components/opinion-header';
@@ -27,6 +28,7 @@ export default function OpinionDetailPage() {
   const [showPoolCreationModal, setShowPoolCreationModal] = useState(false);
   const [showListForSaleModal, setShowListForSaleModal] = useState(false);
   const [showCancelListingModal, setShowCancelListingModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('chart');
 
   const opinionId = parseInt(params.id as string);
   
@@ -116,8 +118,8 @@ export default function OpinionDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Header */}
+      <div className="max-w-6xl mx-auto p-4 space-y-4 pb-20 md:pb-4">
+        {/* Hero Section */}
         <OpinionHeader
           opinion={opinion}
           onBack={handleBack}
@@ -127,7 +129,7 @@ export default function OpinionDetailPage() {
           onCancelListing={handleCancelListing}
         />
 
-        {/* Stats Cards */}
+        {/* Key Stats Row */}
         {stats && (
           <OpinionStatsComponent
             stats={stats}
@@ -137,33 +139,46 @@ export default function OpinionDetailPage() {
           />
         )}
 
-        {/* Chart and Activity Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Price Chart */}
-          <div className="xl:col-span-1">
-            <OpinionChart
-              data={stats?.volumeHistory || []}
-              currentPrice={Number(opinion.nextPrice) / 1_000_000}
-            />
-          </div>
-
-          {/* Trading Activity */}
-          <div className="xl:col-span-1">
-            <OpinionActivity
-              activity={activity}
-              loading={loading}
-            />
-          </div>
+        {/* Main Content Tabs */}
+        <div className="bg-gray-800 rounded-lg border border-gray-700">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-700/50 rounded-t-lg">
+              <TabsTrigger value="chart" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                Chart
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                Activity
+              </TabsTrigger>
+              <TabsTrigger value="details" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                Details
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chart" className="p-6 m-0">
+              <OpinionChart
+                data={stats?.volumeHistory || []}
+                currentPrice={Number(opinion.nextPrice) / 1_000_000}
+              />
+            </TabsContent>
+            
+            <TabsContent value="activity" className="p-6 m-0">
+              <OpinionActivity
+                activity={activity}
+                loading={loading}
+              />
+            </TabsContent>
+            
+            <TabsContent value="details" className="p-6 m-0">
+              {stats && (
+                <DetailedStats
+                  stats={stats}
+                  currentPrice={Number(opinion.nextPrice) / 1_000_000}
+                  totalVolume={Number(opinion.totalVolume) / 1_000_000}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
-
-        {/* Detailed Statistics */}
-        {stats && (
-          <DetailedStats
-            stats={stats}
-            currentPrice={Number(opinion.nextPrice) / 1_000_000}
-            totalVolume={Number(opinion.totalVolume) / 1_000_000}
-          />
-        )}
 
         {/* Connect Wallet Prompt */}
         {!address && (
@@ -177,6 +192,25 @@ export default function OpinionDetailPage() {
             <ConnectButton />
           </div>
         )}
+      </div>
+
+      {/* Sticky Action Panel (Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-4 md:hidden z-10">
+        <div className="flex gap-3">
+          <Button
+            onClick={handleTrade}
+            className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold"
+          >
+            Trade
+          </Button>
+          <Button
+            onClick={handleCreatePool}
+            variant="outline"
+            className="flex-1 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+          >
+            Pool
+          </Button>
+        </div>
       </div>
 
       {/* Trading Modal */}

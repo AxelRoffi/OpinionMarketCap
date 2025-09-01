@@ -35,7 +35,7 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
       }
     });
 
-  const displayedActivity = showAll ? filteredActivity : filteredActivity.slice(0, 10);
+  const displayedActivity = showAll ? filteredActivity : filteredActivity.slice(0, 5);
 
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now();
@@ -52,7 +52,7 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
 
   if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+      <div>
         <h2 className="text-xl font-bold text-white mb-4">Trading Activity</h2>
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
@@ -75,7 +75,7 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white mb-4 sm:mb-0">
@@ -210,7 +210,7 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
       </div>
 
       {/* Show More Button */}
-      {filteredActivity.length > 10 && (
+      {filteredActivity.length > 5 && (
         <div className="text-center mt-6">
           <Button
             variant="outline"

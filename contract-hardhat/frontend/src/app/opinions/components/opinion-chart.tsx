@@ -27,18 +27,15 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
     }
   });
 
-  // Generate sample data if no real data available
+  // Transform real data for charting
   const chartData = filteredData.length > 0 ? filteredData.map(point => ({
     timestamp: point.timestamp,
     time: new Date(point.timestamp).toLocaleDateString(),
     price: point.price,
     volume: point.volume,
-  })) : [
-    { timestamp: Date.now() - 86400000, time: '1d ago', price: currentPrice * 0.95, volume: 1000 },
-    { timestamp: Date.now() - 43200000, time: '12h ago', price: currentPrice * 0.98, volume: 1500 },
-    { timestamp: Date.now() - 21600000, time: '6h ago', price: currentPrice * 1.02, volume: 2000 },
-    { timestamp: Date.now(), time: 'Now', price: currentPrice, volume: 1800 },
-  ];
+  })) : [];
+  
+  const hasRealData = chartData.length > 0;
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
     if (active && payload && payload.length) {
@@ -55,7 +52,7 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div>
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white mb-4 sm:mb-0">
@@ -110,89 +107,106 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
 
       {/* Chart */}
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          {chartType === 'price' ? (
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="time" 
-                stroke="#9ca3af"
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="#9ca3af"
-                fontSize={12}
-                tickFormatter={(value) => `$${value.toFixed(2)}`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="price"
-                stroke="#10b981"
-                strokeWidth={2}
-                fill="url(#priceGradient)"
-              />
-            </AreaChart>
-          ) : (
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="time" 
-                stroke="#9ca3af"
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="#9ca3af"
-                fontSize={12}
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="volume"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, fill: '#3b82f6' }}
-              />
-            </LineChart>
-          )}
-        </ResponsiveContainer>
+        {hasRealData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            {chartType === 'price' ? (
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                />
+                <YAxis 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickFormatter={(value) => `$${value.toFixed(2)}`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#priceGradient)"
+                />
+              </AreaChart>
+            ) : (
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                />
+                <YAxis 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="volume"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: '#3b82f6' }}
+                />
+              </LineChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-gray-400 mb-2">No Historical Data Available</h4>
+              <p className="text-gray-500 text-sm">
+                {chartType === 'price' ? 'Price history' : 'Volume history'} will appear here once trading begins.
+              </p>
+              <p className="text-gray-600 text-xs mt-2">
+                Current price: ${currentPrice.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Chart Statistics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-700">
-        <div className="text-center">
-          <div className="text-gray-400 text-sm">Current</div>
-          <div className="text-white font-semibold">
-            ${currentPrice.toFixed(2)}
+      {hasRealData && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-700">
+          <div className="text-center">
+            <div className="text-gray-400 text-sm">Current</div>
+            <div className="text-white font-semibold">
+              ${currentPrice.toFixed(2)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-gray-400 text-sm">Period High</div>
+            <div className="text-white font-semibold">
+              ${Math.max(...chartData.map(d => d.price)).toFixed(2)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-gray-400 text-sm">Period Low</div>
+            <div className="text-white font-semibold">
+              ${Math.min(...chartData.map(d => d.price)).toFixed(2)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-gray-400 text-sm">Data Points</div>
+            <div className="text-white font-semibold">
+              {chartData.length}
+            </div>
           </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm">24h High</div>
-          <div className="text-white font-semibold">
-            ${Math.max(...chartData.map(d => d.price)).toFixed(2)}
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm">24h Low</div>
-          <div className="text-white font-semibold">
-            ${Math.min(...chartData.map(d => d.price)).toFixed(2)}
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-sm">Volume</div>
-          <div className="text-white font-semibold">
-            {chartData.reduce((acc, d) => acc + d.volume, 0).toLocaleString()}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -40,25 +40,17 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
   const canCancelListing = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && isForSale;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div className="bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-700">
       {/* Header Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Markets</span>
-        </button>
-        
-        <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
             className="border-gray-600 text-gray-300 hover:bg-gray-700"
           >
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            <span className="hidden sm:inline">Share</span>
           </Button>
           <Button
             variant="outline"
@@ -66,41 +58,61 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             className="border-gray-600 text-gray-300 hover:bg-gray-700"
           >
             <BookmarkPlus className="w-4 h-4 mr-2" />
-            Watch
+            <span className="hidden sm:inline">Watch</span>
           </Button>
         </div>
       </div>
 
-      {/* Opinion Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Question and Answer */}
-        <div className="lg:col-span-2 space-y-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 leading-tight">
-              {opinion.question}
-            </h1>
-            <div className="flex items-center space-x-2 text-gray-400 text-sm">
-              <span>Created by</span>
-              <ClickableAddress 
-                address={opinion.creator}
-                className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
-              >
-                {formatAddress(opinion.creator)}
-              </ClickableAddress>
+      {/* Main Content */}
+      <div className="space-y-4">
+        {/* Question Header */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <span className="text-blue-400 text-sm font-medium bg-blue-600/10 px-3 py-1.5 rounded-md border border-blue-600/20">
+                Question #{opinion.id}
+              </span>
+              {opinion.categories.map((category, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  {category}
+                </Badge>
+              ))}
             </div>
+            <Badge 
+              variant={opinion.isActive ? 'default' : 'secondary'}
+              className={opinion.isActive ? 'bg-emerald-600 text-white' : 'bg-gray-600'}
+            >
+              {opinion.isActive ? 'Active' : 'Inactive'}
+            </Badge>
           </div>
+          
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
+            {opinion.question}
+          </h1>
+          
+          <div className="text-gray-400 text-sm">
+            <span>Created by </span>
+            <ClickableAddress 
+              address={opinion.creator}
+              className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
+            >
+              {formatAddress(opinion.creator)}
+            </ClickableAddress>
+          </div>
+        </div>
 
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400 text-sm">Current Answer</span>
-              <Badge 
-                variant={opinion.isActive ? 'default' : 'secondary'}
-                className={opinion.isActive ? 'bg-emerald-600' : 'bg-gray-600'}
-              >
-                {opinion.isActive ? 'Active' : 'Inactive'}
-              </Badge>
+        {/* Balanced Layout - Answer 50%, Price & Volume 25% each */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Current Answer - Takes 2/4 (50%) width */}
+          <div className="lg:col-span-2 bg-gray-900 rounded-lg p-4 border border-gray-600">
+            <div className="mb-2">
+              <span className="text-gray-400 text-sm font-medium">Current Answer</span>
             </div>
-            <p className="text-white font-semibold text-lg mb-2">
+            <p className="text-white font-semibold text-xl mb-2">
               {opinion.currentAnswer}
             </p>
             {opinion.currentAnswerDescription && (
@@ -108,8 +120,8 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                 {opinion.currentAnswerDescription}
               </p>
             )}
-            <div className="flex items-center space-x-2 text-gray-400 text-sm">
-              <span>Owned by</span>
+            <div className="text-gray-400 text-sm">
+              <span>Owned by </span>
               <ClickableAddress 
                 address={opinion.currentAnswerOwner}
                 className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
@@ -119,30 +131,14 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="flex flex-wrap gap-2">
-            {opinion.categories.map((category, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="bg-blue-600 text-white hover:bg-blue-700"
-              >
-                {category}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Right: Price and Stats */}
-        <div className="space-y-4">
-          {/* Price Card */}
+          {/* Current Price - Takes 1/4 (25%) width */}
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
-            <div className="text-center space-y-2">
-              <div className="text-gray-400 text-sm">Current Price</div>
-              <div className="text-3xl font-bold text-white">
+            <div className="text-center">
+              <div className="text-gray-400 text-sm mb-2">Current Price</div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
                 {formatUSDC(opinion.nextPrice)}
               </div>
-              <div className={`flex items-center justify-center space-x-1 ${
+              <div className={`flex items-center justify-center space-x-1 text-sm ${
                 change.isPositive ? 'text-emerald-500' : 'text-red-500'
               }`}>
                 {change.isPositive ? (
@@ -153,30 +149,27 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                 <span className="font-medium">
                   {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
                 </span>
-                <span className="text-gray-400 text-sm">
+                <span className="text-gray-400 text-xs">
                   (${change.absolute.toFixed(2)})
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-900 rounded-lg p-3 border border-gray-600 text-center">
-              <div className="text-gray-400 text-xs mb-1">Market Cap</div>
-              <div className="text-white font-semibold">
-                ${marketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </div>
-            </div>
-            <div className="bg-gray-900 rounded-lg p-3 border border-gray-600 text-center">
-              <div className="text-gray-400 text-xs mb-1">Volume</div>
-              <div className="text-white font-semibold">
+          {/* Total Volume - Takes 1/4 (25%) width */}
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+            <div className="text-center">
+              <div className="text-gray-400 text-sm mb-2">Total Volume</div>
+              <div className="text-2xl md:text-3xl font-bold text-white">
                 {formatUSDC(opinion.totalVolume)}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Trade Button */}
+        
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button
             onClick={onTrade}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3"
@@ -185,51 +178,56 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             Trade This Opinion
           </Button>
 
-          {/* Create Pool Button */}
           <Button
             onClick={onCreatePool}
             variant="outline"
-            className="w-full border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
+            className="w-full border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold py-3 transition-all duration-200"
           >
             <Target className="w-5 h-5 mr-2" />
             Create Pool
           </Button>
-
-          {/* Question Marketplace Actions */}
-          {isForSale && (
-            <div className="w-full mt-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-              <div className="flex items-center justify-center gap-2 text-emerald-400">
-                <Tag className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  Listed for {formatUSDC(opinion.salePrice)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {canListForSale && (
-            <Button
-              onClick={onListForSale}
-              variant="outline"
-              className="w-full border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
-            >
-              <Tag className="w-5 h-5 mr-2" />
-              List for Sale
-            </Button>
-          )}
-
-          {canCancelListing && (
-            <Button
-              onClick={onCancelListing}
-              variant="outline"
-              className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white font-semibold py-3 mt-2 transition-all duration-200"
-            >
-              <Tag className="w-5 h-5 mr-2" />
-              Cancel Listing
-            </Button>
-          )}
         </div>
+
+        {/* Question Marketplace Status */}
+        {isForSale && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+            <div className="flex items-center justify-center gap-2 text-emerald-400">
+              <Tag className="w-5 h-5" />
+              <span className="font-medium">
+                This question is listed for sale at {formatUSDC(opinion.salePrice)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Marketplace Actions */}
+        {(canListForSale || canCancelListing) && (
+          <div className="flex gap-4 justify-center">
+            {canListForSale && (
+              <Button
+                onClick={onListForSale}
+                variant="outline"
+                className="border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-white font-semibold px-6 py-2 transition-all duration-200"
+              >
+                <Tag className="w-4 h-4 mr-2" />
+                List for Sale
+              </Button>
+            )}
+
+            {canCancelListing && (
+              <Button
+                onClick={onCancelListing}
+                variant="outline"
+                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white font-semibold px-6 py-2 transition-all duration-200"
+              >
+                <Tag className="w-4 h-4 mr-2" />
+                Cancel Listing
+              </Button>
+            )}
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

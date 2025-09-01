@@ -1,5 +1,4 @@
 import { 
-  Users, 
   BarChart3,
   DollarSign,
   ArrowUpDown
@@ -13,11 +12,46 @@ interface OpinionStatsProps {
   loading?: boolean;
 }
 
-export function OpinionStatsComponent({ stats, totalVolume, loading }: OpinionStatsProps) {
+// Helper function to calculate percentage change from historical data
+function calculateMetricChange(history: Array<{timestamp: number, price: number, volume: number}>, currentValue: number, metricType: 'volume' | 'trades'): { change: string; changeType: 'positive' | 'negative' | 'neutral' } {
+  if (history.length < 2) {
+    return { change: 'New', changeType: 'neutral' };
+  }
+
+  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  const recentHistory = history.filter(h => h.timestamp >= oneDayAgo);
+  
+  if (recentHistory.length === 0) {
+    return { change: 'No recent data', changeType: 'neutral' };
+  }
+
+  const oldestRecent = recentHistory[0];
+  let previousValue: number;
+  
+  if (metricType === 'volume') {
+    previousValue = oldestRecent.volume;
+  } else {
+    // For trades, we count entries before vs after
+    const oldEntries = history.filter(h => h.timestamp < oneDayAgo).length;
+    previousValue = oldEntries;
+  }
+
+  if (previousValue === 0) {
+    return { change: 'New', changeType: 'positive' };
+  }
+
+  const percentageChange = ((currentValue - previousValue) / previousValue) * 100;
+  const changeType = percentageChange > 0 ? 'positive' : percentageChange < 0 ? 'negative' : 'neutral';
+  const changeStr = percentageChange > 0 ? `+${percentageChange.toFixed(1)}%` : `${percentageChange.toFixed(1)}%`;
+  
+  return { change: changeStr, changeType };
+}
+
+export function OpinionStatsComponent({ stats, currentPrice, totalVolume, loading }: OpinionStatsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-gray-800 rounded-lg p-6 border border-gray-700 animate-pulse">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-gray-600 rounded"></div>
@@ -33,43 +67,39 @@ export function OpinionStatsComponent({ stats, totalVolume, loading }: OpinionSt
     );
   }
 
+  // Calculate real changes from historical data
+  const volumeChange = calculateMetricChange(stats.volumeHistory, totalVolume, 'volume');
+  const tradesChange = calculateMetricChange(stats.volumeHistory, stats.totalTrades, 'trades');
+  
   const statCards = [
     {
       title: 'Total Volume',
       value: `$${totalVolume.toLocaleString()}`,
       icon: DollarSign,
-      change: '+12.5%',
-      changeType: 'positive' as const,
+      change: volumeChange.change,
+      changeType: volumeChange.changeType,
       description: 'Total trading volume'
     },
     {
       title: 'Total Trades',
       value: stats.totalTrades.toString(),
       icon: ArrowUpDown,
-      change: '+3',
-      changeType: 'positive' as const,
+      change: tradesChange.change,
+      changeType: tradesChange.changeType,
       description: 'Answer changes'
-    },
-    {
-      title: 'Unique Holders',
-      value: stats.uniqueHolders.toString(),
-      icon: Users,
-      change: '+1',
-      changeType: 'positive' as const,
-      description: 'Different participants'
     },
     {
       title: 'Price Range',
       value: `$${stats.priceRange.min.toFixed(2)} - $${stats.priceRange.max.toFixed(2)}`,
       icon: BarChart3,
-      change: `${((stats.priceRange.max - stats.priceRange.min) / stats.priceRange.min * 100).toFixed(1)}%`,
+      change: stats.priceRange.min > 0 ? `${((stats.priceRange.max - stats.priceRange.min) / stats.priceRange.min * 100).toFixed(1)}% range` : 'New',
       changeType: 'neutral' as 'positive' | 'negative' | 'neutral',
       description: 'Min - Max price'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {statCards.map((stat, index) => (
         <div
           key={index}
@@ -123,14 +153,23 @@ export function DetailedStats({ stats, currentPrice, totalVolume }: OpinionStats
     ? ((stats.priceRange.max - stats.priceRange.min) / stats.priceRange.max * 100)
     : 0;
 
+  // Calculate time span of trading activity
+  const timeSpan = stats.volumeHistory.length > 0 
+    ? Math.max(1, (Date.now() - Math.min(...stats.volumeHistory.map(h => h.timestamp))) / (1000 * 60 * 60 * 24))
+    : 1;
+
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div>
       <h3 className="text-lg font-semibold text-white mb-4">Detailed Statistics</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-gray-400">Average Price</span>
+            <span className="text-gray-400">Current Market Price</span>
+            <span className="text-white font-medium">${currentPrice.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Average Historical Price</span>
             <span className="text-white font-medium">${avgPrice.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center">
@@ -138,28 +177,30 @@ export function DetailedStats({ stats, currentPrice, totalVolume }: OpinionStats
             <span className="text-white font-medium">{volatility.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-400">Market Cap</span>
-            <span className="text-white font-medium">${(currentPrice * stats.totalTrades).toLocaleString()}</span>
+            <span className="text-gray-400">Total Trading Volume</span>
+            <span className="text-white font-medium">${totalVolume.toLocaleString()}</span>
           </div>
         </div>
         
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-gray-400">Trading Frequency</span>
+            <span className="text-gray-400">Answer Changes</span>
+            <span className="text-white font-medium">{stats.totalTrades}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Unique Participants</span>
+            <span className="text-white font-medium">{stats.uniqueHolders}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Trading Activity Period</span>
             <span className="text-white font-medium">
-              {stats.totalTrades > 0 ? (stats.totalTrades / 7).toFixed(1) : 0} trades/week
+              {timeSpan.toFixed(0)} day{timeSpan !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-400">Avg. Trade Size</span>
+            <span className="text-gray-400">Price Range</span>
             <span className="text-white font-medium">
-              ${stats.totalTrades > 0 ? (totalVolume / stats.totalTrades).toFixed(2) : '0.00'}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">Holder Distribution</span>
-            <span className="text-white font-medium">
-              {stats.uniqueHolders > 0 ? (100 / stats.uniqueHolders).toFixed(1) : 0}% avg. ownership
+              ${stats.priceRange.min.toFixed(2)} - ${stats.priceRange.max.toFixed(2)}
             </span>
           </div>
         </div>
