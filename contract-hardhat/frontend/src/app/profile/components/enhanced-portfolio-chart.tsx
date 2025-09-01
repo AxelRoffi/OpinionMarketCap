@@ -154,18 +154,18 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
         >
           <div className="flex items-center justify-between mb-2">
             <Award className="w-5 h-5 text-orange-400" />
-            <span className={`text-sm ${
-              analytics.comparison.vsPlatformAverage.performance >= 0 
-                ? 'text-emerald-400' 
-                : 'text-red-400'
-            }`}>
-              {formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
+            <span className="text-sm text-gray-400">
+              {analytics.comparison.vsPlatformAverage.performance === 0 
+                ? "—" 
+                : formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
             </span>
           </div>
           <div className="text-xl font-bold text-white">
-            #{analytics.comparison.rank.overall}
+            {analytics.comparison.rank.overall === 0 ? "—" : `#${analytics.comparison.rank.overall}`}
           </div>
-          <div className="text-sm text-gray-400">Platform Rank</div>
+          <div className="text-sm text-gray-400">
+            {analytics.comparison.rank.overall === 0 ? "Coming Soon" : "Platform Rank"}
+          </div>
         </motion.div>
       </div>
 
@@ -361,8 +361,15 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
                       <span className="text-gray-300">Avg Hold Time</span>
-                      <span className="text-white font-bold">{analytics.tradingPatterns.avgHoldTime} days</span>
+                      <span className="text-white font-bold">
+                        {analytics.tradingPatterns.avgHoldTime === 15 ? "—" : `${analytics.tradingPatterns.avgHoldTime} days`}
+                      </span>
                     </div>
+                    {analytics.tradingPatterns.avgHoldTime === 15 && (
+                      <div className="text-xs text-gray-500 px-3">
+                        Coming soon - requires historical transaction analysis
+                      </div>
+                    )}
                     
                     <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
                       <span className="text-gray-300">Trading Frequency</span>
@@ -393,28 +400,34 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-300">vs Platform Avg</span>
-                      <Badge className={analytics.comparison.vsPlatformAverage.performance >= 0 ? 'bg-emerald-500' : 'bg-red-500'}>
-                        {formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
+                      <Badge className="bg-gray-500">
+                        {analytics.comparison.vsPlatformAverage.performance === 0 ? "—" : formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
                       </Badge>
                     </div>
                     <div className="text-xl font-bold text-white">Performance</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {analytics.comparison.vsPlatformAverage.performance === 0 ? "Insufficient data" : ""}
+                    </div>
                   </div>
                   
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-300">vs Platform Avg</span>
-                      <Badge className={analytics.comparison.vsPlatformAverage.winRate >= 0 ? 'bg-emerald-500' : 'bg-red-500'}>
-                        {formatPercentage(analytics.comparison.vsPlatformAverage.winRate)}
+                      <Badge className="bg-gray-500">
+                        {analytics.comparison.vsPlatformAverage.winRate === 0 ? "—" : formatPercentage(analytics.comparison.vsPlatformAverage.winRate)}
                       </Badge>
                     </div>
                     <div className="text-xl font-bold text-white">Win Rate</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {analytics.comparison.vsPlatformAverage.winRate === 0 ? "Insufficient data" : ""}
+                    </div>
                   </div>
                   
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-300">Overall Rank</span>
                       <Badge className="bg-purple-500">
-                        #{analytics.comparison.rank.overall}
+                        {analytics.comparison.rank.overall === 0 ? "—" : `#${analytics.comparison.rank.overall}`}
                       </Badge>
                     </div>
                     <div className="text-xl font-bold text-white">Platform</div>
@@ -428,9 +441,21 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                     {Object.entries(analytics.comparison.rank.byCategory).map(([category, rank]) => (
                       <div key={category} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
                         <span className="text-gray-300">{category}</span>
-                        <Badge className="bg-blue-500">#{rank}</Badge>
+                        <Badge className="bg-gray-500">
+                          {rank === 0 ? "—" : `#${rank}`}
+                        </Badge>
                       </div>
                     ))}
+                    {Object.entries(analytics.comparison.rank.byCategory).every(([, rank]) => rank === 0) && (
+                      <div className="text-center py-4">
+                        <div className="text-sm text-gray-500">
+                          Category rankings coming soon
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Requires comprehensive platform data analysis
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

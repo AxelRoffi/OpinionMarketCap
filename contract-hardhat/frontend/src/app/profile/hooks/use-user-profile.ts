@@ -340,7 +340,7 @@ export function useUserProfile(userAddress?: string) {
           accumulatedFees: accumulatedFees ? Number(accumulatedFees) / 1_000_000 : 0,
           rank,
           totalUsers, // FIXED: Real count of users with positions
-          avgHoldTime: 5.2, // TODO: Calculate from real position timestamps
+          avgHoldTime: -1, // -1 indicates "coming soon" - will be replaced with real calculation
           bestTrade,
           totalROI,
           creatorFees,

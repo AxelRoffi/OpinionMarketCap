@@ -577,9 +577,13 @@ function ProfilePageContent() {
                       Avg
                     </div>
                   </div>
-                  <div className="text-xl font-bold text-white">{stats.avgHoldTime}d</div>
+                  <div className="text-xl font-bold text-white">
+                    {stats.avgHoldTime === -1 ? "—" : `${stats.avgHoldTime}d`}
+                  </div>
                   <div className="text-sm text-gray-400">Hold Time</div>
-                  <div className="text-xs text-gray-500">Days per position</div>
+                  <div className="text-xs text-gray-500">
+                    {stats.avgHoldTime === -1 ? "Coming soon" : "Days per position"}
+                  </div>
                 </CardContent>
               </Card>
 

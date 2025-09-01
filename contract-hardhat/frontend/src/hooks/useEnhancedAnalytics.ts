@@ -319,13 +319,7 @@ function analyzeTradingPatterns(transactions: Transaction[], opinions: Opinion[]
  * Generate comparison metrics (would come from backend in production)
  */
 function generateComparisonMetrics(opinions: Opinion[], transactions: Transaction[]) {
-  // Mock platform averages - would come from actual platform data
-  const platformAverage = {
-    winRate: 55,
-    avgReturn: 12,
-    totalReturn: 15,
-  };
-
+  // HONEST APPROACH: Show that we need more data for accurate comparisons
   const userWinRate = opinions.length > 0 ? (opinions.filter(op => op.pnl > 0).length / opinions.length) * 100 : 0;
   const userAvgReturn = opinions.length > 0 ? opinions.reduce((sum, op) => sum + op.pnlPercentage, 0) / opinions.length : 0;
   const totalValue = opinions.reduce((sum, op) => sum + op.currentValue, 0);
@@ -335,16 +329,17 @@ function generateComparisonMetrics(opinions: Opinion[], transactions: Transactio
 
   return {
     vsPlatformAverage: {
-      performance: userTotalReturn - platformAverage.totalReturn,
-      winRate: userWinRate - platformAverage.winRate,
-      avgReturn: userAvgReturn - platformAverage.avgReturn,
+      // Show 0 instead of fake comparisons - will be displayed as "Insufficient data"
+      performance: 0,
+      winRate: 0,
+      avgReturn: 0,
     },
     rank: {
-      overall: Math.floor(Math.random() * 1000) + 1, // Mock rank
+      overall: 0, // 0 indicates "Coming soon" - real rank calculated in profile hook
       byCategory: {
-        'Crypto': Math.floor(Math.random() * 500) + 1,
-        'Technology': Math.floor(Math.random() * 300) + 1,
-        'Politics': Math.floor(Math.random() * 200) + 1,
+        'Crypto': 0,
+        'Technology': 0,
+        'Politics': 0,
       },
     },
   };
