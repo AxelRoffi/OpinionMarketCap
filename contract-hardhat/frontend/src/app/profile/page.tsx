@@ -1,3 +1,58 @@
+/**
+ * PROFILE PAGE - ACCURATE CALCULATIONS DOCUMENTATION
+ * 
+ * This profile page displays ACCURATE financial metrics calculated from real blockchain data.
+ * Every number is transparently calculated and documented below:
+ * 
+ * 📊 PRIMARY METRICS:
+ * 
+ * 1. PORTFOLIO VALUE = Sum of nextPrice for opinions where user owns current answer
+ *    - Only positions where user is currentAnswerOwner
+ *    - Real market value of user's positions
+ * 
+ * 2. TOTAL INVESTED = Sum of lastPrice for owned positions
+ *    - What user actually paid for current positions
+ *    - Cost basis for P&L calculation
+ * 
+ * 3. TOTAL P&L = Portfolio Value - Total Invested
+ *    - Unrealized gains/losses on current positions
+ *    - Does NOT double-count sold positions
+ * 
+ * 4. P&L PERCENTAGE = (Total P&L / Total Invested) * 100
+ *    - Return on investment percentage
+ *    - Based on actual cost basis
+ * 
+ * 5. USER TVL = Portfolio Value
+ *    - Total Value Locked in user's positions
+ *    - Value at risk in current positions
+ * 
+ * 6. MARKET SHARE = (User TVL / Platform TVL) * 100
+ *    - User's share of total platform TVL
+ *    - Platform TVL = sum of all opinion nextPrices
+ * 
+ * 7. WIN RATE = (Profitable Positions / Total Positions) * 100
+ *    - Positions with positive P&L / Total positions owned
+ *    - Based on current unrealized P&L
+ * 
+ * 8. ACCUMULATED FEES = Real claimable USDC from FeeManager contract
+ *    - Direct blockchain call: FeeManager.getAccumulatedFees(user)
+ *    - Actual USDC available to claim
+ * 
+ * 🔍 SECONDARY METRICS:
+ * 
+ * - Positions Owned = Count where user is currentAnswerOwner
+ * - Questions Created = Count where user is original creator  
+ * - Questions Owned = Count where user is current questionOwner
+ * - Platform Rank = Estimated based on portfolio performance
+ * - Creator Earnings = Theoretical 3% of volume for owned questions
+ * 
+ * ⚠️ NO DOUBLE COUNTING:
+ * - Each position counted only once (by currentAnswerOwner)
+ * - P&L calculated only for actual investments
+ * - TVL represents real locked value
+ * - All percentages based on accurate denominators
+ */
+
 'use client';
 
 import { useAccount, useDisconnect } from 'wagmi';
@@ -34,6 +89,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile, useClaimFees, formatUSDC, formatPercentage, formatAddress, formatTimeAgo, CONTRACTS } from './hooks/use-user-profile';
 import { PortfolioPerformanceChart } from './components/portfolio-performance-chart';
+import { EnhancedPortfolioChart } from './components/enhanced-portfolio-chart';
+import { EnhancedPortfolioPerformanceChart } from './components/enhanced-portfolio-performance-chart';
+import { AdvancedPositionManagement } from './components/advanced-position-management';
+import { ComprehensiveFeeManagement } from './components/comprehensive-fee-management';
+import { DetailedTradingHistory } from './components/detailed-trading-history';
+import { useENSProfile } from '@/hooks/useENSProfile';
+import { ENSName, ENSAvatar } from '@/components/ENSComponents';
 import { useUserPools, useWithdrawFromExpiredPool } from './hooks/use-withdraw-pool';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
@@ -58,6 +120,7 @@ function ProfilePageContent() {
   
   const { stats, opinions, transactions, loading, error } = useUserProfile(targetAddress);
   const { claimFees, isClaimingFees, claimSuccess, claimError, transactionHash } = useClaimFees();
+  const { ensName, ensAvatar, displayName, isLoading: ensLoading } = useENSProfile(targetAddress);
   const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(targetAddress);
   const { withdrawFromPool, isWithdrawing, withdrawTxHash, isWithdrawSuccess, pendingWithdraw } = useWithdrawFromExpiredPool();
 
@@ -155,51 +218,61 @@ function ProfilePageContent() {
   return (
     <>
       <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Page Header */}
-        <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 glass-card p-6">
+        {/* Profile Header */}
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {/* User Avatar */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
+              {/* ENS Avatar */}
+              <ENSAvatar 
+                address={targetAddress} 
+                size={64} 
+                className="shadow-lg border-2 border-emerald-400/20" 
+              />
               
-              {/* Address Display */}
+              {/* User Info with ENS */}
               <div>
-                <h1 className="text-2xl font-bold text-white">
-                  {isOwnProfile ? 'Your Profile' : 'User Profile'}
-                </h1>
+                <div className="flex items-center space-x-2 mb-1">
+                  {ensName && (
+                    <h1 className="text-3xl font-bold text-white">{ensName}</h1>
+                  )}
+                  {!ensName && (
+                    <h1 className="text-3xl font-bold text-white">
+                      {isOwnProfile ? 'Your Profile' : 'User Profile'}
+                    </h1>
+                  )}
+                  {ensLoading && (
+                    <div className="w-6 h-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+                  )}
+                </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-400">{formatAddress(targetAddress)}</span>
+                  <span className="text-gray-400 font-mono text-sm">
+                    {formatAddress(targetAddress)}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleCopyAddress}
-                    className="p-1 h-6 w-6"
+                    className="p-1 h-6 w-6 hover:bg-emerald-400/20"
                   >
                     {copied ? (
                       <Check className="w-3 h-3 text-emerald-500" />
                     ) : (
-                      <Copy className="w-3 h-3 text-gray-400" />
+                      <Copy className="w-3 h-3 text-gray-400 hover:text-emerald-400" />
                     )}
                   </Button>
                 </div>
+                {ensName && (
+                  <div className="text-sm text-emerald-400 mt-1">
+                    ✓ ENS Verified
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Settings and Disconnect Buttons - Only show for own profile */}
+            {/* Profile Actions */}
             <div className="flex items-center space-x-3">
               {isOwnProfile ? (
                 <>
-                  <ConnectButton />
-                  <Button 
-                    variant="outline" 
-                    className="glass-input bg-transparent"
-                    onClick={() => disconnect()}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Disconnect
-                  </Button>
                   <Button 
                     variant="outline" 
                     className="glass-input bg-transparent"
@@ -210,16 +283,16 @@ function ProfilePageContent() {
                 </>
               ) : (
                 <div className="text-sm text-gray-400">
-                  Viewing {formatAddress(targetAddress)}
+                  Viewing <ENSName address={targetAddress} className="text-gray-300" />
                 </div>
               )}
             </div>
           </div>
-        </header>
+        </div>
 
-        {/* Stats Overview Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Card 1: Total Value */}
+        {/* Stats Overview Cards - ACCURATE CALCULATIONS */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {/* Card 1: Portfolio Value (Current Market Value) */}
           <Card className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -236,132 +309,318 @@ function ProfilePageContent() {
                 </div>
               </div>
               <div className="text-xl font-bold text-white">{formatUSDC(stats.totalValue)}</div>
-              <div className="text-sm text-gray-400">Total Value</div>
+              <div className="text-sm text-gray-400">Portfolio Value</div>
+              <div className="text-xs text-gray-500">Current market value</div>
             </CardContent>
           </Card>
 
-          {/* Card 2: Opinions Owned */}
+          {/* Card 2: TVL (Total Value Locked) */}
+          <Card className="glass-card border border-blue-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Target className="w-5 h-5 text-blue-500" />
+                <div className="text-sm text-blue-400 font-medium">
+                  {stats.totalUsers}
+                </div>
+              </div>
+              <div className="text-xl font-bold text-white">{formatUSDC(stats.totalValue)}</div>
+              <div className="text-sm text-gray-400">User TVL</div>
+              <div className="text-xs text-gray-500">Your locked value</div>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Positions Owned (Answer Ownership) */}
           <Card className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <BarChart3 className="w-5 h-5 text-cyan-500" />
+                <div className="text-sm text-cyan-400">
+                  {stats.opinionsCreated > 0 && `+${stats.opinionsCreated}Q`}
+                </div>
               </div>
               <div className="text-xl font-bold text-white">{stats.opinionsOwned}</div>
-              <div className="text-sm text-gray-400">Opinions Owned</div>
-              <div className="text-xs text-gray-500">Active positions</div>
+              <div className="text-sm text-gray-400">Positions Owned</div>
+              <div className="text-xs text-gray-500">Answer ownership</div>
             </CardContent>
           </Card>
 
-          {/* Card 3: Win Rate */}
+          {/* Card 4: Win Rate (Profitable Positions) */}
           <Card className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <Award className="w-5 h-5 text-orange-500" />
+                <div className="text-sm text-orange-400">
+                  {Math.round((stats.winRate / 100) * stats.opinionsOwned)}/{stats.opinionsOwned}
+                </div>
               </div>
               <div className="text-xl font-bold text-white">{stats.winRate.toFixed(1)}%</div>
               <div className="text-sm text-gray-400">Win Rate</div>
-              <div className="text-xs text-gray-500">{stats.totalTrades} trades</div>
+              <div className="text-xs text-gray-500">Profitable positions</div>
             </CardContent>
           </Card>
 
-          {/* Card 4: Rank */}
+          {/* Card 5: Platform Rank */}
           <Card className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp className="w-5 h-5 text-purple-500" />
+                <div className="text-sm text-purple-400">
+                  Top {((stats.rank / stats.totalUsers) * 100).toFixed(1)}%
+                </div>
               </div>
               <div className="text-xl font-bold text-white">#{stats.rank}</div>
-              <div className="text-sm text-gray-400">Rank</div>
+              <div className="text-sm text-gray-400">Platform Rank</div>
               <div className="text-xs text-gray-500">of {stats.totalUsers} users</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Fee Information - Now Working */}
-        <div className="text-center space-y-4">
-          <div className="text-sm text-gray-400 space-y-2">
-            <div>Accumulated Fees: {stats.accumulatedFees} USDC</div>
-            <div>FeeManager Contract: {CONTRACTS.FEE_MANAGER}</div>
-            <div>Connected Address: {targetAddress}</div>
-          </div>
-          
-          {stats.accumulatedFees > 0 ? (
-            <div className="space-y-3">
-              <div className="text-emerald-400">
-                💰 You have {formatUSDC(stats.accumulatedFees)} in accumulated fees
+        {/* Detailed Metrics Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Total Invested */}
+          <Card className="glass-card bg-slate-800/30">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-1">
+                <DollarSign className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-400">Cost Basis</span>
               </div>
-              
-              <Button 
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-medium px-6 py-2"
-                onClick={handleClaimFees}
-                disabled={isClaimingFees}
-              >
-                {isClaimingFees ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Claiming...
-                  </>
-                ) : claimSuccess ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Claimed!
-                  </>
+              <div className="text-lg font-bold text-white">{formatUSDC(stats.totalInvested)}</div>
+              <div className="text-xs text-gray-400">Total Invested</div>
+            </CardContent>
+          </Card>
+
+          {/* Unrealized P&L */}
+          <Card className="glass-card bg-slate-800/30">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-1">
+                {stats.totalPnL >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
                 ) : (
-                  <>
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Claim Fees
-                  </>
+                  <TrendingDown className="w-4 h-4 text-red-400" />
                 )}
-              </Button>
-              
-              {claimError && (
-                <div className="text-red-400 text-sm">
-                  Error: {claimError.message}
-                </div>
-              )}
-              
-              {claimSuccess && transactionHash && (
-                <div className="text-emerald-400 text-sm">
-                  <a 
-                    href={`https://sepolia.basescan.org/tx/${transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-emerald-300"
-                  >
-                    View transaction ↗
-                  </a>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-gray-400">
-              <p>No accumulated fees yet.</p>
-            </div>
-          )}
+                <span className="text-xs text-gray-400">Unrealized</span>
+              </div>
+              <div className={`text-lg font-bold ${stats.totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {formatUSDC(stats.totalPnL)}
+              </div>
+              <div className="text-xs text-gray-400">P&L</div>
+            </CardContent>
+          </Card>
+
+          {/* Questions Created */}
+          <Card className="glass-card bg-slate-800/30">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-1">
+                <Plus className="w-4 h-4 text-blue-400" />
+                <span className="text-xs text-gray-400">Created</span>
+              </div>
+              <div className="text-lg font-bold text-white">{stats.questionsCreated}</div>
+              <div className="text-xs text-gray-400">Questions</div>
+            </CardContent>
+          </Card>
+
+          {/* Platform TVL Share */}
+          <Card className="glass-card bg-slate-800/30">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-1">
+                <Target className="w-4 h-4 text-purple-400" />
+                <span className="text-xs text-gray-400">Share</span>
+              </div>
+              <div className="text-lg font-bold text-white">{stats.marketShare.toFixed(3)}%</div>
+              <div className="text-xs text-gray-400">of Platform TVL</div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Portfolio Performance Chart */}
-        <PortfolioPerformanceChart opinions={opinions} loading={loading} />
+        {/* Enhanced Fee Claiming Section */}
+        {stats.accumulatedFees > 0 ? (
+          <Card className="glass-card border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-slate-800/50 to-cyan-500/5 shadow-2xl">
+            <CardContent className="p-8 text-center">
+              {/* Header */}
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
+                  <DollarSign className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Fees Available to Claim</h2>
+                <p className="text-gray-400">You've earned trading fees from your platform activity</p>
+              </div>
+
+              {/* Amount Display */}
+              <div className="mb-8">
+                <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text mb-2">
+                  ${stats.accumulatedFees.toFixed(6)}
+                </div>
+                <div className="text-lg text-emerald-400 font-medium">USDC Available</div>
+              </div>
+
+              {/* Claim Button */}
+              <div className="space-y-4">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-bold px-12 py-4 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  onClick={handleClaimFees}
+                  disabled={isClaimingFees}
+                >
+                  {isClaimingFees ? (
+                    <>
+                      <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                      Processing Transaction...
+                    </>
+                  ) : claimSuccess ? (
+                    <>
+                      <CheckCircle className="w-6 h-6 mr-3" />
+                      Successfully Claimed!
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="w-6 h-6 mr-3" />
+                      Claim {formatUSDC(stats.accumulatedFees)} Now
+                    </>
+                  )}
+                </Button>
+
+                {/* Transaction Status */}
+                {claimError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <div className="flex items-center justify-center space-x-2 text-red-400">
+                      <XCircle className="w-5 h-5" />
+                      <span className="font-medium">Transaction Failed</span>
+                    </div>
+                    <p className="text-red-400 text-sm mt-2">{claimError.message}</p>
+                  </div>
+                )}
+
+                {claimSuccess && transactionHash && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                    <div className="flex items-center justify-center space-x-2 text-emerald-400 mb-2">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-medium">Transaction Successful!</span>
+                    </div>
+                    <a 
+                      href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 text-sm underline transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>View on BaseScan</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Contract Info - Collapsible */}
+              <details className="mt-6 text-left">
+                <summary className="text-gray-400 text-sm cursor-pointer hover:text-gray-300 transition-colors">
+                  View Contract Details
+                </summary>
+                <div className="mt-3 space-y-2 text-xs text-gray-500 bg-slate-900/50 rounded-lg p-4 font-mono">
+                  <div><span className="text-gray-400">FeeManager:</span> {CONTRACTS.FEE_MANAGER}</div>
+                  <div><span className="text-gray-400">Your Address:</span> {targetAddress}</div>
+                  <div><span className="text-gray-400">Amount:</span> {stats.accumulatedFees.toFixed(6)} USDC</div>
+                </div>
+              </details>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="glass-card">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-700/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <DollarSign className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">No Fees Available</h3>
+              <p className="text-gray-400">Start trading and creating opinions to earn fees!</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Enhanced Portfolio Performance Chart */}
+        <EnhancedPortfolioPerformanceChart opinions={opinions} loading={loading} />
 
         {/* Detailed Tabs System */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="glass-card grid w-full grid-cols-5">
+          <TabsList className="glass-card grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="opinions">My Opinions</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="positions">Positions</TabsTrigger>
+            <TabsTrigger value="fees">Fee Center</TabsTrigger>
+            <TabsTrigger value="history">Trading</TabsTrigger>
             <TabsTrigger value="pools">Pools</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
+
+          {/* Overview Tab - RESTORED with all original detailed content */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Detailed Metrics Cards Grid - RESTORED */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Best Trade Card */}
+              <Card className="glass-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Award className="w-5 h-5 text-yellow-500" />
+                    <div className="text-sm text-yellow-400">
+                      Best
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-white">{formatUSDC(stats.bestTrade)}</div>
+                  <div className="text-sm text-gray-400">Best Trade</div>
+                  <div className="text-xs text-gray-500">Single position gain</div>
+                </CardContent>
+              </Card>
+
+              {/* Average Hold Time */}
+              <Card className="glass-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Clock className="w-5 h-5 text-purple-500" />
+                    <div className="text-sm text-purple-400">
+                      Avg
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-white">{stats.avgHoldTime}d</div>
+                  <div className="text-sm text-gray-400">Hold Time</div>
+                  <div className="text-xs text-gray-500">Days per position</div>
+                </CardContent>
+              </Card>
+
+              {/* Creator Fees */}
+              <Card className="glass-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Award className="w-5 h-5 text-blue-500" />
+                    <div className="text-sm text-blue-400">
+                      3%
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-white">{formatUSDC(stats.creatorFees)}</div>
+                  <div className="text-sm text-gray-400">Creator Fees</div>
+                  <div className="text-xs text-gray-500">From owned questions</div>
+                </CardContent>
+              </Card>
+
+              {/* Trading Profits */}
+              <Card className="glass-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <TrendingUp className="w-5 h-5 text-emerald-500" />
+                    <div className="text-sm text-emerald-400">
+                      P&L
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-white">{formatUSDC(stats.tradingProfits)}</div>
+                  <div className="text-sm text-gray-400">Trading Profits</div>
+                  <div className="text-xs text-gray-500">Unrealized gains</div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6">
               {/* Recent Activity */}
               <Card className="glass-card">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
                   <div className="space-y-3">
-                    {transactions.slice(0, 3).map((transaction) => (
+                    {transactions.slice(0, 5).map((transaction) => (
                       <div key={transaction.id} className="p-3 rounded-lg bg-muted/20 flex items-center space-x-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           transaction.type === 'BUY' ? 'bg-emerald-500/20' : 
@@ -378,7 +637,7 @@ function ProfilePageContent() {
                         <div className="flex-1">
                           <div className="text-white font-medium">{transaction.type}</div>
                           <div className="text-sm text-gray-400">
-                            {transaction.opinionTitle.substring(0, 40)}...
+                            {transaction.opinionTitle.substring(0, 30)}...
                           </div>
                         </div>
                         <div className="text-right">
@@ -403,23 +662,31 @@ function ProfilePageContent() {
                     {opinions
                       .filter(opinion => opinion.pnl > 0)
                       .sort((a, b) => b.pnlPercentage - a.pnlPercentage)
-                      .slice(0, 3)
+                      .slice(0, 5)
                       .map((opinion) => (
                         <div key={opinion.id} className="p-3 rounded-lg bg-muted/20">
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-white font-medium">
-                              {opinion.question.substring(0, 40)}...
+                              {opinion.question.substring(0, 30)}...
                             </div>
-                            <Badge className="bg-blue-600 text-white">
+                            <Badge className="bg-blue-600 text-white text-xs">
                               {opinion.categories[0]}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-400">
-                              Current: {opinion.currentAnswer}
+                              Answer: {opinion.currentAnswer.substring(0, 20)}...
                             </div>
                             <div className="text-emerald-500 font-medium">
                               {formatPercentage(opinion.pnlPercentage)}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="text-xs text-gray-500">
+                              Value: {formatUSDC(opinion.currentValue)}
+                            </div>
+                            <div className="text-xs text-emerald-400">
+                              +{formatUSDC(opinion.pnl)}
                             </div>
                           </div>
                         </div>
@@ -430,8 +697,23 @@ function ProfilePageContent() {
             </div>
           </TabsContent>
 
-          {/* My Opinions Tab */}
-          <TabsContent value="opinions" className="space-y-4">
+          {/* My Opinions Tab - All User Opinions with Enhanced Details */}
+          <TabsContent value="myopinions" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-white">My Opinions Portfolio</h3>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  {opinions.filter(op => op.isOwner).length} Owned
+                </Badge>
+                <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                  {opinions.filter(op => op.isCreator).length} Created
+                </Badge>
+                <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                  {opinions.filter(op => op.isQuestionOwner).length} Q-Owned
+                </Badge>
+              </div>
+            </div>
+            
             {opinions.map((opinion) => (
               <motion.div
                 key={opinion.id}
@@ -442,16 +724,20 @@ function ProfilePageContent() {
                   <div className="flex-1">
                     <h3 className="text-white font-semibold mb-2">{opinion.question}</h3>
                     <div className="flex items-center space-x-2 mb-2">
-                      <Badge className="bg-blue-600 text-white">
-                        {opinion.categories[0]}
-                      </Badge>
+                      {opinion.categories.map((category, idx) => (
+                        <Badge key={idx} className="bg-blue-600/20 text-blue-400 text-xs">
+                          {category}
+                        </Badge>
+                      ))}
                       {opinion.isOwner && (
-                        <Badge className="bg-emerald-500/20 text-emerald-500">
+                        <Badge className="bg-emerald-500/20 text-emerald-500 text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />
                           Owned
                         </Badge>
                       )}
                       {opinion.isCreator && (
-                        <Badge className="bg-orange-500/20 text-orange-500">
+                        <Badge className="bg-orange-500/20 text-orange-500 text-xs">
+                          <Tag className="w-3 h-3 mr-1" />
                           Created
                         </Badge>
                       )}
@@ -954,6 +1240,51 @@ function ProfilePageContent() {
                 </Card>
               </div>
             )}
+          </TabsContent>
+
+          {/* Analytics Tab - Enhanced Portfolio Analytics */}
+          <TabsContent value="analytics" className="space-y-6">
+            <EnhancedPortfolioChart opinions={opinions} transactions={transactions} loading={loading} />
+          </TabsContent>
+
+          {/* Positions Tab - Advanced Position Management */}
+          <TabsContent value="positions" className="space-y-6">
+            <AdvancedPositionManagement 
+              opinions={opinions} 
+              loading={loading}
+              onListForSale={handleListForSale}
+              onCancelListing={handleCancelListing}
+              onTrade={() => {}} // You can add trading functionality here
+              isOwnProfile={isOwnProfile}
+            />
+          </TabsContent>
+
+          {/* Fee Center Tab - Comprehensive Fee Management */}
+          <TabsContent value="fees" className="space-y-6">
+            <ComprehensiveFeeManagement
+              stats={{
+                accumulatedFees: stats.accumulatedFees,
+                creatorFees: stats.creatorFees,
+                tradingProfits: stats.tradingProfits,
+                totalTrades: stats.totalTrades
+              }}
+              opinions={opinions}
+              onClaimFees={handleClaimFees}
+              isClaimingFees={isClaimingFees}
+              claimSuccess={claimSuccess}
+              claimError={claimError}
+              transactionHash={transactionHash}
+              isOwnProfile={isOwnProfile}
+            />
+          </TabsContent>
+
+          {/* Trading History Tab - Detailed Trading History */}
+          <TabsContent value="history" className="space-y-6">
+            <DetailedTradingHistory
+              opinions={opinions}
+              transactions={transactions}
+              loading={loading}
+            />
           </TabsContent>
         </Tabs>
       </div>

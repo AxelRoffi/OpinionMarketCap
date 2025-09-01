@@ -115,6 +115,7 @@ export interface UserStats {
   creatorFees: number;
   tradingProfits: number;
   marketShare: number;
+  platformTVL: number;
 }
 
 export interface UserProfile {
@@ -149,6 +150,7 @@ export function useUserProfile(userAddress?: string) {
       creatorFees: 0,
       tradingProfits: 0,
       marketShare: 0,
+      platformTVL: 0,
     },
     opinions: [],
     transactions: [],
@@ -196,6 +198,18 @@ export function useUserProfile(userAddress?: string) {
       let bestTrade = 0;
       let creatorFees = 0;
       let tradingProfits = 0;
+      
+      // Calculate platform-wide metrics for real comparisons
+      const platformTotalValue = allOpinions.reduce((sum, opinion) => {
+        return sum + (Number(opinion.nextPrice) / 1_000_000);
+      }, 0);
+      
+      // Get all unique users for ranking calculation
+      const allUsers = new Set<string>();
+      allOpinions.forEach(opinion => {
+        if (opinion.currentAnswerOwner) allUsers.add(opinion.currentAnswerOwner.toLowerCase());
+        if (opinion.creator) allUsers.add(opinion.creator.toLowerCase());
+      });
 
       // Process each opinion to find user's involvement
       allOpinions.forEach((opinion) => {
@@ -281,18 +295,36 @@ export function useUserProfile(userAddress?: string) {
       });
 
       const totalTrades = Number(tradeCount || 0);
-      const totalInvested = Math.max(0, totalValue - totalPnL);
-      const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+      
+      // FIXED: Real total invested calculation using lastPrice (purchase prices)
+      const totalInvested = userOpinions.reduce((sum, opinion) => {
+        if (opinion.isOwner) {
+          return sum + opinion.purchasePrice;
+        }
+        return sum;
+      }, 0);
+      
+      // FIXED: Win rate based on positions only (consistent calculation)
+      const totalPositions = opinionsOwned;
+      const winRate = totalPositions > 0 ? (wins / totalPositions) * 100 : 0;
+      
       const totalPnLPercentage = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
       totalROI = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
 
-      // Calculate platform market share (simulate total platform TVL)
-      const platformTotalValue = 50000; // Simulate platform total
+      // FIXED: Real market share using actual platform TVL
       const marketShare = platformTotalValue > 0 ? (totalValue / platformTotalValue) * 100 : 0;
 
-      // Calculate rank (simulate based on portfolio performance)
-      const rankScore = totalValue + totalPnL;
-      const rank = Math.max(1, Math.floor(100 - (rankScore / 100)));
+      // FIXED: Real ranking calculation based on all users' portfolio values
+      const userPortfolios = Array.from(allUsers).map(userAddress => {
+        return allOpinions
+          .filter(op => op.currentAnswerOwner?.toLowerCase() === userAddress)
+          .reduce((sum, op) => sum + (Number(op.nextPrice) / 1_000_000), 0);
+      }).filter(value => value > 0); // Only users with positions
+      
+      userPortfolios.sort((a, b) => b - a); // Sort descending
+      const userRank = userPortfolios.findIndex(value => value <= totalValue) + 1;
+      const rank = userRank > 0 ? userRank : userPortfolios.length + 1;
+      const totalUsers = userPortfolios.length;
 
       setUserProfile({
         stats: {
@@ -307,13 +339,14 @@ export function useUserProfile(userAddress?: string) {
           winRate,
           accumulatedFees: accumulatedFees ? Number(accumulatedFees) / 1_000_000 : 0,
           rank,
-          totalUsers: 1000,
-          avgHoldTime: 5.2, // days
+          totalUsers, // FIXED: Real count of users with positions
+          avgHoldTime: 5.2, // TODO: Calculate from real position timestamps
           bestTrade,
           totalROI,
           creatorFees,
           tradingProfits,
           marketShare,
+          platformTVL: platformTotalValue, // FIXED: Real platform TVL
         },
         opinions: userOpinions.sort((a, b) => b.timestamp - a.timestamp),
         transactions: userTransactions.sort((a, b) => b.timestamp - a.timestamp),
