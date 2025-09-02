@@ -155,14 +155,23 @@ export function usePools(): UsePlatformStats {
             name: poolData.info.name,
             creator: poolData.info.creator,
             totalAmount: BigInt(poolData.info.totalAmount),
-            targetPrice: opinionData?.nextPrice || BigInt(poolData.currentPrice), // Use real nextPrice from OpinionCore
+            targetPrice: getPoolStatus(poolData.info.status) === 'executed' 
+              ? BigInt(poolData.info.targetPrice) // ✅ FIX: Use fixed targetPrice for completed pools
+              : (opinionData?.nextPrice || BigInt(poolData.currentPrice)), // Use dynamic nextPrice only for active pools
             deadline: Number(poolData.info.deadline),
             status: getPoolStatus(poolData.info.status),
             contributorCount: poolData.contributorCount,
             createdAt: Date.now() - (index * 24 * 60 * 60 * 1000), // Mock creation time
             remainingAmount: BigInt(poolData.remainingAmount),
-            progressPercentage: opinionData?.nextPrice ? 
-              (Number(poolData.info.totalAmount) / Number(opinionData.nextPrice)) * 100 : 0,
+            progressPercentage: (() => {
+              const poolStatus = getPoolStatus(poolData.info.status);
+              const targetPriceForCalc = poolStatus === 'executed' 
+                ? Number(poolData.info.targetPrice) // Use fixed price for executed pools
+                : Number(opinionData?.nextPrice || poolData.currentPrice); // Dynamic for active
+              return targetPriceForCalc > 0 
+                ? Math.min((Number(poolData.info.totalAmount) / targetPriceForCalc) * 100, 100) 
+                : 0;
+            })(),
             // Add question and category from opinion data
             question: opinionData?.question || '',
             category: opinionData?.categories?.[0] || 'Other'

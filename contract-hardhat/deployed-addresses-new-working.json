@@ -32,5 +32,11 @@
     "frontendShouldUse": "0xB2D35055550e2D49E5b2C21298528579A8bF7D2f",
     "contractType": "OpinionCore with PriceCalculator"
   },
-  "poolManagerDeployedAt": "2025-07-21T16:23:25.060Z"
+  "poolManagerDeployedAt": "2025-07-21T16:23:25.060Z",
+  "poolCompletionFixDeployed": {
+    "timestamp": "2025-08-28T17:31:00.484Z",
+    "newImplementationAddress": "0x4315677A18e6DBF74d8aE5266051114C3d2454f1",
+    "proxyAddress": "0x3B4584e690109484059D95d7904dD9fEbA246612",
+    "description": "Fixed 99.9% pool completion bug with 0.01% tolerance and micro-completion support"
+  }
 }

@@ -127,8 +127,22 @@ export const usePoolCompletion = (poolId: number) => {
     }
 
     console.log('Pool details received:', poolDetails);
-    const { info, remainingAmount, timeRemaining } = poolDetails;
+    
+    // FIX: poolDetails is an array [info, currentPrice, remainingAmount, timeRemaining]
+    const info = poolDetails[0];           // First element is the PoolInfo struct
+    const currentPrice = poolDetails[1];   // Second element is currentPrice
+    const remainingAmount = poolDetails[2]; // Third element is remainingAmount  
+    const timeRemaining = poolDetails[3];   // Fourth element is timeRemaining
+    
     const userBalanceAmount = userBalance || 0n;
+    
+    console.log('✅ FIXED: Properly accessing pool data:', {
+      info: info,
+      currentPrice: currentPrice?.toString(),
+      remainingAmount: remainingAmount?.toString(),
+      timeRemaining: timeRemaining?.toString(),
+      poolId
+    });
     
     // Safety check: ensure info exists
     if (!info) {
@@ -141,22 +155,48 @@ export const usePoolCompletion = (poolId: number) => {
       return;
     }
     
+    // FIX: Access struct fields properly (info is array-like)
+    const poolStatus = Number(info[6]);     // status is at index 6
+    const totalAmount = info[3];            // totalAmount at index 3
+    const targetPrice = info[9];            // targetPrice at index 9
+    const deadline = Number(info[4]);       // deadline at index 4
+    
+    console.log('✅ FIXED: Pool struct field access:', {
+      poolStatus,
+      totalAmount: totalAmount?.toString(),
+      targetPrice: targetPrice?.toString(), 
+      deadline,
+      currentTimestamp: Math.floor(Date.now() / 1000)
+    });
+    
     // Pool is expired if deadline passed or status is expired
-    const isExpired = info.status === 2 || timeRemaining === 0n;
+    const isExpired = poolStatus === 2 || timeRemaining === 0n;
     
     // Pool is completable if active, not expired, and has remaining amount
-    const isCompletable = info.status === 0 && !isExpired && remainingAmount > 0n;
+    const isCompletable = poolStatus === 0 && !isExpired && remainingAmount > 0n;
     
     // User can complete if they have enough USDC (including 1 USDC contribution fee)
     const contributionFee = 1_000_000n; // 1 USDC in 6 decimals
     const totalRequired = remainingAmount + contributionFee;
     const canUserComplete = isCompletable && userBalanceAmount >= totalRequired;
+    
+    console.log('🔍 Pool completion analysis:', {
+      poolId,
+      poolStatus: `${poolStatus} (0=Active, 1=Executed, 2=Expired)`,
+      isExpired,
+      isCompletable,
+      remainingAmount: remainingAmount?.toString(),
+      userBalance: userBalanceAmount?.toString(),
+      totalRequired: totalRequired?.toString(),
+      canUserComplete,
+      hasEnoughBalance: userBalanceAmount >= totalRequired
+    });
 
     setCompletionState({
       isCompletable,
       remainingAmount,
-      targetAmount: info.targetPrice,
-      currentAmount: info.totalAmount,
+      targetAmount: targetPrice,
+      currentAmount: totalAmount,
       userUSDCBalance: userBalanceAmount,
       canUserComplete,
       completionCost: formatUSDC(remainingAmount),

@@ -94,6 +94,26 @@ export const OPINION_CORE_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
+    name: 'getAnswerHistory',
+    outputs: [
+      {
+        components: [
+          { internalType: 'string', name: 'answer', type: 'string' },
+          { internalType: 'string', name: 'description', type: 'string' },
+          { internalType: 'address', name: 'owner', type: 'address' },
+          { internalType: 'uint96', name: 'price', type: 'uint96' },
+          { internalType: 'uint32', name: 'timestamp', type: 'uint32' },
+        ],
+        internalType: 'struct AnswerStructs.AnswerHistory[]',
+        name: '',
+        type: 'tuple[]',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 // USDC Contract ABI (for approvals)

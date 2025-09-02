@@ -298,7 +298,27 @@ contract PoolManager is
         
         uint96 remainingAmount = targetPrice - pool.totalAmount;
         
-        // Ensure there's actually an amount to contribute
+        // ✅ FIX: If remaining amount is tiny (< 0.01 USDC), allow free completion
+        // This handles precision issues from bonding curve calculations
+        if (remainingAmount > 0 && remainingAmount < 10000) { // < 0.01 USDC
+            // Micro-amount completion - no additional payment needed
+            pool.totalAmount = targetPrice; // Set to exact target
+            
+            emit PoolContribution(
+                poolId,
+                pool.opinionId,
+                msg.sender,
+                remainingAmount, // Show the micro-amount as contributed
+                pool.totalAmount,
+                block.timestamp
+            );
+            
+            // Pool should be ready to execute now
+            _checkAndExecutePoolIfReady(poolId);
+            return;
+        }
+        
+        // Ensure there's actually a meaningful amount to contribute
         if (remainingAmount == 0) revert PoolAlreadyFunded(poolId);
 
         // Calculate total with fee
@@ -710,6 +730,7 @@ contract PoolManager is
 
     /**
      * @dev Checks if pool has reached target price and executes if so
+     * ✅ FIX: Added completion tolerance to handle precision issues
      */
     function _checkAndExecutePoolIfReady(uint256 poolId) internal {
         PoolStructs.PoolInfo storage pool = pools[poolId];
@@ -720,10 +741,18 @@ contract PoolManager is
         }
 
         uint256 opinionId = pool.opinionId;
-        uint96 targetPrice = pool.targetPrice; // ✅ FIX: Use stored fixed target price
-
-        // Execute if enough funds
-        if (pool.totalAmount >= targetPrice) {
+        uint96 targetPrice = pool.targetPrice;
+        uint96 currentAmount = pool.totalAmount;
+        
+        // ✅ FIX: Allow completion if within 0.01% of target (1 basis point)
+        // This handles precision issues from bonding curve price calculations
+        uint96 tolerance = targetPrice / 10000; // 0.01% tolerance
+        if (tolerance < 1) tolerance = 1; // Minimum 1 wei tolerance
+        
+        // Execute if we're within tolerance of target (fixes 99.9% completion issue)
+        if (currentAmount >= targetPrice - tolerance) {
+            // Set to exact target for clean execution
+            pool.totalAmount = targetPrice;
             _executePool(poolId, opinionId, targetPrice);
         }
     }

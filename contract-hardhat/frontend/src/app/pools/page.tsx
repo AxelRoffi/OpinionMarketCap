@@ -158,7 +158,7 @@ export default function PoolsPage() {
     console.log(`Pool ${pool.id}: targetPrice=${targetPrice}, currentPrice=${pool.currentPrice}, actualTargetPrice=${actualTargetPrice}`);
     
     // Real progress calculation
-    const progress = actualTargetPrice > 0 ? (currentAmount / actualTargetPrice) * 100 : 0;
+    const progress = actualTargetPrice > 0 ? Math.min((currentAmount / actualTargetPrice) * 100, 100) : 0;
     
     return {
       ...pool,
@@ -375,9 +375,14 @@ export default function PoolsPage() {
                             Opinion #{pool.opinionId}
                           </p>
                           
-                          {/* 3. Pool Name - prominent */}
-                          <h4 className="font-medium text-white text-lg mt-2">
-                            {pool.name}
+                          {/* 3. Pool Name - prominent and clickable */}
+                          <h4 className="font-medium text-lg mt-2">
+                            <button
+                              onClick={() => router.push(`/pools/${pool.id}`)}
+                              className="text-white hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                            >
+                              {pool.name}
+                            </button>
                           </h4>
                           
                           {/* 4. Answer avec quotes */}

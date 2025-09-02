@@ -53,14 +53,40 @@ export default function ConnectButton({
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
-      const connector = connectors[0]; // Use first available connector
-      if (connector) {
-        connect({ connector });
-        toast.success('Wallet connected successfully!');
+      
+      // Try to find MetaMask first (most common)
+      const metaMask = connectors.find(c => c.name.toLowerCase().includes('metamask') || c.name.toLowerCase().includes('injected'));
+      const walletConnect = connectors.find(c => c.name.toLowerCase().includes('walletconnect'));
+      const coinbase = connectors.find(c => c.name.toLowerCase().includes('coinbase'));
+      
+      // Prioritize MetaMask if available, then WalletConnect, then any other
+      const preferredConnector = metaMask || walletConnect || coinbase || connectors[0];
+      
+      if (preferredConnector) {
+        console.log('🔗 Connecting with:', preferredConnector.name);
+        await connect({ connector: preferredConnector });
+        toast.success(`Connected with ${preferredConnector.name}!`, {
+          description: 'Your wallet will stay connected across page navigation',
+          duration: 4000,
+        });
+      } else {
+        toast.error('No wallet connectors available');
       }
     } catch (error) {
       console.error('Connection failed:', error);
-      toast.error('Failed to connect wallet');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('rejected')) {
+        toast.error('Connection rejected', {
+          description: 'You declined the connection request',
+        });
+      } else if (errorMessage.includes('already connected')) {
+        toast.info('Wallet already connected');
+      } else {
+        toast.error('Failed to connect wallet', {
+          description: errorMessage,
+        });
+      }
     } finally {
       setIsConnecting(false);
     }
