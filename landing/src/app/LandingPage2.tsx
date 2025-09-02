@@ -186,32 +186,34 @@ export default function LandingPage2() {
         {mounted && [...Array(20)].map((_, i) => {
           const colors = ['bg-blue-400/40', 'bg-purple-400/40', 'bg-emerald-400/40', 'bg-yellow-400/40', 'bg-red-400/40']
           const randomColor = colors[Math.floor(Math.random() * colors.length)]
+          const duration = Math.max(10, Math.random() * 20 + 10) // Ensure positive duration
           
           return (
             <motion.div
-              key={i}
+              key={`particle-${i}`}
               className={`absolute w-3 h-3 ${randomColor} rounded-full`}
               initial={{
-                x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-                y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-                opacity: 0
+                x: Math.random() * 100 + '%',
+                y: Math.random() * 100 + '%',
+                opacity: 0.3
               }}
               animate={{
                 x: [
-                  Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-                  Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-                  Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920)
+                  Math.random() * 100 + '%',
+                  Math.random() * 100 + '%',
+                  Math.random() * 100 + '%'
                 ],
                 y: [
-                  Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-                  Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-                  Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080)
+                  Math.random() * 100 + '%',
+                  Math.random() * 100 + '%',
+                  Math.random() * 100 + '%'
                 ],
                 opacity: [0.3, 0.8, 0.3],
               }}
               transition={{
-                duration: Math.random() * 20 + 15,
+                duration: duration,
                 repeat: Infinity,
+                repeatType: "loop",
                 ease: "linear"
               }}
             />
@@ -228,7 +230,7 @@ export default function LandingPage2() {
       {/* Floating Elements */}
       {mounted && floatingElements.map((element) => (
         <motion.div
-          key={element.id}
+          key={`float-${element.id}`}
           className="absolute text-blue-400/20 pointer-events-none z-10"
           style={{
             left: `${element.x}%`,
@@ -240,8 +242,9 @@ export default function LandingPage2() {
             scale: [element.scale, element.scale * 1.2, element.scale],
           }}
           transition={{
-            duration: 8 + Math.random() * 4,
+            duration: Math.max(8, 8 + Math.random() * 4),
             repeat: Infinity,
+            repeatType: "loop",
             ease: "easeInOut",
           }}
         >
@@ -333,7 +336,12 @@ export default function LandingPage2() {
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              transition={{ 
+                duration: 20, 
+                repeat: Infinity, 
+                repeatType: "loop",
+                ease: "linear" 
+              }}
               className="text-6xl text-blue-400"
             >
               <Infinity />
@@ -355,7 +363,11 @@ export default function LandingPage2() {
               <motion.div
                 className="ml-2"
                 animate={{ x: [0, 5, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity,
+                  repeatType: "loop" 
+                }}
               >
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </motion.div>
@@ -380,14 +392,22 @@ export default function LandingPage2() {
         >
           <motion.div
             animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              repeatType: "loop" 
+            }}
             className="text-white/60"
           >
             <div className="w-6 h-10 border-2 border-white/60 rounded-full flex justify-center">
               <motion.div
                 className="w-1 h-3 bg-white/60 rounded-full mt-2"
                 animate={{ y: [0, 12, 0], opacity: [1, 0, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  repeatType: "loop" 
+                }}
               />
             </div>
           </motion.div>

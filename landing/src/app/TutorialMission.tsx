@@ -157,18 +157,19 @@ export default function TutorialMission() {
       <LandingNavigation />
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(50)].map((_, i) => (
+        {mounted && [...Array(50)].map((_, i) => (
           <motion.div
-            key={i}
+            key={`bg-particle-${i}`}
             className="absolute w-1 h-1 bg-blue-400/30 rounded-full"
             animate={{
-              x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
-              y: [Math.random() * window.innerHeight, Math.random() * window.innerHeight],
+              x: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
+              y: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
               opacity: [0.2, 0.8, 0.2],
             }}
             transition={{
-              duration: Math.random() * 20 + 10,
+              duration: Math.max(10, Math.random() * 20 + 10),
               repeat: Infinity,
+              repeatType: "loop",
               ease: "linear"
             }}
             style={{
@@ -386,7 +387,12 @@ export default function TutorialMission() {
           <motion.div
             className="inline-flex items-center text-purple-400 text-lg mb-4"
             animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            transition={{ 
+              duration: 20, 
+              repeat: Infinity, 
+              repeatType: "loop",
+              ease: "linear" 
+            }}
           >
             <Infinity className="w-8 h-8" />
           </motion.div>
