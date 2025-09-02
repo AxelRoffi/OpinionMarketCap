@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { ArrowLeft, Lightbulb, DollarSign, CheckCircle, Wallet } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -66,23 +65,6 @@ export default function CreateOpinionPage() {
               Back to Dashboard
             </Button>
           </div>
-          
-          <div className="hidden md:flex">
-            <StepIndicator 
-              steps={steps} 
-              currentStep={currentStep} 
-              onStepClick={handleStepClick}
-            />
-          </div>
-        </div>
-
-        {/* Mobile Step Indicator */}
-        <div className="md:hidden mb-8 flex justify-center">
-          <StepIndicator 
-            steps={steps} 
-            currentStep={currentStep} 
-            onStepClick={handleStepClick}
-          />
         </div>
 
         {/* Wallet Connection Alert */}
@@ -97,6 +79,16 @@ export default function CreateOpinionPage() {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Step Indicator - aligned with main content */}
+          <div className="lg:col-span-4 mb-6">
+            <div className="flex justify-start">
+              <StepIndicator 
+                steps={steps} 
+                currentStep={currentStep} 
+                onStepClick={handleStepClick}
+              />
+            </div>
+          </div>
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <CreateSidebar 
