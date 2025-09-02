@@ -104,7 +104,7 @@ export default function LandingPage2Simple() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
         >
-          {/* OMC Logo */}
+          {/* OpinionMarketCap Logo */}
           <motion.div
             className="mb-8"
             initial={{ scale: 0 }}
@@ -115,19 +115,34 @@ export default function LandingPage2Simple() {
               delay: 0.3 
             }}
           >
-            <h1 
-              className="text-7xl md:text-8xl font-black mb-4 animated-gradient-text"
-            >
-              OMC
-            </h1>
+            <div className="text-4xl md:text-6xl font-black mb-4">
+              {["Opinion", "Market", "Cap"].map((word, index) => (
+                <motion.span
+                  key={word}
+                  className="inline-block animated-gradient-text mr-3"
+                  initial={{ opacity: 0, y: 50, rotateX: -90 }}
+                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 0.5 + index * 0.2,
+                    ease: "easeOut"
+                  }}
+                  style={{
+                    transformOrigin: "center bottom"
+                  }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </div>
             
             <motion.div
               className="text-2xl md:text-3xl font-semibold text-white/80 mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.8 }}
+              transition={{ delay: 1.1, duration: 0.8 }}
             >
-              The Infinite Marketplace
+              <span className="typewriter">The Infinite Marketplace</span>
             </motion.div>
           </motion.div>
 
@@ -136,13 +151,25 @@ export default function LandingPage2Simple() {
             className="text-4xl md:text-6xl font-bold mb-12 leading-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 1 }}
+            transition={{ delay: 1.2, duration: 1 }}
           >
-            <span className="text-white">Own the narrative,</span>
+            <motion.span 
+              className="text-white text-glow"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.4, duration: 0.8 }}
+            >
+              Own The Narrative,
+            </motion.span>
             <br />
-            <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              earn the profits.
-            </span>
+            <motion.span 
+              className="text-shimmer bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.6, duration: 0.8 }}
+            >
+              Earn The Profits.
+            </motion.span>
           </motion.h2>
 
           {/* CSS Animated Infinity Symbol */}
@@ -168,7 +195,7 @@ export default function LandingPage2Simple() {
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 group"
             >
-              Enter the Market
+              <span className="group-hover:text-shimmer">Enter The Market</span>
               <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
 
