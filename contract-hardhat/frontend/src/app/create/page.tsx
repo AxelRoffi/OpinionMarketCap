@@ -74,12 +74,6 @@ export default function CreateOpinionPage() {
               onStepClick={handleStepClick}
             />
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">
-              <ConnectButton />
-            </div>
-          </div>
         </div>
 
         {/* Mobile Step Indicator */}
