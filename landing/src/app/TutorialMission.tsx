@@ -155,26 +155,17 @@ export default function TutorialMission() {
     >
       {/* Navigation */}
       <LandingNavigation />
-      {/* Animated Background */}
+      {/* Simple CSS Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        {mounted && [...Array(50)].map((_, i) => (
-          <motion.div
+        {mounted && [...Array(30)].map((_, i) => (
+          <div
             key={`bg-particle-${i}`}
-            className="absolute w-1 h-1 bg-blue-400/30 rounded-full"
-            animate={{
-              x: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
-              y: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
-              opacity: [0.2, 0.8, 0.2],
-            }}
-            transition={{
-              duration: Math.max(10, Math.random() * 20 + 10),
-              repeat: Infinity,
-              repeatType: "loop",
-              ease: "linear"
-            }}
+            className="absolute w-1 h-1 bg-blue-400/30 rounded-full animate-pulse"
             style={{
               left: Math.random() * 100 + '%',
               top: Math.random() * 100 + '%',
+              animationDelay: Math.random() * 5 + 's',
+              animationDuration: (2 + Math.random() * 4) + 's'
             }}
           />
         ))}
@@ -384,18 +375,11 @@ export default function TutorialMission() {
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 1 }}
         >
-          <motion.div
-            className="inline-flex items-center text-purple-400 text-lg mb-4"
-            animate={{ rotate: 360 }}
-            transition={{ 
-              duration: 20, 
-              repeat: Infinity, 
-              repeatType: "loop",
-              ease: "linear" 
-            }}
-          >
-            <Infinity className="w-8 h-8" />
-          </motion.div>
+          <div className="inline-flex items-center text-purple-400 text-lg mb-4">
+            <div className="animate-infinite-rotate">
+              <Infinity className="w-8 h-8" />
+            </div>
+          </div>
           
           <h3 className="text-3xl font-bold text-white mb-4">Ready to Begin?</h3>
           <p className="text-gray-300 mb-8 max-w-2xl mx-auto">

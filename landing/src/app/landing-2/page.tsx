@@ -1,5 +1,5 @@
 import React from 'react';
-import LandingPage2 from '../LandingPage2';
+import LandingPage2Simple from '../LandingPage2Simple';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export default function Landing2() {
     <>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      <LandingPage2 />
+      <LandingPage2Simple />
     </>
   );
 }
