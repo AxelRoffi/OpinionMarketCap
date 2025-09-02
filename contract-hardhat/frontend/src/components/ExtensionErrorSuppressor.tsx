@@ -20,7 +20,9 @@ export function ExtensionErrorSuppressor() {
         message.includes('WebSocket connection closed abnormally') ||
         message.includes('Fatal socket error') ||
         message.includes('Connection interrupted while trying to subscribe') ||
-        message.includes('opfgelmcmbiajamepnmloijbpoleiama')
+        message.includes('opfgelmcmbiajamepnmloijbpoleiama') ||
+        message.includes('Error in invocation of runtime.sendMessage') ||
+        message.includes('must specify an Extension ID (string) for its first argument')
       ) {
         return; // Suppress these errors
       }
@@ -48,14 +50,17 @@ export function ExtensionErrorSuppressor() {
     // Global error handler for runtime errors
     const handleGlobalError = (event: ErrorEvent) => {
       const error = event.error || event.message;
+      const errorString = typeof error === 'string' ? error : String(error);
+      
       if (
-        (error && typeof error === 'string' && (
-          error.includes('chrome.runtime.sendMessage') ||
-          error.includes('Extension ID') ||
-          error.includes('chrome-extension://') ||
-          error.includes('Connection interrupted while trying to subscribe')
-        )) ||
-        event.filename?.includes('chrome-extension://')
+        errorString.includes('chrome.runtime.sendMessage') ||
+        errorString.includes('Extension ID') ||
+        errorString.includes('chrome-extension://') ||
+        errorString.includes('Connection interrupted while trying to subscribe') ||
+        errorString.includes('Error in invocation of runtime.sendMessage') ||
+        errorString.includes('must specify an Extension ID (string) for its first argument') ||
+        event.filename?.includes('chrome-extension://') ||
+        event.filename?.includes('inpage.js')
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -66,13 +71,15 @@ export function ExtensionErrorSuppressor() {
     // Global promise rejection handler
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason;
+      const reasonString = typeof reason === 'string' ? reason : String(reason);
+      
       if (
-        reason && typeof reason === 'string' && (
-          reason.includes('chrome.runtime.sendMessage') ||
-          reason.includes('Extension ID') ||
-          reason.includes('chrome-extension://') ||
-          reason.includes('Connection interrupted while trying to subscribe')
-        )
+        reasonString.includes('chrome.runtime.sendMessage') ||
+        reasonString.includes('Extension ID') ||
+        reasonString.includes('chrome-extension://') ||
+        reasonString.includes('Connection interrupted while trying to subscribe') ||
+        reasonString.includes('Error in invocation of runtime.sendMessage') ||
+        reasonString.includes('must specify an Extension ID (string) for its first argument')
       ) {
         event.preventDefault();
         return false;

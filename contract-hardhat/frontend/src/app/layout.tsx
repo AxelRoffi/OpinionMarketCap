@@ -5,6 +5,7 @@ import Providers from "./providers";
 import { Toaster } from "sonner";
 import { GlobalNavbar } from "@/components/GlobalNavbar";
 import { ExtensionErrorSuppressor } from "@/components/ExtensionErrorSuppressor";
+import { ExtensionErrorBoundary } from "@/components/ExtensionErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,19 +32,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <ExtensionErrorSuppressor />
-          <div className="min-h-screen bg-gray-900 text-white">
-            <GlobalNavbar />
-            <main>
-              {children}
-            </main>
-          </div>
-          <Toaster 
-            theme="dark"
-            position="top-right"
-          />
-        </Providers>
+        <ExtensionErrorBoundary>
+          <Providers>
+            <ExtensionErrorSuppressor />
+            <div className="min-h-screen bg-gray-900 text-white">
+              <GlobalNavbar />
+              <main>
+                {children}
+              </main>
+            </div>
+            <Toaster 
+              theme="dark"
+              position="top-right"
+            />
+          </Providers>
+        </ExtensionErrorBoundary>
       </body>
     </html>
   );
