@@ -79,16 +79,6 @@ export default function CreateOpinionPage() {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Step Indicator - aligned with main content */}
-          <div className="lg:col-span-4 mb-6">
-            <div className="flex justify-start">
-              <StepIndicator 
-                steps={steps} 
-                currentStep={currentStep} 
-                onStepClick={handleStepClick}
-              />
-            </div>
-          </div>
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <CreateSidebar 
@@ -99,6 +89,14 @@ export default function CreateOpinionPage() {
 
           {/* Main Form Area */}
           <div className="lg:col-span-3">
+            {/* Step Indicator - aligned with main form card */}
+            <div className="mb-6">
+              <StepIndicator 
+                steps={steps} 
+                currentStep={currentStep} 
+                onStepClick={handleStepClick}
+              />
+            </div>
             <Card className="glass-card border-gradient">
               <CardContent className="p-8">
                 <AnimatePresence mode="wait">
