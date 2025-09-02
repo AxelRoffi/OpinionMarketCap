@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronUp, ChevronDown, Trophy, Medal, Award, Info } from 'lucide-react';
+import { useEnsName } from 'wagmi';
 import { useEnhancedLeaderboardData, LeaderboardUser } from '@/hooks/useLeaderboardData';
 
 // Type for sorting
@@ -11,6 +12,7 @@ type SortField = keyof LeaderboardUser;
 export function LeaderboardTable() {
   const [sortField, setSortField] = useState<SortField>('trueROI');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [timePeriod, setTimePeriod] = useState<'24h' | '7d' | '30d' | 'all'>('all');
   const router = useRouter();
 
   const { users: leaderboardUsers, isLoading } = useEnhancedLeaderboardData();
@@ -18,7 +20,13 @@ export function LeaderboardTable() {
   const sortedData = useMemo(() => {
     if (!leaderboardUsers || leaderboardUsers.length === 0) return [];
     
-    const sorted = [...leaderboardUsers].sort((a, b) => {
+    // Filter by time period (for now, show all data - time filtering will be enhanced later)
+    const filteredUsers = [...leaderboardUsers];
+    
+    // TODO: Implement actual time-based filtering when we have timestamp data
+    // For MVP, we'll show all users but could filter by recent activity patterns
+    
+    const sorted = filteredUsers.sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
       
@@ -67,6 +75,74 @@ export function LeaderboardTable() {
 
   const formatAddress = (address: string): string => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  // Achievement badges based on user stats
+  const getAchievementBadges = (user: LeaderboardUser) => {
+    const badges = [];
+    
+    // Top performer badges
+    if (user.rank <= 3) badges.push({ icon: '👑', label: 'Elite', color: 'text-yellow-400' });
+    else if (user.rank <= 10) badges.push({ icon: '🏆', label: 'Top 10', color: 'text-orange-400' });
+    else if (user.rank <= 25) badges.push({ icon: '🥈', label: 'Top 25', color: 'text-gray-400' });
+    
+    // Volume badges
+    if (user.totalEarnings > 1000) badges.push({ icon: '🔥', label: 'High Earner', color: 'text-red-400' });
+    else if (user.totalEarnings > 100) badges.push({ icon: '💰', label: 'Profitable', color: 'text-green-400' });
+    
+    // Activity badges
+    if (user.questionsCreated >= 10) badges.push({ icon: '🎯', label: 'Creator', color: 'text-purple-400' });
+    if (user.tradesCount >= 50) badges.push({ icon: '📈', label: 'Active Trader', color: 'text-blue-400' });
+    
+    // ROI badge
+    if (user.trueROI > 10) badges.push({ icon: '💎', label: 'High ROI', color: 'text-cyan-400' });
+    
+    return badges.slice(0, 2); // Show max 2 badges to avoid clutter
+  };
+
+  // Component for ENS name resolution with badges
+  const UserDisplayName = ({ address, user }: { address: string; user: LeaderboardUser }) => {
+    const { data: ensName } = useEnsName({
+      address: address as `0x${string}`,
+      query: {
+        staleTime: 300000, // Cache for 5 minutes
+        enabled: Boolean(address) && address.startsWith('0x'),
+      },
+    });
+
+    const badges = getAchievementBadges(user);
+
+    return (
+      <div className="flex flex-col">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => router.push(`/profile?address=${address}`)}
+            className="text-sm font-medium text-white hover:text-blue-400 transition-colors cursor-pointer text-left"
+          >
+            {ensName || formatAddress(address)}
+          </button>
+          <div className="flex items-center space-x-1">
+            {badges.map((badge, index) => (
+              <div
+                key={index}
+                className={`flex items-center space-x-1 px-1.5 py-0.5 rounded text-xs font-medium ${badge.color} bg-gray-700 border border-gray-600`}
+                title={badge.label}
+              >
+                <span>{badge.icon}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {ensName && (
+          <button
+            onClick={() => router.push(`/profile?address=${address}`)}
+            className="text-xs text-gray-400 hover:text-blue-400 transition-colors cursor-pointer text-left"
+          >
+            {formatAddress(address)}
+          </button>
+        )}
+      </div>
+    );
   };
 
   const getRankIcon = (rank: number) => {
@@ -202,6 +278,28 @@ export function LeaderboardTable() {
 
   return (
     <div className="bg-gray-800 shadow rounded-lg overflow-hidden">
+      {/* Time Period Filter */}
+      <div className="px-6 py-4 border-b border-gray-700 bg-gray-750">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-white">Rankings</h3>
+          <div className="flex items-center space-x-1">
+            <span className="text-sm text-gray-400 mr-3">Time Period:</span>
+            {(['all', '30d', '7d', '24h'] as const).map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimePeriod(period)}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  timePeriod === period
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {period === 'all' ? 'All Time' : period.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
@@ -243,22 +341,7 @@ export function LeaderboardTable() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col">
-                    <button
-                      onClick={() => router.push(`/profile?address=${user.address}`)}
-                      className="text-sm font-medium text-white hover:text-blue-400 transition-colors cursor-pointer text-left"
-                    >
-                      {user.username || formatAddress(user.address)}
-                    </button>
-                    {user.username && (
-                      <button
-                        onClick={() => router.push(`/profile?address=${user.address}`)}
-                        className="text-xs text-gray-400 hover:text-blue-400 transition-colors cursor-pointer text-left"
-                      >
-                        {formatAddress(user.address)}
-                      </button>
-                    )}
-                  </div>
+                  <UserDisplayName address={user.address} user={user} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {user.questionsCreated.toLocaleString()}
