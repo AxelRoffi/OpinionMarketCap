@@ -1,0 +1,30 @@
+{
+  "contractAddress": "0x6B45d9917F400c0a2d2f928AC15F6D960CAfD2b1",
+  "contractType": "SimpleOpinionMarket (No Proxy)",
+  "usdcToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "treasury": "0xFb7eF00D5C2a87d282F273632e834f9105795067",
+  "deployer": "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3",
+  "network": "baseSepolia",
+  "deployedAt": "2025-06-26T18:52:49.387Z",
+  "isProxy": false,
+  "opinions": [
+    {
+      "id": 1,
+      "question": "Who will win 2026 World Cup?",
+      "answer": "Brazil",
+      "price": "3.0 USDC"
+    },
+    {
+      "id": 2,
+      "question": "Goat of Soccer ?",
+      "answer": "Zidane",
+      "price": "2.0 USDC"
+    },
+    {
+      "id": 3,
+      "question": "Most beautiful city ?",
+      "answer": "Paris",
+      "price": "2.0 USDC"
+    }
+  ]
+}
