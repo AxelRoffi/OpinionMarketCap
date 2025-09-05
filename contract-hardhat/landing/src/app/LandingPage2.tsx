@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion"
-import { ArrowRight, Infinity, TrendingUp, Users, Globe } from "lucide-react"
+import { ArrowRight, Infinity as InfinityIcon, TrendingUp, Users, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LandingNavigation } from "@/components/LandingNavigation"
 import { cn } from "@/lib/utils"
@@ -32,7 +32,7 @@ export default function LandingPage2() {
   const [particles, setParticles] = useState<Particle[]>([])
   const [floatingElements, setFloatingElements] = useState<FloatingElement[]>([])
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
   
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -63,7 +63,7 @@ export default function LandingPage2() {
       <TrendingUp key="trend" size={24} />,
       <Users key="users" size={24} />,
       <Globe key="globe" size={24} />,
-      <Infinity key="infinity" size={24} />
+      <InfinityIcon key="infinity" size={24} />
     ]
     
     const newFloatingElements: FloatingElement[] = Array.from({ length: 8 }, (_, i) => ({
@@ -344,7 +344,7 @@ export default function LandingPage2() {
               }}
               className="text-6xl text-blue-400"
             >
-              <Infinity />
+              <InfinityIcon />
             </motion.div>
           </motion.div>
 
