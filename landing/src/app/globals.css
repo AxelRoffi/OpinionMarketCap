@@ -305,13 +305,68 @@
   animation: letter-bounce 2s ease-in-out infinite;
 }
 
+/* Text bounce animation */
+@keyframes text-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.text-bounce {
+  animation: text-bounce 2s ease-in-out infinite;
+}
+
+/* Button pulse animation */
+@keyframes button-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.button-pulse {
+  animation: button-pulse 2s infinite;
+}
+
+/* Button hover float */
+@keyframes button-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.button-hover-float:hover {
+  animation: button-float 0.6s ease-in-out infinite;
+}
+
 /* Typewriter effect */
 @keyframes typewriter {
   from { width: 0; }
   to { width: 100%; }
 }
 
+@keyframes typewriter-large {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
 @keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #60A5FA; }
+}
+
+@keyframes blink-caret-large {
   from, to { border-color: transparent; }
   50% { border-color: #60A5FA; }
 }
@@ -325,6 +380,17 @@
   animation: 
     typewriter 3.5s steps(40, end),
     blink-caret 0.75s step-end infinite;
+}
+
+.typewriter-large {
+  overflow: hidden;
+  border-right: 4px solid #60A5FA;
+  white-space: nowrap;
+  margin: 0 auto;
+  letter-spacing: 0.1em;
+  animation: 
+    typewriter-large 4s steps(50, end),
+    blink-caret-large 0.75s step-end infinite;
 }
 
 /* Shimmer effect */
