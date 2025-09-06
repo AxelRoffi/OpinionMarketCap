@@ -58,6 +58,18 @@ export default function HowItWorks() {
       problems: ["No financial incentive for quality", "Algorithm manipulation", "Platform keeps all value"]
     },
     {
+      title: "AI/LLM Responses",
+      subtitle: "Model-Generated Answers",
+      steps: [
+        { icon: <Search className="w-8 h-8" />, text: "Prompt Input", desc: "User asks question" },
+        { icon: <Brain className="w-8 h-8" />, text: "AI Processing", desc: "Neural network inference" },
+        { icon: <Layers className="w-8 h-8" />, text: "Generated Response", desc: "Single answer output" },
+        { icon: <DollarSign className="w-8 h-8" />, text: "Subscription Revenue", desc: "Platform profits" }
+      ],
+      color: "from-green-500 to-teal-600",
+      problems: ["No accuracy verification", "Massive energy consumption", "No financial incentive for correctness"]
+    },
+    {
       title: "OpinionMarketCap (OMC)",
       subtitle: "Market-Driven Consensus",
       steps: [
@@ -76,14 +88,14 @@ export default function HowItWorks() {
       title: "Question Minting on OpinionMarketCap",
       description: "Transform your insight into a tradeable blockchain asset",
       visual: "🎯",
-      details: "Pay 5 USDC creation fee, set initial answer and price. Your question becomes an NFT-like asset with ongoing royalty potential.",
+      details: "Set initial answer, initial price, description and link, creation fee = 20% initial price. Your question becomes an NFT-like asset with ongoing royalty potential.",
       example: "\"Best CRM for startups?\" → Initial answer: \"HubSpot\" → Starting price: 12 USDC"
     },
     {
       title: "Market Creation & Price Discovery",
       description: "OpinionMarketCap's bonding curve creates instant liquidity",
       visual: "📈",
-      details: "As more people buy your answer, the price increases exponentially. Early believers get better prices, rewarding conviction.",
+      details: "As more people buy the right to change the answer, the price increases exponentially, replicating market forces. Early believers get better prices, rewarding conviction.",
       example: "HubSpot answer: 12 → 15 → 22 → 35 USDC as demand increases"
     },
     {
@@ -91,7 +103,7 @@ export default function HowItWorks() {
       description: "Buy, sell, and own the best answers on OMC",
       visual: "🔄",
       details: "Anyone can challenge the current answer by paying the higher price. 95% goes to the previous owner.",
-      example: "Someone pays 35 USDC for \"Salesforce\" → Previous owner receives 33.25 USDC profit"
+      example: "Someone pays 35 USDC to change answer for \"Salesforce\" → Previous owner receives 33.25 USDC profit"
     },
     {
       title: "Continuous Value Generation",
@@ -132,7 +144,7 @@ export default function HowItWorks() {
       icon: <Users className="w-6 h-6" />,
       description: "Collaborates in OMC prediction pools",
       earnings: "Share of pool rewards when targets are reached",
-      example: "Joined 10-person pool → Target reached → Shared 500 USDC reward = 50 USDC each",
+      example: "Joined 10-person pool → Target reached → Shared 500 USDC reward according to pool share",
       color: "from-purple-500 to-pink-500"
     }
   ]
@@ -238,25 +250,29 @@ export default function HowItWorks() {
             <span className="text-white">The Paradigm Shift:</span>{" "}
             <span className="bg-gradient-to-r from-red-400 to-yellow-500 bg-clip-text text-transparent">Old Web</span>{" "}
             vs{" "}
+            <span className="bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">AI</span>{" "}
+            vs{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OMC</span>
           </h2>
           
-          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {paradigmComparison.map((paradigm, paradigmIndex) => (
               <motion.div
                 key={paradigm.title}
-                initial={{ opacity: 0, x: paradigmIndex === 0 ? -50 : 50 }}
+                initial={{ opacity: 0, x: paradigmIndex === 0 ? -50 : paradigmIndex === 2 ? 50 : 0 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.2 + paradigmIndex * 0.3, duration: 0.8 }}
               >
                 <Card className={cn(
                   "bg-gray-800/50 border-2 backdrop-blur-sm h-full",
-                  paradigmIndex === 0 ? "border-gray-600" : "border-purple-500"
+                  paradigmIndex === 0 ? "border-gray-600" : 
+                  paradigmIndex === 1 ? "border-green-500" : "border-purple-500"
                 )}>
                   <CardHeader>
                     <CardTitle className={cn(
                       "text-2xl text-center",
-                      paradigmIndex === 0 ? "text-gray-300" : "text-purple-300"
+                      paradigmIndex === 0 ? "text-gray-300" : 
+                      paradigmIndex === 1 ? "text-green-300" : "text-purple-300"
                     )}>
                       {paradigm.title}
                     </CardTitle>
@@ -292,17 +308,17 @@ export default function HowItWorks() {
                     <div className="mt-8 p-4 rounded-lg bg-gray-700/50">
                       <h4 className={cn(
                         "font-semibold mb-3",
-                        paradigmIndex === 0 ? "text-red-300" : "text-green-300"
+                        paradigmIndex === 2 ? "text-green-300" : "text-red-300"
                       )}>
-                        {paradigmIndex === 0 ? "Problems:" : "OMC Benefits:"}
+                        {paradigmIndex === 2 ? "OMC Benefits:" : "Problems:"}
                       </h4>
                       <ul className="space-y-2">
                         {(paradigm.problems || paradigm.benefits)?.map((item, index) => (
                           <li key={index} className="text-sm text-gray-300 flex items-center space-x-2">
-                            {paradigmIndex === 0 ? (
-                              <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                            ) : (
+                            {paradigmIndex === 2 ? (
                               <CheckCircle className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <span className="w-2 h-2 bg-red-400 rounded-full"></span>
                             )}
                             <span>{item}</span>
                           </li>
