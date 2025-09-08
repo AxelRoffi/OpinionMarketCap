@@ -41,9 +41,9 @@ export default function Tutorial() {
       icon: <Wallet className="w-6 h-6" />,
       details: {
         what: "A Web3 wallet to interact with OpinionMarketCap on Base Sepolia testnet",
-        why: "Required to sign transactions, hold tokens, and pay gas fees",
+        why: "Required to sign transactions, hold digital assets, and pay gas fees",
         how: [
-          "Install MetaMask browser extension or mobile app",
+          "Install a Web3 Wallet extension or mobile app",
           "Create new wallet or import existing one", 
           "Add Base Sepolia network (Chain ID: 84532)",
           "Connect wallet to OpinionMarketCap platform"
@@ -57,12 +57,12 @@ export default function Tutorial() {
     {
       id: "eth",
       title: "Get Base Sepolia ETH",
-      description: "For transaction gas fees (~0.01 ETH needed)",
+      description: "For transaction gas fees (~0.0001 base sepolia ETH needed)",
       status: 'pending',
       icon: <Zap className="w-6 h-6" />,
       details: {
         what: "Base Sepolia ETH to pay for blockchain transaction fees",
-        why: "Every transaction (minting, trading, pool participation) requires gas fees",
+        why: "Every transaction (minting, trading, pool participation... ) requires gas fees",
         how: [
           "Visit Base Sepolia faucet websites",
           "Connect your wallet to the faucet",
@@ -88,7 +88,7 @@ export default function Tutorial() {
           "Visit Circle's official USDC faucet",
           "Select 'Base Sepolia' network",
           "Select 'USDC' token type",
-          "Connect your wallet and request tokens"
+          "Fill your wallet address and request tokens"
         ],
         links: [
           { text: "Circle USDC Faucet", url: "https://faucet.circle.com/" }
@@ -104,43 +104,24 @@ export default function Tutorial() {
     { name: "FeeManager", address: "0xc8f879d86266C334eb9699963ca0703aa1189d8F", purpose: "Creator fee claims", explorerUrl: "https://sepolia.basescan.org/address/0xc8f879d86266C334eb9699963ca0703aa1189d8F" }
   ]
 
-  const categories = [
-    { emoji: "🏢", name: "Business & Finance", desc: "CRM tools, investment advice, market predictions" },
-    { emoji: "💻", name: "Technology", desc: "AI tools, software reviews, tech predictions" },
-    { emoji: "⚽", name: "Sports & Entertainment", desc: "Team performance, movie reviews, events" },
-    { emoji: "🏛️", name: "Politics & Society", desc: "Policy outcomes, social trends, elections" },
-    { emoji: "🎨", name: "Arts & Culture", desc: "Creative works, cultural trends, artistic value" },
-    { emoji: "🔬", name: "Science & Research", desc: "Research outcomes, scientific developments" },
-    { emoji: "📍", name: "Local & Regional", desc: "Local businesses, regional trends, city-specific" },
-    { emoji: "🌍", name: "Global Affairs", desc: "International trends, global markets, world events" }
-  ]
 
   const mintingSteps = [
-    {
-      field: "Category Selection",
-      type: "Dropdown",
-      required: true,
-      description: "Choose the most relevant category for your question",
-      example: "Technology (for 'Best AI writing tool?')",
-      validation: "Must select one of 8 available categories",
-      purpose: "Helps users discover relevant markets, improves price accuracy"
-    },
     {
       field: "Question Text",
       type: "Text Input",
       required: true,
-      description: "Your question that creates the market (max 280 characters)",
-      example: "'What's the best CRM software for startups under 100 employees?'",
-      validation: "1-280 characters, must be a clear question",
+      description: "Your question that creates the market (max 51 characters)",
+      example: "'Best CRM software for startups under 100 employees?'",
+      validation: "1-250 characters, must be a clear question",
       purpose: "Creates the tradeable opinion market"
     },
     {
       field: "Initial Answer",
       type: "Text Input", 
       required: true,
-      description: "Your proposed answer to start the market (max 140 characters)",
-      example: "'HubSpot - best features for small teams and affordable pricing'",
-      validation: "1-140 characters, should be specific and valuable",
+      description: "Your proposed answer to start the market (max 50 characters)",
+      example: "'HubSpot'",
+      validation: "1-50 characters, should be specific and valuable",
       purpose: "Sets the starting point for market competition"
     },
     {
@@ -151,6 +132,35 @@ export default function Tutorial() {
       example: "25.00 (means someone must pay 25 USDC to replace your answer)",
       validation: "≥ 1 USDC, decimals allowed",
       purpose: "Determines market entry point and creation fee"
+    },
+    {
+      field: "Category Selection",
+      type: "Dropdown",
+      required: true,
+      description: "Choose the most relevant category for your question",
+      example: "Technology (for 'Best AI writing tool?')",
+      validation: "Must select one of our available categories",
+      purpose: "Helps users discover relevant markets, improves price accuracy"
+    },
+    {
+      field: "Description",
+      type: "Text Input",
+      required: false,
+      description: "Argument over your answer and explain why it is the best",
+      example: "best features for small teams and affordable pricing",
+      validation: "1-120 characters, should be specific and valuable",
+      purpose: "Give more context to your answer and why you chose this one specifically"
+    },
+    {
+      field: "External link",
+      type: "Text Input",
+      required: false,
+      description: "Add extra context to your answer or description, it can be a picture, a text, a video",
+      example: <a href="https://www.opinionmarketcap.xyz/" target="_blank" rel="noopener 
+  noreferrer" className="text-blue-400 hover:text-blue-300 
+  underline">https://www.opinionmarketcap.xyz/</a>,
+      validation: "1-260 characters",
+      purpose: "Add extra context to your answer and drive traffic to your page"
     },
     {
       field: "Creation Fee",
@@ -187,7 +197,7 @@ export default function Tutorial() {
     {
       step: "Fee Distribution",
       description: "3% goes to question creator, 2% to OMC platform",
-      details: "All fees distributed automatically via smart contracts"
+      details: "All fees distributed automatically via smart contracts, claim your fees whenever you want"
     }
   ]
 
@@ -240,7 +250,7 @@ export default function Tutorial() {
         ))}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-12">
+      <div className="relative z-10 container mx-auto px-4 pt-20 pb-12">
         {/* Hero Section */}
         <motion.div
           className="text-center mb-16"
@@ -253,7 +263,7 @@ export default function Tutorial() {
               Complete Guide
             </span>
             <br />
-            <span className="text-white">to OpinionMarketCap</span>
+            <span className="text-white">to OMC</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Master the infinite marketplace - from wallet setup to advanced trading strategies
@@ -436,7 +446,7 @@ export default function Tutorial() {
                           <li>• These are Base Sepolia testnet addresses - DO NOT use on mainnet</li>
                           <li>• USDC is the primary trading currency for all OMC operations</li>
                           <li>• PoolManager handles all collaborative pool functionality</li>
-                          <li>• FeeManager is where creators claim their 3% trading royalties</li>
+                          <li>• FeeManager is where users claim their rewards</li>
                         </ul>
                       </div>
                     </div>
@@ -453,46 +463,14 @@ export default function Tutorial() {
                     <Target className="w-6 h-6" />
                     <span>Opinion Minting Guide</span>
                   </CardTitle>
-                  <p className="text-gray-400 mt-2">Create your first tradeable opinion market on OpinionMarketCap</p>
+                  <p className="text-gray-400 mt-2">Mint your first tradeable opinion market on OMC under 60 secondes</p>
                 </CardHeader>
                 <CardContent className="space-y-8">
-                  {/* Categories Section */}
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-4">Step 1: Choose Your Category</h3>
-                    <div className="grid md:grid-cols-2 gap-4 mb-6">
-                      {categories.map((category, index) => (
-                        <motion.div
-                          key={category.name}
-                          className="bg-gray-700/50 rounded-lg p-4 border border-gray-600 hover:border-emerald-400/50 transition-all"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.05, duration: 0.3 }}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <span className="text-2xl">{category.emoji}</span>
-                            <div>
-                              <h4 className="font-semibold text-white">{category.name}</h4>
-                              <p className="text-gray-400 text-sm">{category.desc}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                    
-                    <div className="bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <Shield className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="font-semibold text-emerald-300 mb-1">Why Categories Matter:</h4>
-                          <p className="text-emerald-200 text-sm">Categories help users discover relevant markets, create specialized communities, and improve price accuracy through informed trading.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  
 
                   {/* Form Fields Section */}
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-4">Step 2: Fill Required Fields</h3>
+                    <h3 className="text-xl font-bold text-white mb-4">Fill Required Fields</h3>
                     <div className="space-y-6">
                       {mintingSteps.map((step, index) => (
                         <motion.div
@@ -688,9 +666,10 @@ export default function Tutorial() {
                         <h4 className="font-bold text-blue-300 mb-3">Pool Creation</h4>
                         <ul className="text-blue-200 text-sm space-y-2">
                           <li>• Select any active opinion market</li>
-                          <li>• Set target price (must be higher than current)</li>
-                          <li>• Contribute your USDC amount</li>
+                          <li>• Target Price is set automatically == nextPrice</li>
+                          <li>• Contribute your USDC amount plus an extra 5 usdc pool creation fee </li>
                           <li>• Set expiration date (1-30 days)</li>
+                          <li>• Give your pool a name and propose an answer, market your pool</li>
                           <li>• Others can join your pool</li>
                         </ul>
                       </div>
@@ -712,23 +691,23 @@ export default function Tutorial() {
                   <div className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-400/30 rounded-lg p-6">
                     <h4 className="font-bold text-white mb-4">Real Pool Example</h4>
                     <div className="bg-gray-700/50 rounded-lg p-4 mb-4">
-                      <p className="text-yellow-300 font-semibold mb-2">Question: "Most popular productivity app for remote teams?"</p>
-                      <p className="text-gray-200 mb-2">Current Answer: "Slack" at 45 USDC</p>
-                      <p className="text-blue-300 mb-2">Pool Target: Reach 80 USDC ("Notion for project management")</p>
+                      <p className="text-yellow-300 font-semibold mb-2">Question: "Most popular US female artist ?"</p>
+                      <p className="text-gray-200 mb-2">Current Answer: "Beyonce" at 4500 USDC</p>
+                      <p className="text-blue-300 mb-2">Pool Target: Reach 6000 USDC ("Taylor Swift")</p>
                     </div>
                     
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-300">Pool Contributors:</span>
-                        <span className="text-purple-300">5 participants</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Total Pool Amount:</span>
-                        <span className="text-green-400 font-bold">35 USDC contributed</span>
+                        <span className="text-purple-300">250 participants</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-300">If target reached:</span>
-                        <span className="text-blue-300">Each gets share minus 20% penalty</span>
+                        <span className="text-blue-300">"Taylor Swift" is promoted as top answer for this question.</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-300">Contributors share:</span>
+                        <span className="text-blue-300">Contributors earn pool shares proportional to their contributions, allowing them to benefit from profits generated by future trades.</span>
                       </div>
                       <div className="bg-red-600/20 border border-red-400/30 rounded p-3 mt-3">
                         <p className="text-red-200 text-sm"><strong>Important:</strong> Pool fees go 100% to platform treasury to prevent gaming. This ensures pools are used for legitimate collaboration, not system exploitation.</p>
@@ -765,7 +744,7 @@ export default function Tutorial() {
                           <AlertTriangle className="w-5 h-5 text-red-400" />
                           <strong className="text-red-300">EARLY EXIT</strong>
                         </div>
-                        <p className="text-red-200 text-sm">Withdraw before expiry → 20% penalty to remaining participants</p>
+                        <p className="text-red-200 text-sm">Withdraw before expiry → 20% penalty </p>
                       </div>
                     </div>
                     
@@ -776,7 +755,7 @@ export default function Tutorial() {
                         <li>Stops users from joining, influencing price, then leaving</li>
                         <li>Protects committed participants from trolling behavior</li>
                         <li>Creates aligned incentives for pool success</li>
-                        <li>Penalty goes to remaining participants as reward</li>
+                        <li>Penalty goes to platform treasury</li>
                       </ul>
                     </div>
                   </div>
@@ -786,31 +765,31 @@ export default function Tutorial() {
                     <h4 className="font-bold text-white mb-4">Pool Example Walkthrough</h4>
                     <div className="space-y-4">
                       <div className="bg-yellow-600/20 border border-yellow-400/30 rounded p-4">
-                        <strong className="text-yellow-300">Scenario:</strong> "Best CRM for startups?" currently at 25 USDC
+                        <strong className="text-yellow-300">Scenario:</strong> <h5 className="text-white mb-3">"Most popular US female artist ?" currently at 450 USDC</h5>
                       </div>
                       
                       <div className="grid md:grid-cols-4 gap-3">
                         <div className="bg-blue-900/30 rounded p-3">
                           <strong className="text-blue-300">Pool Target:</strong><br/>
-                          <span className="text-blue-200 text-sm">40 USDC</span>
+                          <span className="text-blue-200 text-sm">600 USDC</span>
                         </div>
                         <div className="bg-purple-900/30 rounded p-3">
                           <strong className="text-purple-300">Your Contribution:</strong><br/>
-                          <span className="text-purple-200 text-sm">100 USDC</span>
+                          <span className="text-purple-200 text-sm">60 USDC</span>
                         </div>
                         <div className="bg-emerald-900/30 rounded p-3">
                           <strong className="text-emerald-300">Total Pool:</strong><br/>
-                          <span className="text-emerald-200 text-sm">500 USDC (5 people)</span>
+                          <span className="text-emerald-200 text-sm">600 USDC (20 people)</span>
                         </div>
                         <div className="bg-red-900/30 rounded p-3">
                           <strong className="text-red-300">Your Share:</strong><br/>
-                          <span className="text-red-200 text-sm">20% (100/500)</span>
+                          <span className="text-red-200 text-sm">10% (60/600)</span>
                         </div>
                       </div>
                       
                       <div className="bg-green-600/20 border border-green-400/30 rounded p-4">
                         <strong className="text-green-300">Result when target reached:</strong><br/>
-                        <span className="text-green-200 text-sm">Pool becomes new answer owner → Earns 95% of future trades → You get 20% of all future earnings</span>
+                        <span className="text-green-200 text-sm">Pool becomes new answer owner → Earns 95% of future trades → You get 10% of rewards on next trade</span>
                       </div>
                     </div>
                   </div>

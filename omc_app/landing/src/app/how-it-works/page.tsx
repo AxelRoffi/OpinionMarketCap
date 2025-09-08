@@ -63,11 +63,11 @@ export default function HowItWorks() {
       steps: [
         { icon: <Search className="w-8 h-8" />, text: "Prompt Input", desc: "User asks question" },
         { icon: <Brain className="w-8 h-8" />, text: "AI Processing", desc: "Neural network inference" },
-        { icon: <Layers className="w-8 h-8" />, text: "Generated Response", desc: "Single answer output" },
+        { icon: <Layers className="w-8 h-8" />, text: "Generated Response", desc: "Next token prediction" },
         { icon: <DollarSign className="w-8 h-8" />, text: "Subscription Revenue", desc: "Platform profits" }
       ],
       color: "from-green-500 to-teal-600",
-      problems: ["No accuracy verification", "Massive energy consumption", "No financial incentive for correctness"]
+      problems: ["Hallucinations & Fake News", "Massive energy consumption", "No financial incentive for correctness"]
     },
     {
       title: "OpinionMarketCap (OMC)",
@@ -85,10 +85,10 @@ export default function HowItWorks() {
 
   const coreSteps = [
     {
-      title: "Question Minting on OpinionMarketCap",
+      title: "Question Minting on OMC",
       description: "Transform your insight into a tradeable blockchain asset",
       visual: "🎯",
-      details: "Set initial answer, initial price, description and link, creation fee = 20% initial price. Your question becomes an NFT-like asset with ongoing royalty potential.",
+      details: "Mint question, set initial answer, initial price, description and link, creation fee = 20% initial price. Your question becomes an NFT-like asset with ongoing royalty potential.",
       example: "\"Best CRM for startups?\" → Initial answer: \"HubSpot\" → Starting price: 12 USDC"
     },
     {
@@ -181,7 +181,7 @@ export default function HowItWorks() {
         ))}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-12">
+      <div className="relative z-10 container mx-auto px-4 pt-20 pb-12">
         {/* Hero Section */}
         <motion.div
           className="text-center mb-20"
@@ -197,7 +197,7 @@ export default function HowItWorks() {
           >
             <span className="text-white">How</span>{" "}
             <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 bg-clip-text text-transparent">
-              OpinionMarketCap
+              Opinion Market Cap
             </span>
             <br />
             <span className="text-white">Works</span>
@@ -250,7 +250,7 @@ export default function HowItWorks() {
             <span className="text-white">The Paradigm Shift:</span>{" "}
             <span className="bg-gradient-to-r from-red-400 to-yellow-500 bg-clip-text text-transparent">Old Web</span>{" "}
             vs{" "}
-            <span className="bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">AI</span>{" "}
+            <span className="bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">AI/LLM</span>{" "}
             vs{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OMC</span>
           </h2>

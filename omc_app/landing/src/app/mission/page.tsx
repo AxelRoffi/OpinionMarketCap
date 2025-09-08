@@ -63,8 +63,8 @@ export default function Mission() {
   const economicRoles = [
     {
       role: "Question Creator",
-      description: "Creates a market/opinion, pays creation fee",
-      earnings: "3% royalty on every future answer trade forever",
+      description: "Mints a market/opinion, pays creation fee",
+      earnings: "3% royalty on every future answer trade forever, can sell its question on our marketplace",
       example: "Created \"Best CRM for startups?\" → earns 3% of $50K volume = $1,500"
     },
     {
@@ -76,13 +76,13 @@ export default function Mission() {
     {
       role: "Enterprise Advertisers",
       description: "Compete for status positioning and market research",
-      earnings: "Brand positioning and verified market consensus",
+      earnings: "Brand positioning and verified market consensus, fastest way to advertise on the web/blockchain",
       example: "Luxury brands battle for \"Most prestigious watch brand?\""
     },
     {
       role: "Communities & Speculators",
       description: "Pool resources and trade on market knowledge",
-      earnings: "95% value capture from successful predictions",
+      earnings: "95% value capture from each trade",
       example: "Early adopters buying low-priced answers before appreciation"
     }
   ]
@@ -118,7 +118,7 @@ export default function Mission() {
         ))}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-12">
+      <div className="relative z-10 container mx-auto px-4 pt-20 pb-12">
         {/* Hero Section */}
         <motion.div
           className="text-center mb-20"
@@ -133,7 +133,7 @@ export default function Mission() {
             transition={{ duration: 1.2, ease: "easeOut" }}
           >
             <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 bg-clip-text text-transparent">
-              THE INFINITE
+              OMC THE INFINITE
             </span>
             <br />
             <span className="text-white">MARKETPLACE</span>
@@ -206,7 +206,7 @@ export default function Mission() {
                   <div className="grid md:grid-cols-4 gap-6 mb-12">
                     {[
                       { icon: <Search className="w-12 h-12" />, title: "Question Minted", desc: "\"Best CRM for startups?\"", color: "from-blue-500 to-cyan-500" },
-                      { icon: <Target className="w-12 h-12" />, title: "Opinions Form", desc: "Multiple answers compete with price dimension", color: "from-purple-500 to-pink-500" },
+                      { icon: <Target className="w-12 h-12" />, title: "Opinions Form", desc: "Multiple answers compete financially", color: "from-purple-500 to-pink-500" },
                       { icon: <BarChart3 className="w-12 h-12" />, title: "Market Creates", desc: "Economic value emerges", color: "from-green-500 to-emerald-500" },
                       { icon: <DollarSign className="w-12 h-12" />, title: "Everyone Profits", desc: "98% goes to community", color: "from-yellow-500 to-orange-500" }
                     ].map((step, index) => (
@@ -241,7 +241,7 @@ export default function Mission() {
                       <div className="bg-purple-600/20 rounded-lg p-6">
                         <h4 className="text-lg font-semibold text-purple-300 mb-2">Luxury Market</h4>
                         <p className="text-gray-200">"Most iconic female fragrance?"</p>
-                        <p className="text-sm text-gray-400 mt-2">Brands like Chanel pay premium for market positioning</p>
+                        <p className="text-sm text-gray-400 mt-2">Luxury brands pay premium for market positioning</p>
                       </div>
                     </div>
                   </div>
@@ -481,6 +481,13 @@ export default function Mission() {
                             <td className="py-4 text-gray-400">Advertisers</td>
                             <td className="py-4 text-gray-400">Dynamic but ad-driven</td>
                           </tr>
+                          <tr className="border-b border-gray-700/50">
+                            <td className="py-4 text-purple-300">AI/LLM</td>
+                            <td className="py-4 text-gray-300">Token Generation</td>
+                            <td className="py-4 text-gray-400">ChatGPT: proprietary models</td>
+                            <td className="py-4 text-gray-400">AI Giants: OpenAI, Claude...</td>
+                            <td className="py-4 text-gray-400">Dynamic but model-driven</td>
+                          </tr>
                           <tr>
                             <td className="py-4 text-yellow-300 font-bold">Web 3.0</td>
                             <td className="py-4 text-yellow-300 font-bold">Market Validation</td>
@@ -519,7 +526,7 @@ export default function Mission() {
                         <h3 className="text-2xl font-bold text-emerald-300">E-Commerce Revolution</h3>
                         <div className="bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-6">
                           <p className="text-gray-200 leading-relaxed">
-                            Within 3-5 years, OpinionMarketCap aims to revolutionize e-commerce by enabling enterprises 
+                            Within 3-5 years, OMC aims to revolutionize e-commerce by enabling enterprises 
                             to conduct commerce with reduced friction, eliminating intermediaries that extract 10-15% 
                             commission on every transaction.
                           </p>
@@ -583,9 +590,9 @@ export default function Mission() {
                     <div className="text-center bg-gradient-to-r from-yellow-600/20 to-orange-600/20 rounded-lg p-8 border border-yellow-400/30">
                       <h3 className="text-2xl font-bold text-white mb-4">The Future We're Building</h3>
                       <p className="text-gray-200 leading-relaxed max-w-4xl mx-auto">
-                        By putting information to the test of market forces, OpinionMarketCap is creating a future where 
+                        By putting information to the test of market forces, OMC is creating a future where 
                         the best answers rise to the top not through algorithmic manipulation or advertising dollars, 
-                        but through the collective wisdom and financial backing of knowledgeable participants.
+                        but through financial backing of knowledgeable participants.
                       </p>
                     </div>
                   </div>

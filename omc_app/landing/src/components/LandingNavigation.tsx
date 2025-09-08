@@ -3,15 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Home, BookOpen, Infinity, Menu, X } from 'lucide-react'
+import { Home, BookOpen, Target, Rocket, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function LandingNavigation() {
   const [isOpen, setIsOpen] = useState(false)
 
   const navigation = [
-    { name: 'Landing V1', href: '/', icon: Home },
-    { name: 'Landing V2', href: '/landing-2', icon: Infinity },
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Mission', href: '/mission', icon: Target },
+    { name: 'How it Works', href: '/how-it-works', icon: BookOpen },
     { name: 'Tutorial', href: '/tutorial', icon: BookOpen },
   ]
 
@@ -30,6 +31,15 @@ export function LandingNavigation() {
               <span className="text-sm font-medium">{item.name}</span>
             </Link>
           ))}
+          <Button
+            asChild
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm px-4 py-2 rounded-full font-medium transition-all duration-300 hover:scale-105"
+          >
+            <Link href="http://test.opinionmarketcap.xyz" target="_blank">
+              <Rocket className="w-4 h-4 mr-2" />
+              Launch App
+            </Link>
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -62,6 +72,16 @@ export function LandingNavigation() {
                     <span className="text-sm font-medium">{item.name}</span>
                   </Link>
                 ))}
+                <Button
+                  asChild
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm px-4 py-2 rounded-lg font-medium transition-all duration-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Link href="http://test.opinionmarketcap.xyz" target="_blank">
+                    <Rocket className="w-4 h-4 mr-2" />
+                    Launch App
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           )}
