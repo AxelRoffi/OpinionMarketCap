@@ -55,9 +55,7 @@ const SORT_OPTIONS = [
   { value: "volume", label: "Volume" },
   { value: "change", label: "24h Change" },
   { value: "price", label: "Price" },
-  { value: "age", label: "Age" },
-  { value: "trades", label: "Trades" },
-  { value: "activity", label: "Last Activity" }
+  { value: "trades", label: "Trades" }
 ];
 
 interface OpinionData {
@@ -72,6 +70,7 @@ interface OpinionData {
   creator: string;
   categories: string[];
   currentAnswerDescription?: string;
+  link?: string;
   tradesCount?: number;
   createdAt?: number; // Real timestamp from blockchain
   lastActivityAt?: number; // Real timestamp from blockchain
@@ -371,17 +370,9 @@ export default function HomePage() {
           aValue = Number(a.nextPrice) - Number(a.lastPrice);
           bValue = Number(b.nextPrice) - Number(b.lastPrice);
           break;
-        case 'age':
-          aValue = a.age;
-          bValue = b.age;
-          break;
         case 'trades':
           aValue = a.tradesCount;
           bValue = b.tradesCount;
-          break;
-        case 'activity':
-          aValue = a.timeSinceActivity;
-          bValue = b.timeSinceActivity;
           break;
         case 'id':
           aValue = a.id;
@@ -467,13 +458,6 @@ export default function HomePage() {
   };
 
 
-  // Get opinion link (placeholder - this would fetch from contract in real implementation)
-  const getOpinionLink = async (opinionId: number) => {
-    // TODO: Implement contract call to get opinion.link
-    // const opinionDetails = await contract.getOpinionDetails(opinionId);
-    // return opinionDetails.link;
-    return `https://opinion.market/${opinionId}`;
-  };
 
   // Handle sorting
   const handleSort = (column: string) => {
@@ -769,7 +753,7 @@ export default function HomePage() {
 
           {/* Table Header - ENHANCED: ADDED NEW COLUMNS */}
           <div className="hidden lg:grid gap-2 px-4 py-3 bg-gray-800/50 border-b border-gray-700/50" style={{
-            gridTemplateColumns: "40px 1fr 200px 80px 70px 60px 80px 80px 90px 120px 120px"
+            gridTemplateColumns: "40px 1fr 200px 80px 70px 80px 80px 120px 120px"
           }}>
             <div className="text-white text-base font-bold text-center">#</div>
             <div className="text-white text-base font-bold">Question</div>
@@ -798,17 +782,6 @@ export default function HomePage() {
             </div>
             <div 
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('age')}
-            >
-              <span className="text-sm">Age</span>
-              {sortState.column === 'age' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('trades')}
             >
               <span className="text-sm">Trades</span>
@@ -824,17 +797,6 @@ export default function HomePage() {
             >
               <span className="text-sm">Vol</span>
               {sortState.column === 'volume' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('activity')}
-            >
-              <span className="text-sm">Activity</span>
-              {sortState.column === 'activity' ? (
                 sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
               ) : (
                 <ChevronsUpDown className="w-3 h-3" />
@@ -876,9 +838,9 @@ export default function HomePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="grid grid-cols-1 lg:grid-cols-11 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
+                  className="grid grid-cols-1 lg:grid-cols-9 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
                   style={{
-                    gridTemplateColumns: "40px 1fr 200px 80px 70px 60px 80px 80px 90px 120px 120px"
+                    gridTemplateColumns: "40px 1fr 200px 80px 70px 80px 80px 120px 120px"
                   }}
                   onClick={() => router.push(`/opinions/${opinion.id}`)}
                 >
@@ -921,17 +883,27 @@ export default function HomePage() {
                         </Badge>
                       </div>
                       <div className="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                        <span 
-                          className="hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1"
-                          onClick={async (e) => {
+                        <button 
+                          className="hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none focus:text-emerald-400"
+                          onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
-                            const link = await getOpinionLink(opinion.id);
-                            window.open(link, '_blank');
+                            console.log('🔗 Answer clicked - Opinion:', opinion.id, 'Link:', opinion.link);
+                            if (opinion.link && opinion.link.trim()) {
+                              console.log('✅ Opening link:', opinion.link);
+                              window.open(opinion.link, '_blank');
+                            } else {
+                              console.log('❌ No valid link found for opinion', opinion.id);
+                              console.log('Link value:', JSON.stringify(opinion.link));
+                              // Fallback: show alert or create a basic link
+                              alert(`No link available for "${opinion.currentAnswer}"`);
+                            }
                           }}
+                          type="button"
                         >
                           <ExternalLink className="w-3 h-3" />
                           {opinion.currentAnswer}
-                        </span>
+                        </button>
                       </div>
                       <div className="text-xs">
                         by <ClickableAddress 
@@ -967,21 +939,9 @@ export default function HomePage() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Age</div>
-                          <div className="text-gray-300 text-sm">
-                            {realCreationTime ? formatTimeAgo(opinion.createdAt) : '-'}
-                          </div>
-                        </div>
-                        <div>
                           <div className="text-xs text-gray-500">Trades</div>
                           <div className="text-gray-300 text-sm">
                             {opinion.tradesCount}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500">Activity</div>
-                          <div className="text-gray-300 text-sm">
-                            {realLastActivity ? formatTimeAgo(opinion.lastActivityAt) : '-'}
                           </div>
                         </div>
                       </div>
@@ -1045,17 +1005,27 @@ export default function HomePage() {
                     {/* Answer Column - MODIFIED: CLICKABLE WITH LINK ICON */}
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
-                        <div 
-                          className="text-white font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1"
-                          onClick={async (e) => {
+                        <button
+                          className="text-white font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left w-full focus:outline-none focus:text-emerald-400"
+                          onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
-                            const link = await getOpinionLink(opinion.id);
-                            window.open(link, '_blank');
+                            console.log('🔗 Answer clicked - Opinion:', opinion.id, 'Link:', opinion.link);
+                            if (opinion.link && opinion.link.trim()) {
+                              console.log('✅ Opening link:', opinion.link);
+                              window.open(opinion.link, '_blank');
+                            } else {
+                              console.log('❌ No valid link found for opinion', opinion.id);
+                              console.log('Link value:', JSON.stringify(opinion.link));
+                              // Fallback: show alert or create a basic link
+                              alert(`No link available for "${opinion.currentAnswer}"`);
+                            }
                           }}
+                          type="button"
                         >
-                          <ExternalLink className="w-3 h-3" />
-                          {opinion.currentAnswer}
-                        </div>
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                          <span>{opinion.currentAnswer}</span>
+                        </button>
                         <div className="text-xs">
                           {(() => {
                             // Show loading state while pool data is fetching
@@ -1109,17 +1079,6 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Age - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      {realCreationTime ? (
-                        <span className="text-white font-medium text-sm">
-                          {formatTimeAgo(opinion.createdAt)}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-sm">-</span>
-                      )}
-                    </div>
-
                     {/* Trades - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
                       <span className="text-white font-medium text-sm">
@@ -1132,17 +1091,6 @@ export default function HomePage() {
                       <span className="text-white font-medium text-sm">
                         {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
                       </span>
-                    </div>
-
-                    {/* Last Activity - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      {realLastActivity ? (
-                        <span className="text-white font-medium text-sm">
-                          {formatTimeAgo(opinion.lastActivityAt)}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-sm">-</span>
-                      )}
                     </div>
 
                     {/* Price Chart - RESPONSIVE */}

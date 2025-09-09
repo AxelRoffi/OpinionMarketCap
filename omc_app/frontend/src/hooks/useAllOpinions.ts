@@ -16,6 +16,7 @@ interface OpinionData {
   creator: string;
   categories: string[];
   currentAnswerDescription?: string;
+  link?: string;
   tradesCount?: number;
 }
 
@@ -86,7 +87,8 @@ export function useAllOpinions() {
           question: opinionQuery.data?.question,
           answer: opinionQuery.data?.currentAnswer,
           categories: opinionQuery.data?.categories,
-          isActive: opinionQuery.data?.isActive
+          isActive: opinionQuery.data?.isActive,
+          link: opinionQuery.data?.link // Debug the link field
         });
         
         opinions.push({
@@ -103,6 +105,7 @@ export function useAllOpinions() {
           creator: String(opinionQuery.data?.creator) || '',
           categories: (opinionQuery.data?.categories as string[]) || [],
           currentAnswerDescription: String(opinionQuery.data?.currentAnswerDescription) || '',
+          link: String(opinionQuery.data?.link) || '',
           tradesCount: Math.ceil(Number(opinionQuery.data?.totalVolume || BigInt(0)) / Number(opinionQuery.data?.lastPrice || BigInt(1_000_000))),
         });
       } else {
