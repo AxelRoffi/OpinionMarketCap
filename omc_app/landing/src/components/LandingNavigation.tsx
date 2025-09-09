@@ -3,32 +3,32 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Home, BookOpen, Target, Rocket, Menu, X } from 'lucide-react'
+import { Rocket, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function LandingNavigation() {
   const [isOpen, setIsOpen] = useState(false)
 
   const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Mission', href: '/mission', icon: Target },
-    { name: 'How it Works', href: '/how-it-works', icon: BookOpen },
-    { name: 'Tutorial', href: '/tutorial', icon: BookOpen },
+    { name: 'OMC', href: '/' },
+    { name: 'Mission', href: '/mission' },
+    { name: 'How it Works', href: '/how-it-works' },
+    { name: 'Tutorial', href: '/tutorial' },
+    { name: 'Influences', href: '/influences' },
   ]
 
   return (
     <nav className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="bg-black/80 backdrop-blur-md rounded-full border border-white/10 px-6 py-3">
+      <div className="bg-black/80 backdrop-blur-md rounded-full border border-white/10 px-8 py-3">
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-200"
+              className="text-white/80 hover:text-white transition-colors duration-200"
             >
-              <item.icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{item.name}</span>
+              <span className="text-sm font-medium whitespace-nowrap">{item.name}</span>
             </Link>
           ))}
           <Button
@@ -65,10 +65,9 @@ export function LandingNavigation() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center space-x-3 text-white/80 hover:text-white transition-colors duration-200 p-2 rounded-lg hover:bg-white/5"
+                    className="flex items-center text-white/80 hover:text-white transition-colors duration-200 p-2 rounded-lg hover:bg-white/5"
                     onClick={() => setIsOpen(false)}
                   >
-                    <item.icon className="w-4 h-4" />
                     <span className="text-sm font-medium">{item.name}</span>
                   </Link>
                 ))}
