@@ -82,6 +82,7 @@ interface OpinionData {
 
 interface MarketStats {
   totalMarketCap: number;
+  totalVolume: number;
   volume24h: number;
   activeTraders: number;
   totalOpinions: number;
@@ -139,20 +140,27 @@ export default function HomePage() {
 
   // Calculate market statistics with REAL blockchain data
   const marketStats: MarketStats = useMemo(() => {
-    // Total market cap = sum of all opinion total volumes (accumulated trading volume)
-    const totalMarketCap = allOpinions.reduce((sum, opinion) => sum + Number(opinion.totalVolume), 0) / 1_000_000;
+    // Total market cap = sum of all opinion next prices
+    const totalMarketCap = allOpinions.reduce((sum, opinion) => sum + Number(opinion.nextPrice), 0) / 1_000_000;
+    const totalVolume = allOpinions.reduce((sum, opinion) => sum + Number(opinion.totalVolume), 0) / 1_000_000;
     
     // REAL 24h volume from blockchain events
     const volume24h = total24hVolume / 1_000_000; // Convert from wei to USDC
     
-    // REAL unique traders count from blockchain events
-    const activeTraders = totalUniqueTraders;
+    // Total participants = unique creators and answer owners
+    const participants = new Set<string>();
+    allOpinions.forEach(opinion => {
+      participants.add(opinion.creator.toLowerCase());
+      participants.add(opinion.currentAnswerOwner.toLowerCase());
+    });
+    const activeTraders = participants.size;
     
     // Total opinions from contract
     const totalOpinions = Number(nextOpinionId || 0) - 1;
     
     return {
       totalMarketCap,
+      totalVolume,
       volume24h,
       activeTraders,
       totalOpinions: Math.max(totalOpinions, 0)
@@ -332,8 +340,10 @@ export default function HomePage() {
   // Filter and sort opinions
   const filteredAndSortedOpinions = useMemo(() => {
     const filtered = enhancedOpinions.filter(opinion => {
-      const matchesSearch = opinion.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           opinion.currentAnswer.toLowerCase().includes(searchQuery.toLowerCase());
+      const searchWords = searchQuery.toLowerCase().split(' ').filter(w => w);
+      const opinionText = (opinion.question + ' ' + opinion.currentAnswer).toLowerCase();
+      const matchesSearch = searchWords.every(word => opinionText.includes(word));
+
       const matchesCategory = selectedCategory === 'All Categories' || 
                              opinion.categories.includes(selectedCategory);
       
@@ -361,6 +371,10 @@ export default function HomePage() {
         case 'price':
           aValue = Number(a.nextPrice); // Use nextPrice for current trading price
           bValue = Number(b.nextPrice);
+          break;
+        case 'lastPrice':
+          aValue = Number(a.lastPrice);
+          bValue = Number(b.lastPrice);
           break;
         case 'volume':
           aValue = Number(a.totalVolume);
@@ -559,6 +573,14 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  const formatQuestion = (question: string) => {
+    const trimmed = question.trim();
+    if (trimmed.endsWith('?')) {
+      return question;
+    }
+    return `${trimmed} ?`;
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 py-8">
@@ -592,10 +614,8 @@ export default function HomePage() {
                 <span className="text-emerald-500 font-bold text-lg">$</span>
                 <span className="text-gray-400 text-sm font-medium">Total Market Cap</span>
               </div>
-              <div className={`text-sm font-medium ${
-                calculatePercentageChanges.marketCap.isPositive ? 'text-emerald-500' : 'text-red-500'
-              }`}>
-                {calculatePercentageChanges.marketCap.display} 24h
+              <div className="text-sm font-medium text-gray-500">
+                (24h: soon)
               </div>
             </div>
             <div className="text-white text-2xl font-bold">{formatLargeUSDC(marketStats.totalMarketCap)}</div>
@@ -610,15 +630,13 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-400 text-sm font-medium">24h Volume</span>
+                <span className="text-gray-400 text-sm font-medium">Total Volume</span>
               </div>
-              <div className={`text-sm font-medium ${
-                calculatePercentageChanges.volume.isPositive ? 'text-blue-500' : 'text-red-500'
-              }`}>
-                {calculatePercentageChanges.volume.display} 24h
+              <div className="text-sm font-medium text-gray-500">
+                (24h: soon)
               </div>
             </div>
-            <div className="text-white text-2xl font-bold">{formatLargeUSDC(marketStats.volume24h)}</div>
+            <div className="text-white text-2xl font-bold">{formatLargeUSDC(marketStats.totalVolume)}</div>
           </motion.div>
 
           <motion.div
@@ -630,12 +648,10 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-orange-500" />
-                <span className="text-gray-400 text-sm font-medium">Total Traders</span>
+                <span className="text-gray-400 text-sm font-medium">Total Participants</span>
               </div>
-              <div className={`text-sm font-medium ${
-                calculatePercentageChanges.traders.isPositive ? 'text-orange-500' : 'text-red-500'
-              }`}>
-                {calculatePercentageChanges.traders.display} 24h
+              <div className="text-sm font-medium text-gray-500">
+                (24h: soon)
               </div>
             </div>
             <div className="text-white text-2xl font-bold">{marketStats.activeTraders.toLocaleString()}</div>
@@ -652,10 +668,8 @@ export default function HomePage() {
                 <MessageSquare className="w-4 h-4 text-purple-500" />
                 <span className="text-gray-400 text-sm font-medium">Total Opinions</span>
               </div>
-              <div className={`text-sm font-medium ${
-                calculatePercentageChanges.opinions.isPositive ? 'text-purple-500' : 'text-red-500'
-              }`}>
-                {calculatePercentageChanges.opinions.display} today
+              <div className="text-sm font-medium text-gray-500">
+                (today: soon)
               </div>
             </div>
             <div className="text-white text-2xl font-bold">{marketStats.totalOpinions}</div>
@@ -690,26 +704,6 @@ export default function HomePage() {
               ))}
             </SelectContent>
           </Select>
-          
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="bg-gray-800 border-gray-700 text-white w-full md:w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-700">{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc')}
-            className="bg-gray-800 border-gray-700 text-white p-2 hover:bg-gray-700"
-          >
-            <ChevronsUpDown className="w-4 h-4" />
-          </Button>
         </motion.div>
 
         {/* Tab Navigation System - EXACT MATCH */}
@@ -729,10 +723,6 @@ export default function HomePage() {
                 <Flame className="w-4 h-4" />
                 Trending
               </TabsTrigger>
-              <TabsTrigger value="featured" className="flex items-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-gray-700">
-                <Star className="w-4 h-4" />
-                Featured
-              </TabsTrigger>
             </TabsList>
           </Tabs>
         </motion.div>
@@ -744,8 +734,8 @@ export default function HomePage() {
           transition={{ delay: 0.7 }}
           className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden"
         >
-          <div className="p-6 border-b border-gray-700/50">
-            <h2 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
+          <div className="p-4 border-b border-gray-700/50">
+            <h2 className="text-white text-xl font-semibold mb-2 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Opinion Market ({filteredAndSortedOpinions.length})
             </h2>
@@ -753,16 +743,37 @@ export default function HomePage() {
 
           {/* Table Header - ENHANCED: ADDED NEW COLUMNS */}
           <div className="hidden lg:grid gap-2 px-4 py-3 bg-gray-800/50 border-b border-gray-700/50" style={{
-            gridTemplateColumns: "40px 1fr 200px 80px 70px 80px 80px 120px 120px"
+            gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
           }}>
-            <div className="text-white text-base font-bold text-center">#</div>
-            <div className="text-white text-base font-bold">Question</div>
-            <div className="text-white text-base font-bold">🔗 Answer</div>
+            <div 
+              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+              onClick={() => handleSort('id')}
+            >
+              <span className="text-sm">#</span>
+              {sortState.column === 'id' ? (
+                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
+              ) : (
+                <ChevronsUpDown className="w-3 h-3" />
+              )}
+            </div>
+            <div className="text-white text-base font-bold">question</div>
+            <div className="text-white text-base font-bold">🔗 answer</div>
+            <div 
+              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+              onClick={() => handleSort('lastPrice')}
+            >
+              <span className="text-sm whitespace-nowrap">last price</span>
+              {sortState.column === 'lastPrice' ? (
+                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
+              ) : (
+                <ChevronsUpDown className="w-3 h-3" />
+              )}
+            </div>
             <div 
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('price')}
             >
-              <span className="text-sm">Price</span>
+              <span className="text-sm whitespace-nowrap">next price</span>
               {sortState.column === 'price' ? (
                 sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
               ) : (
@@ -773,7 +784,7 @@ export default function HomePage() {
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('change')}
             >
-              <span className="text-sm">24h %</span>
+              <span className="text-sm">var %</span>
               {sortState.column === 'change' ? (
                 sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
               ) : (
@@ -784,7 +795,7 @@ export default function HomePage() {
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('trades')}
             >
-              <span className="text-sm">Trades</span>
+              <span className="text-sm">trades</span>
               {sortState.column === 'trades' ? (
                 sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
               ) : (
@@ -795,15 +806,15 @@ export default function HomePage() {
               className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('volume')}
             >
-              <span className="text-sm">Vol</span>
+              <span className="text-sm">vol</span>
               {sortState.column === 'volume' ? (
                 sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
               ) : (
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div className="text-white text-base font-bold text-center hidden lg:block">Chart</div>
-            <div className="text-white text-base font-bold text-center">Actions</div>
+            <div className="text-white text-base font-bold text-center hidden lg:block">chart</div>
+            <div className="text-white text-base font-bold text-center">actions</div>
           </div>
 
           {/* Table Body - REAL CONTRACT DATA */}
@@ -838,9 +849,9 @@ export default function HomePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="grid grid-cols-1 lg:grid-cols-9 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
+                  className="grid grid-cols-1 lg:grid-cols-10 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
                   style={{
-                    gridTemplateColumns: "40px 1fr 200px 80px 70px 80px 80px 120px 120px"
+                    gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
                   }}
                   onClick={() => router.push(`/opinions/${opinion.id}`)}
                 >
@@ -856,7 +867,7 @@ export default function HomePage() {
                     
                     <div className="w-full">
                       <div className="text-white font-bold text-base mb-1 leading-tight">
-                        {opinion.question}
+                        {formatQuestion(opinion.question)}
                       </div>
                       <div className="text-xs mb-2">
                         by <ClickableAddress 
@@ -918,30 +929,36 @@ export default function HomePage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <div className="text-xs text-gray-500">Price</div>
+                          <div className="text-xs text-gray-500">Last Price</div>
+                          <div className="font-semibold text-white">
+                            {formatUSDC(opinion.lastPrice)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">Next Price</div>
                           <div className="font-semibold text-white">
                             {formatUSDC(opinion.nextPrice)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Change</div>
-                          <div className={`flex items-center space-x-1 ${
+                          <div className="text-xs text-gray-500">24h %</div>
+                          <div className={`flex items-center space-x-1 ${ 
                             change.isPositive ? 'text-emerald-500' : 'text-red-500'
                           }`}>
-                            {change.isPositive ? <TrendingUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            {change.isPositive ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                             <span className="text-sm font-medium">{change.percentage.toFixed(1)}%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500">Volume</div>
-                          <div className="text-gray-300 text-sm">
-                            {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
                           </div>
                         </div>
                         <div>
                           <div className="text-xs text-gray-500">Trades</div>
                           <div className="text-gray-300 text-sm">
                             {opinion.tradesCount}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">Vol</div>
+                          <div className="text-gray-300 text-sm">
+                            {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
                           </div>
                         </div>
                       </div>
@@ -972,7 +989,7 @@ export default function HomePage() {
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
                         <div className="text-white font-bold text-base leading-tight mb-1">
-                          {opinion.question}
+                          {formatQuestion(opinion.question)}
                         </div>
                         <div className="text-xs mb-1 flex items-center gap-2">
                           <span>
@@ -1062,7 +1079,14 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Price - COMPACT */}
+                    {/* Last Price - COMPACT */}
+                    <div className="flex items-center justify-center min-h-[60px]">
+                      <span className="font-medium text-white text-sm">
+                        {formatUSDC(opinion.lastPrice)}
+                      </span>
+                    </div>
+
+                    {/* Next Price - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
                       <span className="font-medium text-white text-sm">
                         {formatUSDC(opinion.nextPrice)}
@@ -1071,10 +1095,10 @@ export default function HomePage() {
 
                     {/* 24h Change - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
-                      <div className={`flex items-center space-x-1 ${
+                      <div className={`flex items-center space-x-1 ${ 
                         change.isPositive ? 'text-emerald-500' : 'text-red-500'
                       }`}>
-                        {change.isPositive ? <TrendingUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {change.isPositive ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         <span className="font-medium text-xs">{change.percentage.toFixed(1)}%</span>
                       </div>
                     </div>
