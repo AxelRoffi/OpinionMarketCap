@@ -413,11 +413,13 @@ contract OpinionCore is
      * @param opinionId The ID of the opinion
      * @param answer The new answer
      * @param description The answer description (optional, max 120 chars)
+     * @param link The external URL link (optional, max 260 chars)
      */
     function submitAnswer(
         uint256 opinionId,
         string calldata answer,
-        string calldata description
+        string calldata description,
+        string calldata link
     ) external override nonReentrant whenNotPaused {
         _checkAndUpdateTradesInBlock();
         _checkTradeAllowed(opinionId);
@@ -435,6 +437,10 @@ contract OpinionCore is
 
         // Validate description (optional)
         ValidationLibrary.validateDescription(description);
+
+        // Validate link (optional)
+        bytes memory linkBytes = bytes(link);
+        if (linkBytes.length > MAX_LINK_LENGTH) revert InvalidLinkLength();
 
         // Use the stored next price or calculate it
         uint96 price = opinion.nextPrice > 0
@@ -507,6 +513,7 @@ contract OpinionCore is
         opinion.currentAnswer = answer;
         opinion.currentAnswerDescription = description;
         opinion.currentAnswerOwner = msg.sender;
+        opinion.link = link;
         opinion.lastPrice = price;
         opinion.totalVolume += price;
 

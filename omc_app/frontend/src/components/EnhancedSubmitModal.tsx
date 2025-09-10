@@ -321,7 +321,7 @@ export default function EnhancedSubmitModal({
           address: CONTRACTS.OPINION_CORE,
           abi: OPINION_CORE_ABI,
           functionName: 'submitAnswer',
-          args: [BigInt(opinionId), answer.trim(), description.trim()],
+          args: [BigInt(opinionId), answer.trim(), description.trim(), ''],
         });
         
         setStep('submitting');
@@ -344,7 +344,7 @@ export default function EnhancedSubmitModal({
             address: CONTRACTS.OPINION_CORE,
             abi: OPINION_CORE_ABI,
             functionName: 'submitAnswer',
-            args: [BigInt(opinionId), answer.trim(), description.trim()],
+            args: [BigInt(opinionId), answer.trim(), description.trim(), ''],
           });
           setStep('submitting');
         } catch (error) {

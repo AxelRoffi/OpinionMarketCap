@@ -107,7 +107,7 @@ export default function SubmitAnswerModal({
           address: CONTRACTS.OPINION_CORE,
           abi: OPINION_CORE_ABI,
           functionName: 'submitAnswer',
-          args: [BigInt(opinionId), answer, description || ''],
+          args: [BigInt(opinionId), answer, description || '', ''],
         });
       }
     } catch (error: unknown) {

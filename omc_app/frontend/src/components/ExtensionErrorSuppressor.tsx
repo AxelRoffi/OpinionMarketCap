@@ -22,7 +22,9 @@ export function ExtensionErrorSuppressor() {
         message.includes('Connection interrupted while trying to subscribe') ||
         message.includes('opfgelmcmbiajamepnmloijbpoleiama') ||
         message.includes('Error in invocation of runtime.sendMessage') ||
-        message.includes('must specify an Extension ID (string) for its first argument')
+        message.includes('must specify an Extension ID (string) for its first argument') ||
+        message.includes('An unexpected error occurred. Please refresh the page') ||
+        message.includes('React caught an error thrown by one of your components')
       ) {
         return; // Suppress these errors
       }

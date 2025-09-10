@@ -110,11 +110,26 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     query: { enabled: !!address }
   })
 
-  const { writeContract: approveUSDC, data: approveHash } = useWriteContract()
-  const { writeContract: submitAnswer, data: submitHash } = useWriteContract()
+  const { 
+    writeContract: approveUSDC, 
+    data: approveHash, 
+    error: approveError,
+    isPending: isApprovePending 
+  } = useWriteContract()
+  
+  const { 
+    writeContract: submitAnswer, 
+    data: submitHash,
+    error: submitError,
+    isPending: isSubmitPending 
+  } = useWriteContract()
 
   const { isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({ hash: approveHash })
   const { isSuccess: isSubmitSuccess } = useWaitForTransactionReceipt({ hash: submitHash })
+  
+  // Derive error states
+  const isSubmitError = !!submitError
+  const isApproveError = !!approveError
 
   // Format functions
   const formatUSDC = useCallback((wei: bigint) => {
@@ -252,11 +267,12 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
         })
       } else {
         setCurrentStep('submit')
+        
         await submitAnswer({
           address: CONTRACTS.OPINION_CORE,
           abi: OPINION_CORE_ABI,
           functionName: 'submitAnswer',
-          args: [BigInt(opinionId), answer.trim(), description.trim()]
+          args: [BigInt(opinionId), answer.trim(), description.trim(), link.trim()]
         })
       }
     } catch (error) {
@@ -285,24 +301,29 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     if (isApproveSuccess && currentStep === 'approve') {
       setCurrentStep('submit')
       try {
+        
         submitAnswer({
           address: CONTRACTS.OPINION_CORE,
           abi: OPINION_CORE_ABI,
           functionName: 'submitAnswer',
-          args: [BigInt(opinionId), answer.trim(), description.trim()]
+          args: [BigInt(opinionId), answer.trim(), description.trim(), link.trim()]
         })
       } catch (error) {
         handleError(error, 'Submit after approval')
       }
     }
-  }, [isApproveSuccess, currentStep, submitAnswer, opinionId, answer, description])
+  }, [isApproveSuccess, currentStep, submitAnswer, opinionId, answer, description, link])
 
   // Handle submit success
   useEffect(() => {
     if (isSubmitSuccess && currentStep === 'submit') {
       handleTransactionSuccess()
     }
-  }, [isSubmitSuccess, currentStep])
+    
+    if (isSubmitError && submitError) {
+      handleError(submitError, 'Transaction submission')
+    }
+  }, [isSubmitSuccess, isSubmitError, isSubmitPending, submitError, currentStep])
 
   // CRITICAL: Only reset form on SUCCESS or manual close (preserve data on error)
   const resetForm = () => {

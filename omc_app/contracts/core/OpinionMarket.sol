@@ -176,9 +176,10 @@ contract OpinionMarket is
     function submitAnswer(
         uint256 opinionId,
         string calldata answer,
-        string calldata description
+        string calldata description,
+        string calldata link
     ) external nonReentrant whenNotPaused {
-        opinionCore.submitAnswer(opinionId, answer, description);
+        opinionCore.submitAnswer(opinionId, answer, description, link);
     }
 
     /**

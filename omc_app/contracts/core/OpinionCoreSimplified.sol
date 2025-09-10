@@ -273,7 +273,8 @@ contract OpinionCoreSimplified is
     function submitAnswer(
         uint256 opinionId,
         string calldata answer,
-        string calldata description
+        string calldata description,
+        string calldata link
     ) external override nonReentrant whenNotPaused {
         _checkAndUpdateTradesInBlock();
         _checkTradeAllowed(opinionId);
@@ -285,6 +286,10 @@ contract OpinionCoreSimplified is
 
         // Basic validation
         _validateAnswerInput(answer, description);
+
+        // Validate link (optional)
+        bytes memory linkBytes = bytes(link);
+        if (linkBytes.length > MAX_LINK_LENGTH) revert InvalidLinkLength();
 
         // Calculate price
         uint96 price = opinion.nextPrice > 0
@@ -343,6 +348,7 @@ contract OpinionCoreSimplified is
         opinion.currentAnswer = answer;
         opinion.currentAnswerDescription = description;
         opinion.currentAnswerOwner = msg.sender;
+        opinion.link = link;
         opinion.lastPrice = price;
         opinion.totalVolume += price;
         opinion.nextPrice = uint96(_calculateNextPrice(opinionId, price));

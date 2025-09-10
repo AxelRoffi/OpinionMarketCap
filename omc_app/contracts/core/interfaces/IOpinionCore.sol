@@ -26,7 +26,8 @@ interface IOpinionCore {
     function submitAnswer(
         uint256 opinionId, 
         string calldata answer,
-        string calldata description
+        string calldata description,
+        string calldata link
     ) external;
 
     function getAnswerHistory(

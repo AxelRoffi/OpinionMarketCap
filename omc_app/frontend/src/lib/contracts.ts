@@ -49,7 +49,8 @@ export const OPINION_CORE_ABI = [
     inputs: [
       { internalType: 'uint256', name: 'opinionId', type: 'uint256' },
       { internalType: 'string', name: 'answer', type: 'string' },
-      { internalType: 'string', name: 'description', type: 'string' }
+      { internalType: 'string', name: 'description', type: 'string' },
+      { internalType: 'string', name: 'link', type: 'string' }
     ],
     name: 'submitAnswer',
     outputs: [],
