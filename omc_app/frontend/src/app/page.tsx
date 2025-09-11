@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-// Removed unused imports
+import { PriceHistoryChart } from '@/components/PriceHistoryChart';
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
 import { ClickableAddress } from '@/components/ui/clickable-address';
@@ -58,7 +58,7 @@ const SORT_OPTIONS = [
   { value: "trades", label: "Trades" }
 ];
 
-interface OpinionData {
+export interface OpinionData {
   id: number;
   question: string;
   currentAnswer: string;
@@ -483,86 +483,7 @@ export default function HomePage() {
     setSortDirection(sortState.column === column && sortState.direction === 'desc' ? 'asc' : 'desc');
   };
 
-  // Generate realistic price history from initialPrice to current price
-  const generateRealPriceHistory = (opinion: OpinionData) => {
-    // TODO: In real implementation, this would fetch from contract.getAnswerHistory(opinionId)
-    // For now, we simulate realistic price evolution from initial to current
-    
-    const currentPrice = Number(opinion.nextPrice) / 1_000_000;
-    const initialPrice = 5.0; // Most opinions start at 5 USDC
-    
-    const points = 20;
-    const history = [];
-    
-    // Calculate total growth from initial to current
-    const totalGrowth = currentPrice / initialPrice;
-    
-    for (let i = 0; i < points; i++) {
-      const progress = i / (points - 1); // 0 to 1
-      
-      // Simulate realistic price progression with some volatility
-      let price;
-      if (i === 0) {
-        price = initialPrice; // Start at initial price
-      } else if (i === points - 1) {
-        price = currentPrice; // End at current price
-      } else {
-        // Gradual progression with some realistic market volatility
-        const baseProgress = Math.pow(progress, 1.2); // Slightly accelerated growth curve
-        price = initialPrice * (1 + (totalGrowth - 1) * baseProgress);
-        
-        // Add some realistic volatility (±5%)
-        const volatility = (Math.sin(i * 0.7) * 0.03 + Math.random() * 0.02 - 0.01);
-        price *= (1 + volatility);
-        
-        // Ensure minimum price
-        price = Math.max(price, 0.1);
-      }
-      
-      history.push({
-        timestamp: Date.now() - (points - 1 - i) * 3600000, // Hourly intervals
-        price: price
-      });
-    }
-    
-    return history;
-  };
-
-  // Enhanced Mini Price Chart Component with trend colors
-  const MiniPriceChart = ({ 
-    priceHistory, 
-    change24h 
-  }: { 
-    priceHistory: Array<{ timestamp: number; price: number }>;
-    change24h: { percentage: number; isPositive: boolean };
-  }) => {
-    if (!priceHistory || priceHistory.length === 0) {
-      return (
-        <div className="w-32 h-10 bg-gray-700/50 rounded flex items-center justify-center">
-          <span className="text-xs text-gray-500">No data</span>
-        </div>
-      );
-    }
-
-    const strokeColor = change24h.isPositive ? "#10b981" : "#ef4444"; // Green or red
-
-    return (
-      <div className="w-32 h-10">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={priceHistory}>
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke={strokeColor}
-              strokeWidth={2}
-              dot={false}
-              strokeLinecap="round"
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  };
+  
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -1119,9 +1040,9 @@ export default function HomePage() {
 
                     {/* Price Chart - RESPONSIVE */}
                     <div className="hidden lg:flex items-center justify-center min-h-[60px]">
-                      <MiniPriceChart 
-                        priceHistory={generateRealPriceHistory(opinion)} 
-                        change24h={change}
+                      <PriceHistoryChart 
+                        opinion={opinion} 
+                        change={change}
                       />
                     </div>
 

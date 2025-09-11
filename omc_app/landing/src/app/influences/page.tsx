@@ -1,5 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
+import { LandingNavigation } from '@/components/LandingNavigation';
 
 const InfluencesPage: NextPage = () => {
   return (
@@ -9,7 +10,10 @@ const InfluencesPage: NextPage = () => {
         <meta name="description" content="The intellectual and philosophical foundations of OpinionMarketCap." />
       </Head>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Navigation */}
+      <LandingNavigation />
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-28">
         <article className="prose prose-invert prose-lg max-w-none">
           <header className="mb-12 text-center">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">The Genesis of an Idea</h1>

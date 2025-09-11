@@ -813,7 +813,7 @@ export default function Tutorial() {
                       <AccordionTrigger className="text-left">
                         <div className="flex items-center space-x-3">
                           <Crown className="w-5 h-5 text-yellow-400" />
-                          <span className="text-lg font-semibold">Question Creator Strategy</span>
+                          <span className="text-lg font-semibold text-white">Question Creator Strategy</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
@@ -821,7 +821,7 @@ export default function Tutorial() {
                           <div className="bg-yellow-600/20 border border-yellow-400/30 rounded p-4">
                             <strong className="text-yellow-300">Best practices:</strong>
                             <ul className="text-yellow-200 text-sm mt-2 space-y-1 list-disc list-inside">
-                              <li>Ask questions in your area of expertise</li>
+                              <li>Ask questions that sparkle endless debates</li>
                               <li>Research current market gaps and underserved topics</li>
                               <li>Set realistic but attractive initial prices</li>
                               <li>Choose specific, actionable questions over vague ones</li>
@@ -831,7 +831,7 @@ export default function Tutorial() {
                           
                           <div className="bg-green-600/20 border border-green-400/30 rounded p-4">
                             <strong className="text-green-300">Revenue optimization:</strong>
-                            <p className="text-green-200 text-sm mt-2">Your 3% royalty compounds over time. A successful question generating 1000 USDC in trading volume earns you 30 USDC. Focus on evergreen topics with lasting relevance.</p>
+                            <p className="text-green-200 text-sm mt-2">Your 3% royalty compounds over time. A successful question generating 1000 USDC in trading volume earns you 30 USDC. Focus on evergreen topics with lasting relevance. You can list for selling the question you minted on our marketplace</p>
                           </div>
                         </div>
                       </AccordionContent>
@@ -841,7 +841,7 @@ export default function Tutorial() {
                       <AccordionTrigger className="text-left">
                         <div className="flex items-center space-x-3">
                           <TrendingUp className="w-5 h-5 text-emerald-400" />
-                          <span className="text-lg font-semibold">Advanced Trading Tactics</span>
+                          <span className="text-lg font-semibold text-white">Advanced Trading Tactics</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
@@ -875,7 +875,7 @@ export default function Tutorial() {
                       <AccordionTrigger className="text-left">
                         <div className="flex items-center space-x-3">
                           <Users className="w-5 h-5 text-red-400" />
-                          <span className="text-lg font-semibold">Pool Mastery</span>
+                          <span className="text-lg font-semibold text-white">Pool Mastery</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
@@ -903,7 +903,7 @@ export default function Tutorial() {
                       <AccordionTrigger className="text-left">
                         <div className="flex items-center space-x-3">
                           <AlertCircle className="w-5 h-5 text-orange-400" />
-                          <span className="text-lg font-semibold">Troubleshooting Common Issues</span>
+                          <span className="text-lg font-semibold text-white">Troubleshooting Common Issues</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
