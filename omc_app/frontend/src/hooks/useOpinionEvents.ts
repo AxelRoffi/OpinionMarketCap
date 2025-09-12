@@ -16,25 +16,7 @@ const OPINION_ACTION_EVENT = {
   type: 'event'
 } as const;
 
-// ABI for getAnswerHistory to get complete trade counts
-const GET_ANSWER_HISTORY_ABI = {
-  inputs: [{ name: 'opinionId', type: 'uint256' }],
-  name: 'getAnswerHistory',
-  outputs: [
-    {
-      components: [
-        { name: 'answer', type: 'string' },
-        { name: 'description', type: 'string' },
-        { name: 'owner', type: 'address' },
-        { name: 'price', type: 'uint96' },
-        { name: 'timestamp', type: 'uint32' },
-      ],
-      type: 'tuple[]',
-    },
-  ],
-  stateMutability: 'view',
-  type: 'function',
-} as const;
+
 
 interface OpinionActionEvent {
   opinionId: number;
