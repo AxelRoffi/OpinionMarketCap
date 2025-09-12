@@ -64,7 +64,7 @@ export const usePoolCompletion = (poolId: number) => {
       enabled: poolId >= 0,
       refetchInterval: 10000, // Refresh every 10 seconds
     },
-  }) as { data: PoolDetails | undefined, refetch: () => void, error: any, isLoading: boolean };
+  }) as { data: PoolDetails | undefined, refetch: () => void, error: Error | null, isLoading: boolean };
 
   console.log('🔧 Pool details contract call:', {
     poolId,
@@ -97,7 +97,7 @@ export const usePoolCompletion = (poolId: number) => {
       enabled: !!userAddress,
       refetchInterval: 15000, // Refresh every 15 seconds
     },
-  }) as { data: bigint | undefined, refetch: () => void, error: any, isLoading: boolean };
+  }) as { data: bigint | undefined, refetch: () => void, error: Error | null, isLoading: boolean };
 
   console.log('🔧 USDC balance contract call:', {
     userAddress,

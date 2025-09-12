@@ -48,7 +48,22 @@ export function usePoolOwnerDisplay() {
         const data = await response.json();
         const pools = data.pools || [];
         
-        const poolInfos: PoolInfo[] = pools.map((pool: any) => ({
+        interface ApiPool {
+          info?: {
+            id: string;
+            name: string;
+            status: string;
+            opinionId: string;
+            proposedAnswer: string;
+          };
+          id?: string;
+          name?: string;
+          status?: string;
+          opinionId?: string;
+          proposedAnswer?: string;
+        }
+
+        const poolInfos: PoolInfo[] = pools.map((pool: ApiPool) => ({
           id: parseInt(pool.info?.id || pool.id),
           name: pool.info?.name || pool.name,
           status: parseInt(pool.info?.status || pool.status),

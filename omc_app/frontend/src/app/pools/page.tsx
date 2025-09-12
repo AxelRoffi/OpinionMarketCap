@@ -33,6 +33,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePools } from './hooks/usePools';
 import { useRouter } from 'next/navigation';
 import JoinPoolModal from './components/JoinPoolModal';
@@ -173,7 +174,11 @@ export default function PoolsPage() {
   });
 
   // Filter and sort pools
-  const filteredPools = processedPools.filter(pool => {
+  const activePools = processedPools.filter(p => p.status !== 'Executed' && p.timeLeft !== 'Expired');
+  const executedPools = processedPools.filter(p => p.status === 'Executed');
+  const expiredPools = processedPools.filter(p => p.timeLeft === 'Expired');
+
+  const filteredPools = activePools.filter(pool => {
     const matchesSearch = searchQuery === '' || 
       pool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pool.proposedAnswer.toLowerCase().includes(searchQuery.toLowerCase());
@@ -234,6 +239,39 @@ export default function PoolsPage() {
           <p className="text-gray-400 text-lg">
             Fund opinion changes together and share the rewards
           </p>
+        </motion.div>
+
+        {/* How it works alert */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-blue-900/50 border border-blue-700 rounded-lg p-6 mb-8"
+        >
+          <h3 className="text-xl font-bold text-white mb-4">How Pools Work</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-300">
+            <div>
+              <h4 className="font-semibold text-white mb-2">1. Create or Join a Pool</h4>
+              <p>
+                Users can create a new pool for an opinion with a proposed answer, a deadline, and an initial contribution.
+                Others can then join the pool by contributing USDC. A small fee is charged for creating and contributing to a pool.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">2. Fund the Pool</h4>
+              <p>
+                The goal is to collectively reach the opinion's <code className="bg-gray-700 p-1 rounded">nextPrice</code> before the deadline.
+                If the target is met, the pool is executed, and the opinion's answer is updated.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">3. Share the Rewards</h4>
+              <p>
+                When the pool-owned answer is purchased by another user, the rewards are distributed proportionally to all pool contributors.
+                If the pool expires, contributors can withdraw their funds.
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* 1. Platform Stats Cards - EXACT Layout (4 cards horizontal) */}
@@ -333,50 +371,150 @@ export default function PoolsPage() {
           </Button>
         </motion.div>
 
-        {/* 3. Table Structure - OBLIGATOIRE Desktop Format (7 columns) */}
+        {/* 3. Main Content Area */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Pool</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Progress</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Amount</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Contributors</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Time Left</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Status</TableHead>
-                  <TableHead className="text-left py-4 px-6 text-white font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedPools.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-gray-400">
-                      No pools found matching your filters
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedPools.map((pool, index) => (
-                    <TableRow key={pool.id} className="border-b border-gray-700/40 hover:bg-gray-700/20">
-                      {/* PREMIÈRE COLONNE SEULEMENT - Pool Info */}
-                      <TableCell className="py-4 px-6">
-                        <div>
-                          {/* 1. Question en premier */}
-                          <h3 className="font-semibold text-white text-base leading-tight">
-                            {pool.question}
-                          </h3>
-                          
-                          {/* 2. Opinion ID - petit et gris */}
-                          <p className="text-xs text-gray-400 mt-1">
-                            Opinion #{pool.opinionId}
-                          </p>
-                          
-                          {/* 3. Pool Name - prominent and clickable */}
-                          <h4 className="font-medium text-lg mt-2">
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList>
+              <TabsTrigger value="active">Active Pools</TabsTrigger>
+              <TabsTrigger value="executed">Recently Executed</TabsTrigger>
+              <TabsTrigger value="expired">Expired</TabsTrigger>
+            </TabsList>
+            <TabsContent value="active">
+              <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Pool</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Progress</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Amount</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Contributors</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Time Left</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Status</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedPools.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-12 text-gray-400">
+                          No active pools found matching your filters
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedPools.map((pool, index) => (
+                        <TableRow key={pool.id} className="border-b border-gray-700/40 hover:bg-gray-700/20">
+                          <TableCell className="py-4 px-6">
+                            <div>
+                              <h3 className="font-semibold text-white text-base leading-tight">
+                                {pool.question}
+                              </h3>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Opinion #{pool.opinionId}
+                              </p>
+                              <h4 className="font-medium text-lg mt-2">
+                                <button
+                                  onClick={() => router.push(`/pools/${pool.id}`)}
+                                  className="text-white hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                                >
+                                  {pool.name}
+                                </button>
+                              </h4>
+                              <p className="text-sm text-white italic mt-1">
+                                "{pool.proposedAnswer}"
+                              </p>
+                              <Badge variant="secondary" className="mt-2 bg-blue-600/20 text-blue-400 border-blue-600/30">
+                                {pool.category}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <div>
+                              <p className="text-sm font-medium text-white mb-2">
+                                {pool.progress.toFixed(1)}% complete
+                              </p>
+                              <div className="w-full bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(pool.progress)}`}
+                                  style={{ width: `${Math.min(pool.progress, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <div>
+                              <p className="font-semibold text-white">
+                                ${formatNumber(pool.currentAmount)}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                of ${formatNumber(pool.targetPrice)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-gray-400" />
+                              <span className="text-white">{pool.contributorCount}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <Timer className="h-4 w-4 text-orange-400" />
+                              <span className="text-white">{pool.timeLeft}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <StatusBadge status={pool.status} />
+                          </TableCell>
+                          <TableCell className="py-4 px-6">
+                            <div className="flex gap-2 flex-wrap">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                                onClick={() => router.push(`/pools/${pool.id}`)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className={`bg-gradient-to-r ${pool.progress >= 99 
+                                  ? 'from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700'
+                                  : 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'}`}
+                                onClick={() => handleJoinPool(pool)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                {pool.progress >= 99 ? 'Finish Pool' : 'Join Pool'}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+            <TabsContent value="executed">
+              <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Pool</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Amount</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Contributors</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Executed At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {executedPools.map(pool => (
+                      <TableRow key={pool.id} className="border-b border-gray-700/40 hover:bg-gray-700/20">
+                        <TableCell className="py-4 px-6">
+                          <h4 className="font-medium text-lg">
                             <button
                               onClick={() => router.push(`/pools/${pool.id}`)}
                               className="text-white hover:text-emerald-400 transition-colors cursor-pointer text-left"
@@ -384,114 +522,92 @@ export default function PoolsPage() {
                               {pool.name}
                             </button>
                           </h4>
-                          
-                          {/* 4. Answer avec quotes */}
                           <p className="text-sm text-white italic mt-1">
                             "{pool.proposedAnswer}"
                           </p>
-                          
-                          {/* 5. Category Badge */}
-                          <Badge variant="secondary" className="mt-2 bg-blue-600/20 text-blue-400 border-blue-600/30">
-                            {pool.category}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      
-                      {/* Column 2: Progress Bar */}
-                      <TableCell className="py-4 px-6">
-                        <div>
-                          <p className="text-sm font-medium text-white mb-2">
-                            {pool.progress.toFixed(1)}% complete
-                          </p>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(pool.progress)}`}
-                              style={{ width: `${Math.min(pool.progress, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      {/* Column 3: Amount */}
-                      <TableCell className="py-4 px-6">
-                        <div>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
                           <p className="font-semibold text-white">
                             ${formatNumber(pool.currentAmount)}
                           </p>
-                          <p className="text-sm text-gray-400">
-                            of ${formatNumber(pool.targetPrice)}
-                          </p>
-                        </div>
-                      </TableCell>
-                      
-                      {/* Column 4: Contributors */}
-                      <TableCell className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-gray-400" />
-                          <span className="text-white">{pool.contributorCount}</span>
-                        </div>
-                      </TableCell>
-                      
-                      {/* Column 5: Time Left */}
-                      <TableCell className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <Timer className="h-4 w-4 text-orange-400" />
-                          <span className="text-white">{pool.timeLeft}</span>
-                        </div>
-                      </TableCell>
-                      
-                      {/* Column 6: Status Badge */}
-                      <TableCell className="py-4 px-6">
-                        <StatusBadge status={pool.status} />
-                      </TableCell>
-                      
-                      {/* Column 7: Actions */}
-                      <TableCell className="py-4 px-6">
-                        <div className="flex gap-2 flex-wrap">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                            onClick={() => router.push(`/pools/${pool.id}`)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
-                          
-                          {pool.progress >= 99 && pool.canUseCompletePool && pool.originalTargetPrice > 0 ? (
-                            // Show Complete Pool button ONLY for NEW pools with valid stored targetPrice
-                            <Button 
-                              size="sm" 
-                              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                              onClick={() => handleCompletePool(pool)}
-                              disabled={isCompleting}
-                            >
-                              <Target className="h-4 w-4 mr-2" />
-                              {isCompleting ? 'Completing...' : 'Complete Pool'}
-                            </Button>
-                          ) : (
-                            // Show regular Join Pool button for ALL other cases (including old pools at 99%+)
-                            <Button 
-                              size="sm" 
-                              className={`bg-gradient-to-r ${
-                                pool.progress >= 99 
-                                  ? 'from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700' 
-                                  : 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'
-                              }`}
-                              onClick={() => handleJoinPool(pool)}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              {pool.progress >= 99 ? 'Finish Pool (0.00825 USDC)' : 'Join Pool'}
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            <span className="text-white">{pool.contributorCount}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <span className="text-white">{new Date(pool.deadline * 1000).toLocaleDateString()}</span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {executedPools.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-12 text-gray-400">
+                          No recently executed pools.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+            <TabsContent value="expired">
+              <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Pool</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Amount</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Contributors</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Expired At</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {expiredPools.map(pool => (
+                      <TableRow key={pool.id} className="border-b border-gray-700/40 hover:bg-gray-700/20">
+                        <TableCell className="py-4 px-6">
+                          <h4 className="font-medium text-lg">
+                            <button
+                              onClick={() => router.push(`/pools/${pool.id}`)}
+                              className="text-white hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                            >
+                              {pool.name}
+                            </button>
+                          </h4>
+                          <p className="text-sm text-white italic mt-1">
+                            "{pool.proposedAnswer}"
+                          </p>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <p className="font-semibold text-white">
+                            ${formatNumber(pool.currentAmount)}
+                          </p>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            <span className="text-white">{pool.contributorCount}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <span className="text-white">{new Date(pool.deadline * 1000).toLocaleDateString()}</span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {expiredPools.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-12 text-gray-400">
+                          No expired pools.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </motion.div>
 
         {/* Error State */}

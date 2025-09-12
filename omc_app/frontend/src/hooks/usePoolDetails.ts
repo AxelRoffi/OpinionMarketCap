@@ -194,7 +194,7 @@ export function usePoolDetails(poolId: number, userAddress?: string): UsePoolDet
 
   useEffect(() => {
     fetchPoolDetails();
-  }, [poolId, userAddress]);
+  }, [poolId, userAddress, fetchPoolDetails]);
 
   const refresh = async () => {
     // Clear cache for this pool
