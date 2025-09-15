@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 
 // Contract configuration
@@ -41,8 +41,8 @@ const POOL_MANAGER_ABI = [
 ] as const;
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: any
 ) {
   try {
     const poolId = parseInt(params.id);

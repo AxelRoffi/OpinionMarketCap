@@ -29,13 +29,7 @@ import { useUserProfile, useClaimFees, formatUSDC, formatPercentage, formatAddre
 import { PortfolioPerformanceChart } from '../components/portfolio-performance-chart';
 import { useRouter } from 'next/navigation';
 
-interface ProfilePageProps {
-  params: {
-    address: string;
-  };
-}
-
-export default function ProfilePage({ params }: ProfilePageProps) {
+export default function ProfilePage({ params }: any) {
   const router = useRouter();
   const { address: connectedAddress } = useAccount();
   const [copied, setCopied] = useState(false);

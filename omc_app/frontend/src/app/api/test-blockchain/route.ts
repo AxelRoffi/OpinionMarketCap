@@ -50,7 +50,7 @@ export async function GET() {
         name: poolData[7],
         ipfsHash: poolData[8]
       },
-      contributors: contributors.map(addr => addr),
+      contributors: contributors.map((addr: string) => addr),
       contributorCount: contributors.length,
       message: 'Pool data fetched successfully'
     });

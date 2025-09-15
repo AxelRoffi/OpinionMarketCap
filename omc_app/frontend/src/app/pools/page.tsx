@@ -12,8 +12,13 @@ import {
   Users,
   Eye,
   Plus,
-  Activity
+  Activity,
+  History,
+  TrendingDown,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -62,8 +67,30 @@ const getProgressColor = (progress: number) => {
   return "bg-blue-500"; // Blue for beginning
 };
 
-const getPoolStatus = (progress: number) => {
+const getPoolStatus = (status: string | number, progress: number, deadline: number) => {
+  // Handle both string and number status
+  const numericStatus = typeof status === 'string' ? 
+    (status === 'executed' ? 1 : status === 'expired' ? 2 : 0) : status;
+  
+  // Check contract status first
+  if (numericStatus === 1 || status === 'executed') return 'executed';
+  if (numericStatus === 2 || status === 'expired') return 'expired';
+  
+  // Check if deadline has passed (this is the key fix!)
+  const now = Math.floor(Date.now() / 1000);
+  if (deadline <= now) return 'expired';
+  
+  // Otherwise check progress
   return progress >= 95 ? 'about-to-execute' : 'active';
+};
+
+const getPoolStatusDisplay = (status: string) => {
+  switch (status) {
+    case 'executed': return { label: 'Executed', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' };
+    case 'expired': return { label: 'Expired', color: 'bg-red-500/20 text-red-400 border-red-500/30' };
+    case 'about-to-execute': return { label: 'About to Execute', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' };
+    default: return { label: 'Active', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+  }
 };
 
 
@@ -95,18 +122,12 @@ const StatsCard = ({
   </motion.div>
 );
 
-// Status Badge Component - EXACT Colors
+// Status Badge Component - Enhanced Colors
 const StatusBadge = ({ status }: { status: string }) => {
-  if (status === 'about-to-execute') {
-    return (
-      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-        About to Execute
-      </Badge>
-    );
-  }
+  const statusDisplay = getPoolStatusDisplay(status);
   return (
-    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-      Active
+    <Badge className={statusDisplay.color}>
+      {statusDisplay.label}
     </Badge>
   );
 };
@@ -117,6 +138,7 @@ export default function PoolsPage() {
   const { pools, platformStats, loading, error: poolsError, refetch } = usePools();
   const { completePool, isCompleting } = useCompletePool();
   
+  const [activeTab, setActiveTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [poolTypeFilter, setPoolTypeFilter] = useState('all-pools');
@@ -149,13 +171,14 @@ export default function PoolsPage() {
     const currentAmount = Number(pool.totalAmount) / 1_000_000;
     const targetPrice = Number(pool.targetPrice) / 1_000_000;
     
-    // WORKAROUND: If targetPrice is 0 (old pools), calculate it dynamically
+    // WORKAROUND: If targetPrice is 0 (old pools), use the targetPrice as fallback
     let actualTargetPrice = targetPrice;
-    if (targetPrice === 0 && pool.currentPrice) {
-      actualTargetPrice = Number(pool.currentPrice) / 1_000_000;
+    if (targetPrice === 0) {
+      // Use the stored targetPrice from the pool data
+      actualTargetPrice = Number(pool.targetPrice) / 1_000_000;
     }
     
-    console.log(`Pool ${pool.id}: targetPrice=${targetPrice}, currentPrice=${pool.currentPrice}, actualTargetPrice=${actualTargetPrice}`);
+    console.log(`Pool ${pool.id}: targetPrice=${targetPrice}, storedTargetPrice=${Number(pool.targetPrice)}, actualTargetPrice=${actualTargetPrice}`);
     
     // Real progress calculation
     const progress = actualTargetPrice > 0 ? Math.min((currentAmount / actualTargetPrice) * 100, 100) : 0;
@@ -166,20 +189,32 @@ export default function PoolsPage() {
       targetPrice: actualTargetPrice,
       originalTargetPrice: targetPrice, // Keep track of original
       progress,
-      status: getPoolStatus(progress),
+      poolStatus: getPoolStatus(pool.status, progress, pool.deadline),
       timeLeft: formatTimeLeft(pool.deadline),
       canUseCompletePool: targetPrice > 0 // Only pools with valid stored targetPrice can use completePool
     };
   });
 
+  // Separate active and historical pools
+  const activePools = processedPools.filter(pool => 
+    pool.poolStatus === 'active' || pool.poolStatus === 'about-to-execute'
+  );
+  
+  const historicalPools = processedPools.filter(pool => 
+    pool.poolStatus === 'executed' || pool.poolStatus === 'expired'
+  );
+
+  // Filter pools based on current tab
+  const currentPools = activeTab === 'active' ? activePools : historicalPools;
+  
   // Filter and sort pools
-  const filteredPools = processedPools.filter(pool => {
+  const filteredPools = currentPools.filter(pool => {
     const matchesSearch = searchQuery === '' || 
       pool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pool.proposedAnswer.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = categoryFilter === 'all' || 
-      pool.category.toLowerCase() === categoryFilter;
+      (pool.category && pool.category.toLowerCase() === categoryFilter);
     
     return matchesSearch && matchesCategory;
   });
@@ -236,6 +271,39 @@ export default function PoolsPage() {
           </p>
         </motion.div>
 
+        {/* How it works alert */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-blue-900/50 border border-blue-700 rounded-lg p-6 mb-8"
+        >
+          <h3 className="text-xl font-bold text-white mb-4">How Pools Work</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-300">
+            <div>
+              <h4 className="font-semibold text-white mb-2">1. Create or Join a Pool</h4>
+              <p>
+                Users can create a new pool for an opinion with a proposed answer, a deadline, and an initial contribution.
+                Others can then join the pool by contributing USDC. A 5usdc fee is charged for creating and a 1 usdc fee for contributing to a pool. This prevents gaming, pump and dump or spamming.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">2. Fund the Pool</h4>
+              <p>
+                The goal is to collectively reach the opinion's <code className="bg-gray-700 p-1 rounded">nextPrice</code> before the deadline.
+                If the target is met, the pool is executed, and the opinion's answer is updated. If you withdraw your contribution before deadline, you get a 20% penalty. This prevents gaming, spamming and bad behaviors.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-2">3. Share the Rewards</h4>
+              <p>
+                When the pool-owned answer is purchased by another user, the rewards are distributed proportionally to all pool contributors.
+                If the pool expires, contributors can withdraw their funds.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* 1. Platform Stats Cards - EXACT Layout (4 cards horizontal) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatsCard 
@@ -268,13 +336,44 @@ export default function PoolsPage() {
           />
         </div>
 
-        {/* 2. Filters Row - EXACT Components (Search + 3 Dropdowns + Refresh) */}
+        {/* Tabs Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex flex-col md:flex-row gap-4 mb-6"
+          className="mb-6"
         >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-800 border-gray-700">
+              <TabsTrigger 
+                value="active" 
+                className="flex items-center gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                <Target className="h-4 w-4" />
+                Active Pools
+                <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  {activePools.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white"
+              >
+                <History className="h-4 w-4" />
+                Pool History
+                <Badge className="ml-2 bg-gray-500/20 text-gray-400 border-gray-500/30">
+                  {historicalPools.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* 2. Filters Row - EXACT Components (Search + 3 Dropdowns + Refresh) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col md:flex-row gap-4 mb-6"
+            >
           {/* Search Bar */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -327,19 +426,20 @@ export default function PoolsPage() {
             </SelectContent>
           </Select>
           
-          {/* Refresh Button */}
-          <Button variant="outline" size="icon" className="border-gray-700 bg-gray-800 text-white hover:bg-gray-700" onClick={refetch}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </motion.div>
+              {/* Refresh Button */}
+              <Button variant="outline" size="icon" className="border-gray-700 bg-gray-800 text-white hover:bg-gray-700" onClick={refetch}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </motion.div>
 
-        {/* 3. Table Structure - OBLIGATOIRE Desktop Format (7 columns) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
+            {/* Active Pools Tab */}
+            <TabsContent value="active" className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -391,9 +491,11 @@ export default function PoolsPage() {
                           </p>
                           
                           {/* 5. Category Badge */}
-                          <Badge variant="secondary" className="mt-2 bg-blue-600/20 text-blue-400 border-blue-600/30">
-                            {pool.category}
-                          </Badge>
+                          {pool.category && (
+                            <Badge variant="secondary" className="mt-2 bg-blue-600/20 text-blue-400 border-blue-600/30">
+                              {pool.category}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       
@@ -442,7 +544,7 @@ export default function PoolsPage() {
                       
                       {/* Column 6: Status Badge */}
                       <TableCell className="py-4 px-6">
-                        <StatusBadge status={pool.status} />
+                        <StatusBadge status={pool.poolStatus} />
                       </TableCell>
                       
                       {/* Column 7: Actions */}
@@ -490,9 +592,141 @@ export default function PoolsPage() {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </Card>
-        </motion.div>
+                </Table>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          {/* Pool History Tab */}
+          <TabsContent value="history" className="mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="bg-gray-800/50 border-gray-700/40 backdrop-blur-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Pool</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Final Progress</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Final Amount</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Contributors</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Completion Date</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Result</TableHead>
+                      <TableHead className="text-left py-4 px-6 text-white font-semibold">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedPools.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-12 text-gray-400">
+                          {activeTab === 'history' ? 'No completed or expired pools found' : 'No pools found matching your filters'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedPools.map((pool, index) => (
+                        <TableRow key={pool.id} className="border-b border-gray-700/40 hover:bg-gray-700/20">
+                          {/* Pool Info */}
+                          <TableCell className="py-4 px-6">
+                            <div>
+                              <h3 className="font-semibold text-white text-base leading-tight">
+                                {pool.question}
+                              </h3>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Opinion #{pool.opinionId}
+                              </p>
+                              <h4 className="font-medium text-lg mt-2">
+                                <button
+                                  onClick={() => router.push(`/pools/${pool.id}`)}
+                                  className="text-white hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                                >
+                                  {pool.name}
+                                </button>
+                              </h4>
+                              <p className="text-sm text-white italic mt-1">
+                                "{pool.proposedAnswer}"
+                              </p>
+                              {pool.category && (
+                                <Badge variant="secondary" className="mt-2 bg-blue-600/20 text-blue-400 border-blue-600/30">
+                                  {pool.category}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          
+                          {/* Final Progress */}
+                          <TableCell className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              {pool.poolStatus === 'executed' ? (
+                                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-red-400" />
+                              )}
+                              <span className={`font-medium ${
+                                pool.poolStatus === 'executed' ? 'text-emerald-400' : 'text-red-400'
+                              }`}>
+                                {pool.progress.toFixed(1)}%
+                              </span>
+                            </div>
+                          </TableCell>
+                          
+                          {/* Final Amount */}
+                          <TableCell className="py-4 px-6">
+                            <div>
+                              <p className="font-semibold text-white">
+                                ${formatNumber(pool.currentAmount)}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                of ${formatNumber(pool.targetPrice)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          
+                          {/* Contributors */}
+                          <TableCell className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-gray-400" />
+                              <span className="text-white">{pool.contributorCount}</span>
+                            </div>
+                          </TableCell>
+                          
+                          {/* Completion Date */}
+                          <TableCell className="py-4 px-6">
+                            <span className="text-white">
+                              {new Date(pool.deadline * 1000).toLocaleDateString()}
+                            </span>
+                          </TableCell>
+                          
+                          {/* Result Badge */}
+                          <TableCell className="py-4 px-6">
+                            <Badge className={getPoolStatusDisplay(pool.poolStatus).color}>
+                              {getPoolStatusDisplay(pool.poolStatus).label}
+                            </Badge>
+                          </TableCell>
+                          
+                          {/* Actions */}
+                          <TableCell className="py-4 px-6">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                              onClick={() => router.push(`/pools/${pool.id}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
 
         {/* Error State */}
         {poolsError && (
