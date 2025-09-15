@@ -137,7 +137,7 @@ export function usePoolDetails(poolId: number, userAddress?: string): UsePoolDet
 
       // Determine user's ability to join/withdraw
       const canJoin = status === 'active' && timeRemaining > 0 && progressPercentage < 100;
-      const canWithdraw = status === 'expired' && userAddress; // Can withdraw from expired pools
+      const canWithdraw = status === 'expired' && !!userAddress; // Can withdraw from expired pools
 
       // Build detailed pool info
       const detailedPool: DetailedPoolInfo = {

@@ -332,11 +332,13 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
 
           {/* Chart Content */}
           <div className="h-80">
-            {chartData.timeline.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                {renderChart()}
-              </ResponsiveContainer>
-            ) : (
+            {(() => {
+              const chart = chartData.timeline.length > 0 ? renderChart() : null;
+              return chart ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  {chart}
+                </ResponsiveContainer>
+              ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -346,7 +348,8 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
                   </p>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         </Tabs>
 

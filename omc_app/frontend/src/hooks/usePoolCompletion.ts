@@ -129,10 +129,11 @@ export const usePoolCompletion = (poolId: number) => {
     console.log('Pool details received:', poolDetails);
     
     // FIX: poolDetails is an array [info, currentPrice, remainingAmount, timeRemaining]
-    const info = poolDetails[0];           // First element is the PoolInfo struct
-    const currentPrice = poolDetails[1];   // Second element is currentPrice
-    const remainingAmount = poolDetails[2]; // Third element is remainingAmount  
-    const timeRemaining = poolDetails[3];   // Fourth element is timeRemaining
+    const poolArray = poolDetails as unknown as any[];
+    const info = poolArray[0];           // First element is the PoolInfo struct
+    const currentPrice = poolArray[1];   // Second element is currentPrice
+    const remainingAmount = poolArray[2]; // Third element is remainingAmount  
+    const timeRemaining = poolArray[3];   // Fourth element is timeRemaining
     
     const userBalanceAmount = userBalance || 0n;
     

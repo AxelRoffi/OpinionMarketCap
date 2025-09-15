@@ -5,7 +5,7 @@ import { useAccount, useReconnect, useConnect } from 'wagmi';
 
 export function WalletPersistence() {
   const { isConnected, isConnecting, isReconnecting, address, connector } = useAccount();
-  const { reconnect, isLoading: isReconnectLoading } = useReconnect();
+  const { reconnect } = useReconnect();
   const { connectors } = useConnect();
   const connectionStateRef = useRef<{
     address?: string;
@@ -16,7 +16,7 @@ export function WalletPersistence() {
   // Enhanced connection persistence logic
   useEffect(() => {
     const attemptReconnection = async () => {
-      if (!isConnected && !isConnecting && !isReconnecting && !isReconnectLoading) {
+      if (!isConnected && !isConnecting && !isReconnecting) {
         try {
           // Check multiple storage locations for wallet state
           const wagmiStore = localStorage.getItem('wagmi.store');
@@ -41,7 +41,7 @@ export function WalletPersistence() {
 
     const timeoutId = setTimeout(attemptReconnection, 1000);
     return () => clearTimeout(timeoutId);
-  }, [isConnected, isConnecting, isReconnecting, isReconnectLoading, connectors, reconnect]);
+  }, [isConnected, isConnecting, isReconnecting, connectors, reconnect]);
 
   // Save connection state whenever it changes
   useEffect(() => {

@@ -926,7 +926,6 @@ export default function HomePage() {
                         {/* Category Badge integrated under author */}
                         <div className="mt-1">
                           <Badge 
-                            size="sm"
                             className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
                             onClick={(e) => {
                               e.stopPropagation();

@@ -148,7 +148,7 @@ export function useCompletePool() {
         console.error('❌ approveUSDC failed:', approveError);
         
         // Handle testnet issues
-        const errorMessage = approveError?.message?.toLowerCase() || '';
+        const errorMessage = (approveError as any)?.message?.toLowerCase() || '';
         const isTestnetIssue = 
           errorMessage.includes('rate limited') || 
           errorMessage.includes('request is being rate limited');
@@ -213,7 +213,7 @@ export function useCompletePool() {
         console.error('❌ completePool failed:', completeError);
         
         // Check for testnet issues
-        const errorMessage = completeError?.message?.toLowerCase() || '';
+        const errorMessage = (completeError as any)?.message?.toLowerCase() || '';
         const isTestnetIssue = 
           errorMessage.includes('rate limited') || 
           errorMessage.includes('request is being rate limited');

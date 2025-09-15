@@ -21,7 +21,7 @@ export function JoinPoolModal({ isOpen, onClose, poolDetails, onSuccess }: JoinP
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [step, setStep] = useState<'amount' | 'confirm' | 'processing' | 'success'>('amount');
   
-  const { contributeToPool, isContributing, error, clearError } = useContributeToPool();
+  const { contributeToPool, isContributing, error } = useContributeToPool();
 
   // Reset modal state when opening/closing
   useEffect(() => {
@@ -29,9 +29,8 @@ export function JoinPoolModal({ isOpen, onClose, poolDetails, onSuccess }: JoinP
       setContributionAmount('');
       setAgreedToTerms(false);
       setStep('amount');
-      clearError();
     }
-  }, [isOpen, clearError]);
+  }, [isOpen]);
 
   const contributionAmountFloat = parseFloat(contributionAmount) || 0;
   const remainingAmount = parseFloat(poolDetails.remainingAmount);

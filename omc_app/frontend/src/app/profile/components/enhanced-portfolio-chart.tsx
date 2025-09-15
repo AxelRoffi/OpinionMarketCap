@@ -276,7 +276,7 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ category, percentage }) => `${category}: ${percentage.toFixed(1)}%`}
+                        label={({ category, percentage }: any) => `${category}: ${percentage.toFixed(1)}%`}
                       >
                         {analytics.categoryAnalysis.allocation.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />

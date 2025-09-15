@@ -315,7 +315,7 @@ export default function BuyQuestionModal({
               <Button 
                 onClick={handleBuy}
                 className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
-                disabled={!canBuy || hasInsufficientBalance}
+                disabled={Boolean(!canBuy || (typeof canBuy === 'bigint' && canBuy === 0n) || hasInsufficientBalance)}
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Buy Question

@@ -124,9 +124,9 @@ export function useOpinionEvents() {
             actionEvents.push({
               opinionId: Number(log.args.opinionId),
               actionType: Number(log.args.actionType),
-              content: log.args.content,
-              actor: log.args.actor,
-              price: log.args.price,
+              content: log.args.content || '',
+              actor: log.args.actor || '',
+              price: log.args.price || BigInt(0),
               blockNumber: Number(log.blockNumber),
               timestamp: Number(block.timestamp) * 1000 // Convert to milliseconds
             });
@@ -136,9 +136,9 @@ export function useOpinionEvents() {
             actionEvents.push({
               opinionId: Number(log.args.opinionId),
               actionType: Number(log.args.actionType),
-              content: log.args.content,
-              actor: log.args.actor,
-              price: log.args.price,
+              content: log.args.content || '',
+              actor: log.args.actor || '',
+              price: log.args.price || BigInt(0),
               blockNumber: Number(log.blockNumber),
               timestamp: Date.now() - (actionLogs.length - actionEvents.length) * 60000 // Estimate
             });

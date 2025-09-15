@@ -22,7 +22,6 @@ export function useENSProfile(address: string | undefined): ENSProfile {
     error: nameError 
   } = useEnsName({
     address: address as `0x${string}`,
-    enabled: !!address,
     chainId: 1, // Mainnet for ENS
   });
 
@@ -33,7 +32,6 @@ export function useENSProfile(address: string | undefined): ENSProfile {
     error: avatarError 
   } = useEnsAvatar({
     name: ensName || undefined,
-    enabled: !!ensName,
     chainId: 1, // Mainnet for ENS
   });
 
@@ -44,8 +42,8 @@ export function useENSProfile(address: string | undefined): ENSProfile {
   const error = nameError || avatarError;
 
   return {
-    ensName,
-    ensAvatar,
+    ensName: ensName || null,
+    ensAvatar: ensAvatar || null,
     displayName,
     isLoading,
     error,

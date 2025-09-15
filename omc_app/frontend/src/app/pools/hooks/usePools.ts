@@ -319,19 +319,20 @@ export function usePoolDetails(poolId: number) {
       // poolData is now the direct tuple from the pools mapping
       // Correct mapping: [0] id, [1] opinionId, [2] proposedAnswer, [3] totalAmount, 
       // [4] deadline, [5] creator, [6] status, [7] name, [8] ipfsHash
+      const poolArray = poolData as unknown as any[];
       setPoolDetails({
-        id: poolData[0],
-        opinionId: poolData[1],
-        creator: poolData[5],        // [5] creator
-        proposedAnswer: poolData[2], // [2] proposedAnswer
-        totalAmount: poolData[3],    // [3] totalAmount
-        deadline: Number(poolData[4]), // [4] deadline
-        status: Number(poolData[6]), // [6] status
-        name: poolData[7],           // [7] name
-        ipfsHash: poolData[8],       // [8] ipfsHash
-        currentPrice: poolData[3],   // totalAmount as currentPrice
-        remainingAmount: poolData[3], // For now, assume no contributions tracked
-        timeRemaining: BigInt(Math.max(0, Number(poolData[4]) - Math.floor(Date.now() / 1000))),
+        id: poolArray[0],
+        opinionId: poolArray[1],
+        creator: poolArray[5],        // [5] creator
+        proposedAnswer: poolArray[2], // [2] proposedAnswer
+        totalAmount: poolArray[3],    // [3] totalAmount
+        deadline: Number(poolArray[4]), // [4] deadline
+        status: Number(poolArray[6]), // [6] status
+        name: poolArray[7],           // [7] name
+        ipfsHash: poolArray[8],       // [8] ipfsHash
+        currentPrice: poolArray[3],   // totalAmount as currentPrice
+        remainingAmount: poolArray[3], // For now, assume no contributions tracked
+        timeRemaining: BigInt(Math.max(0, Number(poolArray[4]) - Math.floor(Date.now() / 1000))),
         contributorCount: contributors?.length || 0,
         contributors: contributors ? Array.from(contributors) : []
       });

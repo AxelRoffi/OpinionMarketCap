@@ -89,7 +89,7 @@ export default function MarketplacePage() {
     
     opinionsData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
-        const opinion = result.result as {
+        const opinion = result.result as unknown as {
           salePrice: bigint;
           question: string;
           questionOwner: string;

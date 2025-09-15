@@ -121,7 +121,7 @@ function ProfilePageContent() {
   const { stats, opinions, transactions, loading, error } = useUserProfile(targetAddress);
   const { claimFees, isClaimingFees, claimSuccess, claimError, transactionHash } = useClaimFees();
   const { ensName, ensAvatar, displayName, isLoading: ensLoading } = useENSProfile(targetAddress);
-  const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(targetAddress);
+  const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(targetAddress as `0x${string}`);
   const { withdrawFromPool, isWithdrawing, withdrawTxHash, isWithdrawSuccess, pendingWithdraw } = useWithdrawFromExpiredPool();
 
   // Handle copy address

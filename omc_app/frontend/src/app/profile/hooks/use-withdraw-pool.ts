@@ -296,12 +296,12 @@ export function useUserPools(userAddress: `0x${string}` | undefined) {
       poolIds.forEach((poolId, index) => {
         const poolResult = poolsData[index];
         const contributionResult = contributionsData[index];
-        const earlyWithdrawalResult = earlyWithdrawalData[index];
+        const earlyWithdrawalResult = earlyWithdrawalData?.[index];
 
         // Check pool data status
 
         if (poolResult?.status === 'success' && contributionResult?.status === 'success') {
-          const poolInfo = poolResult.result as {
+          const poolInfo = poolResult.result as unknown as {
             id: bigint;
             opinionId: bigint;
             proposedAnswer: string;
@@ -322,7 +322,7 @@ export function useUserPools(userAddress: `0x${string}` | undefined) {
           let userWillReceive = BigInt(0);
           
           if (earlyWithdrawalResult?.status === 'success') {
-            const earlyWithdrawalPreview = earlyWithdrawalResult.result as [bigint, bigint, bigint, boolean];
+            const earlyWithdrawalPreview = earlyWithdrawalResult.result as unknown as [bigint, bigint, bigint, boolean];
             [, penalty, userWillReceive, canWithdrawEarly] = earlyWithdrawalPreview;
           }
 

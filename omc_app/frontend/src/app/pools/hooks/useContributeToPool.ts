@@ -171,14 +171,14 @@ export function useContributeToPool() {
       } catch (approveError) {
         console.error('❌ approveUSDC failed:', approveError);
         console.error('❌ approveError details:', {
-          message: approveError?.message,
-          cause: approveError?.cause,
-          code: approveError?.code,
-          shortMessage: approveError?.shortMessage
+          message: (approveError as any)?.message,
+          cause: (approveError as any)?.cause,
+          code: (approveError as any)?.code,
+          shortMessage: (approveError as any)?.shortMessage
         });
         
         // Check for common testnet issues that don't actually fail
-        const errorMessage = approveError?.message?.toLowerCase() || '';
+        const errorMessage = (approveError as any)?.message?.toLowerCase() || '';
         const isTestnetIssue = 
           errorMessage.includes('rate limited') || 
           errorMessage.includes('request is being rate limited') ||
@@ -253,14 +253,14 @@ export function useContributeToPool() {
       } catch (contributeError) {
         console.error('❌ contributeToPool failed:', contributeError);
         console.error('❌ contributeError details:', {
-          message: contributeError?.message,
-          cause: contributeError?.cause,
-          code: contributeError?.code,
-          shortMessage: contributeError?.shortMessage
+          message: (contributeError as any)?.message,
+          cause: (contributeError as any)?.cause,
+          code: (contributeError as any)?.code,
+          shortMessage: (contributeError as any)?.shortMessage
         });
         
         // Check for testnet issues
-        const errorMessage = contributeError?.message?.toLowerCase() || '';
+        const errorMessage = (contributeError as any)?.message?.toLowerCase() || '';
         const isTestnetIssue = 
           errorMessage.includes('rate limited') || 
           errorMessage.includes('request is being rate limited') ||
