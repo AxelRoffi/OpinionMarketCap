@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "npm run verify:build && next build --no-lint",
+    "build:unsafe": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:build": "node scripts/verify-build.js",
+    "verify:dependencies": "npm list --depth=0 && npm audit --level=moderate",
+    "prebuild": "npm run verify:dependencies"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.14",

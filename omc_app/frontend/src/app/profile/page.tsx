@@ -59,6 +59,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Copy, 
@@ -1344,10 +1345,26 @@ function ProfilePageContent() {
   );
 }
 
+// Loading component for Suspense
+function ProfilePageLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading profile...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   return (
     <ErrorBoundary>
-      <ProfilePageContent />
+      <Suspense fallback={<ProfilePageLoading />}>
+        <ProfilePageContent />
+      </Suspense>
     </ErrorBoundary>
   );
 }
