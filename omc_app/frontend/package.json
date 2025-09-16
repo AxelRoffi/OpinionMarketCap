@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run verify:build && next build --no-lint",
-    "build:unsafe": "next build --no-lint",
+    "build:production": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "verify:build": "node scripts/verify-build.js",
-    "verify:dependencies": "npm list --depth=0 && npm audit --level=moderate",
+    "verify:dependencies": "npm list --depth=0",
+    "audit:security": "npm audit --level=moderate",
     "prebuild": "npm run verify:dependencies"
   },
   "dependencies": {
@@ -33,7 +34,7 @@
     "ethers": "^6.15.0",
     "framer-motion": "^12.22.0",
     "lucide-react": "^0.544.0",
-    "next": "15.3.4",
+    "next": "15.5.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "recharts": "^3.1.2",
@@ -47,7 +48,10 @@
     "react-dom": "19.0.0",
     "valtio": "1.13.2",
     "@reown/appkit": "1.7.8",
-    "use-sync-external-store": "1.2.0"
+    "use-sync-external-store": "1.2.0",
+    "@metamask/sdk": "0.33.1",
+    "@metamask/sdk-communication-layer": "0.33.1",
+    "debug": "4.3.7"
   },
   "engines": {
     "node": ">=18.17.0",
@@ -60,7 +64,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "15.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -51,7 +51,8 @@ function verifyLockedDependencies() {
     { name: 'react-dom', expected: '19.0.0' },
     { name: 'wagmi', expected: '2.15.6' },
     { name: '@rainbow-me/rainbowkit', expected: '2.2.8' },
-    { name: 'viem', expected: '2.31.3' }
+    { name: 'viem', expected: '2.31.3' },
+    { name: 'next', expected: '15.5.3' }
   ];
   
   let hasErrors = false;
@@ -81,7 +82,9 @@ function verifyOverrides() {
     'react-dom', 
     'valtio',
     '@reown/appkit',
-    'use-sync-external-store'
+    'use-sync-external-store',
+    '@metamask/sdk',
+    'debug'
   ];
   
   let hasErrors = false;
