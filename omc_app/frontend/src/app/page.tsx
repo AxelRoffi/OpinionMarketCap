@@ -28,6 +28,7 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { PriceHistoryChart } from '@/components/PriceHistoryChart';
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
+import { usePaginatedOpinions } from '@/hooks/usePaginatedOpinions';
 import { ClickableAddress } from '@/components/ui/clickable-address';
 import { usePoolOwnerDisplay } from '@/hooks/usePoolOwnerDisplay';
 import { useOpinionEvents } from '@/hooks/useOpinionEvents';
@@ -102,9 +103,35 @@ export default function HomePage() {
   const [selectedOpinion, setSelectedOpinion] = useState<OpinionData | null>(null);
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
   
+  // Pagination state - CoinMarketCap style
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 100; // CoinMarketCap uses 100 per page
+  
 
-  // Use dynamic opinion fetching hook
-  const { opinions: allOpinions, nextOpinionId } = useAllOpinions();
+  // Use scalable opinion fetching - automatically chooses best strategy
+  // For small datasets (<= 500): fetch all and paginate client-side
+  // For large datasets (> 500): use server-side pagination
+  const { 
+    opinions: currentPageOpinions,
+    allOpinions, 
+    nextOpinionId,
+    totalPages: paginationTotalPages,
+    totalOpinions: paginationTotalOpinions,
+    isFetchingAll,
+    isLoading: isPaginationLoading
+  } = usePaginatedOpinions({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    fetchAll: true, // Let the hook decide based on dataset size
+    maxBatchSize: 500 // Switch to server-side pagination above 500 opinions
+  });
+  
+  // Fallback to old hook for comparison (can be removed later)
+  const { opinions: fallbackOpinions } = useAllOpinions();
+  
+  // Choose the appropriate data source
+  const opinionsToUse = isFetchingAll ? allOpinions : currentPageOpinions;
+  const isLoadingOpinions = isPaginationLoading;
   
   // Hook for pool owner display
   const { getOwnerDisplay, isLoading: poolDataLoading } = usePoolOwnerDisplay();
@@ -123,7 +150,7 @@ export default function HomePage() {
   } = useOpinionEvents();
   
   // Hook for accurate trade counts using contract calls
-  const opinionIds = allOpinions.map(o => o.id);
+  const opinionIds = opinionsToUse.map(o => o.id);
   const { 
     getTradeCount: getAccurateTradeCount, 
     isLoading: tradeCountsLoading 
@@ -140,23 +167,26 @@ export default function HomePage() {
 
   // Calculate market statistics with REAL blockchain data
   const marketStats: MarketStats = useMemo(() => {
+    // Use all opinions for accurate market stats, or current page if server-side paginated
+    const dataForStats = isFetchingAll ? allOpinions : opinionsToUse;
+    
     // Total market cap = sum of all opinion next prices
-    const totalMarketCap = allOpinions.reduce((sum, opinion) => sum + Number(opinion.nextPrice), 0) / 1_000_000;
-    const totalVolume = allOpinions.reduce((sum, opinion) => sum + Number(opinion.totalVolume), 0) / 1_000_000;
+    const totalMarketCap = dataForStats.reduce((sum, opinion) => sum + Number(opinion.nextPrice), 0) / 1_000_000;
+    const totalVolume = dataForStats.reduce((sum, opinion) => sum + Number(opinion.totalVolume), 0) / 1_000_000;
     
     // REAL 24h volume from blockchain events
     const volume24h = total24hVolume / 1_000_000; // Convert from wei to USDC
     
     // Total participants = unique creators and answer owners
     const participants = new Set<string>();
-    allOpinions.forEach(opinion => {
+    dataForStats.forEach(opinion => {
       participants.add(opinion.creator.toLowerCase());
       participants.add(opinion.currentAnswerOwner.toLowerCase());
     });
     const activeTraders = participants.size;
     
-    // Total opinions from contract
-    const totalOpinions = Number(nextOpinionId || 0) - 1;
+    // Total opinions from contract (use paginated total for accuracy)
+    const totalOpinions = paginationTotalOpinions || Number(nextOpinionId || 0) - 1;
     
     return {
       totalMarketCap,
@@ -165,12 +195,15 @@ export default function HomePage() {
       activeTraders,
       totalOpinions: Math.max(totalOpinions, 0)
     };
-  }, [allOpinions, nextOpinionId, total24hVolume, totalUniqueTraders]);
+  }, [opinionsToUse, allOpinions, isFetchingAll, nextOpinionId, paginationTotalOpinions, total24hVolume, totalUniqueTraders]);
 
   // Calculate REAL percentage changes based on blockchain data
   const calculatePercentageChanges = useMemo(() => {
+    // Use appropriate dataset for calculations
+    const dataForCalc = isFetchingAll ? allOpinions : opinionsToUse;
+    
     // For market cap: calculate based on REAL price differences
-    const marketCapChange = allOpinions.reduce((totalChange, opinion) => {
+    const marketCapChange = dataForCalc.reduce((totalChange, opinion) => {
       const currentPrice = Number(opinion.nextPrice);
       const lastPrice = Number(opinion.lastPrice);
       if (lastPrice > 0) {
@@ -178,7 +211,7 @@ export default function HomePage() {
         return totalChange + change;
       }
       return totalChange;
-    }, 0) / Math.max(allOpinions.length, 1);
+    }, 0) / Math.max(dataForCalc.length, 1);
 
     // REAL 24h volume change - compare today vs yesterday (when we have historical data)
     // For now, show current 24h volume as positive change
@@ -214,7 +247,7 @@ export default function HomePage() {
         display: `${opinionsChange} total`
       }
     };
-  }, [allOpinions, marketStats]);
+  }, [opinionsToUse, allOpinions, isFetchingAll, marketStats]);
 
   // Helper function for future 24h volume calculation from events
   // const calculate24hVolume = async (opinionId: number) => {
@@ -230,7 +263,7 @@ export default function HomePage() {
 
   // Enhanced opinions with HYBRID data (real blockchain + intelligent fallbacks)
   const enhancedOpinions = useMemo(() => {
-    return allOpinions.map(opinion => {
+    return opinionsToUse.map(opinion => {
       // SMART HYBRID APPROACH: Use real data if available, intelligent fallbacks otherwise
       
       // 1. CREATION TIME - Real from events OR intelligent estimation
@@ -335,10 +368,14 @@ export default function HomePage() {
         volume24h
       };
     });
-  }, [allOpinions, getCreationTimestamp, getTradeCount, getLastActivity, get24hVolume]);
+  }, [opinionsToUse, getCreationTimestamp, getTradeCount, getLastActivity, get24hVolume]);
 
-  // Filter and sort opinions
-  const filteredAndSortedOpinions = useMemo(() => {
+  // Filter, sort and paginate opinions - CoinMarketCap style
+  const { paginatedOpinions, totalPages, totalFiltered } = useMemo(() => {
+    // Note: If using server-side pagination, filtering/sorting should ideally be done server-side too
+    // For now, we'll filter/sort the current data we have
+    // First filter and sort
+    const filteredAndSorted = (() => {
     const filtered = enhancedOpinions.filter(opinion => {
       const searchWords = searchQuery.toLowerCase().split(' ').filter(w => w);
       const opinionText = (opinion.question + ' ' + opinion.currentAnswer).toLowerCase();
@@ -401,7 +438,28 @@ export default function HomePage() {
     });
     
     return filtered;
-  }, [enhancedOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection]);
+    })();
+    
+    // Calculate pagination
+    const totalFiltered = filteredAndSorted.length;
+    const totalPages = Math.ceil(totalFiltered / itemsPerPage);
+    
+    // Paginate the results
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedOpinions = filteredAndSorted.slice(startIndex, endIndex);
+    
+    // If we're doing server-side pagination and have limited data, use what we have
+    // Otherwise use the calculated pagination
+    const finalTotalPages = isFetchingAll ? totalPages : (paginationTotalPages || totalPages);
+    const finalPaginatedOpinions = isFetchingAll ? paginatedOpinions : filteredAndSorted;
+    
+    return {
+      paginatedOpinions: finalPaginatedOpinions,
+      totalPages: finalTotalPages,
+      totalFiltered: isFetchingAll ? totalFiltered : paginationTotalOpinions || totalFiltered
+    };
+  }, [enhancedOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection, currentPage, itemsPerPage, isFetchingAll, paginationTotalPages, paginationTotalOpinions]);
 
   // Utility functions
   const formatUSDC = (wei: bigint) => {
@@ -484,6 +542,11 @@ export default function HomePage() {
   };
 
   
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, activeTab, sortBy, sortDirection]);
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -658,7 +721,7 @@ export default function HomePage() {
           <div className="p-4 border-b border-gray-700/50">
             <h2 className="text-white text-xl font-semibold mb-2 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Opinion Market ({filteredAndSortedOpinions.length})
+              Opinion Market ({totalFiltered})
             </h2>
           </div>
 
@@ -738,9 +801,19 @@ export default function HomePage() {
             <div className="text-white text-base font-bold text-center">actions</div>
           </div>
 
+          {/* Pagination Info */}
+          <div className="px-4 py-3 bg-gray-800/30 border-b border-gray-700/50 flex items-center justify-between">
+            <div className="text-sm text-gray-400">
+              Showing <span className="text-white font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-white font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-white font-medium">{totalFiltered}</span> opinions
+            </div>
+            <div className="text-sm text-gray-400">
+              Page <span className="text-white font-medium">{currentPage}</span> of <span className="text-white font-medium">{totalPages}</span>
+            </div>
+          </div>
+
           {/* Table Body - REAL CONTRACT DATA */}
           <div className="divide-y divide-gray-700/20">
-            {filteredAndSortedOpinions.map((opinion, index) => {
+            {paginatedOpinions.map((opinion, index) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
               const displayCategory = opinion.categories && opinion.categories.length > 0 
                 ? opinion.categories[0] 
@@ -1065,6 +1138,105 @@ export default function HomePage() {
             })}
           </div>
         </motion.div>
+
+        {/* Pagination Controls - CoinMarketCap Style */}
+        {totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden mt-4"
+          >
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-400">
+                  Page {currentPage} of {totalPages} • {totalFiltered} total opinions
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {/* First Page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                  >
+                    First
+                  </Button>
+                  
+                  {/* Previous Page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                  >
+                    ← Previous
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {(() => {
+                      const pages = [];
+                      const showPages = 5; // Show 5 page numbers
+                      let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+                      let endPage = Math.min(totalPages, startPage + showPages - 1);
+                      
+                      // Adjust if we're near the end
+                      if (endPage - startPage + 1 < showPages) {
+                        startPage = Math.max(1, endPage - showPages + 1);
+                      }
+                      
+                      for (let i = startPage; i <= endPage; i++) {
+                        pages.push(
+                          <Button
+                            key={i}
+                            variant={i === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(i)}
+                            className={i === currentPage 
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              : "bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                            }
+                          >
+                            {i}
+                          </Button>
+                        );
+                      }
+                      
+                      return pages;
+                    })()
+                    }
+                  </div>
+                  
+                  {/* Next Page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                  >
+                    Next →
+                  </Button>
+                  
+                  {/* Last Page */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                  >
+                    Last
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Bottom Action Buttons - EXACT STYLING */}
         <motion.div
