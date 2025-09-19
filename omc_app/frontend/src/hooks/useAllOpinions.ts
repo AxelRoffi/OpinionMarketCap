@@ -1,4 +1,4 @@
-import { useReadContract } from 'wagmi';
+import { useReadContract, useReadContracts } from 'wagmi';
 import { useMemo } from 'react';
 import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 
@@ -20,118 +20,116 @@ interface OpinionData {
   tradesCount?: number;
 }
 
-// Custom hook to fetch all opinions (fixed version)
+// Custom hook to fetch ALL opinions dynamically - TRULY SCALABLE
 export function useAllOpinions() {
-  // Get total opinion count
+  // Get total opinion count first
   const { data: nextOpinionId, isLoading: isLoadingCount } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
     functionName: 'nextOpinionId',
   });
 
-  // Fetch known opinions dynamically based on nextOpinionId
-  const opinion1 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [BigInt(1)],
-    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 2) }
-  });
+  // Calculate total opinions that exist
+  const totalOpinionsCount = nextOpinionId ? Number(nextOpinionId) - 1 : 0;
 
-  const opinion2 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [BigInt(2)],
-    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 3) }
-  });
+  // Create batch contract calls for ALL opinions
+  const opinionContracts = useMemo(() => {
+    if (!nextOpinionId || totalOpinionsCount === 0) return [];
+    
+    const contracts = [];
+    for (let i = 1; i <= totalOpinionsCount; i++) {
+      contracts.push({
+        address: CONTRACTS.OPINION_CORE,
+        abi: OPINION_CORE_ABI,
+        functionName: 'getOpinionDetails',
+        args: [BigInt(i)],
+      } as const);
+    }
+    
+    console.log(`🔄 Creating ${contracts.length} contract calls for opinions 1-${totalOpinionsCount}`);
+    return contracts;
+  }, [nextOpinionId, totalOpinionsCount]);
 
-  const opinion3 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [BigInt(3)],
-    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 4) }
-  });
-
-  // Add opinion 4 for future scalability
-  const opinion4 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [BigInt(4)],
-    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 5) }
-  });
-
-  // Add opinion 5 for future scalability
-  const opinion5 = useReadContract({
-    address: CONTRACTS.OPINION_CORE,
-    abi: OPINION_CORE_ABI,
-    functionName: 'getOpinionDetails',
-    args: [BigInt(5)],
-    query: { enabled: Boolean(nextOpinionId && Number(nextOpinionId) >= 6) }
+  // Fetch ALL opinions in parallel using useReadContracts
+  const { 
+    data: opinionsRawData, 
+    isLoading: isLoadingOpinions,
+    error: opinionsError 
+  } = useReadContracts({
+    contracts: opinionContracts,
+    query: {
+      enabled: opinionContracts.length > 0,
+      staleTime: 30000, // Cache for 30 seconds
+      gcTime: 60000, // Keep in cache for 1 minute (renamed from cacheTime)
+    }
   });
 
   // Process all opinion data
   const allOpinions: OpinionData[] = useMemo(() => {
+    if (!opinionsRawData || isLoadingOpinions || !nextOpinionId) {
+      return [];
+    }
+
+    console.log('=== TRULY DYNAMIC OPINION FETCHING ===');
+    console.log('Next Opinion ID:', nextOpinionId?.toString());
+    console.log('Total Opinions to fetch:', totalOpinionsCount);
+    console.log('Raw data received:', opinionsRawData.length);
+
     const opinions: OpinionData[] = [];
     
-    console.log('=== DYNAMIC OPINION FETCHING ===');
-    console.log('Next Opinion ID:', nextOpinionId?.toString());
-    
-    // Helper function to add opinion
-    const addOpinion = (opinionQuery: { data: Record<string, unknown> | undefined; isLoading: boolean; error: unknown }, id: number) => {
-      if (opinionQuery.data && !opinionQuery.isLoading && !opinionQuery.error) {
-        console.log(`✅ Adding Opinion ${id} to array`);
-        console.log(`Opinion ${id} data:`, {
-          question: opinionQuery.data?.question,
-          answer: opinionQuery.data?.currentAnswer,
-          categories: opinionQuery.data?.categories,
-          isActive: opinionQuery.data?.isActive,
-          link: opinionQuery.data?.link // Debug the link field
+    opinionsRawData.forEach((result, index) => {
+      const opinionId = index + 1;
+      
+      if (result.status === 'success' && result.result) {
+        const data = result.result as Record<string, unknown>;
+        
+        console.log(`✅ Processing Opinion ${opinionId}:`, {
+          question: data?.question,
+          answer: data?.currentAnswer,
+          categories: data?.categories,
+          isActive: data?.isActive,
+          link: data?.link
         });
         
         opinions.push({
-          id,
-          question: String(opinionQuery.data?.question) || '',
-          currentAnswer: String(opinionQuery.data?.currentAnswer) || '',
-          nextPrice: (opinionQuery.data?.nextPrice as bigint) || BigInt(0),
-          lastPrice: (opinionQuery.data?.lastPrice as bigint) || BigInt(0),
-          totalVolume: (opinionQuery.data?.totalVolume as bigint) || BigInt(0),
-          currentAnswerOwner: String(opinionQuery.data?.currentAnswerOwner) || '',
-          questionOwner: String(opinionQuery.data?.questionOwner) || '',
-          salePrice: (opinionQuery.data?.salePrice as bigint) || BigInt(0),
-          isActive: Boolean(opinionQuery.data?.isActive) || false,
-          creator: String(opinionQuery.data?.creator) || '',
-          categories: (opinionQuery.data?.categories as string[]) || [],
-          currentAnswerDescription: String(opinionQuery.data?.currentAnswerDescription) || '',
-          link: String(opinionQuery.data?.link) || '',
-          tradesCount: Math.ceil(Number(opinionQuery.data?.totalVolume || BigInt(0)) / Number(opinionQuery.data?.lastPrice || BigInt(1_000_000))),
+          id: opinionId,
+          question: String(data?.question || ''),
+          currentAnswer: String(data?.currentAnswer || ''),
+          nextPrice: (data?.nextPrice as bigint) || BigInt(0),
+          lastPrice: (data?.lastPrice as bigint) || BigInt(0),
+          totalVolume: (data?.totalVolume as bigint) || BigInt(0),
+          currentAnswerOwner: String(data?.currentAnswerOwner || ''),
+          questionOwner: String(data?.questionOwner || ''),
+          salePrice: (data?.salePrice as bigint) || BigInt(0),
+          isActive: Boolean(data?.isActive),
+          creator: String(data?.creator || ''),
+          categories: (data?.categories as string[]) || [],
+          currentAnswerDescription: String(data?.currentAnswerDescription || ''),
+          link: String(data?.link || ''),
+          tradesCount: Math.ceil(Number(data?.totalVolume || BigInt(0)) / Number(data?.lastPrice || BigInt(1_000_000))),
         });
       } else {
-        console.log(`❌ Opinion ${id} not added - Loading:`, opinionQuery.isLoading, 'Error:', (opinionQuery.error as Error)?.message, 'HasData:', !!opinionQuery.data);
+        console.log(`❌ Opinion ${opinionId} failed:`, result.status, result.error?.message);
       }
-    };
-
-    // Add all available opinions in order
-    addOpinion(opinion1, 1);
-    addOpinion(opinion2, 2);
-    addOpinion(opinion3, 3);
-    addOpinion(opinion4, 4);
-    addOpinion(opinion5, 5);
+    });
     
-    console.log('Final opinions array length:', opinions.length);
-    console.log('Final opinions array:', opinions);
-    return opinions;
-  }, [opinion1.data, opinion1.isLoading, opinion1.error, opinion2.data, opinion2.isLoading, opinion2.error, opinion3.data, opinion3.isLoading, opinion3.error, opinion4.data, opinion4.isLoading, opinion4.error, opinion5.data, opinion5.isLoading, opinion5.error, nextOpinionId]);
+    console.log('Final opinions processed:', opinions.length);
+    console.log('Expected vs Actual:', totalOpinionsCount, 'vs', opinions.length);
+    
+    // Sort by ID to ensure proper ordering
+    return opinions.sort((a, b) => a.id - b.id);
+  }, [opinionsRawData, isLoadingOpinions, nextOpinionId, totalOpinionsCount]);
 
-  // Check if any opinion is still loading
-  const isLoading = isLoadingCount || opinion1.isLoading || opinion2.isLoading || opinion3.isLoading || opinion4.isLoading || opinion5.isLoading;
+  // Overall loading state
+  const isLoading = isLoadingCount || isLoadingOpinions;
+
+  console.log(`🎯 FINAL HOOK RESULT: ${allOpinions.length} opinions loaded, loading: ${isLoading}`);
 
   return {
     opinions: allOpinions,
     isLoading,
+    error: opinionsError,
     nextOpinionId,
-    totalOpinions: nextOpinionId ? Number(nextOpinionId) - 1 : 0
+    totalOpinions: totalOpinionsCount
   };
 }
