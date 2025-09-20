@@ -17,12 +17,12 @@ export function LandingNavigation() {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold text-gray-900">OMC</span>
+            <span className="text-xl font-bold text-white">OMC</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -31,7 +31,7 @@ export function LandingNavigation() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium"
+                className="text-gray-300 hover:text-blue-400 transition-colors duration-200 font-medium"
               >
                 {item.name}
               </Link>
@@ -53,7 +53,7 @@ export function LandingNavigation() {
               onClick={() => setIsOpen(!isOpen)}
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-300 hover:text-white"
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
@@ -62,13 +62,13 @@ export function LandingNavigation() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="md:hidden border-t border-gray-700 py-4">
             <div className="space-y-3">
               {navigation.slice(1).map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block text-gray-600 hover:text-blue-600 transition-colors duration-200 py-2 font-medium"
+                  className="block text-gray-300 hover:text-blue-400 transition-colors duration-200 py-2 font-medium"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}
