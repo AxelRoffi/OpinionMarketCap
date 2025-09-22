@@ -26,11 +26,5 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/profile",
-      "destination": "/profile?address=",
-      "permanent": false
-    }
-  ]
+  "redirects": []
 }

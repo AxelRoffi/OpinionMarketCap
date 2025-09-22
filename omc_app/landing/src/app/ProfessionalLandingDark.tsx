@@ -27,8 +27,8 @@ export default function ProfessionalLandingDark() {
           <div className="mb-8">
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
               <span className="text-white">OPINION</span>
-              <span className="text-blue-400">MARKET</span>
-              <span className="text-white">CAP</span>
+              <span className="text-blue-400"> MARKET</span>
+              <span className="text-white"> CAP</span>
             </h1>
             <p className="text-2xl md:text-3xl text-gray-300 font-semibold mb-4">
               The Infinite Marketplace
@@ -78,14 +78,14 @@ export default function ProfessionalLandingDark() {
             <div>
               <h2 className="text-3xl font-bold text-white mb-6">The Current Problem</h2>
               <p className="text-lg text-gray-300 leading-relaxed">
-                Traditional opinion markets are limited, centralized, and exclusive. 
-                Most people can't participate or profit from their knowledge and insights.
+                Traditional opinion or prediction markets are limited and centralized. 
+                Most people can't profit from their knowledge and insights.
               </p>
             </div>
             <div>
               <h2 className="text-3xl font-bold text-blue-400 mb-6">Our Solution</h2>
               <p className="text-lg text-gray-300 leading-relaxed">
-                OpinionMarketCap creates an infinite marketplace where anyone can mint, 
+                OMC creates an infinite marketplace where anyone can mint, 
                 trade, and profit from opinions on anything. Forever.
               </p>
             </div>
@@ -94,7 +94,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Key Features Section */}
       <section className="py-20">
@@ -125,7 +125,7 @@ export default function ProfessionalLandingDark() {
                 <Coins className="w-8 h-8 text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Question Ownership</h3>
-              <p className="text-gray-300">Mint questions & earn 2% royalties from every transaction, forever.</p>
+              <p className="text-gray-300">Mint questions & earn 3% royalties from every transaction, forever. Or sell it</p>
             </div>
             
             <div className="text-center p-6">
@@ -140,7 +140,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* How It Works Section */}
       <section className="py-20 bg-gray-800/50">
@@ -166,7 +166,7 @@ export default function ProfessionalLandingDark() {
               </div>
               <h3 className="text-2xl font-semibold text-white mb-4">Trade Your Opinion</h3>
               <p className="text-gray-300 text-lg leading-relaxed">
-                Buy/sell position shares with protected transactions and transparent pricing.
+                Buy/sell opinions with protected transactions and transparent pricing.
               </p>
             </div>
             
@@ -176,7 +176,7 @@ export default function ProfessionalLandingDark() {
               </div>
               <h3 className="text-2xl font-semibold text-white mb-4">Earn Profits</h3>
               <p className="text-gray-300 text-lg leading-relaxed">
-                Get rewarded for accuracy and question ownership with ongoing passive income.
+                Get rewarded whenever someone buys the right to change your opinion.
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Real Example Section */}
       <section className="py-20">
@@ -221,7 +221,7 @@ export default function ProfessionalLandingDark() {
               </div>
               
               <div className="bg-gray-800/50 border border-gray-700/30 rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-orange-400 mb-2">2%</div>
+                <div className="text-3xl font-bold text-orange-400 mb-2">3%</div>
                 <div className="text-sm text-gray-300">Royalty Rate</div>
                 <div className="text-xs text-gray-400 mt-1">On every trade</div>
               </div>
@@ -236,15 +236,15 @@ export default function ProfessionalLandingDark() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-blue-400">Question owner gets:</span>
-                  <span className="font-semibold text-blue-400">$0.30 (2% royalty)</span>
+                  <span className="font-semibold text-blue-400">$0.45 (3% royalty)</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Platform fee:</span>
-                  <span className="font-semibold text-white">$0.075 (0.5%)</span>
+                  <span className="font-semibold text-white">$0.30 (2%)</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-green-400">Trading pool:</span>
-                  <span className="font-semibold text-green-400">$14.625 (97.5%)</span>
+                  <span className="text-green-400">Answer Owner:</span>
+                  <span className="font-semibold text-green-400">$14.25 (95%)</span>
                 </div>
               </div>
             </div>
@@ -275,7 +275,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Live Stats Section */}
       <section className="py-20 bg-gray-800/50">
@@ -313,7 +313,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Use Cases Section */}
       <section className="py-20">
@@ -435,7 +435,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Why Timeless Questions Win */}
       <section className="py-20 bg-gray-800/50">
@@ -524,7 +524,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Security & Technology Section */}
       <section className="py-20">
@@ -570,7 +570,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Community & Trust Section */}
       <section className="py-20 bg-gray-800">
@@ -636,7 +636,7 @@ export default function ProfessionalLandingDark() {
       </section>
 
       {/* Separator */}
-      <div className="border-t border-gray-700/50"></div>
+      <div className="border-t border-gray-800/60"></div>
 
       {/* Footer */}
       <footer className="py-16 bg-gray-800/50">
