@@ -910,5 +910,58 @@ contract OpinionCoreSimplified is
         keys.push(key);
     }
 
+    /**
+     * @dev Moderates an inappropriate answer by reverting to initial answer (simplified version)
+     * @param opinionId The ID of the opinion
+     * @param reason The reason for moderation
+     */
+    function moderateAnswer(
+        uint256 opinionId,
+        string calldata reason
+    ) external onlyRole(MODERATOR_ROLE) {
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+
+        OpinionStructs.Opinion storage opinion = opinions[opinionId];
+        if (!opinion.isActive) revert OpinionNotActive();
+        
+        // Can't moderate if creator is still the current owner (no inappropriate answer)
+        if (opinion.currentAnswerOwner == opinion.creator) {
+            revert("No answer to moderate");
+        }
+
+        address previousOwner = opinion.currentAnswerOwner;
+        
+        // Get initial answer from first entry in history
+        OpinionStructs.AnswerHistory[] storage history = answerHistory[opinionId];
+        require(history.length > 0, "No initial answer found");
+        
+        string memory initialAnswer = history[0].answer;
+        string memory initialDescription = history[0].description;
+        
+        // Record moderation in history before reverting
+        history.push(OpinionStructs.AnswerHistory({
+            answer: "[MODERATED]",
+            description: reason,
+            owner: previousOwner,
+            price: opinion.nextPrice,
+            timestamp: uint32(block.timestamp)
+        }));
+        
+        // Revert to initial answer and creator ownership
+        opinion.currentAnswer = initialAnswer;
+        opinion.currentAnswerDescription = initialDescription;
+        opinion.currentAnswerOwner = opinion.creator;
+        // Keep current price (fair for next trader)
+        
+        // Emit moderation event
+        emit AnswerModerated(
+            opinionId,
+            previousOwner,
+            opinion.creator,
+            reason,
+            block.timestamp
+        );
+    }
+
     // Events are inherited from IOpinionMarketEvents
 }

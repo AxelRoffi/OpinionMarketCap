@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"; // Changed from security/
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol"; //
@@ -23,6 +24,7 @@ import "./libraries/PriceCalculator.sol";
  */
 contract OpinionCore is
     Initializable,
+    UUPSUpgradeable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable,
     PausableUpgradeable,
@@ -656,6 +658,62 @@ contract OpinionCore is
     }
 
     /**
+     * @dev Moderates an inappropriate answer by reverting to initial answer
+     * @param opinionId The ID of the opinion
+     * @param reason The reason for moderation
+     */
+    function moderateAnswer(
+        uint256 opinionId,
+        string calldata reason
+    ) external onlyRole(MODERATOR_ROLE) {
+        if (opinionId >= nextOpinionId) revert OpinionNotFound();
+
+        OpinionStructs.Opinion storage opinion = opinions[opinionId];
+        if (!opinion.isActive) revert OpinionNotActive();
+        
+        // Can't moderate if creator is still the current owner (no inappropriate answer)
+        if (opinion.currentAnswerOwner == opinion.creator) {
+            revert("No answer to moderate");
+        }
+
+        address previousOwner = opinion.currentAnswerOwner;
+        
+        // Get initial answer from first entry in history
+        OpinionStructs.AnswerHistory[] storage history = answerHistory[opinionId];
+        require(history.length > 0, "No initial answer found");
+        
+        string memory initialAnswer = history[0].answer;
+        string memory initialDescription = history[0].description;
+        
+        // Record moderation in history before reverting
+        history.push(OpinionStructs.AnswerHistory({
+            answer: "[MODERATED]",
+            description: reason,
+            owner: previousOwner,
+            price: opinion.nextPrice,
+            timestamp: uint32(block.timestamp)
+        }));
+        
+        // Revert to initial answer and creator ownership
+        opinion.currentAnswer = initialAnswer;
+        opinion.currentAnswerDescription = initialDescription;
+        opinion.currentAnswerOwner = opinion.creator;
+        // Keep current price (fair for next trader)
+        
+        // Emit moderation event
+        emit AnswerModerated(
+            opinionId,
+            previousOwner,
+            opinion.creator,
+            reason,
+            block.timestamp
+        );
+        
+        // Emit standard opinion action for consistency
+        emit OpinionAction(opinionId, 4, reason, msg.sender, 0); // 4 = moderate action
+    }
+
+    /**
      * @dev Returns the answer history for an opinion
      * @param opinionId The ID of the opinion
      * @return History array of answers
@@ -962,6 +1020,35 @@ contract OpinionCore is
         }
 
         categories.push(newCategory);
+        emit CategoryAction(0, categories.length - 1, newCategory, msg.sender, 0);
+    }
+
+    /**
+     * @dev Add multiple new categories in batch - for major category expansion
+     * @param newCategories Array of new categories to add
+     */
+    function addMultipleCategories(
+        string[] calldata newCategories
+    ) external onlyRole(ADMIN_ROLE) {
+        for (uint256 i = 0; i < newCategories.length; i++) {
+            // Check if category already exists
+            bytes32 newCategoryHash = keccak256(bytes(newCategories[i]));
+            uint256 length = categories.length;
+            bool exists = false;
+
+            for (uint256 j = 0; j < length; j++) {
+                if (keccak256(bytes(categories[j])) == newCategoryHash) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            // Only add if doesn't exist
+            if (!exists) {
+                categories.push(newCategories[i]);
+                emit CategoryAction(0, categories.length - 1, newCategories[i], msg.sender, 0);
+            }
+        }
     }
 
     // --- VIEW FUNCTIONS FOR CATEGORIES (Creative Freedom Zone) ---
@@ -1571,4 +1658,10 @@ contract OpinionCore is
     ) external view returns (uint256) {
         return opinionExtensionKeys[opinionId].length;
     }
+
+    /**
+     * @dev Authorize upgrade (required for UUPS proxy pattern)
+     * @param newImplementation Address of the new implementation
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
 }

@@ -1582,7 +1582,7 @@
             "label": "usdcToken",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IERC20)1665",
+            "type": "t_contract(IERC20)2808",
             "contract": "SimpleOpinionMarket",
             "src": "contracts/simple/SimpleOpinionMarket.sol:23"
           },
@@ -1614,7 +1614,7 @@
             "label": "opinions",
             "offset": 0,
             "slot": "4",
-            "type": "t_mapping(t_uint256,t_struct(Opinion)2420_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Opinion)35669_storage)",
             "contract": "SimpleOpinionMarket",
             "src": "contracts/simple/SimpleOpinionMarket.sol:50"
           },
@@ -1622,7 +1622,7 @@
             "label": "pools",
             "offset": 0,
             "slot": "5",
-            "type": "t_mapping(t_uint256,t_struct(Pool)2437_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Pool)35686_storage)",
             "contract": "SimpleOpinionMarket",
             "src": "contracts/simple/SimpleOpinionMarket.sol:51"
           },
@@ -1676,7 +1676,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(InitializableStorage)145_storage": {
+          "t_struct(InitializableStorage)211_storage": {
             "label": "struct Initializable.InitializableStorage",
             "members": [
               {
@@ -1694,7 +1694,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(PausableStorage)286_storage": {
+          "t_struct(PausableStorage)352_storage": {
             "label": "struct PausableUpgradeable.PausableStorage",
             "members": [
               {
@@ -1706,7 +1706,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(ReentrancyGuardStorage)350_storage": {
+          "t_struct(ReentrancyGuardStorage)416_storage": {
             "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
             "members": [
               {
@@ -1744,7 +1744,7 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_contract(IERC20)1665": {
+          "t_contract(IERC20)2808": {
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
@@ -1756,11 +1756,11 @@
             "label": "mapping(uint256 => mapping(address => uint96))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Opinion)2420_storage)": {
+          "t_mapping(t_uint256,t_struct(Opinion)35669_storage)": {
             "label": "mapping(uint256 => struct SimpleOpinionMarket.Opinion)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Pool)2437_storage)": {
+          "t_mapping(t_uint256,t_struct(Pool)35686_storage)": {
             "label": "mapping(uint256 => struct SimpleOpinionMarket.Pool)",
             "numberOfBytes": "32"
           },
@@ -1768,7 +1768,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Opinion)2420_storage": {
+          "t_struct(Opinion)35669_storage": {
             "label": "struct SimpleOpinionMarket.Opinion",
             "members": [
               {
@@ -1822,7 +1822,7 @@
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(Pool)2437_storage": {
+          "t_struct(Pool)35686_storage": {
             "label": "struct SimpleOpinionMarket.Pool",
             "members": [
               {

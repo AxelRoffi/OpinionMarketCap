@@ -8,6 +8,8 @@ import { ExtensionErrorSuppressor } from "@/components/ExtensionErrorSuppressor"
 import { ExtensionErrorBoundary } from "@/components/ExtensionErrorBoundary";
 import { WalletPersistence } from "@/components/WalletPersistence";
 import { WalletRoutePersistence } from "@/components/WalletRoutePersistence";
+import { ModeratedAnswersNotification } from "@/components/ModeratedAnswersNotification";
+import { AdminModerationPanel } from "@/components/AdminModerationPanel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +46,8 @@ export default function RootLayout({
               <main>
                 {children}
               </main>
+              <ModeratedAnswersNotification />
+              <AdminModerationPanel isAdmin={false} />
             </div>
             <Toaster 
               theme="dark"

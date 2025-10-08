@@ -11,6 +11,7 @@ interface FormData {
   question?: string
   answer?: string
   category?: string
+  categories?: string[]
   initialPrice: number
   description?: string
   externalLink?: string
@@ -162,12 +163,16 @@ export function CreateSidebar({ currentStep, formData }: CreateSidebarProps) {
                   <p className="text-sm text-emerald-400">{formData.answer}</p>
                 </div>
               )}
-              {formData.category && (
+              {formData.categories && formData.categories.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Category</p>
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-                    {formData.category}
-                  </Badge>
+                  <p className="text-xs text-gray-500 mb-1">Categories ({formData.categories.length}/3)</p>
+                  <div className="flex flex-wrap gap-1">
+                    {formData.categories.map(category => (
+                      <Badge key={category} variant="secondary" className="bg-blue-500/20 text-blue-400 text-xs">
+                        {category === 'Adult' ? '🔞 Adult' : category}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
