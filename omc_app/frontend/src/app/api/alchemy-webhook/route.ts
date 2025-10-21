@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ethers } from 'ethers';
+import { Interface } from 'ethers';
 
 // Types pour les événements OMC
 interface AlchemyWebhookPayload {
@@ -41,7 +41,7 @@ const OPINION_CORE_ABI = [
   "event QuestionSaleAction(indexed uint256 opinionId, uint8 actionType, indexed address seller, indexed address buyer, uint256 price)"
 ];
 
-const contractInterface = new ethers.utils.Interface(OPINION_CORE_ABI);
+const contractInterface = new Interface(OPINION_CORE_ABI);
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Erreur webhook:', error);
     return NextResponse.json(
-      { success: false, error: error.message }, 
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' }, 
       { status: 500 }
     );
   }

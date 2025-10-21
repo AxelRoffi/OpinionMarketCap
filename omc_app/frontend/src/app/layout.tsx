@@ -39,8 +39,6 @@ export default function RootLayout({
         <ExtensionErrorBoundary>
           <Providers>
             <ExtensionErrorSuppressor />
-            <WalletPersistence />
-            <WalletRoutePersistence />
             <div className="min-h-screen bg-gray-900 text-white">
               <GlobalNavbar />
               <main>

@@ -24,7 +24,7 @@ interface FormData {
 
 interface QuestionAnswerFormProps {
   formData: FormData
-  onUpdate: (field: string, value: string | number) => void
+  onUpdate: (field: string, value: string | number | string[]) => void
   onNext: () => void
 }
 

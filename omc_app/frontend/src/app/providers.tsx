@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { WagmiProvider, type State } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { wagmiConfig } from '@/lib/wagmi';
+import { wagmiConfig } from '@/lib/wagmi-simple';
 import '@rainbow-me/rainbowkit/styles.css';
 
 export default function Providers({
@@ -45,21 +45,9 @@ export default function Providers({
   );
 
   return (
-    <WagmiProvider 
-      config={wagmiConfig}
-      reconnectOnMount={true}
-    >
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          modalSize="wide"
-          initialChain={wagmiConfig.chains[0]}
-          showRecentTransactions={true}
-          coolMode={true}
-          appInfo={{
-            appName: 'OpinionMarketCap',
-            learnMoreUrl: 'https://opinionmarketcap.com',
-          }}
-        >
+        <RainbowKitProvider>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
