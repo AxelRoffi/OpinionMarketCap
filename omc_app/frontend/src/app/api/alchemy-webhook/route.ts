@@ -80,15 +80,19 @@ export async function POST(request: NextRequest) {
           data: log.data
         });
 
-        console.log('📝 Événement décodé:', {
-          name: decodedEvent.name,
-          args: decodedEvent.args,
-          txHash: log.transactionHash,
-          block: log.blockNumber
-        });
+        if (decodedEvent) {
+          console.log('📝 Event decoded:', {
+            name: decodedEvent.name,
+            args: decodedEvent.args,
+            txHash: log.transactionHash,
+            block: log.blockNumber
+          });
 
-        // Traitement selon le type d'événement
-        await processEvent(decodedEvent, log);
+          // Process event by type
+          await processEvent(decodedEvent, log);
+        } else {
+          console.log('⚠️ Could not decode event');
+        }
 
       } catch (decodeError) {
         console.error('❌ Erreur décodage événement:', decodeError);
@@ -223,7 +227,7 @@ async function handleQuestionSaleAction(args: any, log: any) {
 }
 
 function getActionTypeName(actionType: number): string {
-  const types = {
+  const types: { [key: number]: string } = {
     0: 'Question Created',
     1: 'Answer Submitted', 
     2: 'Opinion Deactivated',

@@ -9,22 +9,6 @@ const webhookLogs: Array<{
   error?: string;
 }> = [];
 
-// Function to add log entry (called from webhook)
-export function logWebhookActivity(method: string, success: boolean, eventCount?: number, error?: string) {
-  webhookLogs.push({
-    timestamp: new Date().toISOString(),
-    method,
-    success,
-    eventCount,
-    error
-  });
-  
-  // Keep only last 50 logs
-  if (webhookLogs.length > 50) {
-    webhookLogs.shift();
-  }
-}
-
 // GET endpoint to view webhook activity logs
 export async function GET() {
   return NextResponse.json({
@@ -39,4 +23,28 @@ export async function GET() {
       totalEvents: webhookLogs.reduce((sum, log) => sum + (log.eventCount || 0), 0)
     }
   });
+}
+
+// POST endpoint to log webhook activity (called by webhook)
+export async function POST(request: Request) {
+  try {
+    const { method, success, eventCount, error } = await request.json();
+    
+    webhookLogs.push({
+      timestamp: new Date().toISOString(),
+      method,
+      success,
+      eventCount,
+      error
+    });
+    
+    // Keep only last 50 logs
+    if (webhookLogs.length > 50) {
+      webhookLogs.shift();
+    }
+    
+    return NextResponse.json({ success: true, logged: true });
+  } catch (err) {
+    return NextResponse.json({ success: false, error: 'Invalid request' }, { status: 400 });
+  }
 }
