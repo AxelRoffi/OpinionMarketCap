@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Interface } from 'ethers';
+import { indexingService, IndexedEvent } from '@/lib/indexing-service';
 
 // Types pour les événements OMC
 interface AlchemyWebhookPayload {
@@ -44,13 +45,23 @@ const OPINION_CORE_ABI = [
 const contractInterface = new Interface(OPINION_CORE_ABI);
 
 export async function POST(request: NextRequest) {
+  console.log('🚀 POST request received at webhook:', new Date().toISOString());
+  console.log('🚀 Request method:', request.method);
+  console.log('🚀 Request URL:', request.url);
+  console.log('🚀 Headers:', Object.fromEntries(request.headers.entries()));
+  
   try {
-    const payload: AlchemyWebhookPayload = await request.json();
+    const contentType = request.headers.get('content-type');
+    console.log('📄 Content-Type:', contentType);
     
-    console.log('🔔 Webhook reçu:', {
+    const payload: AlchemyWebhookPayload = await request.json();
+    console.log('📦 Raw payload received:', JSON.stringify(payload, null, 2));
+    
+    console.log('🔔 Webhook received:', {
       type: payload.type,
       network: payload.event.network,
-      activities: payload.event.activity.length
+      activities: payload.event.activity.length,
+      timestamp: new Date().toISOString()
     });
 
     // Traiter chaque activité (event)
@@ -84,13 +95,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('✅ Webhook processing completed successfully');
+    
     return NextResponse.json({ 
       success: true, 
       processed: payload.event.activity.length 
     });
 
   } catch (error) {
-    console.error('❌ Erreur webhook:', error);
+    console.error('❌ Webhook error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Unknown error' }, 
       { status: 500 }
@@ -120,43 +135,91 @@ async function processEvent(decodedEvent: any, log: any) {
 }
 
 async function handleOpinionAction(args: any, log: any) {
-  const opinionId = args.opinionId.toString();
+  const opinionId = parseInt(args.opinionId.toString());
   const actionType = args.actionType;
   const content = args.content;
   const user = args.user;
-  const price = args.price.toString();
+  const price = BigInt(args.price.toString());
   
   console.log('💭 Opinion Action:', {
     opinionId,
     actionType: getActionTypeName(actionType),
     user,
-    price,
+    price: price.toString(),
     block: log.blockNumber
   });
   
-  // TODO: Ici tu peux mettre à jour ton cache local, base de données, etc.
-  // Par exemple, sauvegarder dans localStorage côté client via Server-Sent Events
-  // Ou mettre à jour une base Vercel KV
+  // Create indexed event
+  const event: IndexedEvent = {
+    opinionId,
+    eventType: actionType === 1 ? 'answer_submitted' : 'opinion_created',
+    user,
+    content,
+    price,
+    timestamp: Date.now(),
+    blockNumber: parseInt(log.blockNumber),
+    transactionHash: log.transactionHash
+  };
+  
+  // Add to indexing service
+  indexingService.addEvent(event);
+  
+  console.log('📊 Event indexed:', event);
 }
 
 async function handleFeesAction(args: any, log: any) {
+  const opinionId = parseInt(args.opinionId.toString());
+  const user = args.user;
+  const price = BigInt(args.price.toString());
+  
   console.log('💰 Fees Action:', {
-    opinionId: args.opinionId.toString(),
-    user: args.user,
-    price: args.price.toString(),
+    opinionId,
+    user,
+    price: price.toString(),
     platformFee: args.platformFee.toString(),
     creatorFee: args.creatorFee.toString(),
     ownerAmount: args.ownerAmount.toString()
   });
+  
+  // Create indexed event for fees
+  const event: IndexedEvent = {
+    opinionId,
+    eventType: 'fees_collected',
+    user,
+    price,
+    timestamp: Date.now(),
+    blockNumber: parseInt(log.blockNumber),
+    transactionHash: log.transactionHash
+  };
+  
+  indexingService.addEvent(event);
 }
 
 async function handleQuestionSaleAction(args: any, log: any) {
+  const opinionId = parseInt(args.opinionId.toString());
+  const seller = args.seller;
+  const buyer = args.buyer;
+  const price = BigInt(args.price.toString());
+  
   console.log('🏷️ Question Sale:', {
-    opinionId: args.opinionId.toString(),
-    seller: args.seller,
-    buyer: args.buyer,
-    price: args.price.toString()
+    opinionId,
+    seller,
+    buyer,
+    price: price.toString()
   });
+  
+  // Create indexed event for question sale
+  const event: IndexedEvent = {
+    opinionId,
+    eventType: 'question_sale',
+    user: buyer, // buyer is the new owner
+    price,
+    timestamp: Date.now(),
+    blockNumber: parseInt(log.blockNumber),
+    transactionHash: log.transactionHash
+  };
+  
+  indexingService.addEvent(event);
 }
 
 function getActionTypeName(actionType: number): string {
@@ -170,12 +233,42 @@ function getActionTypeName(actionType: number): string {
   return types[actionType] || `Unknown (${actionType})`;
 }
 
-// Endpoint GET pour vérifier que le webhook fonctionne
+// GET endpoint to check webhook status
 export async function GET() {
+  console.log('ℹ️ GET request to webhook endpoint');
+  
   return NextResponse.json({ 
     status: 'active',
     contract: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f',
     network: 'base-sepolia',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    message: 'Webhook is active and ready to receive POST requests from Alchemy'
+  });
+}
+
+// Handle other HTTP methods with explicit error
+export async function PUT() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+export async function PATCH() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  console.log('⚙️ OPTIONS request received - handling CORS preflight');
+  
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
   });
 }

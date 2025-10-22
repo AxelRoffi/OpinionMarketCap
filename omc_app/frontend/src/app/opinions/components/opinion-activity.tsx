@@ -180,7 +180,24 @@ export function OpinionActivity({ activity, loading }: OpinionActivityProps) {
                     </Badge>
                   </div>
                   <div className="text-gray-400 text-sm mt-1">
-                    {item.answer.length > 50 ? `${item.answer.substring(0, 50)}...` : item.answer}
+                    {item.link ? (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 group"
+                        title="View source link"
+                      >
+                        <span>
+                          {item.answer.length > 50 ? `${item.answer.substring(0, 50)}...` : item.answer}
+                        </span>
+                        <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
+                      </a>
+                    ) : (
+                      <span>
+                        {item.answer.length > 50 ? `${item.answer.substring(0, 50)}...` : item.answer}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center space-x-2 text-gray-500 text-xs mt-1">
                     <Clock className="w-3 h-3" />

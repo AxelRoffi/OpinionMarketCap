@@ -28,8 +28,10 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { PriceHistoryChart } from '@/components/PriceHistoryChart';
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
+import { useIndexedOpinions } from '@/hooks/useIndexedOpinions';
 import { usePaginatedOpinions } from '@/hooks/usePaginatedOpinions';
 import { ClickableAddress } from '@/components/ui/clickable-address';
+import { IndexingDebug } from '@/components/IndexingDebug';
 import { usePoolOwnerDisplay } from '@/hooks/usePoolOwnerDisplay';
 import { useOpinionEvents } from '@/hooks/useOpinionEvents';
 import { useAccurateTradeCounts } from '@/hooks/useAccurateTradeCounts';
@@ -146,9 +148,30 @@ export default function HomePage() {
   // Fallback to old hook for comparison (can be removed later)
   const { opinions: fallbackOpinions } = useAllOpinions();
   
-  // Choose the appropriate data source
-  const opinionsToUse = isFetchingAll ? allOpinions : currentPageOpinions;
-  const isLoadingOpinions = isPaginationLoading;
+  // Try indexed opinions for faster loading
+  const { opinions: indexedOpinions, loading: indexedLoading, stats: indexingStats } = useIndexedOpinions();
+  
+  // Choose the appropriate data source - prefer indexed data if available
+  const opinionsToUse = indexedOpinions.length > 0 ? 
+    indexedOpinions.map(indexed => ({
+      id: indexed.id,
+      question: indexed.question,
+      currentAnswer: indexed.currentAnswer,
+      currentAnswerOwner: indexed.currentAnswerOwner,
+      creator: indexed.creator,
+      nextPrice: indexed.nextPrice,
+      lastPrice: indexed.lastPrice,
+      totalVolume: indexed.totalVolume,
+      categories: indexed.categories,
+      isActive: indexed.isActive,
+      link: indexed.link,
+      isForSale: false, // Default value
+      salePrice: BigInt(0), // Default value
+      questionOwner: indexed.creator // Use creator as question owner
+    })) :
+    (isFetchingAll ? allOpinions : currentPageOpinions);
+    
+  const isLoadingOpinions = indexedLoading || isPaginationLoading;
   
   // Hook for pool owner display
   const { getOwnerDisplay, isLoading: poolDataLoading } = usePoolOwnerDisplay();
@@ -625,6 +648,9 @@ export default function HomePage() {
   return (
     <>
       <div className="container mx-auto px-4 py-8">
+        
+        {/* Indexing Debug Info */}
+        <IndexingDebug stats={indexingStats} isVisible={true} />
         
         {/* Loading & Error States */}
         {eventsLoading && (

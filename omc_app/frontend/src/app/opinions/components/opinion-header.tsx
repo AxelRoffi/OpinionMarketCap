@@ -8,12 +8,14 @@ import {
   BookmarkPlus,
   Zap,
   Target,
+  ExternalLink,
   Tag
 } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
 import { ClickableAddress } from '@/components/ui/clickable-address';
+import { formatQuestion } from '@/lib/format-utils';
 
 interface OpinionHeaderProps {
   opinion: OpinionDetail;
@@ -91,7 +93,7 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
           </div>
           
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
-            {opinion.question}
+            {formatQuestion(opinion.question)}
           </h1>
           
           <div className="text-gray-400 text-sm">
@@ -112,9 +114,24 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             <div className="mb-2">
               <span className="text-gray-400 text-sm font-medium">Current Answer</span>
             </div>
-            <p className="text-white font-semibold text-xl mb-2">
-              {opinion.currentAnswer}
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              {opinion.link ? (
+                <a
+                  href={opinion.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white font-semibold text-xl hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-2 group"
+                  title="View source link"
+                >
+                  {opinion.currentAnswer}
+                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-emerald-400 transition-colors" />
+                </a>
+              ) : (
+                <p className="text-white font-semibold text-xl">
+                  {opinion.currentAnswer}
+                </p>
+              )}
+            </div>
             {opinion.currentAnswerDescription && (
               <p className="text-gray-300 text-sm mb-2">
                 {opinion.currentAnswerDescription}
