@@ -1,0 +1,199 @@
+# Prometheus alerting rules for OpinionMarketCap mainnet monitoring
+
+groups:
+  - name: opinionmarketcap.critical
+    rules:
+      # Critical system failures
+      - alert: ContractDown
+        expr: deployment_health_status == 2
+        for: 2m
+        labels:
+          severity: critical
+          service: opinionmarketcap
+          environment: mainnet
+        annotations:
+          summary: "OpinionMarketCap contract is down"
+          description: "One or more critical contracts are not responding on Base mainnet"
+          runbook_url: "https://docs.opinionmarketcap.xyz/runbooks/contract-down"
+
+      - alert: TreasuryDrained
+        expr: treasury_balance_usd < 50
+        for: 5m
+        labels:
+          severity: critical
+          service: treasury
+        annotations:
+          summary: "Treasury balance critically low"
+          description: "Treasury balance is below $50 USD - immediate attention required"
+          value: "{{ $value }}"
+
+      - alert: HighErrorRate
+        expr: rate(contract_errors_total[5m]) / rate(contract_calls_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          service: contracts
+        annotations:
+          summary: "High contract error rate detected"
+          description: "Contract error rate is above 10% for the last 5 minutes"
+          error_rate: "{{ $value | humanizePercentage }}"
+
+      - alert: NetworkPartition
+        expr: up{job="base-network"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: base-network
+        annotations:
+          summary: "Base network monitoring down"
+          description: "Cannot connect to Base network - possible network issues"
+
+  - name: opinionmarketcap.warning
+    rules:
+      # Warning level alerts
+      - alert: LowTreasuryBalance
+        expr: treasury_balance_usd < 500
+        for: 10m
+        labels:
+          severity: warning
+          service: treasury
+        annotations:
+          summary: "Treasury balance low"
+          description: "Treasury balance is below $500 USD"
+          value: "{{ $value }}"
+
+      - alert: HighGasPrice
+        expr: base_network_gas_price_gwei > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: base-network
+        annotations:
+          summary: "High gas prices on Base network"
+          description: "Gas price is above 10 gwei - users may experience high transaction costs"
+          gas_price: "{{ $value }} gwei"
+
+      - alert: SlowBlockProduction
+        expr: time() - base_network_latest_block_timestamp > 300
+        for: 1m
+        labels:
+          severity: warning
+          service: base-network
+        annotations:
+          summary: "Slow block production on Base"
+          description: "Latest block is more than 5 minutes old"
+          block_age: "{{ $value | humanizeDuration }}"
+
+      - alert: ModerateErrorRate
+        expr: rate(contract_errors_total[5m]) / rate(contract_calls_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: contracts
+        annotations:
+          summary: "Moderate contract error rate"
+          description: "Contract error rate is above 5% for the last 5 minutes"
+          error_rate: "{{ $value | humanizePercentage }}"
+
+      - alert: LowTradingActivity
+        expr: rate(answers_submitted_total[1h]) < 0.01
+        for: 30m
+        labels:
+          severity: warning
+          service: trading
+        annotations:
+          summary: "Low trading activity"
+          description: "Less than 1 answer per hour submitted in the last 30 minutes"
+
+  - name: opinionmarketcap.info
+    rules:
+      # Informational alerts
+      - alert: NewOpinionCreated
+        expr: increase(total_opinions_created[5m]) > 0
+        labels:
+          severity: info
+          service: opinions
+        annotations:
+          summary: "New opinion created"
+          description: "{{ $value }} new opinions created in the last 5 minutes"
+
+      - alert: HighTradingVolume
+        expr: rate(total_trading_volume_usdc[1h]) > 1000
+        labels:
+          severity: info
+          service: trading
+        annotations:
+          summary: "High trading volume detected"
+          description: "Trading volume exceeded $1000/hour"
+          volume_rate: "${{ $value }}/hour"
+
+  - name: system.alerts
+    rules:
+      # System-level alerts
+      - alert: HighCPUUsage
+        expr: (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for 5 minutes"
+          cpu_usage: "{{ $value }}%"
+
+      - alert: HighMemoryUsage  
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85%"
+          memory_usage: "{{ $value }}%"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk space critically low"
+          description: "Disk usage is above 90% on {{ $labels.device }}"
+          disk_usage: "{{ $value }}%"
+          device: "{{ $labels.device }}"
+
+  - name: monitoring.health
+    rules:
+      # Monitoring system health
+      - alert: MonitoringDown
+        expr: up{job="opinionmarketcap-monitoring"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "OpinionMarketCap monitoring is down"
+          description: "The monitoring system itself is not responding"
+
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: "Prometheus target down"
+          description: "{{ $labels.job }} target is down"
+          target: "{{ $labels.instance }}"
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: alerting
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager is not responding - alerts will not be sent"

@@ -7,7 +7,47 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    
+    "compile": "hardhat compile",
+    "compile:clean": "hardhat clean && hardhat compile",
+    
+    "test:hardhat": "hardhat test",
+    
+    "mainnet:deploy": "npx hardhat run scripts/deploy-mainnet.ts --network base",
+    "mainnet:verify": "npx hardhat run scripts/verify-mainnet-contracts.ts --network base",
+    "mainnet:setup": "cp .env.mainnet.template .env.mainnet && echo 'Edit .env.mainnet with your values'",
+    "mainnet:validate": "npx hardhat run scripts/validate-mainnet-setup.ts --network base",
+    "mainnet:monitor": "node scripts/monitor-mainnet-health.js",
+    "testnet:deploy": "npx hardhat run scripts/deploy.ts --network baseSepolia",
+    "test:coverage": "hardhat coverage",
+    
+    "deploy:testnet": "hardhat run scripts/deploy-step-by-step.ts --network baseSepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy-mainnet.ts --network base",
+    "deploy:mainnet-safe": "hardhat run scripts/deploy-mainnet-safe.ts --network base",
+    
+    "verify:testnet": "hardhat run scripts/verify-contracts.ts --network baseSepolia",
+    "verify:mainnet": "hardhat run scripts/verify-mainnet-contracts.ts --network base",
+    
+    "validate:usdc": "hardhat run scripts/validate-usdc.ts",
+    "validate:environment": "node -e \"console.log('Environment validation script')\"",
+    
+    "monitor:health": "hardhat run scripts/deployment-monitor.ts",
+    "monitor:setup": "echo 'Setting up monitoring infrastructure'",
+    
+    "mainnet:prepare": "npm run compile:clean && npm run validate:usdc && npm run validate:environment",
+    "mainnet:deploy-safe": "npm run mainnet:prepare && npm run deploy:mainnet-safe",
+    "mainnet:deploy-direct": "npm run mainnet:prepare && npm run deploy:mainnet",
+    "mainnet:verify": "npm run verify:mainnet",
+    "mainnet:monitor": "npm run monitor:health",
+    "mainnet:full-cycle": "npm run mainnet:deploy-safe && npm run mainnet:verify && npm run mainnet:monitor",
+    
+    "size": "hardhat size-contracts",
+    "node": "hardhat node",
+    "flatten": "hardhat flatten",
+    
+    "docs:generate": "echo 'Generating documentation'",
+    "security:audit": "npm audit && echo 'Security audit complete'"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,126 @@
+{
+  "mcpServers": {
+    "contract-guardian": {
+      "command": "node",
+      "args": ["mcp-servers/contract-guardian/index.js"],
+      "description": "Smart contract testing and validation automation",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "security-auditor": {
+      "command": "node", 
+      "args": ["mcp-servers/security-auditor/index.js"],
+      "description": "Comprehensive security analysis and vulnerability detection",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "mainnet-deployment": {
+      "command": "node",
+      "args": ["mcp-servers/mainnet-deployment/index.js"],
+      "description": "Mainnet deployment automation and management",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "frontend-hardening": {
+      "command": "node",
+      "args": ["mcp-servers/frontend-hardening/index.js"],
+      "description": "Frontend security hardening and performance optimization",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "frontend-testing": {
+      "command": "node",
+      "args": ["mcp-servers/frontend-testing/index.js"],
+      "description": "Comprehensive frontend testing automation",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "deployment-pipeline": {
+      "command": "node",
+      "args": ["mcp-servers/deployment-pipeline/index.js"],
+      "description": "CI/CD deployment pipeline automation",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "gas-optimizer": {
+      "command": "node",
+      "args": ["mcp-servers/gas-optimizer/index.js"],
+      "description": "Gas usage optimization and analysis",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "trading-validator": {
+      "command": "node",
+      "args": ["mcp-servers/trading-validator/index.js"],
+      "description": "Trading logic validation and simulation",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "ux-optimizer": {
+      "command": "node",
+      "args": ["mcp-servers/ux-optimizer/index.js"],
+      "description": "UX optimization and user experience analysis",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  },
+  "globalSettings": {
+    "web3": {
+      "defaultNetwork": "baseSepolia",
+      "networks": {
+        "baseSepolia": {
+          "name": "Base Sepolia",
+          "chainId": 84532,
+          "rpc": "https://sepolia.base.org",
+          "explorer": "https://sepolia.basescan.org"
+        },
+        "base": {
+          "name": "Base Mainnet", 
+          "chainId": 8453,
+          "rpc": "https://mainnet.base.org",
+          "explorer": "https://basescan.org"
+        }
+      },
+      "contracts": {
+        "opinionCore": "0xB2D35055550e2D49E5b2C21298528579A8bF7D2f",
+        "feeManager": "0xc8f879d86266C334eb9699963ca0703aa1189d8F",
+        "poolManager": "0x3B4584e690109484059D95d7904dD9fEbA246612",
+        "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+      }
+    },
+    "testing": {
+      "defaultTimeout": 30000,
+      "maxRetries": 3,
+      "reportPath": "reports/",
+      "coverage": {
+        "threshold": 80,
+        "include": ["frontend/src/**/*.{js,ts,tsx}"],
+        "exclude": ["**/*.test.{js,ts,tsx}", "**/*.spec.{js,ts,tsx}"]
+      }
+    },
+    "security": {
+      "auditLevel": "comprehensive",
+      "reportVulnerabilities": true,
+      "autoFix": false,
+      "securityHeaders": true
+    },
+    "performance": {
+      "lighthouseThreshold": 85,
+      "bundleSizeLimit": "3MB",
+      "coreWebVitals": {
+        "lcp": 2.5,
+        "fid": 100,
+        "cls": 0.1
+      }
+    }
+  }
+}
