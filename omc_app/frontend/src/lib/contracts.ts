@@ -4,6 +4,9 @@ export const CONTRACTS = {
   FEE_MANAGER: '0xc8f879d86266C334eb9699963ca0703aa1189d8F' as `0x${string}`,
   POOL_MANAGER: '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`,
   USDC_TOKEN: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
+  // Referral system (LIVE on Base Sepolia)
+  REFERRAL_MANAGER: '0xD848740cA3Cc6D83F5EF2d3761c65023c371f90C' as `0x${string}`,
+  OPINION_CORE_WITH_REFERRALS: '0x0000000000000000000000000000000000000000' as `0x${string}`, // TODO: Deploy later
 } as const;
 
 
@@ -219,4 +222,43 @@ export const POOL_MANAGER_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+] as const;
+
+// ReferralManager ABI for referral operations
+export const REFERRAL_MANAGER_ABI = [
+  {
+    name: 'generateReferralCode',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [{ name: 'referralCode', type: 'uint256' }]
+  },
+  {
+    name: 'getReferralStats',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [
+      { name: 'totalReferrals', type: 'uint256' },
+      { name: 'availableFreeMints', type: 'uint256' },
+      { name: 'totalFreeMints', type: 'uint256' },
+      { name: 'referralCode', type: 'uint256' },
+      { name: 'isReferred', type: 'bool' },
+      { name: 'referredBy', type: 'address' }
+    ]
+  },
+  {
+    name: 'getAvailableFreeMints',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [{ name: 'available', type: 'uint256' }]
+  },
+  {
+    name: 'getReferrerFromCode',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'referralCode', type: 'uint256' }],
+    outputs: [{ name: '', type: 'address' }]
+  }
 ] as const;

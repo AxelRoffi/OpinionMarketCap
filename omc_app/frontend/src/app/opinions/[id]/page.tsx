@@ -199,18 +199,33 @@ export default function OpinionDetailPage() {
         <div className="flex gap-3">
           <Button
             onClick={handleTrade}
-            className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold"
+            className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-base"
           >
             Trade
           </Button>
-          <Button
-            onClick={handleCreatePool}
-            variant="outline"
-            className="flex-1 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-          >
-            Pool
-          </Button>
+          {opinion && opinion.nextPrice >= 100_000_000 ? (
+            <Button
+              onClick={handleCreatePool}
+              variant="outline"
+              className="flex-1 h-12 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-base"
+            >
+              Pool
+            </Button>
+          ) : (
+            <Button
+              disabled
+              variant="outline"
+              className="flex-1 h-12 border-gray-600 text-gray-500 cursor-not-allowed font-semibold text-base"
+            >
+              Pool
+            </Button>
+          )}
         </div>
+        {opinion && opinion.nextPrice < 100_000_000 && (
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            Pool requires NextPrice ≥ 100 USDC
+          </p>
+        )}
       </div>
 
       {/* Trading Modal */}

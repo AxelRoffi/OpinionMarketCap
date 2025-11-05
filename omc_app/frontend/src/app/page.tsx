@@ -36,6 +36,8 @@ import { usePoolOwnerDisplay } from '@/hooks/usePoolOwnerDisplay';
 import { useOpinionEvents } from '@/hooks/useOpinionEvents';
 import { useAccurateTradeCounts } from '@/hooks/useAccurateTradeCounts';
 import { AdultContentModal } from '@/components/AdultContentModal';
+import useReferral from '@/hooks/useReferral';
+import { ReferralBanner } from '@/components/referral/ReferralBanner';
 
 // All categories (original + new) - based on our agreed list
 const ALL_CATEGORIES = [
@@ -121,6 +123,14 @@ export default function HomePage() {
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
   const [showAdultModal, setShowAdultModal] = useState(false);
   const [adultContentEnabled, setAdultContentEnabled] = useState(false);
+  
+  // Referral system
+  const { 
+    referralCode, 
+    isValidCode, 
+    showReferralWelcome, 
+    dismissReferralWelcome 
+  } = useReferral();
   
   // Pagination state - CoinMarketCap style
   const [currentPage, setCurrentPage] = useState(1);
@@ -649,8 +659,10 @@ export default function HomePage() {
     <>
       <div className="container mx-auto px-4 py-8">
         
-        {/* Indexing Debug Info */}
-        <IndexingDebug stats={indexingStats} isVisible={true} />
+        {/* Indexing Debug Info - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <IndexingDebug stats={indexingStats} isVisible={true} />
+        )}
         
         {/* Loading & Error States */}
         {eventsLoading && (
@@ -742,6 +754,7 @@ export default function HomePage() {
             <div className="text-white text-2xl font-bold">{marketStats.totalOpinions}</div>
           </motion.div>
         </div>
+
 
         {/* Search & Filter System - VISIBILITY FIXED */}
         <motion.div
@@ -1372,6 +1385,15 @@ export default function HomePage() {
         onAccept={handleAdultContentAccept}
         onDecline={handleAdultContentDecline}
       />
+
+      {/* Referral Banner */}
+      {referralCode && (
+        <ReferralBanner
+          isVisible={showReferralWelcome}
+          onDismiss={dismissReferralWelcome}
+          referralCode={referralCode}
+        />
+      )}
 
     </>
   );

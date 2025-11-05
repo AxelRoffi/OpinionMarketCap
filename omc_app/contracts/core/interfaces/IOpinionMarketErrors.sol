@@ -52,6 +52,7 @@ interface IOpinionMarketErrors {
     error PoolAlreadyRefunded(uint256 poolId, address user);
     error PoolAlreadyFunded(uint256 poolId);
     error PoolInvalidNameLength();
+    error PoolNextPriceTooLow(uint256 currentPrice, uint256 minimumRequired);
 
     // Extension errors - IMPOSED SIGNATURES
     error InvalidExtensionKey();

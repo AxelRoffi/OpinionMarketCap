@@ -372,9 +372,9 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             >
-              <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-900 rounded-2xl border border-gray-700/50 shadow-2xl">
+              <div className="w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-gray-900 rounded-lg sm:rounded-2xl border border-gray-700/50 shadow-2xl">
                 
                 {/* Header - UPDATED: Removed "Created by" */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
@@ -397,14 +397,14 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                 </div>
 
                 {/* Question Section - NEW HIERARCHY */}
-                <div className="p-6 space-y-6">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   <div className="space-y-4">
                     {/* Question Section */}
                     <div>
                       <p className="text-sm text-gray-400 mb-1">question</p>
                       <div className="mb-3">
-                        <span className="text-lg font-bold text-white">{opinionData.question}</span>
-                        <span className="text-gray-400 text-lg"> created by {formatAddress(opinionData.creator)}</span>
+                        <span className="text-base sm:text-lg font-bold text-white break-words">{opinionData.question}</span>
+                        <span className="text-gray-400 text-sm sm:text-lg block sm:inline"> created by {formatAddress(opinionData.creator)}</span>
                       </div>
                       <div className="flex items-center gap-2 mb-4">
                         {opinionData.categories.map((category, index) => (
@@ -419,14 +419,14 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     <div>
                       <p className="text-sm text-gray-400 mb-1">answer</p>
                       <div className="mb-4">
-                        <span className="text-lg font-bold text-white">{opinionData.currentAnswer}</span>
-                        <span className="text-gray-400 text-lg"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
+                        <span className="text-base sm:text-lg font-bold text-white break-words">{opinionData.currentAnswer}</span>
+                        <span className="text-gray-400 text-sm sm:text-lg block sm:inline"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Info Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                     <Card className="bg-gray-800/50 border-gray-700/50">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
@@ -625,20 +625,20 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                       </div>
                       {errors.terms && <span className="text-red-400 text-sm">{errors.terms}</span>}
 
-                      {/* Submit Button */}
-                      <div className="flex gap-4">
+                      {/* Submit Button - Mobile-Optimized */}
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={onClose}
-                          className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                          className="w-full sm:flex-1 h-12 sm:h-10 border-gray-700 text-gray-300 hover:bg-gray-800 text-base"
                         >
                           Cancel
                         </Button>
                         <Button
                           type="submit"
                           disabled={!hasBalance || isSubmitting}
-                          className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium disabled:opacity-50"
+                          className="w-full sm:flex-1 h-12 sm:h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium disabled:opacity-50 text-base"
                         >
                           {needsApproval 
                             ? (useInfiniteApproval ? 'Approve Once & Submit' : 'Approve & Submit')

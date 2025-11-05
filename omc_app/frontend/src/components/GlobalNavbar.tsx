@@ -8,7 +8,8 @@ import {
   Moon,
   Sun,
   Menu,
-  X
+  X,
+  Gift
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,10 @@ export function GlobalNavbar() {
             <Link href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</Link>
             <Link href="/marketplace" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Questions for Sale</Link>
             <Link href="/profile" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Profile</Link>
+            <Link href="/referrals" className="text-gray-300 font-medium hover:text-purple-500 hover:font-bold transition-colors duration-200 flex items-center gap-1">
+              <Gift className="w-4 h-4" />
+              Referrals
+            </Link>
             <Link href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Create</Link>
           </nav>
 
@@ -81,6 +86,10 @@ export function GlobalNavbar() {
                 <Link href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</Link>
                 <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">Questions for Sale</Link>
                 <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
+                <Link href="/referrals" className="text-gray-300 hover:text-purple-400 transition-colors flex items-center gap-2">
+                  <Gift className="w-4 h-4" />
+                  Referrals
+                </Link>
                 <Link href="/create" className="text-gray-300 hover:text-white transition-colors">Create</Link>
               </div>
             </motion.nav>
