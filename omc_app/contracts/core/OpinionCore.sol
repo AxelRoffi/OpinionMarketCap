@@ -263,7 +263,7 @@ contract OpinionCore is
         string calldata description,
         uint96 initialPrice,
         string[] calldata opinionCategories
-    ) external override nonReentrant whenNotPaused {
+    ) external virtual override nonReentrant whenNotPaused {
         // 1. Access control check FIRST - IMPOSED ORDER
         if (!isPublicCreationEnabled && !hasRole(ADMIN_ROLE, msg.sender))
             revert UnauthorizedCreator();
