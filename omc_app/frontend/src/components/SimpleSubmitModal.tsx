@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi';
 import { X, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts';
+import { formatQuestion } from '@/lib/format-utils';
 
 interface SimpleSubmitModalProps {
   isOpen: boolean;
@@ -185,7 +186,7 @@ export default function SimpleSubmitModal({
               {/* Question */}
               <div className="bg-gray-800 rounded-lg p-4 mb-6">
                 <div className="text-sm text-emerald-400 mb-2">Question #{opinionId}</div>
-                <div className="text-white font-semibold mb-2">{question}</div>
+                <div className="text-white font-semibold mb-2">{formatQuestion(question)}</div>
                 <div className="text-sm text-gray-400">
                   Current: <span className="text-gray-300">{currentAnswer}</span>
                 </div>

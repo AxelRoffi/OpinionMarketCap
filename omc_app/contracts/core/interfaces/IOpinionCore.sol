@@ -40,6 +40,8 @@ interface IOpinionCore {
 
     function reactivateOpinion(uint256 opinionId) external;
 
+    function moderateAnswer(uint256 opinionId, string calldata reason) external;
+
     function listQuestionForSale(uint256 opinionId, uint256 price) external;
 
     function buyQuestion(uint256 opinionId) external;

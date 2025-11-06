@@ -6,10 +6,12 @@ import {
   TrendingDown, 
   Search, 
   Filter,
-  BarChart3
+  BarChart3,
+  ExternalLink
 } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import SimpleSubmitModal from './SimpleSubmitModal';
+import { formatQuestion } from '@/lib/format-utils';
 
 interface OpinionData {
   id: number;
@@ -260,7 +262,7 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
 
                   {/* Opinion */}
                   <div className="col-span-3">
-                    <div className="font-medium text-white mb-1">{opinion.question}</div>
+                    <div className="font-medium text-white mb-1">{formatQuestion(opinion.question)}</div>
                     <div className="text-sm text-gray-400">
                       by {opinion.creator.slice(0, 6)}...{opinion.creator.slice(-4)}
                     </div>
@@ -273,7 +275,22 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
 
                   {/* Answer */}
                   <div className="col-span-2">
-                    <div className="font-medium text-white mb-1">{opinion.currentAnswer}</div>
+                    <div className="mb-1">
+                      {opinion.link ? (
+                        <a
+                          href={opinion.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-white hover:text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 group"
+                          title="View source link"
+                        >
+                          {opinion.currentAnswer}
+                          <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-emerald-400 transition-colors" />
+                        </a>
+                      ) : (
+                        <div className="font-medium text-white">{opinion.currentAnswer}</div>
+                      )}
+                    </div>
                     <div className="text-sm text-gray-400">
                       by {opinion.currentAnswerOwner.slice(0, 6)}...{opinion.currentAnswerOwner.slice(-4)}
                     </div>

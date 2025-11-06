@@ -1,0 +1,29 @@
+{
+  "name": "@opinionmarketcap/frontend-hardening",
+  "version": "1.0.0",
+  "description": "MCP server for frontend security hardening and performance optimization",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "puppeteer": "^22.0.0",
+    "lighthouse": "^11.0.0",
+    "axe-core": "^4.8.0",
+    "helmet": "^7.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "frontend",
+    "security",
+    "performance",
+    "hardening",
+    "opinionmarketcap"
+  ],
+  "author": "OpinionMarketCap Team",
+  "license": "MIT"
+}

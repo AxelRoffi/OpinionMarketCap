@@ -14,35 +14,55 @@
       "question": "Will Bitcoin reach $100k by end of 2024?",
       "answer": "Yes, based on institutional adoption",
       "price": "5.0 USDC",
-      "categories": ["crypto", "bitcoin", "prediction"]
+      "categories": [
+        "crypto",
+        "bitcoin",
+        "prediction"
+      ]
     },
     {
       "id": 2,
       "question": "Most influential Prophet ?",
       "answer": "Actually, no - bear market coming",
       "price": "3.38 USDC",
-      "categories": ["web3"]
+      "categories": [
+        "web3"
+      ]
     },
     {
       "id": 3,
       "question": "Will ETH reach $5000 by end of 2024?",
       "answer": "Yes, bullish on ETH",
       "price": "5.0 USDC",
-      "categories": ["crypto", "ethereum"]
+      "categories": [
+        "crypto",
+        "ethereum"
+      ]
     },
     {
       "id": 4,
       "question": "Will ETH reach $5000 by end of 2024?",
       "answer": "Yes, bullish on ETH",
       "price": "5.0 USDC",
-      "categories": ["crypto", "ethereum"]
+      "categories": [
+        "crypto",
+        "ethereum"
+      ]
     },
     {
       "id": 5,
       "question": "Will ChatGPT-5 be released in 2024?",
       "answer": "Yes, OpenAI will release it Q4 2024",
       "price": "20.0 USDC",
-      "categories": ["ai", "openai", "tech"]
+      "categories": [
+        "ai",
+        "openai",
+        "tech"
+      ]
     }
-  ]
+  ],
+  "treasurySecureEnhanced": "0xAe78a6c716DEA5C1580bca0B05C4A4ca6337C94a",
+  "lastTreasuryUpgrade": "2025-11-04T15:59:54.686Z",
+  "referralManager": "0xD848740cA3Cc6D83F5EF2d3761c65023c371f90C",
+  "lastReferralDeployment": "2025-11-05T15:12:28.424Z"
 }

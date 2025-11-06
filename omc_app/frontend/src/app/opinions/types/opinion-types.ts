@@ -14,6 +14,7 @@ export interface OpinionDetail {
   question: string;
   categories: string[];
   createdAt: number;
+  link?: string; // Link associated with the current answer
 }
 
 export interface AnswerHistory {
@@ -54,4 +55,5 @@ export interface TradingActivity {
   price: bigint;
   timestamp: number;
   transactionHash?: string;
+  link?: string; // Link associated with this answer
 }

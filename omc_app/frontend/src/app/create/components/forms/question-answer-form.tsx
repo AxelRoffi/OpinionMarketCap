@@ -12,36 +12,51 @@ import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AdultContentModal } from '@/components/AdultContentModal'
 
 interface FormData {
   question: string
   answer: string
   category: string
+  categories: string[]
   initialPrice: number
 }
 
 interface QuestionAnswerFormProps {
   formData: FormData
-  onUpdate: (field: string, value: string | number) => void
+  onUpdate: (field: string, value: string | number | string[]) => void
   onNext: () => void
 }
 
-// Categories from smart contract (available-categories.json)
-const CATEGORIES = [
-  'Crypto',
-  'Politics',
-  'Science',
-  'Technology',
-  'Sports',
-  'Entertainment',
-  'Culture',
-  'Web',
-  'Social Media',
-  'Other'
+// All categories (original + new) - based on our agreed list
+const ALL_CATEGORIES = [
+  // Original categories (some will be hidden)
+  'Crypto', 'Politics', 'Science', 'Technology', 'Sports',
+  'Entertainment', 'Culture', 'Web', 'Social Media', 'Other',
+  
+  // New agreed categories
+  'AI', 'Automotive', 'Books & Literature', 'Celebrities', 
+  'Conspiracy', 'Dating & Relationships', 'Investing', 
+  'Luxury', 'Mobile Apps', 'Movies & TV', 'Music', 'Parenting', 
+  'Podcasts', 'Real Estate', 'Adult'
 ]
+
+// Categories to hide in frontend (deprecated/redundant)
+const HIDDEN_CATEGORIES = ['Science', 'Technology', 'Culture', 'Web']
+
+// Active categories (visible in UI) - sorted alphabetically with Adult at end
+const CATEGORIES = (() => {
+  const active = ALL_CATEGORIES.filter(cat => !HIDDEN_CATEGORIES.includes(cat))
+  const nonAdult = active.filter(cat => cat !== 'Adult').sort()
+  const adult = active.filter(cat => cat === 'Adult')
+  return [...nonAdult, ...adult]
+})()
 
 export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswerFormProps) {
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [showAdultModal, setShowAdultModal] = useState(false)
+  const [adultContentEnabled, setAdultContentEnabled] = useState(false)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
@@ -67,8 +82,10 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     }
 
     // Category validation
-    if (!formData.category) {
-      newErrors.category = 'Category is required'
+    if (!selectedCategories.length) {
+      newErrors.categories = 'At least one category is required'
+    } else if (selectedCategories.length > 3) {
+      newErrors.categories = 'Maximum 3 categories allowed'
     }
 
     // Price validation
@@ -94,6 +111,53 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
+  }
+
+  const handleCategoryToggle = (category: string) => {
+    if (category === 'Adult' && !adultContentEnabled) {
+      // Show adult content modal when Adult category is selected
+      setShowAdultModal(true)
+      return
+    }
+    
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        // Remove category if already selected
+        const updated = prev.filter(c => c !== category)
+        onUpdate('categories', updated)
+        return updated
+      } else if (prev.length < 3) {
+        // Add category if under limit
+        const updated = [...prev, category]
+        onUpdate('categories', updated)
+        return updated
+      } else {
+        // Already at limit, don't add
+        return prev
+      }
+    })
+    
+    // Clear category errors when user makes selection
+    if (errors.categories) {
+      setErrors(prev => ({ ...prev, categories: '' }))
+    }
+  }
+
+  const handleAdultContentAccept = () => {
+    setAdultContentEnabled(true)
+    setShowAdultModal(false)
+    // Now add the Adult category
+    handleCategoryToggle('Adult')
+  }
+
+  const handleAdultContentDecline = () => {
+    setShowAdultModal(false)
+    // Don't select Adult category, user stays on current selection
+  }
+
+  // Show all categories including Adult - age verification happens on selection
+  const getVisibleCategories = () => {
+    return CATEGORIES
   }
 
   // Correct fee calculation matching smart contract: 20% with 5 USDC minimum
@@ -165,26 +229,48 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
 
       {/* Category Selection */}
       <div className="space-y-2">
-        <Label htmlFor="category" className="text-white font-medium">
-          Category *
+        <Label className="text-white font-medium">
+          Categories * (Select 1-3)
         </Label>
-        <Select value={formData.category || ''} onValueChange={(value) => handleFieldUpdate('category', value)}>
-          <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white focus:border-emerald-500">
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-700">
-            {CATEGORIES.map((category) => (
-              <SelectItem 
-                key={category} 
-                value={category}
-                className="text-white hover:bg-gray-700"
-              >
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="text-red-400 text-sm">{errors.category}</span>
+        <div className="text-sm text-gray-400 mb-2">
+          Selected: {selectedCategories.length}/3
+        </div>
+        
+        {/* Dropdown Interface */}
+        <div className="bg-gray-800/50 border border-gray-700 rounded p-3 max-h-48 overflow-y-auto">
+          <div className="space-y-2">
+            {getVisibleCategories().map((category) => {
+              const isSelected = selectedCategories.includes(category)
+              const isDisabled = !isSelected && selectedCategories.length >= 3
+              
+              return (
+                <label
+                  key={category}
+                  className={`
+                    flex items-center gap-3 p-2 rounded cursor-pointer transition-all duration-200
+                    ${isDisabled && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/50'}
+                    ${category === 'Adult' ? 'border border-red-500/30 bg-red-900/10' : ''}
+                  `}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    disabled={isDisabled && !isSelected}
+                    onChange={() => !isDisabled && handleCategoryToggle(category)}
+                    className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500 focus:ring-2"
+                  />
+                  <span className="text-white text-sm font-medium">
+                    {category === 'Adult' ? '🔞 Adult' : category}
+                  </span>
+                  {isDisabled && !isSelected && (
+                    <span className="text-xs text-gray-500 ml-auto">Max reached</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
+        </div>
+        <span className="text-red-400 text-sm">{errors.categories}</span>
       </div>
 
       {/* Price Slider */}
@@ -275,6 +361,13 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           Continue to Additional Info
         </Button>
       </div>
+
+      {/* Adult Content Modal */}
+      <AdultContentModal
+        isOpen={showAdultModal}
+        onAccept={handleAdultContentAccept}
+        onDecline={handleAdultContentDecline}
+      />
     </div>
   )
 }

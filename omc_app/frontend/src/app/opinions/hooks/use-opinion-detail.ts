@@ -111,6 +111,7 @@ export function useOpinionDetail(opinionId: number) {
     question: opinionData.question,
     categories: [...opinionData.categories],
     createdAt: Date.now(), // Would be better to get from contract events
+    link: opinionData.link || undefined, // Include link if available from contract
   } : null;
 
   // Transform history data
@@ -170,6 +171,8 @@ export function useOpinionDetail(opinionId: number) {
         answer: h.answer,
         price: h.price,
         timestamp: h.timestamp * 1000,
+        // Include link if this answer matches the current answer (most recent)
+        link: h.answer === opinionData?.currentAnswer ? opinionData?.link : undefined,
       }));
 
       setStats(calculatedStats);

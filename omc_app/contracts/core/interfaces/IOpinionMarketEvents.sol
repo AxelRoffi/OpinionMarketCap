@@ -176,6 +176,38 @@ interface IOpinionMarketEvents {
     );
 
     /**
+     * @dev Emitted when an answer is moderated by admin
+     * @param opinionId Opinion ID
+     * @param moderatedUser Address of user whose answer was moderated
+     * @param newOwner Address of new answer owner (question creator)
+     * @param reason Reason for moderation
+     * @param timestamp Block timestamp of moderation
+     */
+    event AnswerModerated(
+        uint256 indexed opinionId,
+        address indexed moderatedUser,
+        address indexed newOwner,
+        string reason,
+        uint256 timestamp
+    );
+
+    /**
+     * @dev Emitted when category management actions occur
+     * @param actionType Action type (0 = add single, 1 = add multiple)
+     * @param categoryIndex Index of the category
+     * @param categoryName Name of the category
+     * @param actor Address performing the action
+     * @param data Additional data (unused, set to 0)
+     */
+    event CategoryAction(
+        uint8 indexed actionType,
+        uint256 indexed categoryIndex,
+        string categoryName,
+        address indexed actor,
+        uint256 data
+    );
+
+    /**
      * @dev Emitted when a question sale action occurs
      * @param opinionId Opinion ID
      * @param actionType Action type (0 = list, 1 = buy, 2 = cancel)

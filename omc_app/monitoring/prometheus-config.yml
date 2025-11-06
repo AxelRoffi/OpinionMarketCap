@@ -1,0 +1,120 @@
+# Prometheus configuration for OpinionMarketCap mainnet monitoring
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    monitor: 'opinionmarketcap-mainnet'
+    environment: 'production'
+
+rule_files:
+  - "alert-rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # OpinionMarketCap deployment monitoring
+  - job_name: 'opinionmarketcap-monitoring'
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: 
+        - 'localhost:8080'  # Monitoring script endpoint
+    labels:
+      service: 'opinionmarketcap'
+      network: 'base-mainnet'
+      
+  # Base network monitoring
+  - job_name: 'base-network'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+        - 'localhost:8081'  # Base network metrics endpoint
+    labels:
+      network: 'base'
+      chain_id: '8453'
+
+  # Contract health monitoring
+  - job_name: 'contract-health'
+    scrape_interval: 120s  # Every 2 minutes
+    scrape_timeout: 60s
+    metrics_path: '/health'
+    static_configs:
+      - targets:
+        - 'localhost:8082'  # Contract health endpoint
+    labels:
+      service: 'contract-monitoring'
+      
+  # Frontend application monitoring (if available)
+  - job_name: 'frontend-metrics'
+    scrape_interval: 60s
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets:
+        - 'opinionmarketcap.xyz'
+    scheme: https
+    labels:
+      component: 'frontend'
+
+  # Database monitoring (if applicable)
+  - job_name: 'database-metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+        - 'localhost:9187'  # PostgreSQL exporter
+    labels:
+      component: 'database'
+
+  # System metrics
+  - job_name: 'node-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+        - 'localhost:9100'
+    labels:
+      component: 'system'
+
+# Remote write configuration (optional - for long-term storage)
+remote_write:
+  - url: "https://prometheus-remote-write-endpoint.example.com/api/v1/write"
+    basic_auth:
+      username: "${PROMETHEUS_REMOTE_USERNAME}"
+      password: "${PROMETHEUS_REMOTE_PASSWORD}"
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'opinionmarketcap_.*|base_network_.*|contract_.*'
+        action: keep
+
+# Storage configuration
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 10GB
+    path: /prometheus/data
+
+# Recording rules for aggregated metrics
+recording_rules:
+  - name: opinionmarketcap.aggregates
+    interval: 30s
+    rules:
+      - record: opinionmarketcap:total_opinions:rate5m
+        expr: rate(total_opinions_created[5m])
+        labels:
+          aggregation: rate5m
+          
+      - record: opinionmarketcap:trading_volume:rate5m  
+        expr: rate(total_trading_volume_usdc[5m])
+        labels:
+          aggregation: rate5m
+          
+      - record: opinionmarketcap:error_rate:rate5m
+        expr: rate(contract_errors_total[5m]) / rate(contract_calls_total[5m])
+        labels:
+          aggregation: rate5m

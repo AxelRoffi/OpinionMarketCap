@@ -148,6 +148,12 @@ contract PoolManager is
             opinionId
         );
 
+        // Check NextPrice >= 100 USDC requirement for pool creation
+        uint256 nextPrice = opinionCore.getNextPrice(opinionId);
+        if (nextPrice < 100_000_000) { // 100 USDC (6 decimals)
+            revert PoolNextPriceTooLow(nextPrice, 100_000_000);
+        }
+
         // Validate parameters
         PoolStructs.PoolCreationParams memory params = PoolStructs
             .PoolCreationParams({
@@ -228,9 +234,9 @@ contract PoolManager is
         if (block.timestamp > pool.deadline)
             revert PoolDeadlinePassed(poolId, pool.deadline);
 
-        // Use fixed target price (no longer dynamic)
+        // Use dynamic NextPrice as target (real-time)
         uint256 opinionId = pool.opinionId;
-        uint96 targetPrice = pool.targetPrice; // ✅ FIX: Use stored fixed target price
+        uint96 targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ DYNAMIC: Always current NextPrice
 
         // Check if pool already has enough funds
         if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
@@ -244,22 +250,16 @@ contract PoolManager is
         // Ensure non-zero contribution
         if (actualAmount == 0) revert PoolContributionTooLow(actualAmount, 1);
 
-        // Calculate total with fee
-        uint96 totalRequired = actualAmount + poolContributionFee;
-
-        // Check allowance
+        // No contribution fee anymore - just transfer the contribution amount
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < totalRequired)
-            revert InsufficientAllowance(totalRequired, allowance);
+        if (allowance < actualAmount)
+            revert InsufficientAllowance(actualAmount, allowance);
 
         // Update pool state
         _updatePoolForContribution(poolId, actualAmount);
 
-        // Transfer funds
-        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
-
-        // Handle fee - send to treasury instead of splitting
-        usdcToken.safeTransfer(treasury, poolContributionFee);
+        // Transfer funds (no fee)
+        usdcToken.safeTransferFrom(msg.sender, address(this), actualAmount);
 
         // Emit contribution event
         emit PoolContribution(
@@ -292,8 +292,8 @@ contract PoolManager is
         if (block.timestamp > pool.deadline)
             revert PoolDeadlinePassed(poolId, pool.deadline);
 
-        // Calculate exact remaining amount
-        uint96 targetPrice = pool.targetPrice;
+        // Calculate exact remaining amount using current NextPrice
+        uint96 targetPrice = uint96(opinionCore.getNextPrice(pool.opinionId));
         if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
         
         uint96 remainingAmount = targetPrice - pool.totalAmount;
@@ -321,22 +321,16 @@ contract PoolManager is
         // Ensure there's actually a meaningful amount to contribute
         if (remainingAmount == 0) revert PoolAlreadyFunded(poolId);
 
-        // Calculate total with fee
-        uint96 totalRequired = remainingAmount + poolContributionFee;
-
-        // Check allowance
+        // No contribution fee anymore - just transfer the remaining amount
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < totalRequired)
-            revert InsufficientAllowance(totalRequired, allowance);
+        if (allowance < remainingAmount)
+            revert InsufficientAllowance(remainingAmount, allowance);
 
         // Update pool state
         _updatePoolForContribution(poolId, remainingAmount);
 
-        // Transfer funds
-        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
-
-        // Handle fee - send to treasury instead of splitting
-        usdcToken.safeTransfer(treasury, poolContributionFee);
+        // Transfer funds (no fee)
+        usdcToken.safeTransferFrom(msg.sender, address(this), remainingAmount);
 
         // Emit contribution event
         emit PoolContribution(
@@ -586,14 +580,14 @@ contract PoolManager is
 
         info = pools[poolId];
 
-        // Use fixed target price (not dynamic current price)
-        currentPrice = info.targetPrice; // ✅ FIX: Return stored target price
+        // Use dynamic NextPrice as target (real-time)
+        currentPrice = opinionCore.getNextPrice(info.opinionId); // ✅ DYNAMIC: Current NextPrice
 
         // Calculate remaining amount needed
-        if (info.totalAmount >= info.targetPrice) {
+        if (info.totalAmount >= currentPrice) {
             remainingAmount = 0;
         } else {
-            remainingAmount = info.targetPrice - info.totalAmount;
+            remainingAmount = currentPrice - info.totalAmount;
         }
 
         // Calculate time remaining
@@ -671,7 +665,7 @@ contract PoolManager is
         pool.opinionId = opinionId;
         pool.proposedAnswer = proposedAnswer;
         pool.totalAmount = uint96(initialContribution);
-        pool.targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ FIX: Store fixed target price
+        pool.targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ INITIAL: Store initial NextPrice (for reference only)
         pool.deadline = uint32(deadline);
         pool.creator = msg.sender;
         pool.status = PoolStructs.PoolStatus.Active;
@@ -741,19 +735,17 @@ contract PoolManager is
         }
 
         uint256 opinionId = pool.opinionId;
-        uint96 targetPrice = pool.targetPrice;
+        uint96 currentNextPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ DYNAMIC: Current NextPrice
         uint96 currentAmount = pool.totalAmount;
         
-        // ✅ FIX: Allow completion if within 0.01% of target (1 basis point)
-        // This handles precision issues from bonding curve price calculations
-        uint96 tolerance = targetPrice / 10000; // 0.01% tolerance
+        // ✅ DYNAMIC: Execute if we have enough funds for CURRENT NextPrice
+        // Allow 0.01% tolerance for precision issues
+        uint96 tolerance = currentNextPrice / 10000; // 0.01% tolerance
         if (tolerance < 1) tolerance = 1; // Minimum 1 wei tolerance
         
-        // Execute if we're within tolerance of target (fixes 99.9% completion issue)
-        if (currentAmount >= targetPrice - tolerance) {
-            // Set to exact target for clean execution
-            pool.totalAmount = targetPrice;
-            _executePool(poolId, opinionId, targetPrice);
+        // Execute if we're within tolerance of CURRENT NextPrice
+        if (currentAmount >= currentNextPrice - tolerance) {
+            _executePool(poolId, opinionId, currentNextPrice);
         }
     }
 
@@ -771,9 +763,10 @@ contract PoolManager is
         if (pool.status != PoolStructs.PoolStatus.Active)
             revert PoolNotActive(poolId, uint8(pool.status));
 
-        // Double-check funds
-        if (pool.totalAmount < targetPrice)
-            revert PoolInsufficientFunds(pool.totalAmount, targetPrice);
+        // Double-check funds against CURRENT NextPrice (dynamic)
+        uint96 currentNextPrice = uint96(opinionCore.getNextPrice(opinionId));
+        if (pool.totalAmount < currentNextPrice)
+            revert PoolInsufficientFunds(pool.totalAmount, currentNextPrice);
 
         // Get current answer owner before execution
         OpinionStructs.Opinion memory opinion = opinionCore.getOpinionDetails(
@@ -781,12 +774,12 @@ contract PoolManager is
         );
         address currentOwner = opinion.currentAnswerOwner;
 
-        // Update opinion through core contract
+        // Update opinion through core contract using CURRENT NextPrice
         opinionCore.updateOpinionOnPoolExecution(
             opinionId,
             pool.proposedAnswer,
             "", // Empty description for pool execution
-            targetPrice
+            targetPrice // This is now the current NextPrice, not fixed
         );
 
         // Update pool status

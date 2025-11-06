@@ -28,26 +28,45 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { PriceHistoryChart } from '@/components/PriceHistoryChart';
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
+import { useIndexedOpinions } from '@/hooks/useIndexedOpinions';
 import { usePaginatedOpinions } from '@/hooks/usePaginatedOpinions';
 import { ClickableAddress } from '@/components/ui/clickable-address';
+import { IndexingDebug } from '@/components/IndexingDebug';
 import { usePoolOwnerDisplay } from '@/hooks/usePoolOwnerDisplay';
 import { useOpinionEvents } from '@/hooks/useOpinionEvents';
 import { useAccurateTradeCounts } from '@/hooks/useAccurateTradeCounts';
+import { AdultContentModal } from '@/components/AdultContentModal';
+import useReferral from '@/hooks/useReferral';
+import { ReferralBanner } from '@/components/referral/ReferralBanner';
 
-// Smart contract categories
-const SMART_CONTRACT_CATEGORIES = [
-  "All Categories",
-  "Crypto", 
-  "Politics", 
-  "Science", 
-  "Technology", 
-  "Sports", 
-  "Entertainment", 
-  "Culture", 
-  "Web", 
-  "Social Media", 
-  "Other"
+// All categories (original + new) - based on our agreed list
+const ALL_CATEGORIES = [
+  // Original categories (some will be hidden)
+  'Crypto', 'Politics', 'Science', 'Technology', 'Sports',
+  'Entertainment', 'Culture', 'Web', 'Social Media', 'Other',
+  
+  // New agreed categories
+  'AI', 'Automotive', 'Books & Literature', 'Celebrities', 
+  'Conspiracy', 'Dating & Relationships', 'Investing', 
+  'Luxury', 'Mobile Apps', 'Movies & TV', 'Music', 'Parenting', 
+  'Podcasts', 'Real Estate', 'Adult'
 ];
+
+// Categories to hide in frontend (deprecated/redundant)
+const HIDDEN_CATEGORIES = ['Science', 'Technology', 'Culture', 'Web'];
+
+// Active categories (visible in UI) - sorted alphabetically with Adult at end
+const VISIBLE_CATEGORIES = (() => {
+  const active = ALL_CATEGORIES.filter(cat => !HIDDEN_CATEGORIES.includes(cat));
+  const nonAdult = active.filter(cat => cat !== 'Adult').sort();
+  const adult = active.filter(cat => cat === 'Adult');
+  return [...nonAdult, ...adult];
+})();
+
+// Smart contract categories for dropdown (includes "All Categories" + all categories including Adult)
+const getSmartContractCategories = () => {
+  return ['All Categories', ...VISIBLE_CATEGORIES];
+};
 
 // Sort options
 const SORT_OPTIONS = [
@@ -102,6 +121,16 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedOpinion, setSelectedOpinion] = useState<OpinionData | null>(null);
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
+  const [showAdultModal, setShowAdultModal] = useState(false);
+  const [adultContentEnabled, setAdultContentEnabled] = useState(false);
+  
+  // Referral system
+  const { 
+    referralCode, 
+    isValidCode, 
+    showReferralWelcome, 
+    dismissReferralWelcome 
+  } = useReferral();
   
   // Pagination state - CoinMarketCap style
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,9 +158,30 @@ export default function HomePage() {
   // Fallback to old hook for comparison (can be removed later)
   const { opinions: fallbackOpinions } = useAllOpinions();
   
-  // Choose the appropriate data source
-  const opinionsToUse = isFetchingAll ? allOpinions : currentPageOpinions;
-  const isLoadingOpinions = isPaginationLoading;
+  // Try indexed opinions for faster loading
+  const { opinions: indexedOpinions, loading: indexedLoading, stats: indexingStats } = useIndexedOpinions();
+  
+  // Choose the appropriate data source - prefer indexed data if available
+  const opinionsToUse = indexedOpinions.length > 0 ? 
+    indexedOpinions.map(indexed => ({
+      id: indexed.id,
+      question: indexed.question,
+      currentAnswer: indexed.currentAnswer,
+      currentAnswerOwner: indexed.currentAnswerOwner,
+      creator: indexed.creator,
+      nextPrice: indexed.nextPrice,
+      lastPrice: indexed.lastPrice,
+      totalVolume: indexed.totalVolume,
+      categories: indexed.categories,
+      isActive: indexed.isActive,
+      link: indexed.link,
+      isForSale: false, // Default value
+      salePrice: BigInt(0), // Default value
+      questionOwner: indexed.creator // Use creator as question owner
+    })) :
+    (isFetchingAll ? allOpinions : currentPageOpinions);
+    
+  const isLoadingOpinions = indexedLoading || isPaginationLoading;
   
   // Hook for pool owner display
   const { getOwnerDisplay, isLoading: poolDataLoading } = usePoolOwnerDisplay();
@@ -370,6 +420,29 @@ export default function HomePage() {
     });
   }, [opinionsToUse, getCreationTimestamp, getTradeCount, getLastActivity, get24hVolume]);
 
+  // Handle category selection with adult content verification
+  const handleCategorySelect = (value: string) => {
+    if (value === 'Adult' && !adultContentEnabled) {
+      // Show adult content modal when Adult category is selected
+      setShowAdultModal(true);
+      return;
+    }
+    // For all other categories, proceed normally
+    setSelectedCategory(value);
+  };
+
+  const handleAdultContentAccept = () => {
+    setAdultContentEnabled(true);
+    setShowAdultModal(false);
+    // Now select the Adult category
+    setSelectedCategory('Adult');
+  };
+
+  const handleAdultContentDecline = () => {
+    setShowAdultModal(false);
+    // Don't select Adult category, user stays on current selection
+  };
+
   // Filter, sort and paginate opinions - CoinMarketCap style
   const { paginatedOpinions, totalPages, totalFiltered } = useMemo(() => {
     // Note: If using server-side pagination, filtering/sorting should ideally be done server-side too
@@ -380,6 +453,12 @@ export default function HomePage() {
       const searchWords = searchQuery.toLowerCase().split(' ').filter(w => w);
       const opinionText = (opinion.question + ' ' + opinion.currentAnswer).toLowerCase();
       const matchesSearch = searchWords.every(word => opinionText.includes(word));
+
+      // Adult content filtering: Hide adult content by default
+      const isAdultContent = opinion.categories.includes('Adult');
+      if (isAdultContent && !adultContentEnabled) {
+        return false; // Hide adult content if user hasn't verified age
+      }
 
       const matchesCategory = selectedCategory === 'All Categories' || 
                              opinion.categories.includes(selectedCategory);
@@ -459,7 +538,7 @@ export default function HomePage() {
       totalPages: finalTotalPages,
       totalFiltered: isFetchingAll ? totalFiltered : paginationTotalOpinions || totalFiltered
     };
-  }, [enhancedOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection, currentPage, itemsPerPage, isFetchingAll, paginationTotalPages, paginationTotalOpinions]);
+  }, [enhancedOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection, currentPage, itemsPerPage, isFetchingAll, paginationTotalPages, paginationTotalOpinions, adultContentEnabled]);
 
   // Utility functions
   const formatUSDC = (wei: bigint) => {
@@ -517,14 +596,25 @@ export default function HomePage() {
     const colorMap: { [key: string]: string } = {
       'Crypto': 'bg-orange-600 text-white hover:bg-orange-700',
       'Politics': 'bg-red-600 text-white hover:bg-red-700',
-      'Science': 'bg-green-600 text-white hover:bg-green-700',
-      'Technology': 'bg-blue-600 text-white hover:bg-blue-700',
       'Sports': 'bg-yellow-600 text-white hover:bg-yellow-700',
       'Entertainment': 'bg-purple-600 text-white hover:bg-purple-700',
-      'Culture': 'bg-pink-600 text-white hover:bg-pink-700',
-      'Web': 'bg-cyan-600 text-white hover:bg-cyan-700',
       'Social Media': 'bg-indigo-600 text-white hover:bg-indigo-700',
-      'Other': 'bg-gray-600 text-white hover:bg-gray-700'
+      'Other': 'bg-gray-600 text-white hover:bg-gray-700',
+      'AI': 'bg-teal-600 text-white hover:bg-teal-700',
+      'Automotive': 'bg-slate-600 text-white hover:bg-slate-700',
+      'Books & Literature': 'bg-amber-600 text-white hover:bg-amber-700',
+      'Celebrities': 'bg-rose-600 text-white hover:bg-rose-700',
+      'Conspiracy': 'bg-violet-600 text-white hover:bg-violet-700',
+      'Dating & Relationships': 'bg-pink-600 text-white hover:bg-pink-700',
+      'Investing': 'bg-emerald-600 text-white hover:bg-emerald-700',
+      'Luxury': 'bg-amber-700 text-white hover:bg-amber-800',
+      'Mobile Apps': 'bg-cyan-600 text-white hover:bg-cyan-700',
+      'Movies & TV': 'bg-purple-700 text-white hover:bg-purple-800',
+      'Music': 'bg-pink-700 text-white hover:bg-pink-800',
+      'Parenting': 'bg-lime-600 text-white hover:bg-lime-700',
+      'Podcasts': 'bg-green-700 text-white hover:bg-green-800',
+      'Real Estate': 'bg-stone-600 text-white hover:bg-stone-700',
+      'Adult': 'bg-red-900 text-white hover:bg-red-800'
     };
     return colorMap[category] || 'bg-gray-600 text-white hover:bg-gray-700';
   };
@@ -568,6 +658,11 @@ export default function HomePage() {
   return (
     <>
       <div className="container mx-auto px-4 py-8">
+        
+        {/* Indexing Debug Info - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <IndexingDebug stats={indexingStats} isVisible={true} />
+        )}
         
         {/* Loading & Error States */}
         {eventsLoading && (
@@ -660,6 +755,7 @@ export default function HomePage() {
           </motion.div>
         </div>
 
+
         {/* Search & Filter System - VISIBILITY FIXED */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -678,13 +774,15 @@ export default function HomePage() {
             />
           </div>
           
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select value={selectedCategory} onValueChange={handleCategorySelect}>
             <SelectTrigger className="bg-gray-800 border-gray-700 text-white w-full md:w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700">
-              {SMART_CONTRACT_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category} className="text-white hover:bg-gray-700">{category}</SelectItem>
+              {getSmartContractCategories().map((category) => (
+                <SelectItem key={category} value={category} className="text-white hover:bg-gray-700">
+                  {category === 'Adult' ? '🔞 Adult' : category}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -880,11 +978,16 @@ export default function HomePage() {
                           className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedCategory(displayCategory);
-                            setActiveTab('all');
+                            if (displayCategory === 'Adult' && !adultContentEnabled) {
+                              setShowAdultModal(true);
+                            } else {
+                              setSelectedCategory(displayCategory);
+                              setActiveTab('all');
+                            }
                           }}
                         >
                           {displayCategory}
+                          {displayCategory === 'Adult' && ' 🔞'}
                         </Badge>
                       </div>
                       <div className="text-white font-bold text-sm mb-2 flex items-center gap-2">
@@ -1002,11 +1105,16 @@ export default function HomePage() {
                             className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedCategory(displayCategory);
-                              setActiveTab('all');
+                              if (displayCategory === 'Adult' && !adultContentEnabled) {
+                                setShowAdultModal(true);
+                              } else {
+                                setSelectedCategory(displayCategory);
+                                setActiveTab('all');
+                              }
                             }}
                           >
                             {displayCategory}
+                            {displayCategory === 'Adult' && ' 🔞'}
                           </Badge>
                         </div>
                       </div>
@@ -1268,6 +1376,22 @@ export default function HomePage() {
           onClose={() => setSelectedOpinion(null)}
           opinionId={selectedOpinion.id}
           opinionData={selectedOpinion}
+        />
+      )}
+
+      {/* Adult Content Modal */}
+      <AdultContentModal
+        isOpen={showAdultModal}
+        onAccept={handleAdultContentAccept}
+        onDecline={handleAdultContentDecline}
+      />
+
+      {/* Referral Banner */}
+      {referralCode && (
+        <ReferralBanner
+          isVisible={showReferralWelcome}
+          onDismiss={dismissReferralWelcome}
+          referralCode={referralCode}
         />
       )}
 

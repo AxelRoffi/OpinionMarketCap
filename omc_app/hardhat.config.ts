@@ -33,6 +33,14 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 100000000, // Reduced gas price (0.1 gwei)
     },
+    "base": {
+      url: "https://mainnet.base.org",
+      accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
+      gasPrice: 1000000000, // 1 gwei (mainnet)
+      gas: 5000000,
+      timeout: 300000, // 5 minutes
+      confirmations: 2, // Wait for 2 confirmations on mainnet
+    },
     "sepolia": {
       url: "https://rpc.sepolia.org",
       accounts: [process.env.PRIVATE_KEY],
@@ -42,6 +50,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       baseSepolia: process.env.BASESCAN_API_KEY || "PLACEHOLDER",
+      base: process.env.BASESCAN_API_KEY || "PLACEHOLDER",
     },
     customChains: [
       {
@@ -50,6 +59,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.basescan.org/api",
           browserURL: "https://sepolia.basescan.org"
+        }
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org"
         }
       }
     ]

@@ -1,0 +1,32 @@
+{
+  "name": "@opinionmarketcap/web3-development-mcp",
+  "version": "1.0.0",
+  "description": "Web3 Development MCP Server for OpinionMarketCap - Smart Contract Automation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "security-scan": "node tools/security-scanner.js",
+    "deploy-test": "node tools/deployment-tester.js",
+    "gas-analysis": "node tools/gas-analyzer.js"
+  },
+  "keywords": ["mcp", "web3", "smart-contracts", "hardhat", "security", "automation"],
+  "author": "OpinionMarketCap Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.22.17",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
+    "solhint": "^4.0.0",
+    "dotenv": "^16.4.7",
+    "chalk": "^5.0.0",
+    "table": "^6.8.0",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0",
+    "jest": "^29.0.0"
+  }
+}

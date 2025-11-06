@@ -12,7 +12,8 @@ import {
   DollarSign,
   TrendingUp,
   Users,
-  Hash
+  Hash,
+  ExternalLink
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -446,7 +447,22 @@ export default function MarketplacePage() {
                                 <span className="text-xs text-gray-400">{formatAddress(question.questionOwner)}</span>
                               </div>
                               <p className="text-white font-medium">{truncateText(question.question, 60)}</p>
-                              <p className="text-sm text-gray-400">Current: {question.currentAnswer}</p>
+                              <div className="text-sm text-gray-400">
+                                Current: {question.link ? (
+                                  <a
+                                    href={question.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 group"
+                                    title="View source link"
+                                  >
+                                    {question.currentAnswer}
+                                    <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-emerald-400 transition-colors" />
+                                  </a>
+                                ) : (
+                                  question.currentAnswer
+                                )}
+                              </div>
                             </div>
                           </td>
                           
