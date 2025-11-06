@@ -105,7 +105,7 @@ export function SystemStatus({
   useEffect(() => {
     setNetworkHealth(prev => ({
       ...prev,
-      blockNumber,
+      blockNumber: blockNumber ?? null,
       isConnected
     }));
   }, [blockNumber, isConnected]);

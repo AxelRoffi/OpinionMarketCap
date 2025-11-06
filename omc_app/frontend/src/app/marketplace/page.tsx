@@ -448,20 +448,7 @@ export default function MarketplacePage() {
                               </div>
                               <p className="text-white font-medium">{truncateText(question.question, 60)}</p>
                               <div className="text-sm text-gray-400">
-                                Current: {question.link ? (
-                                  <a
-                                    href={question.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 group"
-                                    title="View source link"
-                                  >
-                                    {question.currentAnswer}
-                                    <ExternalLink className="w-3 h-3 text-gray-500 group-hover:text-emerald-400 transition-colors" />
-                                  </a>
-                                ) : (
-                                  question.currentAnswer
-                                )}
+                                Current: <span className="text-emerald-400">{question.currentAnswer}</span>
                               </div>
                             </div>
                           </td>

@@ -14,7 +14,7 @@ export function useIndexedOpinion(opinionId: number) {
   const { data: contractData, isLoading: contractLoading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'getOpinion',
+    functionName: 'getOpinionDetails',
     args: [BigInt(opinionId)],
     query: {
       enabled: opinionId > 0,
@@ -69,11 +69,11 @@ export function useIndexedOpinions() {
   const [opinions, setOpinions] = useState<IndexedOpinion[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fallback contract read for initial load
-  const { data: contractOpinions, isLoading: contractLoading } = useReadContract({
+  // Get total opinion count for fallback
+  const { data: nextOpinionId, isLoading: contractLoading } = useReadContract({
     address: CONTRACTS.OPINION_CORE,
     abi: OPINION_CORE_ABI,
-    functionName: 'getAllActiveOpinions',
+    functionName: 'nextOpinionId',
     args: [],
   });
 
@@ -84,28 +84,13 @@ export function useIndexedOpinions() {
     if (cachedOpinions.length > 0) {
       setOpinions(cachedOpinions);
       setLoading(false);
-    } else if (contractOpinions && !contractLoading) {
-      // Populate cache from contract data
-      const indexedOpinions: IndexedOpinion[] = contractOpinions.map((op: any, index: number) => ({
-        id: index + 1, // Assuming sequential IDs
-        question: op.question,
-        currentAnswer: op.currentAnswer,
-        currentAnswerOwner: op.currentAnswerOwner,
-        creator: op.creator,
-        nextPrice: op.nextPrice,
-        lastPrice: op.lastPrice,
-        totalVolume: op.totalVolume,
-        categories: [...op.categories],
-        isActive: op.isActive,
-        link: op.link,
-        lastUpdated: Date.now(),
-      }));
-
-      indexedOpinions.forEach(op => indexingService.updateOpinion(op));
-      setOpinions(indexedOpinions);
+    } else if (nextOpinionId && !contractLoading) {
+      // TODO: Implement proper contract-based opinion fetching using nextOpinionId
+      // For now, rely on the indexing service to populate data
+      console.log('Total opinions available:', Number(nextOpinionId) - 1);
       setLoading(false);
     }
-  }, [contractOpinions, contractLoading]);
+  }, [nextOpinionId, contractLoading]);
 
   return {
     opinions,

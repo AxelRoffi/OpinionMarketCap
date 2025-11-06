@@ -61,14 +61,14 @@ const createPersistentStorage = () => {
 };
 
 // Environment-aware chain configuration
-function getChains() {
+function getChains(): readonly [typeof base] | readonly [typeof baseSepolia] {
   const env = getCurrentEnvironment();
   
   if (env === 'mainnet') {
-    return [base];
+    return [base] as const;
   }
   
-  return [baseSepolia];
+  return [baseSepolia] as const;
 }
 
 // WalletConnect Project ID with environment awareness

@@ -118,7 +118,7 @@ export const wagmiConfig = getDefaultConfig({
   appName: 'OpinionMarketCap',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '2f05a7e3f5a0b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9',
   chains: rpcConfig.chains,
-  transports: rpcConfig.transports,
+  transports: rpcConfig.transports as any,
   ssr: true,
   storage: createStorage({
     storage: createPersistentStorage(),
@@ -129,9 +129,9 @@ export const wagmiConfig = getDefaultConfig({
 // Create public client with same failover configuration
 export const publicClient = createPublicClient({
   chain: ENV.network,
-  transport: getCurrentEnvironment() === 'mainnet' 
+  transport: (getCurrentEnvironment() === 'mainnet' 
     ? rpcConfig.transports[base.id]
-    : rpcConfig.transports[baseSepolia.id]
+    : rpcConfig.transports[baseSepolia.id]) as any
 });
 
 // Connection health monitoring

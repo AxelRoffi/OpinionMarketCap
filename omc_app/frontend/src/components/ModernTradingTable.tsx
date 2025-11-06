@@ -276,20 +276,7 @@ export default function ModernTradingTable({ opinions }: ModernTradingTableProps
                   {/* Answer */}
                   <div className="col-span-2">
                     <div className="mb-1">
-                      {opinion.link ? (
-                        <a
-                          href={opinion.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-white hover:text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 group"
-                          title="View source link"
-                        >
-                          {opinion.currentAnswer}
-                          <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-emerald-400 transition-colors" />
-                        </a>
-                      ) : (
-                        <div className="font-medium text-white">{opinion.currentAnswer}</div>
-                      )}
+                      <div className="font-medium text-white">{opinion.currentAnswer}</div>
                     </div>
                     <div className="text-sm text-gray-400">
                       by {opinion.currentAnswerOwner.slice(0, 6)}...{opinion.currentAnswerOwner.slice(-4)}

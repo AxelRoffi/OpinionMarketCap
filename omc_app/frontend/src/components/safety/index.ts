@@ -11,7 +11,7 @@ export type { TransactionDetails, SafetyConfirmationOptions } from './Transactio
 
 export { SlippageProtection } from './SlippageProtection';
 export { GasPriceWarning } from './GasPriceWarning';
-export { TransactionErrorBoundary } from './TransactionErrorBoundary';
+export { default as TransactionErrorBoundary } from './TransactionErrorBoundary';
 export { SystemStatus } from './SystemStatus';
 export { TransactionHistory, useTransactionHistory } from './TransactionHistory';
 
@@ -180,6 +180,9 @@ export interface SafetyContextValue {
   updateSafetySettings: (settings: any) => void;
   checkTransactionSafety: (details: any) => Promise<boolean>;
 }
+
+// Import the type for internal use
+import type { TransactionDetails } from './TransactionSafetyModal';
 
 // Export safety validation functions
 export const validateTransactionSafety = async (
