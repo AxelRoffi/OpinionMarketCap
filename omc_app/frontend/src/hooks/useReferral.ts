@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
 
 interface ReferralState {
@@ -12,7 +11,8 @@ interface ReferralState {
 }
 
 export function useReferral() {
-  const searchParams = useSearchParams();
+  // SSG-safe: Only use searchParams on client side
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const { address, isConnected } = useAccount();
   const [referralState, setReferralState] = useState<ReferralState>({
     referralCode: null,
@@ -22,8 +22,18 @@ export function useReferral() {
   });
   const [showReferralWelcome, setShowReferralWelcome] = useState(false);
 
+  // Initialize search params on client side only (SSG-safe)
   useEffect(() => {
-    const refParam = searchParams?.get('ref');
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setSearchParams(params);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!searchParams) return;
+    
+    const refParam = searchParams.get('ref');
     
     if (refParam) {
       // Validate referral code (should be 6+ digits)
@@ -36,7 +46,7 @@ export function useReferral() {
       }));
 
       // Show welcome message for valid referral codes
-      if (isValid && !sessionStorage.getItem(`referral_welcome_${refParam}`)) {
+      if (isValid && typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(`referral_welcome_${refParam}`)) {
         setShowReferralWelcome(true);
         sessionStorage.setItem(`referral_welcome_${refParam}`, 'shown');
       }
