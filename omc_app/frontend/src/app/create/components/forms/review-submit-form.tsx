@@ -29,9 +29,11 @@ interface ReviewSubmitFormProps {
     question: string
     answer: string
     category: string
+    categories: string[]
     initialPrice: number
-    description?: string
-    externalLink?: string
+    description: string
+    externalLink: string
+    tags: string[]
   }
   onPrevious: () => void
   onSuccess: () => void
@@ -240,7 +242,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
             formData.answer,
             formData.description || '',
             initialPriceWei,
-            [formData.category]
+            formData.categories
           ]
         })
       }
@@ -269,7 +271,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
           formData.answer,
           formData.description || '',
           initialPriceWei.toString(),
-          [formData.category]
+          formData.categories
         ])
         
         createOpinion({
@@ -281,7 +283,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
             formData.answer,
             formData.description || '',
             initialPriceWei,
-            [formData.category]
+            formData.categories
           ]
         })
       } catch (error) {
@@ -462,10 +464,14 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
               <p className="text-emerald-400 font-medium">{formData.answer}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-400 mb-1">Category</p>
-              <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-                {formData.category}
-              </Badge>
+              <p className="text-sm text-gray-400 mb-1">Categories</p>
+              <div className="flex flex-wrap gap-2">
+                {formData.categories.map((category, index) => (
+                  <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-400">
+                    {category}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -6,6 +6,7 @@ interface FormData {
   question: string
   answer: string
   category: string
+  categories: string[]
   initialPrice: number
   description: string
   externalLink: string
@@ -23,6 +24,7 @@ const initialFormData: FormData = {
   question: '',
   answer: '',
   category: '',
+  categories: [],
   initialPrice: 5, // Default price
   description: '',
   externalLink: '',
@@ -50,7 +52,8 @@ export function useCreateForm(): UseCreateFormReturn {
           formData.answer?.trim() &&
           formData.answer.trim().length >= 3 &&
           formData.answer.trim().length <= 40 &&
-          formData.category &&
+          formData.categories?.length > 0 &&
+          formData.categories?.length <= 3 &&
           formData.initialPrice >= 1 &&
           formData.initialPrice <= 100
         )

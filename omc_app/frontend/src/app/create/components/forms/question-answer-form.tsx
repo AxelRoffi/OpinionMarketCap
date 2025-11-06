@@ -20,6 +20,9 @@ interface FormData {
   category: string
   categories: string[]
   initialPrice: number
+  description: string
+  externalLink: string
+  tags: string[]
 }
 
 interface QuestionAnswerFormProps {

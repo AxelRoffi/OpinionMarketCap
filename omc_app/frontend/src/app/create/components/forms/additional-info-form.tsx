@@ -11,6 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface FormData {
+  question: string
+  answer: string
+  category: string
+  categories: string[]
+  initialPrice: number
   description: string
   externalLink: string
   tags: string[]
