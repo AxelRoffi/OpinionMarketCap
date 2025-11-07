@@ -203,7 +203,7 @@ contract OpinionCore is
         // Initialize parameters
         nextOpinionId = 1;
         isPublicCreationEnabled = false;
-        maxTradesPerBlock = 3;
+        maxTradesPerBlock = 0; // Rate limiting disabled by default
         minimumPrice = 1_000_000; // 1 USDC (6 decimals)
         questionCreationFee = 1_000_000; // 1 USDC
         initialAnswerPrice = 2_000_000; // 2 USDC
@@ -1308,8 +1308,14 @@ contract OpinionCore is
 
     /**
      * @dev Checks and updates the number of trades per block per user
+     * If maxTradesPerBlock is 0, rate limiting is disabled
      */
     function _checkAndUpdateTradesInBlock() internal {
+        // Skip rate limiting if maxTradesPerBlock is set to 0
+        if (maxTradesPerBlock == 0) {
+            return;
+        }
+        
         if (userLastBlock[msg.sender] != block.number) {
             userTradesInBlock[msg.sender] = 1;
             userLastBlock[msg.sender] = block.number;
