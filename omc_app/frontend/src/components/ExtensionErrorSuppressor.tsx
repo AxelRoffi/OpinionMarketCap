@@ -4,6 +4,34 @@ import { useEffect } from 'react';
 
 export function ExtensionErrorSuppressor() {
   useEffect(() => {
+    // Additional wallet provider cleanup
+    const cleanupWalletProviders = () => {
+      try {
+        if (typeof window !== 'undefined' && (window as any).ethereum) {
+          const ethereum = (window as any).ethereum;
+          
+          // Prevent wallet provider conflicts
+          if (ethereum && ethereum.providers && Array.isArray(ethereum.providers)) {
+            console.log('🔧 Multiple wallet providers detected, stabilizing...');
+            // Keep the first stable provider
+            const stableProvider = ethereum.providers.find((p: any) => p.isMetaMask) || ethereum.providers[0];
+            if (stableProvider) {
+              Object.defineProperty(window, 'ethereum', {
+                value: stableProvider,
+                writable: true,
+                configurable: true,
+                enumerable: true
+              });
+            }
+          }
+        }
+      } catch (error) {
+        // Silent cleanup failure
+      }
+    };
+
+    cleanupWalletProviders();
+
     // Suppress chrome extension errors from wallet providers
     const originalError = console.error;
     const originalWarn = console.warn;
@@ -24,7 +52,13 @@ export function ExtensionErrorSuppressor() {
         message.includes('Error in invocation of runtime.sendMessage') ||
         message.includes('must specify an Extension ID (string) for its first argument') ||
         message.includes('An unexpected error occurred. Please refresh the page') ||
-        message.includes('React caught an error thrown by one of your components')
+        message.includes('React caught an error thrown by one of your components') ||
+        message.includes('Cannot redefine property: ethereum') ||
+        message.includes('MetaMask encountered an error setting the global Ethereum provider') ||
+        message.includes('Cannot set property ethereum') ||
+        message.includes('which has only a getter') ||
+        message.includes('evmAsk.js') ||
+        message.includes('intercept-console-error.js')
       ) {
         return; // Suppress these errors
       }

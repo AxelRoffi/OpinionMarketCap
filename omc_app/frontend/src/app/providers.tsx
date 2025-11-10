@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WagmiProvider, type State } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from '@/lib/wagmi-simple';
+import { suppressExtensionErrors } from '@/lib/wagmi-conflict-free';
 import '@rainbow-me/rainbowkit/styles.css';
 
 export default function Providers({
@@ -12,6 +13,11 @@ export default function Providers({
 }: {
   children: React.ReactNode;
 }) {
+  // Suppress extension errors on mount
+  useEffect(() => {
+    suppressExtensionErrors();
+  }, []);
+
   // Create QueryClient with wallet persistence optimizations
   const [queryClient] = useState(
     () => new QueryClient({

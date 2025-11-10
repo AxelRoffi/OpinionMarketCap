@@ -23,7 +23,8 @@ import {
   RefreshCw,
   ExternalLink,
   Ban,
-  UserCheck
+  UserCheck,
+  Clock
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,9 +33,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
+import { AdminAccessChecker } from '@/components/AdminAccessChecker'
+import { ExtensionErrorSuppressor } from '@/components/ExtensionErrorSuppressor'
+import { AdminActions } from './components/AdminActions'
 
-// Contract configuration
-const OPINION_CORE_ADDRESS = '0x21d8Cff98E50b1327022e786156749CcdBcE9d5e' as `0x${string}`
+// Contract configuration - Updated to use environment-aware addresses
+import { CURRENT_CONTRACTS } from '@/lib/environment'
+const OPINION_CORE_ADDRESS = CURRENT_CONTRACTS.OPINION_CORE
 
 // Contract ABI (minimal for admin functions)
 const OPINION_CORE_ABI = [
@@ -164,6 +169,72 @@ const OPINION_CORE_ABI = [
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
+  },
+  // Timelock Functions
+  {
+    "inputs": [{"internalType": "address", "name": "newImplementation", "type": "address"}, {"internalType": "string", "name": "description", "type": "string"}],
+    "name": "scheduleContractUpgrade",
+    "outputs": [{"internalType": "bytes32", "name": "actionId", "type": "bytes32"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "actionId", "type": "bytes32"}],
+    "name": "executeScheduledUpgrade",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes4", "name": "functionSelector", "type": "bytes4"}, {"internalType": "bytes", "name": "params", "type": "bytes"}, {"internalType": "string", "name": "description", "type": "string"}],
+    "name": "scheduleAdminParameterChange",
+    "outputs": [{"internalType": "bytes32", "name": "actionId", "type": "bytes32"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "actionId", "type": "bytes32"}],
+    "name": "executeScheduledParameterChange",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "actionId", "type": "bytes32"}, {"internalType": "string", "name": "reason", "type": "string"}],
+    "name": "cancelTimelockAction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  // Treasury Functions
+  {
+    "inputs": [{"internalType": "address", "name": "newTreasury", "type": "address"}],
+    "name": "setTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "confirmTreasuryChange",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  // Additional Admin Functions
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxTradesPerBlock", "type": "uint256"}],
+    "name": "setMaxTradesPerBlock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxTradesPerBlock",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const
 
@@ -171,6 +242,7 @@ export default function AdminDashboard() {
   const { address, isConnected } = useAccount()
   const router = useRouter()
   
+  // State variables
   const [isAdmin, setIsAdmin] = useState(false)
   const [isModerator, setIsModerator] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -184,12 +256,26 @@ export default function AdminDashboard() {
   
   // Form states for different admin actions
   const [moderationForm, setModerationForm] = useState({ opinionId: '', reason: '' })
-  const [priceForm, setPriceForm] = useState({ minPrice: '', creationFee: '', maxChange: '' })
+  const [priceForm, setPriceForm] = useState({ minPrice: '', creationFee: '', maxChange: '', maxTradesPerBlock: '' })
   const [roleForm, setRoleForm] = useState({ address: '', role: 'moderator' })
   const [categoryForm, setCategoryForm] = useState({ newCategory: '', multipleCategories: '' })
   const [contractForm, setContractForm] = useState({ feeManagerAddress: '', poolManagerAddress: '', treasuryAddress: '' })
+  
+  // New timelock and treasury form states
+  const [upgradeForm, setUpgradeForm] = useState({ newImplementation: '', description: '' })
+  const [parameterForm, setParameterForm] = useState({ functionName: '', parameters: '', description: '' })
+  const [timelockForm, setTimelockForm] = useState({ actionId: '', reason: '' })
+  const [treasuryForm, setTreasuryForm] = useState({ newTreasuryAddress: '' })
+  const [pendingActions, setPendingActions] = useState<Array<{id: string, type: string, description: string, executeTime: number}>>([])
+  
+  // Current settings
+  const [currentSettings, setCurrentSettings] = useState({
+    maxTradesPerBlock: 0,
+    treasury: '',
+    pendingTreasury: ''
+  })
 
-  // Contract read hooks
+  // Contract read hooks - ALWAYS CALLED (no conditional rendering)
   const { data: adminRole } = useReadContract({
     address: OPINION_CORE_ADDRESS,
     abi: OPINION_CORE_ABI,
@@ -234,36 +320,65 @@ export default function AdminDashboard() {
     functionName: 'nextOpinionId',
   })
 
-  // Check admin access on component mount
-  useEffect(() => {
-    checkAdminAccess()
-  }, [hasAdminRole, hasModeratorRole, nextOpinionId, isPaused, publicCreationEnabled])
+  // Contract write hooks - ALWAYS CALLED (no conditional rendering)
+  const { writeContract: writeModerateAnswer } = useWriteContract()
+  const { writeContract: writePause } = useWriteContract()
+  const { writeContract: writeUnpause } = useWriteContract()
+  const { writeContract: writeTogglePublicCreation } = useWriteContract()
+  const { writeContract: writeSetMinimumPrice } = useWriteContract()
+  const { writeContract: writeSetQuestionCreationFee } = useWriteContract()
+  const { writeContract: writeSetMaxPriceChange } = useWriteContract()
+  const { writeContract: writeSetMaxTradesPerBlock } = useWriteContract()
+  const { writeContract: writeGrantRole } = useWriteContract()
+  const { writeContract: writeRevokeRole } = useWriteContract()
+  const { writeContract: writeAddCategory } = useWriteContract()
+  
+  // Timelock write hooks - ALWAYS CALLED (no conditional rendering)
+  const { writeContract: writeScheduleContractUpgrade } = useWriteContract()
+  const { writeContract: writeExecuteScheduledUpgrade } = useWriteContract()
+  const { writeContract: writeScheduleAdminParameterChange } = useWriteContract()
+  const { writeContract: writeExecuteScheduledParameterChange } = useWriteContract()
+  const { writeContract: writeCancelTimelockAction } = useWriteContract()
+  
+  // Treasury write hooks - ALWAYS CALLED (no conditional rendering)
+  const { writeContract: writeSetTreasury } = useWriteContract()
+  const { writeContract: writeConfirmTreasuryChange } = useWriteContract()
+  const { writeContract: writeAddMultipleCategories } = useWriteContract()
 
-  const checkAdminAccess = async () => {
-    if (!isConnected || !address) {
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      setIsAdmin(Boolean(hasAdminRole))
-      setIsModerator(Boolean(hasModeratorRole))
-      
-      if (hasAdminRole || hasModeratorRole) {
-        setContractStats({
-          totalOpinions: Number(nextOpinionId) - 1 || 0,
-          activeOpinions: Number(nextOpinionId) - 1 || 0,
-          totalVolume: 0, // This would need additional contract calls to calculate
-          isPaused: Boolean(isPaused),
-          publicCreationEnabled: Boolean(publicCreationEnabled),
-        })
-      }
-    } catch (error) {
-      console.error('Failed to check admin access:', error)
-    } finally {
-      setIsLoading(false)
+  // Update contract stats function
+  const updateContractStats = () => {
+    if (hasAdminRole || hasModeratorRole) {
+      setContractStats({
+        totalOpinions: Number(nextOpinionId) - 1 || 0,
+        activeOpinions: Number(nextOpinionId) - 1 || 0,
+        totalVolume: 0, // This would need additional contract calls to calculate
+        isPaused: Boolean(isPaused),
+        publicCreationEnabled: Boolean(publicCreationEnabled),
+      })
     }
   }
+
+  // Check admin access on component mount
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      if (!isConnected || !address) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsAdmin(Boolean(hasAdminRole))
+        setIsModerator(Boolean(hasModeratorRole))
+        updateContractStats()
+      } catch (error) {
+        console.error('Failed to check admin access:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    checkAdminAccess()
+  }, [hasAdminRole, hasModeratorRole, nextOpinionId, isPaused, publicCreationEnabled, isConnected, address])
 
 
   if (isLoading) {
@@ -299,7 +414,13 @@ export default function AdminDashboard() {
           <Ban className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-2">This dashboard is restricted to contract administrators.</p>
-          <p className="text-gray-500 text-sm mb-6">Connected as: {address}</p>
+          <p className="text-gray-500 text-sm mb-4">Connected as: {address}</p>
+          <p className="text-gray-500 text-xs mb-6">
+            Debug Info:<br/>
+            Admin Role: {hasAdminRole ? 'Yes' : 'No'}<br/>
+            Moderator Role: {hasModeratorRole ? 'Yes' : 'No'}<br/>
+            Contract: {OPINION_CORE_ADDRESS}
+          </p>
           <Button onClick={() => router.push('/')} variant="outline">
             Return to Home
           </Button>
@@ -307,19 +428,6 @@ export default function AdminDashboard() {
       </div>
     )
   }
-
-  // Contract write hooks
-  const { writeContract: writeModerateAnswer } = useWriteContract()
-  const { writeContract: writePause } = useWriteContract()
-  const { writeContract: writeUnpause } = useWriteContract()
-  const { writeContract: writeTogglePublicCreation } = useWriteContract()
-  const { writeContract: writeSetMinimumPrice } = useWriteContract()
-  const { writeContract: writeSetQuestionCreationFee } = useWriteContract()
-  const { writeContract: writeSetMaxPriceChange } = useWriteContract()
-  const { writeContract: writeGrantRole } = useWriteContract()
-  const { writeContract: writeRevokeRole } = useWriteContract()
-  const { writeContract: writeAddCategory } = useWriteContract()
-  const { writeContract: writeAddMultipleCategories } = useWriteContract()
 
   // Admin action handlers
   const handleModerateAnswer = async () => {
@@ -418,7 +526,7 @@ export default function AdminDashboard() {
       
       if (updates.length > 0) {
         toast.success(`Updated: ${updates.join(', ')}`)
-        setPriceForm({ minPrice: '', creationFee: '', maxChange: '' })
+        setPriceForm({ minPrice: '', creationFee: '', maxChange: '', maxTradesPerBlock: '' })
       } else {
         toast.error('Please provide at least one value to update')
       }
@@ -511,9 +619,188 @@ export default function AdminDashboard() {
     }
   }
 
+  // ===============================
+  // TIMELOCK AND TREASURY HANDLERS
+  // ===============================
+
+  const handleScheduleUpgrade = async () => {
+    if (!upgradeForm.newImplementation || !upgradeForm.description) {
+      toast.error('Please provide new implementation address and description')
+      return
+    }
+
+    try {
+      await writeScheduleContractUpgrade({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'scheduleContractUpgrade',
+        args: [upgradeForm.newImplementation as `0x${string}`, upgradeForm.description],
+      })
+      
+      toast.success(`Contract upgrade scheduled with 72-hour delay`)
+      setUpgradeForm({ newImplementation: '', description: '' })
+    } catch (error: any) {
+      console.error('Schedule upgrade failed:', error)
+      toast.error(`Failed to schedule upgrade: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleExecuteUpgrade = async () => {
+    if (!timelockForm.actionId) {
+      toast.error('Please provide action ID to execute')
+      return
+    }
+
+    try {
+      await writeExecuteScheduledUpgrade({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'executeScheduledUpgrade',
+        args: [timelockForm.actionId as `0x${string}`],
+      })
+      
+      toast.success(`Contract upgrade executed successfully`)
+      setTimelockForm({ actionId: '', reason: '' })
+    } catch (error: any) {
+      console.error('Execute upgrade failed:', error)
+      toast.error(`Failed to execute upgrade: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleScheduleParameterChange = async () => {
+    if (!parameterForm.functionName || !parameterForm.parameters || !parameterForm.description) {
+      toast.error('Please provide function name, parameters, and description')
+      return
+    }
+
+    try {
+      // Convert function name to selector (first 4 bytes of keccak256 hash)
+      // This is a simplified approach - in production you'd want proper ABI encoding
+      const functionSelector = `0x${parameterForm.functionName}` as `0x${string}`
+      
+      await writeScheduleAdminParameterChange({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'scheduleAdminParameterChange',
+        args: [functionSelector, parameterForm.parameters as `0x${string}`, parameterForm.description],
+      })
+      
+      toast.success(`Parameter change scheduled with 24-hour delay`)
+      setParameterForm({ functionName: '', parameters: '', description: '' })
+    } catch (error: any) {
+      console.error('Schedule parameter change failed:', error)
+      toast.error(`Failed to schedule parameter change: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleExecuteParameterChange = async () => {
+    if (!timelockForm.actionId) {
+      toast.error('Please provide action ID to execute')
+      return
+    }
+
+    try {
+      await writeExecuteScheduledParameterChange({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'executeScheduledParameterChange',
+        args: [timelockForm.actionId as `0x${string}`],
+      })
+      
+      toast.success(`Parameter change executed successfully`)
+      setTimelockForm({ actionId: '', reason: '' })
+    } catch (error: any) {
+      console.error('Execute parameter change failed:', error)
+      toast.error(`Failed to execute parameter change: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleCancelTimelockAction = async () => {
+    if (!timelockForm.actionId || !timelockForm.reason) {
+      toast.error('Please provide action ID and reason for cancellation')
+      return
+    }
+
+    try {
+      await writeCancelTimelockAction({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'cancelTimelockAction',
+        args: [timelockForm.actionId as `0x${string}`, timelockForm.reason],
+      })
+      
+      toast.success(`Timelock action cancelled successfully`)
+      setTimelockForm({ actionId: '', reason: '' })
+    } catch (error: any) {
+      console.error('Cancel timelock action failed:', error)
+      toast.error(`Failed to cancel action: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleSetTreasury = async () => {
+    if (!treasuryForm.newTreasuryAddress) {
+      toast.error('Please provide new treasury address')
+      return
+    }
+
+    try {
+      await writeSetTreasury({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'setTreasury',
+        args: [treasuryForm.newTreasuryAddress as `0x${string}`],
+      })
+      
+      toast.success(`Treasury change scheduled with 48-hour delay`)
+      setTreasuryForm({ newTreasuryAddress: '' })
+    } catch (error: any) {
+      console.error('Set treasury failed:', error)
+      toast.error(`Failed to set treasury: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleConfirmTreasuryChange = async () => {
+    try {
+      await writeConfirmTreasuryChange({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'confirmTreasuryChange',
+      })
+      
+      toast.success(`Treasury change confirmed successfully`)
+    } catch (error: any) {
+      console.error('Confirm treasury change failed:', error)
+      toast.error(`Failed to confirm treasury change: ${error.message || 'Unknown error'}`)
+    }
+  }
+
+  const handleSetMaxTradesPerBlock = async () => {
+    if (!priceForm.maxTradesPerBlock) {
+      toast.error('Please provide max trades per block value')
+      return
+    }
+
+    try {
+      await writeSetMaxTradesPerBlock({
+        address: OPINION_CORE_ADDRESS,
+        abi: OPINION_CORE_ABI,
+        functionName: 'setMaxTradesPerBlock',
+        args: [BigInt(priceForm.maxTradesPerBlock)],
+      })
+      
+      toast.success(`Max trades per block updated to: ${priceForm.maxTradesPerBlock}`)
+      setPriceForm(prev => ({ ...prev, maxTradesPerBlock: '' }))
+    } catch (error: any) {
+      console.error('Set max trades per block failed:', error)
+      toast.error(`Failed to set max trades per block: ${error.message || 'Unknown error'}`)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <ExtensionErrorSuppressor />
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -532,6 +819,11 @@ export default function AdminDashboard() {
               <p className="text-sm text-white font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</p>
             </div>
           </div>
+        </div>
+
+        {/* Debug Panel */}
+        <div className="mb-8">
+          <AdminAccessChecker />
         </div>
 
         {/* Contract Stats */}
@@ -613,52 +905,22 @@ export default function AdminDashboard() {
               <ExternalLink className="w-4 h-4" />
               Contracts
             </TabsTrigger>
+            <TabsTrigger value="timelock" className="flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Timelock
+            </TabsTrigger>
+            <TabsTrigger value="treasury" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Treasury
+            </TabsTrigger>
           </TabsList>
 
           {/* Moderation Tab */}
           <TabsContent value="moderation" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-red-500" />
-                  Content Moderation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Opinion ID to Moderate
-                    </label>
-                    <Input
-                      value={moderationForm.opinionId}
-                      onChange={(e) => setModerationForm({ ...moderationForm, opinionId: e.target.value })}
-                      placeholder="Enter opinion ID"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Moderation Reason
-                    </label>
-                    <Input
-                      value={moderationForm.reason}
-                      onChange={(e) => setModerationForm({ ...moderationForm, reason: e.target.value })}
-                      placeholder="e.g., Inappropriate content"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleModerateAnswer}
-                  disabled={!moderationForm.opinionId || !moderationForm.reason}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <Ban className="w-4 h-4 mr-2" />
-                  Moderate Answer
-                </Button>
-              </CardContent>
-            </Card>
+            <AdminActions 
+              contractStats={contractStats}
+              onStatsUpdate={updateContractStats}
+            />
           </TabsContent>
 
           {/* Settings Tab */}
@@ -902,8 +1164,333 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Timelock Tab */}
+          <TabsContent value="timelock" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Schedule Contract Upgrade */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <RefreshCw className="w-5 h-5 text-purple-500" />
+                    Schedule Contract Upgrade
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      New Implementation Address
+                    </label>
+                    <Input
+                      value={upgradeForm.newImplementation}
+                      onChange={(e) => setUpgradeForm({ ...upgradeForm, newImplementation: e.target.value })}
+                      placeholder="0x..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Upgrade Description
+                    </label>
+                    <Textarea
+                      value={upgradeForm.description}
+                      onChange={(e) => setUpgradeForm({ ...upgradeForm, description: e.target.value })}
+                      placeholder="Describe the upgrade changes..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                      rows={3}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleScheduleUpgrade}
+                    disabled={!upgradeForm.newImplementation || !upgradeForm.description}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Schedule Upgrade (72h delay)
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Schedule Parameter Change */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-orange-500" />
+                    Schedule Parameter Change
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Function Selector (hex)
+                    </label>
+                    <Input
+                      value={parameterForm.functionName}
+                      onChange={(e) => setParameterForm({ ...parameterForm, functionName: e.target.value })}
+                      placeholder="0x12345678"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Encoded Parameters (hex)
+                    </label>
+                    <Input
+                      value={parameterForm.parameters}
+                      onChange={(e) => setParameterForm({ ...parameterForm, parameters: e.target.value })}
+                      placeholder="0x..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Change Description
+                    </label>
+                    <Textarea
+                      value={parameterForm.description}
+                      onChange={(e) => setParameterForm({ ...parameterForm, description: e.target.value })}
+                      placeholder="Describe the parameter changes..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                      rows={2}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleScheduleParameterChange}
+                    disabled={!parameterForm.functionName || !parameterForm.parameters || !parameterForm.description}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Schedule Change (24h delay)
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Execute Actions */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Execute Scheduled Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Action ID (bytes32)
+                    </label>
+                    <Input
+                      value={timelockForm.actionId}
+                      onChange={(e) => setTimelockForm({ ...timelockForm, actionId: e.target.value })}
+                      placeholder="0x..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      onClick={handleExecuteUpgrade}
+                      disabled={!timelockForm.actionId}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Execute Upgrade
+                    </Button>
+                    <Button 
+                      onClick={handleExecuteParameterChange}
+                      disabled={!timelockForm.actionId}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Execute Parameter
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cancel Actions */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-500" />
+                    Cancel Scheduled Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Action ID to Cancel
+                    </label>
+                    <Input
+                      value={timelockForm.actionId}
+                      onChange={(e) => setTimelockForm({ ...timelockForm, actionId: e.target.value })}
+                      placeholder="0x..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Cancellation Reason
+                    </label>
+                    <Textarea
+                      value={timelockForm.reason}
+                      onChange={(e) => setTimelockForm({ ...timelockForm, reason: e.target.value })}
+                      placeholder="Reason for cancellation..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                      rows={2}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCancelTimelockAction}
+                    disabled={!timelockForm.actionId || !timelockForm.reason}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Cancel Action
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Pending Actions Display */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  Pending Timelock Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingActions.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No pending actions</p>
+                ) : (
+                  <div className="space-y-2">
+                    {pendingActions.map((action, index) => (
+                      <div key={index} className="bg-gray-700 p-3 rounded-lg flex justify-between items-center">
+                        <div>
+                          <p className="text-white font-medium">{action.type}</p>
+                          <p className="text-gray-400 text-sm">{action.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-yellow-400 text-sm">Executes in</p>
+                          <p className="text-white text-sm">{Math.max(0, Math.ceil((action.executeTime - Date.now()) / (1000 * 60 * 60)))}h</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Treasury Tab */}
+          <TabsContent value="treasury" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Set Treasury */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-emerald-500" />
+                    Schedule Treasury Change
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      New Treasury Address
+                    </label>
+                    <Input
+                      value={treasuryForm.newTreasuryAddress}
+                      onChange={(e) => setTreasuryForm({ newTreasuryAddress: e.target.value })}
+                      placeholder="0x..."
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSetTreasury}
+                    disabled={!treasuryForm.newTreasuryAddress}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Schedule Treasury Change (48h delay)
+                  </Button>
+                  
+                  <div className="border-t border-gray-600 pt-4 mt-4">
+                    <Button 
+                      onClick={handleConfirmTreasuryChange}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Confirm Pending Treasury Change
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rate Limiting Settings */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-blue-500" />
+                    Rate Limiting Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Max Trades Per Block
+                    </label>
+                    <Input
+                      type="number"
+                      value={priceForm.maxTradesPerBlock}
+                      onChange={(e) => setPriceForm({ ...priceForm, maxTradesPerBlock: e.target.value })}
+                      placeholder="0 = unlimited"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                    <p className="text-gray-400 text-xs mt-1">Current: {currentSettings.maxTradesPerBlock} (0 = disabled)</p>
+                  </div>
+                  <Button 
+                    onClick={handleSetMaxTradesPerBlock}
+                    disabled={!priceForm.maxTradesPerBlock}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Update Rate Limit
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Treasury Status */}
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  Treasury Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">Current Treasury</p>
+                    <p className="text-white font-mono text-sm break-all">{currentSettings.treasury || 'Loading...'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Pending Treasury</p>
+                    <p className="text-white font-mono text-sm break-all">
+                      {currentSettings.pendingTreasury ? currentSettings.pendingTreasury : 'None'}
+                    </p>
+                  </div>
+                </div>
+                {currentSettings.pendingTreasury && (
+                  <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/20 rounded-lg">
+                    <p className="text-yellow-400 text-sm">
+                      ⚠️ Treasury change pending. You can confirm it after the 48-hour delay period.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
