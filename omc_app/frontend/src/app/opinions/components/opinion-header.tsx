@@ -6,6 +6,7 @@ import {
   TrendingDown, 
   Share2, 
   BookmarkPlus,
+  Bookmark,
   Zap,
   Target,
   ExternalLink,
@@ -16,6 +17,7 @@ import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
 import { ClickableAddress } from '@/components/ui/clickable-address';
 import { formatQuestion } from '@/lib/format-utils';
+import { useWatchlist, useShare } from '@/hooks/useWatchlist';
 
 interface OpinionHeaderProps {
   opinion: OpinionDetail;
@@ -30,6 +32,42 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
   const { address } = useAccount();
   const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
   const marketCap = Number(opinion.totalVolume) / 1_000_000;
+
+  // Watchlist and sharing functionality
+  const { isWatched, toggleWatchlist } = useWatchlist();
+  const { shareOpinion, isSharing } = useShare();
+  
+  const isOpinionWatched = isWatched(opinion.id);
+
+  // Handle share button click
+  const handleShare = () => {
+    shareOpinion(
+      {
+        id: opinion.id,
+        question: opinion.question,
+        currentAnswer: opinion.currentAnswer,
+        nextPrice: opinion.nextPrice
+      },
+      (message) => {
+        // Simple success feedback - could be enhanced with toast later
+        console.log('Share success:', message);
+      },
+      (message) => {
+        // Simple error feedback - could be enhanced with toast later
+        console.error('Share error:', message);
+        alert(message); // Fallback alert for errors
+      }
+    );
+  };
+
+  // Handle watch button click
+  const handleWatch = () => {
+    toggleWatchlist({
+      id: opinion.id,
+      question: opinion.question,
+      nextPrice: opinion.nextPrice
+    });
+  };
 
   // Check if current user can list this question for sale
   const canListForSale = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && 
@@ -47,20 +85,35 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
       <div className="flex items-center justify-end mb-4">
         <div className="flex items-center space-x-2">
           <Button
+            onClick={handleShare}
+            disabled={isSharing}
             variant="outline"
             size="sm"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors duration-200"
           >
             <Share2 className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Share</span>
+            <span className="hidden sm:inline">
+              {isSharing ? 'Sharing...' : 'Share'}
+            </span>
           </Button>
           <Button
+            onClick={handleWatch}
             variant="outline"
             size="sm"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            className={`transition-colors duration-200 ${
+              isOpinionWatched 
+                ? 'border-yellow-500 text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500 hover:text-white' 
+                : 'border-gray-500 text-gray-300 hover:bg-gray-500 hover:text-white'
+            }`}
           >
-            <BookmarkPlus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Watch</span>
+            {isOpinionWatched ? (
+              <Bookmark className="w-4 h-4 mr-2" />
+            ) : (
+              <BookmarkPlus className="w-4 h-4 mr-2" />
+            )}
+            <span className="hidden sm:inline">
+              {isOpinionWatched ? 'Watching' : 'Watch'}
+            </span>
           </Button>
         </div>
       </div>

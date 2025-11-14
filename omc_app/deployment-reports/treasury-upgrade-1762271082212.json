@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-11-04T15:44:40.922Z",
+  "network": "baseSepolia",
+  "deployer": "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3",
+  "deployments": {
+    "treasurySecureEnhanced": {
+      "implementation": "",
+      "proxy": "",
+      "admin": "",
+      "gasUsed": 0,
+      "txHash": ""
+    }
+  },
+  "configuration": {
+    "usdcToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "adminRole": "",
+    "emergencyAdmin": "",
+    "treasuryAdmin": "",
+    "dailyLimitPerUser": "1000000000",
+    "proposalTimelock": 86400,
+    "emergencyFreezeTime": 86400
+  },
+  "testingChecklist": [],
+  "status": "FAILED",
+  "errors": [
+    "Contract `contracts/core/TreasurySecureEnhanced.sol:TreasurySecureEnhanced` is not upgrade safe\n\ncontracts/core/TreasurySecureEnhanced.sol:21: Implementation is missing a public `upgradeTo(address)` or `upgradeToAndCall(address,bytes)` function\n    Inherit UUPSUpgradeable to include one or both of these functions in your contract\n    @openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol\n    https://zpl.in/upgrades/error-008"
+  ]
+}
