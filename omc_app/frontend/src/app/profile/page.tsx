@@ -64,7 +64,6 @@ import { motion } from 'framer-motion';
 import { 
   Copy, 
   Check, 
-  Settings, 
   Wallet, 
   BarChart3,
   Award, 
@@ -272,17 +271,7 @@ function ProfilePageContent() {
             
             {/* Profile Actions */}
             <div className="flex items-center space-x-3">
-              {isOwnProfile ? (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="glass-input bg-transparent"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Button>
-                </>
-              ) : (
+              {!isOwnProfile && (
                 <div className="text-sm text-gray-400">
                   Viewing <ENSName address={targetAddress} className="text-gray-300" />
                 </div>
