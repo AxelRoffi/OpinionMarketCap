@@ -17,7 +17,9 @@ import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
 import { ClickableAddress } from '@/components/ui/clickable-address';
 import { formatQuestion } from '@/lib/format-utils';
-import { useWatchlist, useShare } from '@/hooks/useWatchlist';
+import { useWatchlist } from '@/hooks/useWatchlist';
+import { SocialShareModal } from '@/components/ui/social-share-modal';
+import { useState } from 'react';
 
 interface OpinionHeaderProps {
   opinion: OpinionDetail;
@@ -33,31 +35,16 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
   const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
   const marketCap = Number(opinion.totalVolume) / 1_000_000;
 
-  // Watchlist and sharing functionality
+  // Local state for modal
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Watchlist functionality
   const { isWatched, toggleWatchlist } = useWatchlist();
-  const { shareOpinion, isSharing } = useShare();
-  
   const isOpinionWatched = isWatched(opinion.id);
 
-  // Handle share button click
+  // Handle share button click - opens modal instead of direct sharing
   const handleShare = () => {
-    shareOpinion(
-      {
-        id: opinion.id,
-        question: opinion.question,
-        currentAnswer: opinion.currentAnswer,
-        nextPrice: opinion.nextPrice
-      },
-      (message) => {
-        // Simple success feedback - could be enhanced with toast later
-        console.log('Share success:', message);
-      },
-      (message) => {
-        // Simple error feedback - could be enhanced with toast later
-        console.error('Share error:', message);
-        alert(message); // Fallback alert for errors
-      }
-    );
+    setIsShareModalOpen(true);
   };
 
   // Handle watch button click
@@ -86,15 +73,12 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
         <div className="flex items-center space-x-2">
           <Button
             onClick={handleShare}
-            disabled={isSharing}
             variant="outline"
             size="sm"
             className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors duration-200"
           >
             <Share2 className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">
-              {isSharing ? 'Sharing...' : 'Share'}
-            </span>
+            <span className="hidden sm:inline">Share</span>
           </Button>
           <Button
             onClick={handleWatch}
@@ -316,6 +300,12 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
         )}
       </div>
 
+      {/* Social Share Modal */}
+      <SocialShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        opinion={opinion}
+      />
     </div>
   );
 }

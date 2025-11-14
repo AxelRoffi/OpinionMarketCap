@@ -30,12 +30,13 @@ export function GlobalNavbar() {
           </Link>
 
           {/* Desktop Navigation - Clean URLs matching menu items */}
-          <nav className="hidden md:flex items-center space-x-8 ml-auto">
+          <nav className="hidden md:flex items-center space-x-6 ml-auto">
             <Link href="/" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Market</Link>
             <Link href="/mint" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Mint</Link>
             <Link href="/marketplace" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Marketplace</Link>
             <Link href="/leaderboard" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</Link>
             <Link href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</Link>
+            <Link href="/watchlist" className="text-gray-300 font-medium hover:text-yellow-500 hover:font-bold transition-colors duration-200">Watchlist</Link>
             <Link href="/portfolio" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Portfolio</Link>
             <Link href="/referrals" className="text-gray-300 font-medium hover:text-purple-500 hover:font-bold transition-colors duration-200">Referrals</Link>
           </nav>
@@ -84,6 +85,7 @@ export function GlobalNavbar() {
                 <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">Marketplace</Link>
                 <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                 <Link href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</Link>
+                <Link href="/watchlist" className="text-gray-300 hover:text-yellow-400 transition-colors">Watchlist</Link>
                 <Link href="/portfolio" className="text-gray-300 hover:text-white transition-colors">Portfolio</Link>
                 <Link href="/referrals" className="text-gray-300 hover:text-purple-400 transition-colors">Referrals</Link>
               </div>
