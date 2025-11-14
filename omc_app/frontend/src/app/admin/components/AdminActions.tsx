@@ -109,7 +109,7 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
       
     } catch (error: any) {
       console.error(`${action} failed:`, error);
-      toast.error(`${action} failed: ${error.shortMessage || error.message || 'Unknown error'}`, {
+      toast.error(`${action} failed: ${error.message || 'Unknown error'}`, {
         id: action
       });
       setIsLoading(null);
@@ -126,7 +126,8 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
   }
 
   if (error && isLoading) {
-    toast.error(`${isLoading} failed: ${error.shortMessage || error.message || 'Unknown error'}`, {
+    const errorMessage = error.message || 'Unknown error';
+    toast.error(`${isLoading} failed: ${errorMessage}`, {
       id: isLoading
     });
     setIsLoading(null);

@@ -173,8 +173,7 @@ export function useContributeToPool() {
         console.error('❌ approveError details:', {
           message: (approveError as any)?.message,
           cause: (approveError as any)?.cause,
-          code: (approveError as any)?.code,
-          shortMessage: (approveError as any)?.shortMessage
+          code: (approveError as any)?.code
         });
         
         // Check for common testnet issues that don't actually fail
@@ -255,8 +254,7 @@ export function useContributeToPool() {
         console.error('❌ contributeError details:', {
           message: (contributeError as any)?.message,
           cause: (contributeError as any)?.cause,
-          code: (contributeError as any)?.code,
-          shortMessage: (contributeError as any)?.shortMessage
+          code: (contributeError as any)?.code
         });
         
         // Check for testnet issues
@@ -302,8 +300,6 @@ export function useContributeToPool() {
         errorMessage = 'Insufficient funds for gas fee';
       } else if (err.message?.includes('network')) {
         errorMessage = 'Network error - please try again';
-      } else if (err.shortMessage) {
-        errorMessage = err.shortMessage;
       } else if (err.message) {
         errorMessage = err.message;
       }

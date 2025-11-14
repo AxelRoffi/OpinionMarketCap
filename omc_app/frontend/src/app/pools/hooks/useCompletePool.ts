@@ -251,8 +251,6 @@ export function useCompletePool() {
         errorMessage = 'Insufficient funds for gas fee';
       } else if (err.message?.includes('network')) {
         errorMessage = 'Network error - please try again';
-      } else if (err.shortMessage) {
-        errorMessage = err.shortMessage;
       } else if (err.message) {
         errorMessage = err.message;
       }
