@@ -214,7 +214,7 @@ export function SocialShareModal({ isOpen, onClose, opinion }: SocialShareModalP
               </div>
 
               {/* Native Share (Mobile) */}
-              {navigator.share && (
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
                 <div className="mb-6">
                   <Button
                     onClick={handleNativeShare}

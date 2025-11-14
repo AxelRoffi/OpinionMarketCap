@@ -21,8 +21,8 @@ import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';
 
-// Export the main component for reuse in the slug route
-export function OpinionDetailPage() {
+// Main component for the opinion detail page (internal for slug route reuse)
+function OpinionDetailPageComponent() {
   const params = useParams();
   const router = useRouter();
   const { address } = useAccount();
@@ -328,5 +328,5 @@ export function OpinionDetailPage() {
   );
 }
 
-// Default export for Next.js routing
-export default OpinionDetailPage;
+// Default export for Next.js page routing
+export default OpinionDetailPageComponent;

@@ -4,7 +4,7 @@ import { useParams, notFound } from 'next/navigation';
 import { extractOpinionId } from '@/lib/url-utils';
 
 // Import the existing opinion page content
-import { OpinionDetailPage } from '../page';
+import OpinionDetailPage from '../page';
 
 /**
  * New descriptive URL format: /opinions/[id]/[slug]
