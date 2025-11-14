@@ -17,6 +17,7 @@ import {
   Users,
   Smartphone
 } from 'lucide-react';
+import { createOpinionUrl } from '@/lib/url-utils';
 
 interface SocialShareModalProps {
   isOpen: boolean;
@@ -93,7 +94,7 @@ export function SocialShareModal({ isOpen, onClose, opinion }: SocialShareModalP
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
 
-  const opinionUrl = `${window.location.origin}/opinions/${opinion.id}`;
+  const opinionUrl = `${window.location.origin}${createOpinionUrl(opinion.id, opinion.question)}`;
   const shareText = `💭 Check out this opinion: "${opinion.question}"\n\n🎯 Current Answer: "${opinion.currentAnswer}"\n💰 Price: $${(Number(opinion.nextPrice) / 1_000_000).toFixed(2)} USDC\n\nTrade now on OpinionMarketCap! 📈`;
 
   // For platforms that need shorter text (like Twitter)

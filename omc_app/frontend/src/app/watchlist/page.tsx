@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { formatTimeAgo } from '@/app/profile/hooks/use-user-profile';
+import { createOpinionUrl } from '@/lib/url-utils';
 
 export default function WatchlistPage() {
   const { watchlist, removeFromWatchlist, clearWatchlist, isLoading } = useWatchlist();
@@ -123,7 +124,7 @@ export default function WatchlistPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 ml-4">
-                    <Link href={`/opinions/${item.opinionId}`}>
+                    <Link href={createOpinionUrl(item.opinionId, item.question)}>
                       <Button
                         variant="outline"
                         size="sm"

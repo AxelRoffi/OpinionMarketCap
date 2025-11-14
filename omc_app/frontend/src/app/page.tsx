@@ -38,6 +38,7 @@ import { useAccurateTradeCounts } from '@/hooks/useAccurateTradeCounts';
 import { AdultContentModal } from '@/components/AdultContentModal';
 import useReferral from '@/hooks/useReferral';
 import { ReferralBanner } from '@/components/referral/ReferralBanner';
+import { createOpinionUrl } from '@/lib/url-utils';
 
 // All categories (original + new) - based on our agreed list
 const ALL_CATEGORIES = [
@@ -945,7 +946,7 @@ export default function HomePage() {
                   style={{
                     gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
                   }}
-                  onClick={() => router.push(`/opinions/${opinion.id}`)}
+                  onClick={() => router.push(createOpinionUrl(opinion.id, opinion.question))}
                 >
                   {/* Mobile Layout - MODIFIED: INTEGRATED BADGE IN QUESTION */}
                   <div className="lg:hidden col-span-1 space-y-4">

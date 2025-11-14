@@ -81,7 +81,8 @@ import {
   Clock,
   RefreshCw,
   Tag,
-  X
+  X,
+  Bookmark
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -97,6 +98,8 @@ import { DetailedTradingHistory } from './components/detailed-trading-history';
 import { useENSProfile } from '@/hooks/useENSProfile';
 import { ENSName, ENSAvatar } from '@/components/ENSComponents';
 import { useUserPools, useWithdrawFromExpiredPool } from './hooks/use-withdraw-pool';
+import { useWatchlist } from '@/hooks/useWatchlist';
+import Link from 'next/link';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';
@@ -123,6 +126,10 @@ function ProfilePageContent() {
   const { ensName, ensAvatar, displayName, isLoading: ensLoading } = useENSProfile(targetAddress);
   const { userPools, loading: poolsLoading, error: poolsError, refetch: refetchPools, updatePoolAfterWithdrawal } = useUserPools(targetAddress as `0x${string}`);
   const { withdrawFromPool, isWithdrawing, withdrawTxHash, isWithdrawSuccess, pendingWithdraw } = useWithdrawFromExpiredPool();
+  const { getWatchlistCount } = useWatchlist();
+
+  // Get watchlist count for the current user
+  const watchlistCount = getWatchlistCount();
 
   // Handle copy address
   const handleCopyAddress = async () => {
@@ -271,6 +278,22 @@ function ProfilePageContent() {
             
             {/* Profile Actions */}
             <div className="flex items-center space-x-3">
+              {isOwnProfile && (
+                <Link href="/watchlist">
+                  <Button 
+                    variant="outline" 
+                    className="border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black glass-input bg-transparent relative"
+                  >
+                    <Bookmark className="w-4 h-4 mr-2" />
+                    My Watchlist
+                    {watchlistCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {watchlistCount > 9 ? '9+' : watchlistCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              )}
               {!isOwnProfile && (
                 <div className="text-sm text-gray-400">
                   Viewing <ENSName address={targetAddress} className="text-gray-300" />

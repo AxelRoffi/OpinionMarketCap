@@ -1,7 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createOpinionUrl } from '@/lib/url-utils';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AlertCircle } from 'lucide-react';
@@ -20,7 +21,8 @@ import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';
 
-export default function OpinionDetailPage() {
+// Export the main component for reuse in the slug route
+export function OpinionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { address } = useAccount();
@@ -34,6 +36,22 @@ export default function OpinionDetailPage() {
   
   // Use original working hook
   const { opinion, stats, activity, loading, error } = useOpinionDetail(opinionId);
+
+  // Redirect to new descriptive URL format when opinion data is loaded
+  useEffect(() => {
+    if (opinion && !loading && opinion.question) {
+      // Create the new descriptive URL
+      const newUrl = createOpinionUrl(opinionId, opinion.question);
+      const currentPath = window.location.pathname;
+      
+      // Check if we're currently on the old format (just /opinions/[id])
+      // and not already on the new format
+      if (currentPath === `/opinions/${opinionId}` && currentPath !== newUrl) {
+        // Replace the current URL with the new descriptive one
+        router.replace(newUrl);
+      }
+    }
+  }, [opinion, loading, opinionId, router]);
 
   // Validate opinion ID
   if (isNaN(opinionId) || opinionId <= 0) {
@@ -309,3 +327,6 @@ export default function OpinionDetailPage() {
     </div>
   );
 }
+
+// Default export for Next.js routing
+export default OpinionDetailPage;
