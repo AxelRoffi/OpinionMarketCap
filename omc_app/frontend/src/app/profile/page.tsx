@@ -44,7 +44,7 @@
  * - Questions Created = Count where user is original creator  
  * - Questions Owned = Count where user is current questionOwner
  * - Platform Rank = Estimated based on portfolio performance
- * - Creator Earnings = Theoretical 3% of volume for owned questions
+ * - Creator Earnings = Real accumulated fees from FeeManager contract
  * 
  * ⚠️ NO DOUBLE COUNTING:
  * - Each position counted only once (by currentAnswerOwner)

@@ -142,8 +142,8 @@ export function useUserProfile(userAddress?: string) {
       totalTrades: 0,
       winRate: 0,
       accumulatedFees: 0,
-      rank: 1,
-      totalUsers: 100,
+      rank: 0, // Will be calculated from real user comparisons
+      totalUsers: 0, // Will be calculated from actual unique users
       avgHoldTime: 0,
       bestTrade: 0,
       totalROI: 0,
@@ -188,7 +188,7 @@ export function useUserProfile(userAddress?: string) {
 
     try {
       const userOpinions: UserOpinion[] = [];
-      const userTransactions: Transaction[] = [];
+      // Transaction history removed - needs real blockchain event parsing implementation
       let totalValue = 0;
       let totalPnL = 0;
       let opinionsOwned = 0;
@@ -196,7 +196,7 @@ export function useUserProfile(userAddress?: string) {
       let wins = 0;
       let totalROI = 0;
       let bestTrade = 0;
-      let creatorFees = 0;
+      // Creator fees are fetched directly from FeeManager.accumulatedFees below
       let tradingProfits = 0;
       
       // Calculate platform-wide metrics for real comparisons
@@ -258,39 +258,12 @@ export function useUserProfile(userAddress?: string) {
             opinionsCreated++;
           }
 
-          // Creator fees now go to current question owner (after our smart contract fix)
-          if (isQuestionOwner) {
-            creatorFees += (Number(opinion.totalVolume) / 1_000_000) * 0.03;
-          }
+          // Creator fees are tracked in FeeManager.accumulatedFees - no calculation needed here
+          // The actual creator fees are fetched separately via getAccumulatedFees
 
-          // Generate sample transactions
-          if (isAnswerOwner) {
-            userTransactions.push({
-              id: `${opinion.id}-buy`,
-              type: 'BUY',
-              amount: 1,
-              price: purchasePrice,
-              timestamp: Date.now() - (opinion.id * 86400000),
-              opinionId: opinion.id,
-              opinionTitle: opinion.question,
-              txHash: `0x${Math.random().toString(16).slice(2, 18)}`,
-              status: 'success',
-            });
-          }
-          
-          if (isOriginalCreator) {
-            userTransactions.push({
-              id: `${opinion.id}-create`,
-              type: 'CREATE',
-              amount: 1,
-              price: purchasePrice,
-              timestamp: Date.now() - (opinion.id * 86400000),
-              opinionId: opinion.id,
-              opinionTitle: opinion.question,
-              txHash: `0x${Math.random().toString(16).slice(2, 18)}`,
-              status: 'success',
-            });
-          }
+          // TODO: Implement real transaction history from blockchain events
+          // Current implementation uses simulated data - needs blockchain event parsing
+          // Real implementation should query OpinionAction/FeesAction events from contract logs
         }
       });
 
@@ -343,13 +316,13 @@ export function useUserProfile(userAddress?: string) {
           avgHoldTime: -1, // -1 indicates "coming soon" - will be replaced with real calculation
           bestTrade,
           totalROI,
-          creatorFees,
+          creatorFees: accumulatedFees ? Number(accumulatedFees) / 1_000_000 : 0, // FIXED: Use real accumulated fees
           tradingProfits,
           marketShare,
           platformTVL: platformTotalValue, // FIXED: Real platform TVL
         },
         opinions: userOpinions.sort((a, b) => b.timestamp - a.timestamp),
-        transactions: userTransactions.sort((a, b) => b.timestamp - a.timestamp),
+        transactions: [], // REMOVED: Fake transaction data - needs real blockchain event parsing
         loading: false,
         error: null,
       });
