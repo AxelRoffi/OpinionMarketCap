@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AdultContentModal } from '@/components/AdultContentModal'
+import { useTextLimits } from '@/hooks/useTextLimits'
 
 interface FormData {
   question: string
@@ -61,6 +62,9 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
   const [adultContentEnabled, setAdultContentEnabled] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   
+  // Get dynamic text limits from contract
+  const textLimits = useTextLimits()
+  
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
@@ -71,8 +75,8 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
       newErrors.question = 'Question must end with a question mark'
     } else if (formData.question.trim().length < 10) {
       newErrors.question = 'Question must be at least 10 characters'
-    } else if (formData.question.trim().length > 120) {
-      newErrors.question = 'Question must be 120 characters or less'
+    } else if (formData.question.trim().length > textLimits.maxQuestionLength) {
+      newErrors.question = `Question must be ${textLimits.maxQuestionLength} characters or less`
     }
 
     // Answer validation  
@@ -80,15 +84,15 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
       newErrors.answer = 'Answer is required'
     } else if (formData.answer.trim().length < 3) {
       newErrors.answer = 'Answer must be at least 3 characters'
-    } else if (formData.answer.trim().length > 40) {
-      newErrors.answer = 'Answer must be 40 characters or less'
+    } else if (formData.answer.trim().length > textLimits.maxAnswerLength) {
+      newErrors.answer = `Answer must be ${textLimits.maxAnswerLength} characters or less`
     }
 
     // Category validation
     if (!selectedCategories.length) {
       newErrors.categories = 'At least one category is required'
-    } else if (selectedCategories.length > 3) {
-      newErrors.categories = 'Maximum 3 categories allowed'
+    } else if (selectedCategories.length > textLimits.maxCategoriesPerOpinion) {
+      newErrors.categories = `Maximum ${textLimits.maxCategoriesPerOpinion} categories allowed`
     }
 
     // Price validation
@@ -191,12 +195,12 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           onChange={(e) => handleFieldUpdate('question', e.target.value)}
           placeholder="What do you think will happen? (must end with ?)"
           className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500 resize-none h-20"
-          maxLength={120}
+          maxLength={textLimits.maxQuestionLength}
         />
         <div className="flex justify-between text-sm">
           <span className="text-red-400">{errors.question}</span>
-          <span className={`${(formData.question?.length || 0) > 96 ? 'text-yellow-400' : 'text-gray-500'}`}>
-            {formData.question?.length || 0}/120
+          <span className={`${(formData.question?.length || 0) > (textLimits.maxQuestionLength * 0.8) ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {formData.question?.length || 0}/{textLimits.maxQuestionLength}
           </span>
         </div>
         {formData.question && !formData.question.endsWith('?') && (
@@ -220,12 +224,12 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           onChange={(e) => handleFieldUpdate('answer', e.target.value)}
           placeholder="Your answer (5-40 characters)"
           className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500"
-          maxLength={40}
+          maxLength={textLimits.maxAnswerLength}
         />
         <div className="flex justify-between text-sm">
           <span className="text-red-400">{errors.answer}</span>
-          <span className={`${(formData.answer?.length || 0) > 32 ? 'text-yellow-400' : 'text-gray-500'}`}>
-            {formData.answer?.length || 0}/40
+          <span className={`${(formData.answer?.length || 0) > (textLimits.maxAnswerLength * 0.8) ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {formData.answer?.length || 0}/{textLimits.maxAnswerLength}
           </span>
         </div>
       </div>
@@ -244,7 +248,7 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           <div className="space-y-2">
             {getVisibleCategories().map((category) => {
               const isSelected = selectedCategories.includes(category)
-              const isDisabled = !isSelected && selectedCategories.length >= 3
+              const isDisabled = !isSelected && selectedCategories.length >= textLimits.maxCategoriesPerOpinion
               
               return (
                 <label

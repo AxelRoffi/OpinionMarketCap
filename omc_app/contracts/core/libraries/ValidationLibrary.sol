@@ -64,7 +64,19 @@ library ValidationLibrary {
     }
 
     /**
-     * @dev Validates answer description (optional, max 120 chars)
+     * @dev Validates answer description (optional, configurable max chars)
+     * @param description Answer description (can be empty string)
+     * @param maxLength Maximum allowed length for description
+     */
+    function validateDescription(string memory description, uint256 maxLength) internal pure {
+        bytes memory descriptionBytes = bytes(description);
+        
+        // Only check maximum length, empty string is allowed
+        if (descriptionBytes.length > maxLength) revert("Description too long");
+    }
+
+    /**
+     * @dev Validates answer description (backward compatibility - deprecated)
      * @param description Answer description (can be empty string)
      */
     function validateDescription(string memory description) internal pure {
@@ -75,7 +87,50 @@ library ValidationLibrary {
     }
 
     /**
-     * @dev Validates opinion categories against available categories
+     * @dev Validates opinion categories against available categories (configurable max)
+     * @param userCategories Categories selected by user 
+     * @param availableCategories Global available categories array
+     * @param maxCategoriesAllowed Maximum number of categories allowed per opinion
+     */
+    function validateOpinionCategories(
+        string[] memory userCategories,
+        string[] storage availableCategories,
+        uint256 maxCategoriesAllowed
+    ) internal view {
+        uint256 userLength = userCategories.length;
+        
+        // 1. Length validation
+        if (userLength == 0) revert("NoCategoryProvided");
+        if (userLength > maxCategoriesAllowed) revert("TooManyCategories");
+        
+        // 2. Duplicate check - OPTIMIZED for gas in creative freedom zone
+        for (uint256 i = 0; i < userLength; i++) {
+            for (uint256 j = i + 1; j < userLength; j++) {
+                if (keccak256(bytes(userCategories[i])) == keccak256(bytes(userCategories[j]))) {
+                    revert("DuplicateCategory");
+                }
+            }
+        }
+        
+        // 3. Existence check - OPTIMIZED for gas in creative freedom zone
+        uint256 availableLength = availableCategories.length;
+        for (uint256 i = 0; i < userLength; i++) {
+            bool found = false;
+            bytes32 userCatHash = keccak256(bytes(userCategories[i]));
+            
+            for (uint256 j = 0; j < availableLength; j++) {
+                if (userCatHash == keccak256(bytes(availableCategories[j]))) {
+                    found = true;
+                    break; // Gas optimization: early exit
+                }
+            }
+            
+            if (!found) revert("InvalidCategory");
+        }
+    }
+
+    /**
+     * @dev Validates opinion categories against available categories (backward compatibility)
      * @param userCategories Categories selected by user (1-3 required)
      * @param availableCategories Global available categories array
      * 🚨 IMPOSED SIGNATURE - DO NOT MODIFY

@@ -235,6 +235,92 @@ const OPINION_CORE_ABI = [
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
+  },
+  // Text length settings
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxQuestionLength", "type": "uint256"}],
+    "name": "setMaxQuestionLength",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxAnswerLength", "type": "uint256"}],
+    "name": "setMaxAnswerLength",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxLinkLength", "type": "uint256"}],
+    "name": "setMaxLinkLength",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxIpfsHashLength", "type": "uint256"}],
+    "name": "setMaxIpfsHashLength",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxDescriptionLength", "type": "uint256"}],
+    "name": "setMaxDescriptionLength",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "_maxCategoriesPerOpinion", "type": "uint256"}],
+    "name": "setMaxCategoriesPerOpinion",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  // Text length getters
+  {
+    "inputs": [],
+    "name": "maxQuestionLength",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxAnswerLength",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxLinkLength",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxIpfsHashLength",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxDescriptionLength",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxCategoriesPerOpinion",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const
 
@@ -257,6 +343,14 @@ export default function AdminDashboard() {
   // Form states for different admin actions
   const [moderationForm, setModerationForm] = useState({ opinionId: '', reason: '' })
   const [priceForm, setPriceForm] = useState({ minPrice: '', creationFee: '', maxChange: '', maxTradesPerBlock: '' })
+  const [textSettingsForm, setTextSettingsForm] = useState({ 
+    maxQuestionLength: '', 
+    maxAnswerLength: '', 
+    maxLinkLength: '', 
+    maxIpfsHashLength: '', 
+    maxDescriptionLength: '', 
+    maxCategoriesPerOpinion: '' 
+  })
   const [roleForm, setRoleForm] = useState({ address: '', role: 'moderator' })
   const [categoryForm, setCategoryForm] = useState({ newCategory: '', multipleCategories: '' })
   const [contractForm, setContractForm] = useState({ feeManagerAddress: '', poolManagerAddress: '', treasuryAddress: '' })
@@ -320,6 +414,43 @@ export default function AdminDashboard() {
     functionName: 'nextOpinionId',
   })
 
+  // Text settings read hooks
+  const { data: maxQuestionLength } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxQuestionLength',
+  })
+
+  const { data: maxAnswerLength } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxAnswerLength',
+  })
+
+  const { data: maxLinkLength } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxLinkLength',
+  })
+
+  const { data: maxIpfsHashLength } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxIpfsHashLength',
+  })
+
+  const { data: maxDescriptionLength } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxDescriptionLength',
+  })
+
+  const { data: maxCategoriesPerOpinion } = useReadContract({
+    address: OPINION_CORE_ADDRESS,
+    abi: OPINION_CORE_ABI,
+    functionName: 'maxCategoriesPerOpinion',
+  })
+
   // Contract write hooks - ALWAYS CALLED (no conditional rendering)
   const { writeContract: writeModerateAnswer } = useWriteContract()
   const { writeContract: writePause } = useWriteContract()
@@ -332,6 +463,14 @@ export default function AdminDashboard() {
   const { writeContract: writeGrantRole } = useWriteContract()
   const { writeContract: writeRevokeRole } = useWriteContract()
   const { writeContract: writeAddCategory } = useWriteContract()
+  
+  // Text settings write hooks
+  const { writeContract: writeSetMaxQuestionLength } = useWriteContract()
+  const { writeContract: writeSetMaxAnswerLength } = useWriteContract()
+  const { writeContract: writeSetMaxLinkLength } = useWriteContract()
+  const { writeContract: writeSetMaxIpfsHashLength } = useWriteContract()
+  const { writeContract: writeSetMaxDescriptionLength } = useWriteContract()
+  const { writeContract: writeSetMaxCategoriesPerOpinion } = useWriteContract()
   
   // Timelock write hooks - ALWAYS CALLED (no conditional rendering)
   const { writeContract: writeScheduleContractUpgrade } = useWriteContract()
@@ -796,6 +935,89 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleUpdateTextSettings = async () => {
+    try {
+      const updates = []
+      
+      if (textSettingsForm.maxQuestionLength) {
+        await writeSetMaxQuestionLength({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxQuestionLength',
+          args: [BigInt(textSettingsForm.maxQuestionLength)],
+        })
+        updates.push('max question length')
+      }
+      
+      if (textSettingsForm.maxAnswerLength) {
+        await writeSetMaxAnswerLength({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxAnswerLength',
+          args: [BigInt(textSettingsForm.maxAnswerLength)],
+        })
+        updates.push('max answer length')
+      }
+      
+      if (textSettingsForm.maxDescriptionLength) {
+        await writeSetMaxDescriptionLength({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxDescriptionLength',
+          args: [BigInt(textSettingsForm.maxDescriptionLength)],
+        })
+        updates.push('max description length')
+      }
+      
+      if (textSettingsForm.maxLinkLength) {
+        await writeSetMaxLinkLength({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxLinkLength',
+          args: [BigInt(textSettingsForm.maxLinkLength)],
+        })
+        updates.push('max link length')
+      }
+      
+      if (textSettingsForm.maxIpfsHashLength) {
+        await writeSetMaxIpfsHashLength({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxIpfsHashLength',
+          args: [BigInt(textSettingsForm.maxIpfsHashLength)],
+        })
+        updates.push('max IPFS hash length')
+      }
+      
+      if (textSettingsForm.maxCategoriesPerOpinion) {
+        await writeSetMaxCategoriesPerOpinion({
+          address: OPINION_CORE_ADDRESS,
+          abi: OPINION_CORE_ABI,
+          functionName: 'setMaxCategoriesPerOpinion',
+          args: [BigInt(textSettingsForm.maxCategoriesPerOpinion)],
+        })
+        updates.push('max categories per opinion')
+      }
+      
+      if (updates.length > 0) {
+        toast.success(`Updated: ${updates.join(', ')}`)
+        setTextSettingsForm({ 
+          maxQuestionLength: '', 
+          maxAnswerLength: '', 
+          maxLinkLength: '', 
+          maxIpfsHashLength: '', 
+          maxDescriptionLength: '', 
+          maxCategoriesPerOpinion: '' 
+        })
+      } else {
+        toast.error('Please provide at least one value to update')
+      }
+    } catch (error: any) {
+      console.error('Text settings update failed:', error)
+      toast.error(`Failed to update text settings: ${error.message || 'Unknown error'}`)
+    }
+  }
+
   return (
     <>
       <ExtensionErrorSuppressor />
@@ -925,7 +1147,7 @@ export default function AdminDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Contract Controls */}
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
@@ -998,6 +1220,106 @@ export default function AdminDashboard() {
                   </div>
                   <Button onClick={handleUpdatePrices} className="w-full bg-emerald-600 hover:bg-emerald-700">
                     Update Prices
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Text Length Settings */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-purple-500" />
+                    Text Length Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-gray-300 mb-4">
+                    <p className="text-green-400 mb-2">✅ Now Configurable!</p>
+                    <p className="text-xs text-gray-400">Update these settings to control text limits across the platform.</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max Question Length (Current: {Number(maxQuestionLength) || 52})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxQuestionLength}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxQuestionLength: e.target.value })}
+                        placeholder="52"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max Answer Length (Current: {Number(maxAnswerLength) || 52})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxAnswerLength}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxAnswerLength: e.target.value })}
+                        placeholder="52"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max Description Length (Current: {Number(maxDescriptionLength) || 120})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxDescriptionLength}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxDescriptionLength: e.target.value })}
+                        placeholder="120"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max Link Length (Current: {Number(maxLinkLength) || 260})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxLinkLength}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxLinkLength: e.target.value })}
+                        placeholder="260"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max IPFS Hash Length (Current: {Number(maxIpfsHashLength) || 68})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxIpfsHashLength}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxIpfsHashLength: e.target.value })}
+                        placeholder="68"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Max Categories per Opinion (Current: {Number(maxCategoriesPerOpinion) || 3})
+                      </label>
+                      <Input
+                        type="number"
+                        value={textSettingsForm.maxCategoriesPerOpinion}
+                        onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxCategoriesPerOpinion: e.target.value })}
+                        placeholder="3"
+                        className="bg-gray-700 border-gray-600 text-white"
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button onClick={handleUpdateTextSettings} className="w-full bg-purple-600 hover:bg-purple-700">
+                    Update Text Settings
                   </Button>
                 </CardContent>
               </Card>

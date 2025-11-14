@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useTextLimits } from '@/hooks/useTextLimits'
 
 interface FormData {
   question: string
@@ -31,17 +32,24 @@ interface AdditionalInfoFormProps {
 export function AdditionalInfoForm({ formData, onUpdate, onNext, onPrevious }: AdditionalInfoFormProps) {
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   
+  // Get dynamic text limits from contract
+  const textLimits = useTextLimits()
+  
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
     // Description validation (optional but if provided, must be reasonable)
-    if (formData.description && formData.description.trim().length > 300) {
-      newErrors.description = 'Description must be 300 characters or less'
+    if (formData.description && formData.description.trim().length > textLimits.maxDescriptionLength) {
+      newErrors.description = `Description must be ${textLimits.maxDescriptionLength} characters or less`
     }
 
-    // External link validation (optional but if provided, must be valid URL)
-    if (formData.externalLink && !isValidUrl(formData.externalLink)) {
-      newErrors.externalLink = 'Please enter a valid URL (e.g., https://example.com)'
+    // External link validation (optional but if provided, must be valid URL and within length limit)
+    if (formData.externalLink) {
+      if (!isValidUrl(formData.externalLink)) {
+        newErrors.externalLink = 'Please enter a valid URL (e.g., https://example.com)'
+      } else if (formData.externalLink.length > textLimits.maxLinkLength) {
+        newErrors.externalLink = `Link must be ${textLimits.maxLinkLength} characters or less`
+      }
     }
 
     setErrors(newErrors)
@@ -96,12 +104,12 @@ export function AdditionalInfoForm({ formData, onUpdate, onNext, onPrevious }: A
           onChange={(e) => handleFieldUpdate('description', e.target.value)}
           placeholder="Provide additional context, reasoning, or explanation for your opinion..."
           className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 resize-none h-24"
-          maxLength={300}
+          maxLength={textLimits.maxDescriptionLength}
         />
         <div className="flex justify-between text-sm">
           <span className="text-red-400">{errors.description}</span>
-          <span className={`${(formData.description?.length || 0) > 240 ? 'text-yellow-400' : 'text-gray-500'}`}>
-            {formData.description?.length || 0}/300
+          <span className={`${(formData.description?.length || 0) > (textLimits.maxDescriptionLength * 0.8) ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {formData.description?.length || 0}/{textLimits.maxDescriptionLength}
           </span>
         </div>
       </div>
@@ -119,8 +127,14 @@ export function AdditionalInfoForm({ formData, onUpdate, onNext, onPrevious }: A
           onChange={(e) => handleFieldUpdate('externalLink', e.target.value)}
           placeholder="https://example.com/source-or-reference"
           className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500"
+          maxLength={textLimits.maxLinkLength}
         />
-        <span className="text-red-400 text-sm">{errors.externalLink}</span>
+        <div className="flex justify-between text-sm">
+          <span className="text-red-400">{errors.externalLink}</span>
+          <span className={`${(formData.externalLink?.length || 0) > (textLimits.maxLinkLength * 0.8) ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {formData.externalLink?.length || 0}/{textLimits.maxLinkLength}
+          </span>
+        </div>
         <p className="text-xs text-gray-500">
           Add a link to support your opinion (news article, research, etc.)
         </p>

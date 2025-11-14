@@ -94,21 +94,9 @@ contract OpinionCore is
      */
     bytes32 public constant POOL_MANAGER_ROLE = keccak256("POOL_MANAGER_ROLE");
 
-    // --- CONSTANTS ---
-    uint256 public constant MAX_QUESTION_LENGTH = 52;
-    uint256 public constant MAX_ANSWER_LENGTH = 52;
-    uint256 public constant MAX_LINK_LENGTH = 260;
-    uint256 public constant MAX_IPFS_HASH_LENGTH = 68;
-
-    // --- INITIAL PRICE RANGE CONSTANTS ---
+    // --- CONSTANTS (IMMUTABLE) ---
     uint96 public constant MIN_INITIAL_PRICE = 1_000_000; // 1 USDC (6 decimals)
     uint96 public constant MAX_INITIAL_PRICE = 100_000_000; // 100 USDC (6 decimals)
-
-    // --- DESCRIPTION LENGTH CONSTANT ---
-    uint256 public constant MAX_DESCRIPTION_LENGTH = 120;
-
-    // --- CATEGORIES CONSTANTS ---
-    uint256 public constant MAX_CATEGORIES_PER_OPINION = 3;
 
     // --- STATE VARIABLES ---
     IERC20 public usdcToken;
@@ -155,6 +143,14 @@ contract OpinionCore is
     uint96 public questionCreationFee;
     uint96 public initialAnswerPrice;
     uint256 public absoluteMaxPriceChange;
+    
+    // Configurable text length limits
+    uint256 public maxQuestionLength;
+    uint256 public maxAnswerLength;
+    uint256 public maxLinkLength;
+    uint256 public maxIpfsHashLength;
+    uint256 public maxDescriptionLength;
+    uint256 public maxCategoriesPerOpinion;
 
     // Core data structures
     mapping(uint256 => OpinionStructs.Opinion) public opinions;
@@ -208,6 +204,14 @@ contract OpinionCore is
         questionCreationFee = 1_000_000; // 1 USDC
         initialAnswerPrice = 2_000_000; // 2 USDC
         absoluteMaxPriceChange = 200; // 200%
+        
+        // Initialize text length limits with original default values
+        maxQuestionLength = 52;
+        maxAnswerLength = 52;
+        maxLinkLength = 260;
+        maxIpfsHashLength = 68;
+        maxDescriptionLength = 120;
+        maxCategoriesPerOpinion = 3;
 
         // 🚨 IMPOSED: Initialize default categories - EXACT LIST REQUIRED
         categories = [
@@ -271,19 +275,20 @@ contract OpinionCore is
         // 2. Categories validation BEFORE other validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionCategories(
             opinionCategories,
-            categories
+            categories,
+            maxCategoriesPerOpinion
         );
 
         // 3. Then existing validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionParams(
             question,
             answer,
-            MAX_QUESTION_LENGTH,
-            MAX_ANSWER_LENGTH
+            maxQuestionLength,
+            maxAnswerLength
         );
 
         // Validate description (optional)
-        ValidationLibrary.validateDescription(description);
+        ValidationLibrary.validateDescription(description, maxDescriptionLength);
 
         // 🚨 CRITICAL: Validate initialPrice range (1-100 USDC inclusive)
         if (
@@ -348,27 +353,28 @@ contract OpinionCore is
         // 2. Categories validation BEFORE other validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionCategories(
             opinionCategories,
-            categories
+            categories,
+            maxCategoriesPerOpinion
         );
 
         // 3. Then existing validations - IMPOSED ORDER
         ValidationLibrary.validateOpinionParams(
             question,
             answer,
-            MAX_QUESTION_LENGTH,
-            MAX_ANSWER_LENGTH
+            maxQuestionLength,
+            maxAnswerLength
         );
 
         // Validate description (optional)
-        ValidationLibrary.validateDescription(description);
+        ValidationLibrary.validateDescription(description, maxDescriptionLength);
 
         // Validate IPFS hash and link
         bytes memory ipfsHashBytes = bytes(ipfsHash);
         bytes memory linkBytes = bytes(link);
 
-        if (ipfsHashBytes.length > MAX_IPFS_HASH_LENGTH)
+        if (ipfsHashBytes.length > maxIpfsHashLength)
             revert InvalidIpfsHashLength();
-        if (linkBytes.length > MAX_LINK_LENGTH) revert InvalidLinkLength();
+        if (linkBytes.length > maxLinkLength) revert InvalidLinkLength();
 
         // Validate IPFS hash format if not empty
         if (ipfsHashBytes.length > 0) {
@@ -436,15 +442,15 @@ contract OpinionCore is
         // Validate answer
         bytes memory answerBytes = bytes(answer);
         if (answerBytes.length == 0) revert EmptyString();
-        if (answerBytes.length > MAX_ANSWER_LENGTH)
+        if (answerBytes.length > maxAnswerLength)
             revert InvalidAnswerLength();
 
         // Validate description (optional)
-        ValidationLibrary.validateDescription(description);
+        ValidationLibrary.validateDescription(description, maxDescriptionLength);
 
         // Validate link (optional)
         bytes memory linkBytes = bytes(link);
-        if (linkBytes.length > MAX_LINK_LENGTH) revert InvalidLinkLength();
+        if (linkBytes.length > maxLinkLength) revert InvalidLinkLength();
 
         // Use the stored next price or calculate it
         uint96 price = opinion.nextPrice > 0
@@ -901,6 +907,78 @@ contract OpinionCore is
     ) external onlyRole(ADMIN_ROLE) {
         maxTradesPerBlock = _maxTradesPerBlock;
         emit ParameterUpdated(4, _maxTradesPerBlock);
+    }
+
+    /**
+     * @dev Sets the maximum question length
+     * @param _maxQuestionLength New maximum question length
+     */
+    function setMaxQuestionLength(
+        uint256 _maxQuestionLength
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxQuestionLength > 0 && _maxQuestionLength <= 500, "Invalid question length");
+        maxQuestionLength = _maxQuestionLength;
+        emit ParameterUpdated(8, _maxQuestionLength);
+    }
+
+    /**
+     * @dev Sets the maximum answer length
+     * @param _maxAnswerLength New maximum answer length
+     */
+    function setMaxAnswerLength(
+        uint256 _maxAnswerLength
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxAnswerLength > 0 && _maxAnswerLength <= 500, "Invalid answer length");
+        maxAnswerLength = _maxAnswerLength;
+        emit ParameterUpdated(9, _maxAnswerLength);
+    }
+
+    /**
+     * @dev Sets the maximum link length
+     * @param _maxLinkLength New maximum link length
+     */
+    function setMaxLinkLength(
+        uint256 _maxLinkLength
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxLinkLength > 0 && _maxLinkLength <= 2000, "Invalid link length");
+        maxLinkLength = _maxLinkLength;
+        emit ParameterUpdated(10, _maxLinkLength);
+    }
+
+    /**
+     * @dev Sets the maximum IPFS hash length
+     * @param _maxIpfsHashLength New maximum IPFS hash length
+     */
+    function setMaxIpfsHashLength(
+        uint256 _maxIpfsHashLength
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxIpfsHashLength > 0 && _maxIpfsHashLength <= 200, "Invalid IPFS hash length");
+        maxIpfsHashLength = _maxIpfsHashLength;
+        emit ParameterUpdated(11, _maxIpfsHashLength);
+    }
+
+    /**
+     * @dev Sets the maximum description length
+     * @param _maxDescriptionLength New maximum description length
+     */
+    function setMaxDescriptionLength(
+        uint256 _maxDescriptionLength
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxDescriptionLength > 0 && _maxDescriptionLength <= 1000, "Invalid description length");
+        maxDescriptionLength = _maxDescriptionLength;
+        emit ParameterUpdated(12, _maxDescriptionLength);
+    }
+
+    /**
+     * @dev Sets the maximum categories per opinion
+     * @param _maxCategoriesPerOpinion New maximum categories per opinion
+     */
+    function setMaxCategoriesPerOpinion(
+        uint256 _maxCategoriesPerOpinion
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_maxCategoriesPerOpinion > 0 && _maxCategoriesPerOpinion <= 10, "Invalid max categories");
+        maxCategoriesPerOpinion = _maxCategoriesPerOpinion;
+        emit ParameterUpdated(13, _maxCategoriesPerOpinion);
     }
 
     /**
