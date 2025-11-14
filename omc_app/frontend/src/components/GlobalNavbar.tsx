@@ -8,8 +8,7 @@ import {
   Moon,
   Sun,
   Menu,
-  X,
-  Gift
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -30,18 +29,15 @@ export function GlobalNavbar() {
             </h1>
           </Link>
 
-          {/* Desktop Navigation - Enhanced with clearer menu items */}
+          {/* Desktop Navigation - Clean and concise menu items */}
           <nav className="hidden md:flex items-center space-x-8 ml-auto">
-            <Link href="/" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Opinion Market</Link>
-            <Link href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Mint Opinion</Link>
+            <Link href="/" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Market</Link>
+            <Link href="/create" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Mint</Link>
             <Link href="/marketplace" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Marketplace</Link>
             <Link href="/leaderboard" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</Link>
             <Link href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</Link>
             <Link href="/profile" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Portfolio</Link>
-            <Link href="/referrals" className="text-gray-300 font-medium hover:text-purple-500 hover:font-bold transition-colors duration-200 flex items-center gap-1">
-              <Gift className="w-4 h-4" />
-              Referrals
-            </Link>
+            <Link href="/referrals" className="text-gray-300 font-medium hover:text-purple-500 hover:font-bold transition-colors duration-200">Referrals</Link>
           </nav>
 
           {/* Right Side */}
@@ -83,16 +79,13 @@ export function GlobalNavbar() {
               className="md:hidden mt-4 pt-4 border-t border-gray-700/40"
             >
               <div className="flex flex-col space-y-4">
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">Opinion Market</Link>
-                <Link href="/create" className="text-gray-300 hover:text-white transition-colors">Mint Opinion</Link>
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">Market</Link>
+                <Link href="/create" className="text-gray-300 hover:text-white transition-colors">Mint</Link>
                 <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">Marketplace</Link>
                 <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                 <Link href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</Link>
                 <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Portfolio</Link>
-                <Link href="/referrals" className="text-gray-300 hover:text-purple-400 transition-colors flex items-center gap-2">
-                  <Gift className="w-4 h-4" />
-                  Referrals
-                </Link>
+                <Link href="/referrals" className="text-gray-300 hover:text-purple-400 transition-colors">Referrals</Link>
               </div>
             </motion.nav>
           )}
