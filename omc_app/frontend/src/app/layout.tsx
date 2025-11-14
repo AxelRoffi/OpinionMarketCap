@@ -39,7 +39,7 @@ export default function RootLayout({
         <ExtensionErrorBoundary>
           <Providers>
             <ExtensionErrorSuppressor />
-            <div className="min-h-screen bg-gray-900 text-white">
+            <div className="min-h-screen bg-background text-foreground">
               <GlobalNavbar />
               <main>
                 {children}
@@ -48,7 +48,6 @@ export default function RootLayout({
               <AdminModerationPanel isAdmin={false} />
             </div>
             <Toaster 
-              theme="dark"
               position="top-right"
             />
           </Providers>
