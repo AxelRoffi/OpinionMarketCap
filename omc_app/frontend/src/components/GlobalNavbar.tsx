@@ -12,10 +12,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useWatchlist } from '@/hooks/useWatchlist';
 
 export function GlobalNavbar() {
   const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { getWatchlistCount } = useWatchlist();
+  const watchlistCount = getWatchlistCount();
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-700/40 backdrop-blur-sm bg-gray-900/80">
@@ -36,7 +39,14 @@ export function GlobalNavbar() {
             <Link href="/marketplace" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Marketplace</Link>
             <Link href="/leaderboard" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Leaderboard</Link>
             <Link href="/pools" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Pools</Link>
-            <Link href="/watchlist" className="text-gray-300 font-medium hover:text-yellow-500 hover:font-bold transition-colors duration-200">Watchlist</Link>
+            <Link href="/watchlist" className="text-gray-300 font-medium hover:text-yellow-500 hover:font-bold transition-colors duration-200 relative">
+              Watchlist
+              {watchlistCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {watchlistCount > 9 ? '9+' : watchlistCount}
+                </span>
+              )}
+            </Link>
             <Link href="/portfolio" className="text-gray-300 font-medium hover:text-emerald-500 hover:font-bold transition-colors duration-200">Portfolio</Link>
             <Link href="/referrals" className="text-gray-300 font-medium hover:text-purple-500 hover:font-bold transition-colors duration-200">Referrals</Link>
           </nav>
@@ -85,7 +95,14 @@ export function GlobalNavbar() {
                 <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">Marketplace</Link>
                 <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                 <Link href="/pools" className="text-gray-300 hover:text-white transition-colors">Pools</Link>
-                <Link href="/watchlist" className="text-gray-300 hover:text-yellow-400 transition-colors">Watchlist</Link>
+                <Link href="/watchlist" className="text-gray-300 hover:text-yellow-400 transition-colors relative">
+                  Watchlist
+                  {watchlistCount > 0 && (
+                    <span className="absolute -top-1 -right-3 bg-yellow-500 text-black text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {watchlistCount > 9 ? '9+' : watchlistCount}
+                    </span>
+                  )}
+                </Link>
                 <Link href="/portfolio" className="text-gray-300 hover:text-white transition-colors">Portfolio</Link>
                 <Link href="/referrals" className="text-gray-300 hover:text-purple-400 transition-colors">Referrals</Link>
               </div>
