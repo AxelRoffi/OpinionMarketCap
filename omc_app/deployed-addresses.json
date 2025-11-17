@@ -1,5 +1,5 @@
 {
-  "opinionCore": "0xF7304466B4937B63b52e8516834Be5E9B6451BDE",
+  "opinionCore": "0x734f3BC19615C3afeeff8C8d858FDAA798029745",
   "contractType": "FixedOpinionMarket",
   "usdcToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
   "treasury": "0xFb7eF00D5C2a87d282F273632e834f9105795067",
@@ -65,12 +65,12 @@
   "lastTreasuryUpgrade": "2025-11-04T15:59:54.686Z",
   "referralManager": "0xD848740cA3Cc6D83F5EF2d3761c65023c371f90C",
   "lastReferralDeployment": "2025-11-05T15:12:28.424Z",
-  "lastUpgrade": "2025-11-17T11:29:38.620Z",
+  "lastUpgrade": "2025-11-17T21:38:54.163Z",
   "validationLimits": {
     "maxQuestionLength": 60,
     "maxAnswerLength": 60,
     "maxDescriptionLength": 240,
     "enforceMinimum": 2
   },
-  "deploymentTx": "0x3e04c1eeb8e46ad457e2aa31d28cf6623913df145a1eed78362887df140dbe49"
+  "deploymentTx": "0xb05a081471cdc4996c2ac0e48c67085a7ab26ea0af7917172242a0bcf3c04443"
 }
