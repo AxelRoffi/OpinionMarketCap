@@ -161,6 +161,25 @@ contract OpinionCore is
     mapping(uint256 => mapping(address => bool)) private hasTraded; // Track if address has traded this opinion
     mapping(uint256 => uint256) private lastCompetitionReset; // Track when competition data was last reset
 
+    // --- REFERRAL SYSTEM (OPTION C: 25% discount + 12% cashback for 3 opinions) ---
+    struct ReferralData {
+        address referrer;                    // Who referred this user
+        uint8 discountedOpinionsUsed;       // How many discounted opinions used (max 3)
+        bool hasReferralCode;               // Whether user has generated their own referral code
+        uint256 referralCode;               // User's own referral code for sharing
+        uint256 pendingCashback;            // Accumulated cashback in USDC (6 decimals)
+        uint256 totalReferrals;             // Total successful referrals made
+    }
+    
+    mapping(address => ReferralData) public referralUsers;
+    mapping(uint256 => address) public referralCodeToUser; // Map referral codes to users
+    uint256 private nextReferralCode; // Counter for generating unique referral codes
+    
+    // Referral system constants
+    uint256 public constant REFERRAL_DISCOUNT_PERCENT = 25;  // 25% discount for new users
+    uint256 public constant REFERRAL_CASHBACK_PERCENT = 12;  // 12% cashback for referrers
+    uint256 public constant MAX_DISCOUNTED_OPINIONS = 3;     // Maximum opinions with discount
+
     // --- INITIALIZATION ---
     /**
      * @dev Initializes the contract with required dependencies and parameters
@@ -212,6 +231,9 @@ contract OpinionCore is
         maxIpfsHashLength = 68;
         maxDescriptionLength = 240;
         maxCategoriesPerOpinion = 3;
+        
+        // Initialize referral system
+        nextReferralCode = 100000; // Start referral codes at 100000
 
         // 🚨 IMPOSED: Initialize default categories - EXACT LIST REQUIRED
         categories = [
@@ -268,6 +290,40 @@ contract OpinionCore is
         uint96 initialPrice,
         string[] calldata opinionCategories
     ) external virtual override nonReentrant whenNotPaused {
+        _createOpinionWithReferral(question, answer, description, initialPrice, opinionCategories, 0);
+    }
+
+    /**
+     * @dev Creates a new opinion with referral code support
+     * @param question The opinion question
+     * @param answer The initial answer
+     * @param description The answer description (optional, max 120 chars)
+     * @param initialPrice The initial price chosen by creator (1-100 USDC)
+     * @param opinionCategories Categories for the opinion (1-3 required)
+     * @param referralCode Referral code for discount (0 = no referral)
+     */
+    function createOpinionWithReferral(
+        string calldata question,
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories,
+        uint256 referralCode
+    ) external virtual nonReentrant whenNotPaused {
+        _createOpinionWithReferral(question, answer, description, initialPrice, opinionCategories, referralCode);
+    }
+
+    /**
+     * @dev Internal function to create opinion with referral logic
+     */
+    function _createOpinionWithReferral(
+        string calldata question,
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories,
+        uint256 referralCode
+    ) internal {
         // 1. Access control check FIRST - IMPOSED ORDER
         if (!isPublicCreationEnabled && !hasRole(ADMIN_ROLE, msg.sender))
             revert UnauthorizedCreator();
@@ -297,16 +353,56 @@ contract OpinionCore is
             revert InvalidInitialPrice();
         }
 
-        // Calculate creation fee: 20% of initialPrice with 5 USDC minimum
-        uint96 creationFee = uint96((initialPrice * 20) / 100);
-        if (creationFee < 5_000_000) { // 5 USDC minimum
-            creationFee = 5_000_000;
+        // 4. REFERRAL SYSTEM LOGIC - Calculate final price with potential discount
+        uint96 finalCreationFee;
+        address referrer = address(0);
+        bool hasValidReferral = false;
+
+        // Calculate base creation fee: 20% of initialPrice with 5 USDC minimum
+        uint96 baseCreationFee = uint96((initialPrice * 20) / 100);
+        if (baseCreationFee < 5_000_000) { // 5 USDC minimum
+            baseCreationFee = 5_000_000;
         }
 
-        // Check allowance for creation fee (not full initialPrice)
+        // Process referral code if provided
+        if (referralCode > 0) {
+            referrer = referralCodeToUser[referralCode];
+            ReferralData storage userData = referralUsers[msg.sender];
+            
+            // Validate referral: code exists, not self-referral, user hasn't exceeded discount limit
+            if (referrer != address(0) && 
+                referrer != msg.sender && 
+                userData.discountedOpinionsUsed < MAX_DISCOUNTED_OPINIONS) {
+                
+                // Apply 25% discount
+                finalCreationFee = baseCreationFee - uint96(baseCreationFee * REFERRAL_DISCOUNT_PERCENT / 100);
+                hasValidReferral = true;
+                
+                // Set referrer if this is user's first referral
+                if (userData.referrer == address(0)) {
+                    userData.referrer = referrer;
+                }
+                
+                // Increment discount counter
+                userData.discountedOpinionsUsed++;
+                
+                // Calculate and add cashback for referrer (12% of base fee)
+                uint96 cashback = uint96(baseCreationFee * REFERRAL_CASHBACK_PERCENT / 100);
+                referralUsers[referrer].pendingCashback += cashback;
+                referralUsers[referrer].totalReferrals++;
+                
+            } else {
+                // Invalid referral code or user exceeded limit, use full price
+                finalCreationFee = baseCreationFee;
+            }
+        } else {
+            finalCreationFee = baseCreationFee;
+        }
+
+        // Check allowance for final creation fee
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
-        if (allowance < creationFee)
-            revert InsufficientAllowance(creationFee, allowance);
+        if (allowance < finalCreationFee)
+            revert InsufficientAllowance(finalCreationFee, allowance);
 
         // Create opinion record with user-chosen initialPrice
         uint256 opinionId = _createOpinionRecord(
@@ -319,12 +415,25 @@ contract OpinionCore is
             opinionCategories
         );
 
-        // 🚨 NEW FINANCIAL FLOW: Only charge creation fee to treasury
-        usdcToken.safeTransferFrom(msg.sender, treasury, creationFee);
+        // Generate referral code for user after their first opinion (they paid)
+        ReferralData storage userReferralData = referralUsers[msg.sender];
+        if (!userReferralData.hasReferralCode) {
+            userReferralData.referralCode = nextReferralCode;
+            userReferralData.hasReferralCode = true;
+            referralCodeToUser[nextReferralCode] = msg.sender;
+            nextReferralCode++;
+        }
 
-        // Emit events
+        // Transfer funds: Pay discounted amount to treasury
+        usdcToken.safeTransferFrom(msg.sender, treasury, finalCreationFee);
+
+        // Emit events with referral information
         emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
         emit OpinionAction(opinionId, 1, answer, msg.sender, initialPrice);
+        
+        if (hasValidReferral) {
+            emit ReferralUsed(msg.sender, referrer, referralCode, baseCreationFee - finalCreationFee);
+        }
     }
 
     /**
@@ -1830,6 +1939,116 @@ contract OpinionCore is
         super.cancelScheduledAction(actionId, reason);
         
         emit AdminAction(9, msg.sender, actionId, 0);
+    }
+
+    // === 🎁 REFERRAL SYSTEM FUNCTIONS ===
+
+    /**
+     * @dev Get referral data for a user
+     * @param user Address of the user
+     * @return referralData Complete referral data for the user
+     */
+    function getReferralData(address user) external view returns (ReferralData memory referralData) {
+        return referralUsers[user];
+    }
+
+    /**
+     * @dev Get user address from referral code
+     * @param referralCode The referral code
+     * @return user Address of the user who owns the referral code (address(0) if invalid)
+     */
+    function getUserFromReferralCode(uint256 referralCode) external view returns (address user) {
+        return referralCodeToUser[referralCode];
+    }
+
+    /**
+     * @dev Check if user is eligible for referral discount
+     * @param user Address of the user
+     * @return isEligible Whether user can still use referral discounts
+     * @return remainingDiscounts How many discounted opinions they have left
+     */
+    function getReferralEligibility(address user) external view returns (bool isEligible, uint8 remainingDiscounts) {
+        ReferralData storage userData = referralUsers[user];
+        remainingDiscounts = uint8(MAX_DISCOUNTED_OPINIONS) - userData.discountedOpinionsUsed;
+        isEligible = remainingDiscounts > 0;
+    }
+
+    /**
+     * @dev Calculate referral discount for an opinion creation
+     * @param baseCreationFee Base creation fee before discount
+     * @param user Address of the user
+     * @param referralCode Referral code being used
+     * @return finalFee Final fee after discount (if applicable)
+     * @return discount Amount of discount applied
+     * @return isValidReferral Whether the referral is valid
+     */
+    function calculateReferralDiscount(
+        uint96 baseCreationFee, 
+        address user, 
+        uint256 referralCode
+    ) external view returns (uint96 finalFee, uint96 discount, bool isValidReferral) {
+        if (referralCode == 0) {
+            return (baseCreationFee, 0, false);
+        }
+
+        address referrer = referralCodeToUser[referralCode];
+        ReferralData storage userData = referralUsers[user];
+
+        // Validate referral
+        if (referrer != address(0) && 
+            referrer != user && 
+            userData.discountedOpinionsUsed < MAX_DISCOUNTED_OPINIONS) {
+            
+            discount = uint96(baseCreationFee * REFERRAL_DISCOUNT_PERCENT / 100);
+            finalFee = baseCreationFee - discount;
+            isValidReferral = true;
+        } else {
+            finalFee = baseCreationFee;
+            discount = 0;
+            isValidReferral = false;
+        }
+    }
+
+    /**
+     * @dev Withdraw accumulated cashback rewards
+     * @param amount Amount to withdraw (0 = withdraw all)
+     */
+    function withdrawCashback(uint256 amount) external nonReentrant whenNotPaused {
+        ReferralData storage userData = referralUsers[msg.sender];
+        
+        require(userData.pendingCashback > 0, "No cashback available");
+        
+        uint256 withdrawAmount = amount == 0 ? userData.pendingCashback : amount;
+        require(withdrawAmount <= userData.pendingCashback, "Insufficient cashback balance");
+        
+        userData.pendingCashback -= withdrawAmount;
+        
+        // Transfer USDC from contract to user
+        usdcToken.safeTransfer(msg.sender, withdrawAmount);
+        
+        emit CashbackWithdrawn(msg.sender, withdrawAmount);
+    }
+
+    /**
+     * @dev Get referral system statistics
+     * @return totalUsers Total number of users with referral data
+     * @return totalReferralCodes Total number of generated referral codes  
+     * @return totalCashbackPaid Total cashback paid out
+     * @return totalDiscountsGiven Total discount amount given
+     */
+    function getReferralSystemStats() external view returns (
+        uint256 totalUsers,
+        uint256 totalReferralCodes,
+        uint256 totalCashbackPaid,
+        uint256 totalDiscountsGiven
+    ) {
+        // Note: These would need additional state variables to track efficiently
+        // For now, returning basic stats that can be calculated
+        totalReferralCodes = nextReferralCode - 100000; // Total codes generated
+        
+        // Other stats would require additional tracking in the contract
+        // This is a basic implementation that could be enhanced
+        return (0, totalReferralCodes, 0, 0);
     }
 
     /**

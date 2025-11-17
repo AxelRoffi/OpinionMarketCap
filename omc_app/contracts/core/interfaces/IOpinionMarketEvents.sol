@@ -503,4 +503,30 @@ interface IOpinionMarketEvents {
         uint8 corruptionLevel,
         string recoverySteps
     );
+
+    // === 🎁 REFERRAL SYSTEM EVENTS ===
+    
+    /**
+     * @dev Emitted when a referral code is used successfully
+     * @param newUser Address of the user who used the referral code
+     * @param referrer Address of the user who referred them  
+     * @param referralCode Referral code that was used
+     * @param discountAmount Amount of discount received (in USDC)
+     */
+    event ReferralUsed(
+        address indexed newUser,
+        address indexed referrer,
+        uint256 indexed referralCode,
+        uint256 discountAmount
+    );
+
+    /**
+     * @dev Emitted when cashback is withdrawn by a referrer
+     * @param referrer Address of the referrer withdrawing cashback
+     * @param amount Amount withdrawn (in USDC)
+     */
+    event CashbackWithdrawn(
+        address indexed referrer,
+        uint256 amount
+    );
 }

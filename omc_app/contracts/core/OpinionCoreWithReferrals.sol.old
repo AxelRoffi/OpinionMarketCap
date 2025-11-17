@@ -81,8 +81,8 @@ contract OpinionCoreWithReferrals is OpinionCore {
         ValidationLibrary.validateOpinionParams(
             question,
             answer,
-            MAX_QUESTION_LENGTH,
-            MAX_ANSWER_LENGTH
+            maxQuestionLength,
+            maxAnswerLength
         );
         ValidationLibrary.validateDescription(description);
 
