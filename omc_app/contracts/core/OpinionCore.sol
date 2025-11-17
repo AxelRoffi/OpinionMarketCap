@@ -205,12 +205,12 @@ contract OpinionCore is
         initialAnswerPrice = 2_000_000; // 2 USDC
         absoluteMaxPriceChange = 200; // 200%
         
-        // Initialize text length limits with original default values
-        maxQuestionLength = 52;
-        maxAnswerLength = 52;
+        // Initialize text length limits with updated default values
+        maxQuestionLength = 60;
+        maxAnswerLength = 60;
         maxLinkLength = 260;
         maxIpfsHashLength = 68;
-        maxDescriptionLength = 120;
+        maxDescriptionLength = 240;
         maxCategoriesPerOpinion = 3;
 
         // 🚨 IMPOSED: Initialize default categories - EXACT LIST REQUIRED
@@ -441,7 +441,7 @@ contract OpinionCore is
 
         // Validate answer
         bytes memory answerBytes = bytes(answer);
-        if (answerBytes.length == 0) revert EmptyString();
+        if (answerBytes.length < 2) revert("Minimum 2 characters required");
         if (answerBytes.length > maxAnswerLength)
             revert InvalidAnswerLength();
 
@@ -916,7 +916,7 @@ contract OpinionCore is
     function setMaxQuestionLength(
         uint256 _maxQuestionLength
     ) external onlyRole(ADMIN_ROLE) {
-        require(_maxQuestionLength > 0 && _maxQuestionLength <= 500, "Invalid question length");
+        require(_maxQuestionLength >= 2 && _maxQuestionLength <= 500, "Invalid question length");
         maxQuestionLength = _maxQuestionLength;
         emit ParameterUpdated(8, _maxQuestionLength);
     }
@@ -928,7 +928,7 @@ contract OpinionCore is
     function setMaxAnswerLength(
         uint256 _maxAnswerLength
     ) external onlyRole(ADMIN_ROLE) {
-        require(_maxAnswerLength > 0 && _maxAnswerLength <= 500, "Invalid answer length");
+        require(_maxAnswerLength >= 2 && _maxAnswerLength <= 500, "Invalid answer length");
         maxAnswerLength = _maxAnswerLength;
         emit ParameterUpdated(9, _maxAnswerLength);
     }
@@ -964,7 +964,7 @@ contract OpinionCore is
     function setMaxDescriptionLength(
         uint256 _maxDescriptionLength
     ) external onlyRole(ADMIN_ROLE) {
-        require(_maxDescriptionLength > 0 && _maxDescriptionLength <= 1000, "Invalid description length");
+        require(_maxDescriptionLength >= 2 && _maxDescriptionLength <= 1000, "Invalid description length");
         maxDescriptionLength = _maxDescriptionLength;
         emit ParameterUpdated(12, _maxDescriptionLength);
     }

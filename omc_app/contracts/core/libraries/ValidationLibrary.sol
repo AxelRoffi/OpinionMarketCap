@@ -13,8 +13,8 @@ library ValidationLibrary {
         bytes memory questionBytes = bytes(question);
         bytes memory answerBytes = bytes(initialAnswer);
 
-        if (questionBytes.length == 0 || answerBytes.length == 0)
-            revert("Empty string");
+        if (questionBytes.length < 2 || answerBytes.length < 2)
+            revert("Minimum 2 characters required");
         if (questionBytes.length > maxQuestionLength)
             revert("Question too long");
         if (answerBytes.length > maxAnswerLength) revert("Answer too long");
@@ -71,7 +71,11 @@ library ValidationLibrary {
     function validateDescription(string memory description, uint256 maxLength) internal pure {
         bytes memory descriptionBytes = bytes(description);
         
-        // Only check maximum length, empty string is allowed
+        // If description is provided, must be at least 2 characters
+        if (descriptionBytes.length > 0 && descriptionBytes.length < 2) {
+            revert("Description minimum 2 characters");
+        }
+        // Check maximum length
         if (descriptionBytes.length > maxLength) revert("Description too long");
     }
 
@@ -82,7 +86,11 @@ library ValidationLibrary {
     function validateDescription(string memory description) internal pure {
         bytes memory descriptionBytes = bytes(description);
         
-        // Only check maximum length, empty string is allowed
+        // If description is provided, must be at least 2 characters
+        if (descriptionBytes.length > 0 && descriptionBytes.length < 2) {
+            revert("Description minimum 2 characters");
+        }
+        // Check maximum length
         if (descriptionBytes.length > 120) revert("Description too long");
     }
 

@@ -165,6 +165,7 @@ You are working as a pair programmer. Provide constructive feedback on ideas, bo
 - In @contracts/core/PoolManager.sol, add a restriction to create pools only when NextPrice >= 100 USDC to prevent low-value or spam pool creation
 - Add referral for free mint, free OpinionCreation
 - Remove rate limiting
+- Add quality content filtering on UI, make sure to display "good questions" first and burry non sensical questions at the bottom of the table
 
 ## Sub-Agent & MCP Architecture Details
 

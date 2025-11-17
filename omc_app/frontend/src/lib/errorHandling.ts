@@ -75,8 +75,8 @@ export function parseContractError(error: unknown, context?: TransactionContext)
     
     'InvalidAnswerLength': () => ({
       name: 'Answer Too Long',
-      message: 'Your answer exceeds the maximum length of 52 characters.',
-      solution: 'Shorten your answer to 52 characters or less.',
+      message: 'Your answer exceeds the maximum length of 60 characters.',
+      solution: 'Shorten your answer to 60 characters or less.',
       canRetry: true,
       severity: 'error'
     }),
@@ -91,8 +91,8 @@ export function parseContractError(error: unknown, context?: TransactionContext)
     
     'InvalidDescriptionLength': () => ({
       name: 'Description Too Long',
-      message: 'Your description exceeds the maximum length of 120 characters.',
-      solution: 'Shorten your description to 120 characters or less.',
+      message: 'Your description exceeds the maximum length of 240 characters.',
+      solution: 'Shorten your description to 240 characters or less.',
       canRetry: true,
       severity: 'error'
     }),
@@ -256,12 +256,12 @@ export function validateTransactionInputs(
   // Basic field validation
   if (!answer.trim()) {
     errors.push('Answer is required');
-  } else if (answer.trim().length > 52) {
-    errors.push('Answer must be 52 characters or less');
+  } else if (answer.trim().length < 2 || answer.trim().length > 60) {
+    errors.push('Answer must be 2-60 characters');
   }
 
-  if (description.length > 120) {
-    errors.push('Description must be 120 characters or less');
+  if (description.length > 0 && (description.length < 2 || description.length > 240)) {
+    errors.push('Description must be 2-240 characters (or empty)');
   }
 
   // Account validation

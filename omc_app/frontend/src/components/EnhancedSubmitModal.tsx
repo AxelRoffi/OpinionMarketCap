@@ -164,8 +164,8 @@ export default function EnhancedSubmitModal({
       },
       'InvalidAnswerLength': {
         name: 'Answer Too Long',
-        message: 'Your answer exceeds the maximum length of 52 characters.',
-        solution: 'Shorten your answer to 52 characters or less.',
+        message: 'Your answer exceeds the maximum length of 60 characters.',
+        solution: 'Shorten your answer to 60 characters or less.',
         canRetry: true
       },
       'EmptyString': {
@@ -176,8 +176,8 @@ export default function EnhancedSubmitModal({
       },
       'InvalidDescriptionLength': {
         name: 'Description Too Long',
-        message: 'Your description exceeds the maximum length of 120 characters.',
-        solution: 'Shorten your description to 120 characters or less.',
+        message: 'Your description exceeds the maximum length of 240 characters.',
+        solution: 'Shorten your description to 240 characters or less.',
         canRetry: true
       }
     };

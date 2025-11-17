@@ -73,8 +73,8 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
       newErrors.question = 'Question is required'
     } else if (!formData.question.trim().endsWith('?')) {
       newErrors.question = 'Question must end with a question mark'
-    } else if (formData.question.trim().length < 10) {
-      newErrors.question = 'Question must be at least 10 characters'
+    } else if (formData.question.trim().length < 2) {
+      newErrors.question = 'Question must be at least 2 characters'
     } else if (formData.question.trim().length > textLimits.maxQuestionLength) {
       newErrors.question = `Question must be ${textLimits.maxQuestionLength} characters or less`
     }
@@ -82,8 +82,8 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     // Answer validation  
     if (!formData.answer?.trim()) {
       newErrors.answer = 'Answer is required'
-    } else if (formData.answer.trim().length < 3) {
-      newErrors.answer = 'Answer must be at least 3 characters'
+    } else if (formData.answer.trim().length < 2) {
+      newErrors.answer = 'Answer must be at least 2 characters'
     } else if (formData.answer.trim().length > textLimits.maxAnswerLength) {
       newErrors.answer = `Answer must be ${textLimits.maxAnswerLength} characters or less`
     }
@@ -222,7 +222,7 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           id="answer"
           value={formData.answer || ''}
           onChange={(e) => handleFieldUpdate('answer', e.target.value)}
-          placeholder="Your answer (5-40 characters)"
+          placeholder="Your answer (2-60 characters)"
           className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500"
           maxLength={textLimits.maxAnswerLength}
         />

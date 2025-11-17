@@ -47,11 +47,11 @@ export function useCreateForm(): UseCreateFormReturn {
         return !!(
           formData.question?.trim() &&
           formData.question.trim().endsWith('?') &&
-          formData.question.trim().length >= 10 &&
-          formData.question.trim().length <= 120 &&
+          formData.question.trim().length >= 2 &&
+          formData.question.trim().length <= 60 &&
           formData.answer?.trim() &&
-          formData.answer.trim().length >= 3 &&
-          formData.answer.trim().length <= 40 &&
+          formData.answer.trim().length >= 2 &&
+          formData.answer.trim().length <= 60 &&
           formData.categories?.length > 0 &&
           formData.categories?.length <= 3 &&
           formData.initialPrice >= 1 &&
@@ -61,7 +61,7 @@ export function useCreateForm(): UseCreateFormReturn {
       case 2: // Additional Info step (optional fields)
         // All fields are optional, so always valid
         // But validate format if provided
-        if (formData.description && formData.description.length > 300) {
+        if (formData.description && (formData.description.length < 2 || formData.description.length > 240)) {
           return false
         }
         if (formData.externalLink && !isValidUrl(formData.externalLink)) {

@@ -57,13 +57,13 @@ export interface TextLimits {
   maxCategoriesPerOpinion: number
 }
 
-// Default fallback values (original hardcoded values)
+// Default fallback values (updated to match new contract limits)
 const DEFAULT_LIMITS: TextLimits = {
-  maxQuestionLength: 52,
-  maxAnswerLength: 52,
+  maxQuestionLength: 60,
+  maxAnswerLength: 60,
   maxLinkLength: 260,
   maxIpfsHashLength: 68,
-  maxDescriptionLength: 120,
+  maxDescriptionLength: 240,
   maxCategoriesPerOpinion: 3
 }
 

@@ -16,7 +16,11 @@ import {
   Users,
   MessageSquare,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  Settings,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +32,7 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { PriceHistoryChart } from '@/components/PriceHistoryChart';
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
+import { useContentFiltering } from '@/hooks/useContentFiltering';
 import { useIndexedOpinions } from '@/hooks/useIndexedOpinions';
 import { usePaginatedOpinions } from '@/hooks/usePaginatedOpinions';
 import { ClickableAddress } from '@/components/ui/clickable-address';
@@ -124,6 +129,7 @@ export default function HomePage() {
   const [sortState, setSortState] = useState<{ column: string | null; direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' });
   const [showAdultModal, setShowAdultModal] = useState(false);
   const [adultContentEnabled, setAdultContentEnabled] = useState(false);
+  const [showQualityFilter, setShowQualityFilter] = useState(false);
   
   // Referral system
   const { 
@@ -444,13 +450,22 @@ export default function HomePage() {
     // Don't select Adult category, user stays on current selection
   };
 
+  // Apply content quality filtering - sorts good questions first, buries nonsensical ones
+  const {
+    filteredOpinions: qualityFilteredOpinions,
+    filterStats,
+    filterSettings,
+    updateFilterSettings,
+    getOpinionScore
+  } = useContentFiltering(enhancedOpinions);
+
   // Filter, sort and paginate opinions - CoinMarketCap style
   const { paginatedOpinions, totalPages, totalFiltered } = useMemo(() => {
     // Note: If using server-side pagination, filtering/sorting should ideally be done server-side too
     // For now, we'll filter/sort the current data we have
     // First filter and sort
     const filteredAndSorted = (() => {
-    const filtered = enhancedOpinions.filter(opinion => {
+    const filtered = qualityFilteredOpinions.filter(opinion => {
       const searchWords = searchQuery.toLowerCase().split(' ').filter(w => w);
       const opinionText = (opinion.question + ' ' + opinion.currentAnswer).toLowerCase();
       const matchesSearch = searchWords.every(word => opinionText.includes(word));
@@ -539,7 +554,7 @@ export default function HomePage() {
       totalPages: finalTotalPages,
       totalFiltered: isFetchingAll ? totalFiltered : paginationTotalOpinions || totalFiltered
     };
-  }, [enhancedOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection, currentPage, itemsPerPage, isFetchingAll, paginationTotalPages, paginationTotalOpinions, adultContentEnabled]);
+  }, [qualityFilteredOpinions, searchQuery, selectedCategory, activeTab, sortBy, sortDirection, currentPage, itemsPerPage, isFetchingAll, paginationTotalPages, paginationTotalOpinions, adultContentEnabled]);
 
   // Utility functions
   const formatUSDC = (wei: bigint) => {
@@ -787,7 +802,116 @@ export default function HomePage() {
               ))}
             </SelectContent>
           </Select>
+          
+          {/* Quality Filter Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowQualityFilter(!showQualityFilter)}
+            className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 w-full md:w-auto"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Quality Filter
+            {filterStats.filtered > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {filterStats.filtered} hidden
+              </Badge>
+            )}
+          </Button>
         </motion.div>
+
+        {/* Quality Filter Controls */}
+        {showQualityFilter && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 p-4 bg-gray-800/30 border border-gray-700/50 rounded-lg"
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-300">Content Quality Settings</span>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Enable/Disable Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateFilterSettings({ enableQualityFilter: !filterSettings.enableQualityFilter })}
+                  className={`${
+                    filterSettings.enableQualityFilter 
+                      ? 'bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-700' 
+                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  {filterSettings.enableQualityFilter ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                  {filterSettings.enableQualityFilter ? 'Enabled' : 'Disabled'}
+                </Button>
+
+                {/* Quality Threshold Slider */}
+                {filterSettings.enableQualityFilter && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">Min Quality:</span>
+                    <Select 
+                      value={filterSettings.minQualityScore.toString()} 
+                      onValueChange={(value) => updateFilterSettings({ minQualityScore: parseInt(value) })}
+                    >
+                      <SelectTrigger className="w-20 h-8 bg-gray-800 border-gray-700 text-white text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="0" className="text-white hover:bg-gray-700 text-xs">Show All</SelectItem>
+                        <SelectItem value="25" className="text-white hover:bg-gray-700 text-xs">Hide Spam</SelectItem>
+                        <SelectItem value="40" className="text-white hover:bg-gray-700 text-xs">Basic Quality</SelectItem>
+                        <SelectItem value="60" className="text-white hover:bg-gray-700 text-xs">High Quality</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Sort by Quality Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateFilterSettings({ sortByQuality: !filterSettings.sortByQuality })}
+                  className={`${
+                    filterSettings.sortByQuality 
+                      ? 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700' 
+                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                  } text-xs`}
+                >
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  {filterSettings.sortByQuality ? 'Quality Sort' : 'Manual Sort'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Filter Stats */}
+            {filterSettings.showFilterStats && (
+              <div className="mt-3 pt-3 border-t border-gray-700/50">
+                <div className="flex flex-wrap gap-4 text-xs">
+                  <div className="text-gray-400">
+                    Total: <span className="text-white">{filterStats.total}</span>
+                  </div>
+                  <div className="text-emerald-400">
+                    High Quality: <span className="text-white">{filterStats.high}</span>
+                  </div>
+                  <div className="text-yellow-400">
+                    Medium Quality: <span className="text-white">{filterStats.medium}</span>
+                  </div>
+                  <div className="text-orange-400">
+                    Low Quality: <span className="text-white">{filterStats.low}</span>
+                  </div>
+                  <div className="text-red-400">
+                    Spam/Hidden: <span className="text-white">{filterStats.spam}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Tab Navigation System - EXACT MATCH */}
         <motion.div

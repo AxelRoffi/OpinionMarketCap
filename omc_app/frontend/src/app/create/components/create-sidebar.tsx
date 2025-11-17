@@ -45,7 +45,7 @@ export function CreateSidebar({ currentStep, formData }: CreateSidebarProps) {
           {currentStep === 1 && (
             <>
               <p>• Create your opinion question ending with &ldquo;?&rdquo;</p>
-              <p>• Provide your initial answer (5-40 characters)</p>
+              <p>• Provide your initial answer (2-60 characters)</p>
               <p>• Select a category for better discovery</p>
               <p>• Set initial price (1-100 USDC)</p>
             </>

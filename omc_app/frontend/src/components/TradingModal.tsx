@@ -86,8 +86,8 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   const { answer, description, externalLink: link, acceptedTerms } = formData
 
   // Character limits
-  const ANSWER_LIMIT = 40
-  const DESCRIPTION_LIMIT = 120
+  const ANSWER_LIMIT = 60
+  const DESCRIPTION_LIMIT = 240
   
   // Conservative "infinite" approval amount - use a reasonable large number
   // Equivalent to 1 million USDC (6 decimals) - should be enough for any reasonable use
