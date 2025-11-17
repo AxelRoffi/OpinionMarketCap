@@ -102,6 +102,7 @@ import { useWatchlist } from '@/hooks/useWatchlist';
 import Link from 'next/link';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
+import { ReferralDashboard } from '@/components/referral/ReferralDashboard';
 import CancelListingModal from '@/components/modals/CancelListingModal';
 
 function ProfilePageContent() {
@@ -552,11 +553,12 @@ function ProfilePageContent() {
 
         {/* Detailed Tabs System */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="glass-card grid w-full grid-cols-6">
+          <TabsList className="glass-card grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="fees">Fee Center</TabsTrigger>
+            <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="history">Trading</TabsTrigger>
             <TabsTrigger value="pools">Pools</TabsTrigger>
           </TabsList>
@@ -1257,6 +1259,18 @@ function ProfilePageContent() {
                 </Card>
               </div>
             )}
+          </TabsContent>
+
+          {/* Referrals Tab - Cashback and Referral Management */}
+          <TabsContent value="referrals" className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-semibold text-white">Referral Dashboard</h3>
+              <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                25% Discount System
+              </Badge>
+            </div>
+            
+            <ReferralDashboard />
           </TabsContent>
 
           {/* Analytics Tab - Enhanced Portfolio Analytics */}

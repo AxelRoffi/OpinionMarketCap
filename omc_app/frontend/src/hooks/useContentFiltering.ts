@@ -37,7 +37,8 @@ const DEFAULT_FILTER_SETTINGS: FilterSettings = {
 export function useContentFiltering<T extends { 
   question: string; 
   currentAnswer: string; 
-  totalVolume?: number; 
+  totalVolume?: number | bigint; 
+  [key: string]: any; // Allow additional properties like categories, marketStatus, etc.
 }>(opinions: T[]): ContentFilterResult<T> {
   
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(() => {
@@ -136,7 +137,7 @@ export function useContentFiltering<T extends {
 export function useQualitySorting<T extends { 
   question: string; 
   currentAnswer: string; 
-  totalVolume?: number; 
+  totalVolume?: number | bigint; 
 }>(opinions: T[], enabled: boolean = true): T[] {
   
   return useMemo(() => {

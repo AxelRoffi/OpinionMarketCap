@@ -10,6 +10,7 @@ import { WalletPersistence } from "@/components/WalletPersistence";
 import { WalletRoutePersistence } from "@/components/WalletRoutePersistence";
 import { ModeratedAnswersNotification } from "@/components/ModeratedAnswersNotification";
 import { AdminModerationPanel } from "@/components/AdminModerationPanel";
+import { Footer } from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,11 +40,12 @@ export default function RootLayout({
         <ExtensionErrorBoundary>
           <Providers>
             <ExtensionErrorSuppressor />
-            <div className="min-h-screen bg-background text-foreground">
+            <div className="min-h-screen bg-background text-foreground flex flex-col">
               <GlobalNavbar />
-              <main>
+              <main className="flex-grow">
                 {children}
               </main>
+              <Footer />
               <ModeratedAnswersNotification />
               <AdminModerationPanel isAdmin={false} />
             </div>

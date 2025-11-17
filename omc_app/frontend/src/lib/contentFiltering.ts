@@ -94,7 +94,7 @@ function hasSpamCharacteristics(question: string, answer: string): boolean {
 export function scoreOpinionContent(opinion: {
   question: string;
   currentAnswer: string;
-  totalVolume?: number;
+  totalVolume?: number | bigint;
   createdAt?: Date;
 }): ContentScore {
   const { question, currentAnswer, totalVolume = 0 } = opinion;
@@ -165,7 +165,9 @@ export function scoreOpinionContent(opinion: {
   
   // Market activity bonus (indicates user engagement)
   if (totalVolume > 0) {
-    const volumeBonus = Math.min(20, Math.log(totalVolume / 1000000) * 5); // Log scale bonus
+    // Convert bigint to number for calculation
+    const volumeNumber = typeof totalVolume === 'bigint' ? Number(totalVolume) : totalVolume;
+    const volumeBonus = Math.min(20, Math.log(volumeNumber / 1000000) * 5); // Log scale bonus
     score += volumeBonus;
     if (volumeBonus > 0) {
       reasons.push(`Market activity bonus: ${volumeBonus.toFixed(1)} points`);
@@ -192,7 +194,7 @@ export function scoreOpinionContent(opinion: {
 /**
  * Sort opinions by quality score (high to low)
  */
-export function sortOpinionsByQuality<T extends { question: string; currentAnswer: string; totalVolume?: number }>(
+export function sortOpinionsByQuality<T extends { question: string; currentAnswer: string; totalVolume?: number | bigint }>(
   opinions: T[]
 ): T[] {
   return opinions.sort((a, b) => {
@@ -205,7 +207,7 @@ export function sortOpinionsByQuality<T extends { question: string; currentAnswe
 /**
  * Filter opinions by minimum quality threshold
  */
-export function filterOpinionsByQuality<T extends { question: string; currentAnswer: string; totalVolume?: number }>(
+export function filterOpinionsByQuality<T extends { question: string; currentAnswer: string; totalVolume?: number | bigint }>(
   opinions: T[],
   minQualityScore: number = 25
 ): T[] {

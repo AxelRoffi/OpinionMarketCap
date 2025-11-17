@@ -1,13 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
+import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 
 interface ReferralState {
   referralCode: string | null;
   isValidCode: boolean;
   referrerAddress: string | null;
   hasProcessedReferral: boolean;
+}
+
+interface ReferralData {
+  referrer: string;
+  discountedOpinionsUsed: number;
+  hasReferralCode: boolean;
+  referralCode: bigint;
+  pendingCashback: bigint;
+  totalReferrals: bigint;
 }
 
 export function useReferral() {
@@ -21,6 +31,45 @@ export function useReferral() {
     hasProcessedReferral: false
   });
   const [showReferralWelcome, setShowReferralWelcome] = useState(false);
+
+  // Get user's referral data from contract (with error handling)
+  const { data: userReferralData, error: referralDataError } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_ABI,
+    functionName: 'getReferralData',
+    args: address ? [address] : undefined,
+    query: { 
+      enabled: !!address,
+      retry: false,
+      refetchOnWindowFocus: false
+    }
+  }) as { data: ReferralData | undefined; error: any };
+
+  // Validate referral code against contract (with error handling)
+  const { data: referrerForCode, error: referrerCodeError } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_ABI,
+    functionName: 'getUserFromReferralCode',
+    args: referralState.referralCode ? [BigInt(referralState.referralCode)] : undefined,
+    query: { 
+      enabled: !!referralState.referralCode && referralState.isValidCode,
+      retry: false,
+      refetchOnWindowFocus: false
+    }
+  }) as { data: string | undefined; error: any };
+
+  // Get referral eligibility (with error handling)
+  const { data: eligibilityData, error: eligibilityError } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_ABI,
+    functionName: 'getReferralEligibility',
+    args: address ? [address] : undefined,
+    query: { 
+      enabled: !!address,
+      retry: false,
+      refetchOnWindowFocus: false
+    }
+  }) as { data: [boolean, number] | undefined; error: any };
 
   // Initialize search params on client side only (SSG-safe)
   useEffect(() => {
@@ -36,25 +85,25 @@ export function useReferral() {
     const refParam = searchParams.get('ref');
     
     if (refParam) {
-      // Validate referral code (should be 6+ digits)
+      // Validate referral code format (should be 6+ digits)
       const isValid = /^\d{6,}$/.test(refParam);
       
       setReferralState(prev => ({
         ...prev,
         referralCode: refParam,
-        isValidCode: isValid
+        isValidCode: isValid,
+        referrerAddress: referrerForCode || null
       }));
 
-      // Show welcome message for valid referral codes
-      if (isValid && typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(`referral_welcome_${refParam}`)) {
-        setShowReferralWelcome(true);
-        sessionStorage.setItem(`referral_welcome_${refParam}`, 'shown');
+      // Show welcome message for valid referral codes that exist in contract
+      if (isValid && referrerForCode && referrerForCode !== '0x0000000000000000000000000000000000000000') {
+        if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(`referral_welcome_${refParam}`)) {
+          setShowReferralWelcome(true);
+          sessionStorage.setItem(`referral_welcome_${refParam}`, 'shown');
+        }
       }
-
-      // TODO: Validate referral code with contract to get referrer address
-      // This would require a contract call to getReferrerFromCode(refParam)
     }
-  }, [searchParams]);
+  }, [searchParams, referrerForCode]);
 
   const dismissReferralWelcome = () => {
     setShowReferralWelcome(false);
@@ -67,46 +116,92 @@ export function useReferral() {
   };
 
   const hasValidReferral = (): boolean => {
-    return referralState.isValidCode && referralState.referralCode !== null;
+    return referralState.isValidCode && 
+           referralState.referralCode !== null &&
+           referrerForCode !== undefined &&
+           referrerForCode !== '0x0000000000000000000000000000000000000000';
+  };
+
+  // Get user's own referral code for sharing (with error handling)
+  const getMyReferralCode = (): string | null => {
+    if (referralDataError) {
+      console.warn('Referral data not available - contract may not support referral system');
+      return null;
+    }
+    if (userReferralData?.hasReferralCode) {
+      return userReferralData.referralCode.toString();
+    }
+    return null;
+  };
+
+  // Check if user is eligible for discounts (with error handling)
+  const isEligibleForDiscount = (): boolean => {
+    if (eligibilityError) {
+      console.warn('Eligibility data not available - contract may not support referral system');
+      return false;
+    }
+    return eligibilityData ? eligibilityData[0] : false;
+  };
+
+  const getRemainingDiscounts = (): number => {
+    if (eligibilityError) {
+      return 0;
+    }
+    return eligibilityData ? eligibilityData[1] : 0;
+  };
+
+  // Format pending cashback (with error handling)
+  const getPendingCashback = (): string => {
+    if (referralDataError || !userReferralData?.pendingCashback) return '0.00';
+    const cashbackUSDC = Number(userReferralData.pendingCashback) / 1_000_000;
+    return cashbackUSDC.toFixed(2);
   };
 
   return {
     referralCode: referralState.referralCode,
-    isValidCode: referralState.isValidCode,
+    isValidCode: referralState.isValidCode && hasValidReferral(),
     referrerAddress: referralState.referrerAddress,
     showReferralWelcome,
     dismissReferralWelcome,
     getReferralCodeForCreation,
-    hasValidReferral
+    hasValidReferral,
+    getMyReferralCode,
+    isEligibleForDiscount,
+    getRemainingDiscounts,
+    getPendingCashback,
+    userReferralData,
+    totalReferrals: (!referralDataError && userReferralData) ? Number(userReferralData.totalReferrals) : 0,
+    discountedOpinionsUsed: (!referralDataError && userReferralData?.discountedOpinionsUsed) || 0,
+    hasReferralSystemSupport: !referralDataError
   };
 }
 
-// Hook for checking if user can create opinion for free
-export function useFreeMints() {
+// Updated hook for referral discounts instead of free mints
+export function useReferralDiscounts() {
   const { address } = useAccount();
-  const [availableFreeMints, setAvailableFreeMints] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // TODO: Add contract read for getAvailableFreeMints
+  // Get referral eligibility
+  const { data: eligibilityData } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_ABI,
+    functionName: 'getReferralEligibility',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address }
+  }) as { data: [boolean, number] | undefined };
+
   useEffect(() => {
-    if (address) {
-      // This would call the contract method
-      // const freeMints = await readContract({
-      //   address: CONTRACTS.REFERRAL_MANAGER,
-      //   abi: REFERRAL_MANAGER_ABI,
-      //   functionName: 'getAvailableFreeMints',
-      //   args: [address]
-      // });
-      // setAvailableFreeMints(Number(freeMints));
+    if (eligibilityData !== undefined) {
       setLoading(false);
     }
-  }, [address]);
+  }, [eligibilityData]);
 
-  const canCreateForFree = availableFreeMints > 0;
+  const canGetDiscount = eligibilityData ? eligibilityData[0] : false;
+  const remainingDiscounts = eligibilityData ? eligibilityData[1] : 0;
 
   return {
-    availableFreeMints,
-    canCreateForFree,
+    remainingDiscounts,
+    canGetDiscount,
     loading
   };
 }

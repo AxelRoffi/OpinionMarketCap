@@ -118,6 +118,81 @@ export const OPINION_CORE_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  // Referral system functions
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getReferralData',
+    outputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'referrer', type: 'address' },
+          { internalType: 'uint8', name: 'discountedOpinionsUsed', type: 'uint8' },
+          { internalType: 'bool', name: 'hasReferralCode', type: 'bool' },
+          { internalType: 'uint256', name: 'referralCode', type: 'uint256' },
+          { internalType: 'uint256', name: 'pendingCashback', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalReferrals', type: 'uint256' }
+        ],
+        internalType: 'struct ReferralData',
+        name: '',
+        type: 'tuple'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'referralCode', type: 'uint256' }],
+    name: 'getUserFromReferralCode',
+    outputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getReferralEligibility',
+    outputs: [
+      { internalType: 'bool', name: 'isEligible', type: 'bool' },
+      { internalType: 'uint8', name: 'remainingDiscounts', type: 'uint8' }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      { internalType: 'uint96', name: 'baseCreationFee', type: 'uint96' },
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'referralCode', type: 'uint256' }
+    ],
+    name: 'calculateReferralDiscount',
+    outputs: [
+      { internalType: 'uint96', name: 'finalFee', type: 'uint96' },
+      { internalType: 'uint96', name: 'discount', type: 'uint96' },
+      { internalType: 'bool', name: 'isValidReferral', type: 'bool' }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'amount', type: 'uint256' }],
+    name: 'withdrawCashback',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      { internalType: 'string', name: 'question', type: 'string' },
+      { internalType: 'string', name: 'answer', type: 'string' },
+      { internalType: 'string', name: 'description', type: 'string' },
+      { internalType: 'uint96', name: 'initialPrice', type: 'uint96' },
+      { internalType: 'string[]', name: 'opinionCategories', type: 'string[]' },
+      { internalType: 'uint256', name: 'referralCode', type: 'uint256' }
+    ],
+    name: 'createOpinionWithReferral',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
 ] as const;
 
 // USDC Contract ABI (for approvals)
@@ -260,5 +335,79 @@ export const REFERRAL_MANAGER_ABI = [
     stateMutability: 'view',
     inputs: [{ name: 'referralCode', type: 'uint256' }],
     outputs: [{ name: '', type: 'address' }]
+  },
+  // New referral system functions
+  {
+    name: 'getReferralData',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [
+      {
+        components: [
+          { name: 'referrer', type: 'address' },
+          { name: 'discountedOpinionsUsed', type: 'uint8' },
+          { name: 'hasReferralCode', type: 'bool' },
+          { name: 'referralCode', type: 'uint256' },
+          { name: 'pendingCashback', type: 'uint256' },
+          { name: 'totalReferrals', type: 'uint256' }
+        ],
+        name: 'referralData',
+        type: 'tuple'
+      }
+    ]
+  },
+  {
+    name: 'getUserFromReferralCode',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'referralCode', type: 'uint256' }],
+    outputs: [{ name: 'user', type: 'address' }]
+  },
+  {
+    name: 'getReferralEligibility',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [
+      { name: 'isEligible', type: 'bool' },
+      { name: 'remainingDiscounts', type: 'uint8' }
+    ]
+  },
+  {
+    name: 'calculateReferralDiscount',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'baseCreationFee', type: 'uint96' },
+      { name: 'user', type: 'address' },
+      { name: 'referralCode', type: 'uint256' }
+    ],
+    outputs: [
+      { name: 'finalFee', type: 'uint96' },
+      { name: 'discount', type: 'uint96' },
+      { name: 'isValidReferral', type: 'bool' }
+    ]
+  },
+  {
+    name: 'withdrawCashback',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    outputs: []
+  },
+  {
+    name: 'createOpinionWithReferral',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'question', type: 'string' },
+      { name: 'answer', type: 'string' },
+      { name: 'description', type: 'string' },
+      { name: 'initialPrice', type: 'uint96' },
+      { name: 'opinionCategories', type: 'string[]' },
+      { name: 'referralCode', type: 'uint256' }
+    ],
+    outputs: []
   }
 ] as const;
