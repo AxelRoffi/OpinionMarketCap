@@ -553,12 +553,11 @@ function ProfilePageContent() {
 
         {/* Detailed Tabs System */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="glass-card grid w-full grid-cols-7">
+          <TabsList className="glass-card grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="fees">Fee Center</TabsTrigger>
-            <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="history">Trading</TabsTrigger>
             <TabsTrigger value="pools">Pools</TabsTrigger>
           </TabsList>
@@ -1261,8 +1260,8 @@ function ProfilePageContent() {
             )}
           </TabsContent>
 
-          {/* Referrals Tab - Cashback and Referral Management */}
-          <TabsContent value="referrals" className="space-y-6">
+          {/* Referrals Tab temporarily removed - will be implemented in future version */}
+          {/* <TabsContent value="referrals" className="space-y-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-semibold text-white">Referral Dashboard</h3>
               <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
@@ -1271,7 +1270,7 @@ function ProfilePageContent() {
             </div>
             
             <ReferralDashboard />
-          </TabsContent>
+          </TabsContent> */}
 
           {/* Analytics Tab - Enhanced Portfolio Analytics */}
           <TabsContent value="analytics" className="space-y-6">

@@ -41,8 +41,9 @@ import { usePoolOwnerDisplay } from '@/hooks/usePoolOwnerDisplay';
 import { useOpinionEvents } from '@/hooks/useOpinionEvents';
 import { useAccurateTradeCounts } from '@/hooks/useAccurateTradeCounts';
 import { AdultContentModal } from '@/components/AdultContentModal';
-import useReferral from '@/hooks/useReferral';
-import { ReferralBanner } from '@/components/referral/ReferralBanner';
+// Referral system temporarily removed - will be implemented in future version
+// import useReferral from '@/hooks/useReferral';
+// import { ReferralBanner } from '@/components/referral/ReferralBanner';
 import { createOpinionUrl } from '@/lib/url-utils';
 
 // All categories (original + new) - based on our agreed list
@@ -131,13 +132,13 @@ export default function HomePage() {
   const [adultContentEnabled, setAdultContentEnabled] = useState(false);
   const [showQualityFilter, setShowQualityFilter] = useState(false);
   
-  // Referral system
-  const { 
-    referralCode, 
-    isValidCode, 
-    showReferralWelcome, 
-    dismissReferralWelcome 
-  } = useReferral();
+  // Referral system temporarily removed
+  // const { 
+  //   referralCode, 
+  //   isValidCode, 
+  //   showReferralWelcome, 
+  //   dismissReferralWelcome 
+  // } = useReferral();
   
   // Pagination state - CoinMarketCap style
   const [currentPage, setCurrentPage] = useState(1);
@@ -1489,14 +1490,14 @@ export default function HomePage() {
         onDecline={handleAdultContentDecline}
       />
 
-      {/* Referral Banner */}
-      {referralCode && (
+      {/* Referral Banner temporarily removed */}
+      {/* {referralCode && (
         <ReferralBanner
           isVisible={showReferralWelcome}
           onDismiss={dismissReferralWelcome}
           referralCode={referralCode}
         />
-      )}
+      )} */}
 
     </>
   );
