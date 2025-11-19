@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts'
+import { ethers } from 'ethers'
 
 interface ReviewSubmitFormProps {
   formData: {
@@ -36,7 +37,7 @@ interface ReviewSubmitFormProps {
     tags: string[]
   }
   onPrevious: () => void
-  onSuccess: () => void
+  onSuccess: (opinionId?: number) => void
 }
 
 interface ErrorState {
@@ -295,14 +296,63 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
 
   // Handle create success
   useEffect(() => {
-    if (isCreateSuccess && currentStep === 'submit') {
+    if (isCreateSuccess && createData && currentStep === 'submit') {
       setCurrentStep('success')
       setIsSubmitting(false)
-      setTimeout(() => {
-        onSuccess()
-      }, 2000)
+      
+      // Extract opinion ID from transaction receipt
+      const extractOpinionId = async () => {
+        try {
+          if (createData) {
+            // The createData contains the transaction hash, we need the receipt to get events
+            console.log('🔍 Transaction successful, extracting opinion ID from receipt...')
+            console.log('Transaction hash:', createData)
+            
+            // Get transaction receipt to access events
+            const receipt = await createData.wait?.()
+            if (receipt && receipt.logs) {
+              console.log('📋 Transaction receipt logs:', receipt.logs)
+              
+              // Look for OpinionAction event with actionType 0 (create)
+              // The contract emits OpinionAction(opinionId, 0, question, creator, initialPrice)
+              for (const log of receipt.logs) {
+                try {
+                  // Parse log as OpinionAction event
+                  const interface_ = new ethers.Interface(OPINION_CORE_ABI)
+                  const parsedLog = interface_.parseLog({ topics: log.topics, data: log.data })
+                  
+                  if (parsedLog && parsedLog.name === 'OpinionAction' && parsedLog.args.actionType === 0) {
+                    const opinionId = Number(parsedLog.args.opinionId)
+                    console.log('✅ Opinion created with ID:', opinionId)
+                    
+                    setTimeout(() => {
+                      onSuccess(opinionId)
+                    }, 2000)
+                    return
+                  }
+                } catch (parseError) {
+                  // Ignore parsing errors for other events
+                }
+              }
+            }
+          }
+          
+          // Fallback: call onSuccess without opinion ID
+          console.log('⚠️ Could not extract opinion ID, proceeding without redirect')
+          setTimeout(() => {
+            onSuccess()
+          }, 2000)
+        } catch (error) {
+          console.error('❌ Error extracting opinion ID:', error)
+          setTimeout(() => {
+            onSuccess()
+          }, 2000)
+        }
+      }
+      
+      extractOpinionId()
     }
-  }, [isCreateSuccess, currentStep, onSuccess])
+  }, [isCreateSuccess, createData, currentStep, onSuccess])
 
   // Handle approval errors
   useEffect(() => {
@@ -352,8 +402,11 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         </div>
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">Opinion Created!</h2>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-lg mb-2">
             Your opinion has been successfully created and is now live on the platform.
+          </p>
+          <p className="text-blue-400 text-sm">
+            🚀 Redirecting you to your new opinion page in 2 seconds...
           </p>
         </div>
         <Card className="bg-emerald-900/20 border-emerald-500/30">

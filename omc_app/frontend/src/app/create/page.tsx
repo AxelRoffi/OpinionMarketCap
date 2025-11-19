@@ -144,9 +144,17 @@ export default function CreateOpinionPage() {
                       <ReviewSubmitForm
                         formData={formData}
                         onPrevious={handlePrevious}
-                        onSuccess={() => {
+                        onSuccess={(opinionId) => {
                           resetForm()
-                          router.push('/')
+                          if (opinionId) {
+                            // Redirect to the newly created opinion page
+                            console.log('🎯 Redirecting to opinion page:', opinionId)
+                            router.push(`/opinions/${opinionId}`)
+                          } else {
+                            // Fallback: redirect to home page
+                            console.log('⚠️ No opinion ID available, redirecting to home')
+                            router.push('/')
+                          }
                         }}
                       />
                     </motion.div>

@@ -76,7 +76,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    only: ['OpinionMarket'],
+    only: ['OpinionCore'],
   },
   sourcify: {
     enabled: true
