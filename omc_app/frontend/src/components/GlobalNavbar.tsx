@@ -34,7 +34,6 @@ export function GlobalNavbar() {
             <Link href="/leaderboard" className="text-muted-foreground font-medium hover:text-emerald hover:font-bold transition-colors duration-200">Leaderboard</Link>
             <Link href="/pools" className="text-muted-foreground font-medium hover:text-emerald hover:font-bold transition-colors duration-200">Pools</Link>
             <Link href="/portfolio" className="text-muted-foreground font-medium hover:text-emerald hover:font-bold transition-colors duration-200">Portfolio</Link>
-            <Link href="/referrals" className="text-muted-foreground font-medium hover:text-purple hover:font-bold transition-colors duration-200">Referrals</Link>
           </nav>
 
           {/* Right Side */}
@@ -72,7 +71,6 @@ export function GlobalNavbar() {
                 <Link href="/leaderboard" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Leaderboard</Link>
                 <Link href="/pools" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Pools</Link>
                 <Link href="/portfolio" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Portfolio</Link>
-                <Link href="/referrals" className="text-muted-foreground hover:text-purple hover:font-bold transition-colors duration-200">Referrals</Link>
               </div>
             </motion.nav>
           )}

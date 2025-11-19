@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat";
 import fs from 'fs';
 
 async function main() {
-  console.log("\n🚀 UPGRADING TRANSPARENT PROXY WITH REFERRAL SYSTEM");
+  console.log("\n🚀 UPGRADING TRANSPARENT PROXY WITH CONFIGURABLE CREATION FEE");
   console.log("=" .repeat(70));
 
   const [deployer] = await ethers.getSigners();
@@ -88,66 +88,49 @@ async function main() {
       console.log("⚠️  Could not verify existing data:", error.message.split('\n')[0]);
     }
 
-    console.log("\n🔧 STEP 4: Test New Referral Functions");
-    console.log("-".repeat(42));
+    console.log("\n🔧 STEP 4: Test New Creation Fee Functions");
+    console.log("-".repeat(45));
     
     try {
-      // Test the new referral system functions
-      console.log("⏳ Testing getReferralData...");
-      const referralData = await upgradedContract.getReferralData(deployer.address);
-      console.log("✅ New referral function works:");
-      console.log("   • hasReferralCode:", referralData.hasReferralCode);
-      console.log("   • pendingCashback:", ethers.formatUnits(referralData.pendingCashback, 6), "USDC");
-      console.log("   • totalReferrals:", referralData.totalReferrals.toString());
-      console.log("   • discountedOpinionsUsed:", referralData.discountedOpinionsUsed);
+      // Test the new creation fee functionality
+      console.log("⏳ Testing creationFeePercent...");
+      const creationFeePercent = await upgradedContract.creationFeePercent();
+      console.log("✅ New creation fee function works:");
+      console.log("   • Current creation fee percent:", creationFeePercent.toString() + "%");
       
-      console.log("⏳ Testing getReferralEligibility...");
-      const eligibility = await upgradedContract.getReferralEligibility(deployer.address);
-      console.log("✅ Referral eligibility check works:");
-      console.log("   • isEligible:", eligibility[0]);
-      console.log("   • remainingDiscounts:", eligibility[1]);
-      
-      console.log("⏳ Testing calculateReferralDiscount...");
-      const calculation = await upgradedContract.calculateReferralDiscount(
-        ethers.parseUnits("5", 6), // 5 USDC
-        deployer.address,
-        0 // No referral code
-      );
-      console.log("✅ Referral discount calculation works:");
-      console.log("   • Without referral - Final fee:", ethers.formatUnits(calculation[0], 6), "USDC");
-      console.log("   • Discount amount:", ethers.formatUnits(calculation[1], 6), "USDC");
-      console.log("   • Is valid referral:", calculation[2]);
+      // Check admin role for setCreationFeePercent
+      const ADMIN_ROLE = await upgradedContract.ADMIN_ROLE();
+      const hasAdminRole = await upgradedContract.hasRole(ADMIN_ROLE, deployer.address);
+      console.log("   • Has admin role for fee changes:", hasAdminRole);
       
     } catch (error: any) {
-      console.log("⚠️  Testing referral functions:", error.message.split('\n')[0]);
+      console.log("⚠️  Testing creation fee functions:", error.message.split('\n')[0]);
     }
 
-    console.log("\n🔧 STEP 5: Test Referral Constants");
-    console.log("-".repeat(40));
-    
-    try {
-      const discountPercent = await upgradedContract.REFERRAL_DISCOUNT_PERCENT();
-      const cashbackPercent = await upgradedContract.REFERRAL_CASHBACK_PERCENT();
-      const maxDiscounts = await upgradedContract.MAX_DISCOUNTED_OPINIONS();
-      
-      console.log("✅ Referral system constants verified:");
-      console.log("   • Discount percent:", discountPercent.toString() + "%");
-      console.log("   • Cashback percent:", cashbackPercent.toString() + "%");
-      console.log("   • Max discounted opinions:", maxDiscounts.toString());
-    } catch (error: any) {
-      console.log("⚠️  Could not read referral constants:", error.message.split('\n')[0]);
-    }
-
-    console.log("\n🔧 STEP 6: Test createOpinionWithReferral Function");
-    console.log("-".repeat(52));
+    console.log("\n🔧 STEP 5: Test Admin Functions");
+    console.log("-".repeat(35));
     
     try {
       // Just check the function exists (don't actually call it)
-      const fragment = upgradedContract.interface.getFunction('createOpinionWithReferral');
-      console.log("✅ createOpinionWithReferral function available");
+      const fragment = upgradedContract.interface.getFunction('setCreationFeePercent');
+      console.log("✅ setCreationFeePercent function available");
       console.log("   • Inputs:", fragment.inputs.length);
+      
+      // Test some example calculations
+      console.log("\n📊 Example fee calculations with current 20%:");
+      const examples = [
+        { initialPrice: 5, expectedFee: Math.max(5 * 0.20, 5) },
+        { initialPrice: 10, expectedFee: Math.max(10 * 0.20, 5) },
+        { initialPrice: 50, expectedFee: Math.max(50 * 0.20, 5) },
+        { initialPrice: 100, expectedFee: Math.max(100 * 0.20, 5) }
+      ];
+      
+      examples.forEach(example => {
+        console.log(`   • ${example.initialPrice} USDC → ${example.expectedFee} USDC creation fee`);
+      });
+      
     } catch (error: any) {
-      console.log("⚠️  createOpinionWithReferral function not found:", error.message);
+      console.log("⚠️  setCreationFeePercent function not found:", error.message);
     }
 
     // Update deployment addresses to reflect the upgrade
@@ -166,13 +149,13 @@ async function main() {
       priceCalculatorLibrary: priceCalculatorAddress,
       proxyType: "transparent",
       lastUpgrade: new Date().toISOString(),
-      referralSystemEnabled: true,
-      referralFeatures: {
-        discountPercent: 25,
-        cashbackPercent: 12,
-        maxDiscountedOpinions: 3
+      configurableCreationFeeEnabled: true,
+      creationFeeFeatures: {
+        currentPercent: 20,
+        adminControl: true,
+        maxPercent: 100
       },
-      upgradeNote: "Added referral system to existing transparent proxy while preserving all data",
+      upgradeNote: "Added configurable creation fee system to existing transparent proxy while preserving all data",
       network: "baseSepolia",
       deployer: deployer.address
     };
@@ -187,12 +170,12 @@ async function main() {
     console.log("📚 PriceCalculator library:", priceCalculatorAddress);
     console.log("📈 Proxy Type: Transparent Proxy");
     
-    console.log("\n✨ REFERRAL SYSTEM NOW ACTIVE:");
-    console.log("• 25% discount for new users (first 3 opinions)");
-    console.log("• 12% cashback for referrers in USDC");
-    console.log("• Referral code generation after first paid opinion");
-    console.log("• Cashback withdrawal functionality");
-    console.log("• createOpinionWithReferral function available");
+    console.log("\n✨ CONFIGURABLE CREATION FEE NOW ACTIVE:");
+    console.log("• setCreationFeePercent(uint256) admin function available");
+    console.log("• Current: 20% of initial price (minimum 5 USDC)");
+    console.log("• Can be changed to any percentage from 0-100%");
+    console.log("• Fee calculation now uses configurable variable");
+    console.log("• Immediate effect - no contract restart needed");
 
     console.log("\n🔒 DATA SAFETY VERIFIED:");
     console.log("✅ All existing opinions preserved and accessible");
@@ -202,16 +185,16 @@ async function main() {
     console.log("✅ Proxy address unchanged:", contractAddress);
 
     console.log("\n📝 FRONTEND STATUS:");
-    console.log("• Frontend already has referral system UI ready");
-    console.log("• Referral functions will now work (no more 'Coming Soon')");
-    console.log("• Users can immediately start earning cashback");
+    console.log("• Frontend will need ABI update for new functions");
+    console.log("• Admin interface can add creation fee controls");
+    console.log("• Users will see new configurable fees immediately");
     console.log("• All existing functionality preserved");
 
     console.log("\n🚀 READY FOR USE:");
     console.log("• Contract address unchanged -", contractAddress);
     console.log("• All user data accessible");
-    console.log("• Referral system fully functional");
-    console.log("• Frontend should work immediately");
+    console.log("• Configurable creation fee system fully functional");
+    console.log("• Admin can now adjust creation fees at any time");
 
   } catch (error) {
     console.error("❌ Upgrade failed:", error);

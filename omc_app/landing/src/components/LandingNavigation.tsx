@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Rocket, Menu, X } from 'lucide-react'
+import { Rocket, Menu, X, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function LandingNavigation() {
@@ -21,8 +21,9 @@ export function LandingNavigation() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold text-white">OMC</span>
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <BarChart3 className="w-8 h-8 text-emerald-500" />
+            <h1 className="text-xl font-bold text-white">OpinionMarketCap</h1>
           </Link>
 
           {/* Desktop Navigation */}

@@ -161,24 +161,8 @@ contract OpinionCore is
     mapping(uint256 => mapping(address => bool)) private hasTraded; // Track if address has traded this opinion
     mapping(uint256 => uint256) private lastCompetitionReset; // Track when competition data was last reset
 
-    // --- REFERRAL SYSTEM (OPTION C: 25% discount + 12% cashback for 3 opinions) ---
-    struct ReferralData {
-        address referrer;                    // Who referred this user
-        uint8 discountedOpinionsUsed;       // How many discounted opinions used (max 3)
-        bool hasReferralCode;               // Whether user has generated their own referral code
-        uint256 referralCode;               // User's own referral code for sharing
-        uint256 pendingCashback;            // Accumulated cashback in USDC (6 decimals)
-        uint256 totalReferrals;             // Total successful referrals made
-    }
-    
-    mapping(address => ReferralData) public referralUsers;
-    mapping(uint256 => address) public referralCodeToUser; // Map referral codes to users
-    uint256 private nextReferralCode; // Counter for generating unique referral codes
-    
-    // Referral system constants
-    uint256 public constant REFERRAL_DISCOUNT_PERCENT = 25;  // 25% discount for new users
-    uint256 public constant REFERRAL_CASHBACK_PERCENT = 12;  // 12% cashback for referrers
-    uint256 public constant MAX_DISCOUNTED_OPINIONS = 3;     // Maximum opinions with discount
+    // NEW STORAGE VARIABLES (ADDED AT END FOR UPGRADE SAFETY)
+    uint256 public creationFeePercent; // Configurable creation fee percentage (default 20%)
 
     // --- INITIALIZATION ---
     /**
@@ -223,17 +207,15 @@ contract OpinionCore is
         questionCreationFee = 1_000_000; // 1 USDC
         initialAnswerPrice = 2_000_000; // 2 USDC
         absoluteMaxPriceChange = 200; // 200%
+        creationFeePercent = 20; // NEW: 20% creation fee (configurable)
         
-        // Initialize text length limits with updated default values
-        maxQuestionLength = 60;
-        maxAnswerLength = 60;
+        // Initialize text length limits with original default values
+        maxQuestionLength = 52;
+        maxAnswerLength = 52;
         maxLinkLength = 260;
         maxIpfsHashLength = 68;
-        maxDescriptionLength = 240;
+        maxDescriptionLength = 120;
         maxCategoriesPerOpinion = 3;
-        
-        // Initialize referral system
-        nextReferralCode = 100000; // Start referral codes at 100000
 
         // 🚨 IMPOSED: Initialize default categories - EXACT LIST REQUIRED
         categories = [
@@ -358,8 +340,8 @@ contract OpinionCore is
         address referrer = address(0);
         bool hasValidReferral = false;
 
-        // Calculate base creation fee: 20% of initialPrice with 5 USDC minimum
-        uint96 baseCreationFee = uint96((initialPrice * 20) / 100);
+        // Calculate base creation fee: configurable % of initialPrice with 5 USDC minimum
+        uint96 baseCreationFee = uint96((initialPrice * creationFeePercent) / 100);
         if (baseCreationFee < 5_000_000) { // 5 USDC minimum
             baseCreationFee = 5_000_000;
         }
@@ -497,8 +479,8 @@ contract OpinionCore is
             revert InvalidInitialPrice();
         }
 
-        // Calculate creation fee: 20% of initialPrice with 5 USDC minimum
-        uint96 creationFee = uint96((initialPrice * 20) / 100);
+        // Calculate creation fee: configurable % of initialPrice with 5 USDC minimum
+        uint96 creationFee = uint96((initialPrice * creationFeePercent) / 100);
         if (creationFee < 5_000_000) { // 5 USDC minimum
             creationFee = 5_000_000;
         }
@@ -994,6 +976,18 @@ contract OpinionCore is
     ) external onlyRole(ADMIN_ROLE) {
         initialAnswerPrice = _initialAnswerPrice;
         emit ParameterUpdated(7, _initialAnswerPrice);
+    }
+
+    /**
+     * @dev Sets the creation fee percentage
+     * @param _creationFeePercent New creation fee percentage (e.g., 20 for 20%)
+     */
+    function setCreationFeePercent(
+        uint256 _creationFeePercent
+    ) external onlyRole(ADMIN_ROLE) {
+        require(_creationFeePercent <= 100, "Creation fee cannot exceed 100%");
+        creationFeePercent = _creationFeePercent;
+        emit ParameterUpdated(14, _creationFeePercent);
     }
 
     /**

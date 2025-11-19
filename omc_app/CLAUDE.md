@@ -165,7 +165,56 @@ You are working as a pair programmer. Provide constructive feedback on ideas, bo
 - In @contracts/core/PoolManager.sol, add a restriction to create pools only when NextPrice >= 100 USDC to prevent low-value or spam pool creation
 - Add referral for free mint, free OpinionCreation
 - Remove rate limiting
-- Add quality content filtering on UI, make sure to display "good questions" first and burry non sensical questions at the bottom of the table
+
+## TODO: Mainnet Deployment Enhancements
+
+### Configurable Creation Fee System
+
+**Current State**: Creation fee is hardcoded at 20% of initial price with 5 USDC minimum
+**Required for Mainnet**: Add configurable creation fee percentage system
+
+**Implementation Requirements:**
+1. **New state variable**: `uint256 public creationFeePercent = 20;` (default 20%)
+2. **Admin function**: `setCreationFeePercent(uint256 _percent)` with validation (0-100% range)
+3. **Updated logic**: Replace hardcoded `20` with variable in createOpinion functions:
+   ```solidity
+   // Current: uint96 creationFee = uint96((initialPrice * 20) / 100);
+   // New:     uint96 creationFee = uint96((initialPrice * creationFeePercent) / 100);
+   ```
+
+**Benefits for Mainnet:**
+- Ability to adjust fees based on market conditions
+- Flexibility for promotional periods (lower fees)
+- Revenue optimization without contract redeployment
+- Admin control over platform economics
+
+**Storage Considerations:**
+- Add variable at end of storage layout for upgrade safety
+- Ensure initialization in upgrade script  
+- Maintain minimum 5 USDC floor regardless of percentage
+
+### Additional Mainnet TODO Items
+
+**UI/UX Enhancements:**
+- Add quality content filtering on UI, make sure to display "good questions" first and bury non-sensical questions at the bottom of the table
+- Implement admin interface controls for creation fee adjustment
+- Add transaction confirmation dialogs with fee breakdowns
+
+**Security & Governance:**
+- Implement multisig treasury controls
+- Add timelock for critical parameter changes
+- Set up monitoring and alerting systems
+- Conduct professional security audit
+
+**Performance & Scalability:**
+- Implement indexing for fast upload page
+- Optimize gas costs for all functions
+- Add batch processing capabilities where applicable
+
+**Economic Parameters:**
+- Review and optimize all fee structures for mainnet economics
+- Implement dynamic pricing based on network congestion
+- Add fee estimation tools for users
 
 ## Sub-Agent & MCP Architecture Details
 

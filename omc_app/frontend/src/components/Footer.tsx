@@ -58,11 +58,6 @@ export function Footer() {
                   Leaderboard
                 </Link>
               </li>
-              <li>
-                <Link href="/referrals" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Referrals
-                </Link>
-              </li>
             </ul>
           </div>
 

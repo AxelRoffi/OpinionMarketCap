@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 355 7% 97%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 142 76% 36%;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Documentation specific styles */
+.docs-content {
+  @apply max-w-none;
+}
+
+.docs-content h1 {
+  @apply text-3xl font-bold tracking-tight mb-6 text-white;
+}
+
+.docs-content h2 {
+  @apply text-2xl font-semibold tracking-tight mb-4 mt-8 text-white border-b border-gray-800 pb-2;
+}
+
+.docs-content h3 {
+  @apply text-xl font-semibold tracking-tight mb-3 mt-6 text-white;
+}
+
+.docs-content p {
+  @apply mb-4 text-gray-300 leading-7;
+}
+
+.docs-content code {
+  @apply bg-gray-800 text-emerald-400 px-2 py-1 rounded text-sm font-mono;
+}
+
+.docs-content pre {
+  @apply bg-gray-900 p-4 rounded-lg overflow-x-auto mb-4 border border-gray-700;
+}
+
+.docs-content pre code {
+  @apply bg-transparent p-0 text-gray-300;
+}
+
+.docs-content ul, .docs-content ol {
+  @apply mb-4 ml-6;
+}
+
+.docs-content li {
+  @apply mb-2 text-gray-300;
+}
+
+.docs-content ul li {
+  @apply list-disc;
+}
+
+.docs-content ol li {
+  @apply list-decimal;
+}
+
+.docs-content a {
+  @apply text-emerald-400 hover:text-emerald-300 underline;
+}
+
+.docs-content blockquote {
+  @apply border-l-4 border-emerald-500 pl-4 italic text-gray-400 my-4;
+}
