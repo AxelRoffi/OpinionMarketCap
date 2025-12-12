@@ -21,12 +21,12 @@ describe("01_AccessControl - Real Access Control Validation", function () {
 
       // User without ADMIN_ROLE should not be able to set minimum price
       await expect(
-        opinionCore.connect(user1).setMinimumPrice(ethers.parseUnits("2", 6))
+        opinionCore.connect(user1).setParameter(0, ethers.parseUnits("2", 6))
       ).to.be.revertedWithCustomError(opinionCore, "AccessControlUnauthorizedAccount");
 
       // Owner (with ADMIN_ROLE) should be able to set minimum price
       await expect(
-        opinionCore.connect(users.owner).setMinimumPrice(ethers.parseUnits("2", 6))
+        opinionCore.connect(users.owner).setParameter(0, ethers.parseUnits("2", 6))
       ).to.not.be.reverted;
 
       expect(await opinionCore.minimumPrice()).to.equal(ethers.parseUnits("2", 6));
@@ -56,12 +56,12 @@ describe("01_AccessControl - Real Access Control Validation", function () {
 
       // User without ADMIN_ROLE should not be able to set max price change
       await expect(
-        opinionCore.connect(user1).setMaxPriceChange(150)
+        opinionCore.connect(user1).setParameter(3, 150)
       ).to.be.revertedWithCustomError(opinionCore, "AccessControlUnauthorizedAccount");
 
       // Owner (with ADMIN_ROLE) should be able to set max price change
       await expect(
-        opinionCore.connect(users.owner).setMaxPriceChange(150)
+        opinionCore.connect(users.owner).setParameter(3, 150)
       ).to.not.be.reverted;
 
       expect(await opinionCore.absoluteMaxPriceChange()).to.equal(150);
@@ -73,7 +73,7 @@ describe("01_AccessControl - Real Access Control Validation", function () {
 
       // Test multiple admin functions with unauthorized users
       await expect(
-        opinionCore.connect(user1).setMaxPriceChange(200)
+        opinionCore.connect(user1).setParameter(3, 200)
       ).to.be.revertedWithCustomError(opinionCore, "AccessControlUnauthorizedAccount");
 
       await expect(
@@ -288,7 +288,7 @@ describe("01_AccessControl - Real Access Control Validation", function () {
 
       // User should be able to perform functions from all roles
       await expect(
-        opinionCore.connect(user1).setMinimumPrice(ethers.parseUnits("1.5", 6))
+        opinionCore.connect(user1).setParameter(0, ethers.parseUnits("1.5", 6))
       ).to.not.be.reverted;
 
       // Create an opinion to test moderation

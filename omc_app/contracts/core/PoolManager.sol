@@ -778,7 +778,7 @@ contract PoolManager is
         opinionCore.updateOpinionOnPoolExecution(
             opinionId,
             pool.proposedAnswer,
-            "", // Empty description for pool execution
+            address(this), // Pool address as owner
             targetPrice // This is now the current NextPrice, not fixed
         );
 

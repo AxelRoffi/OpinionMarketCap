@@ -194,7 +194,7 @@ describe("OpinionMarket - Rate Limiting", function () {
             const newMaxTrades = 5;
             
             // Update the parameter
-            await mockRateLimiter.setMaxTradesPerBlock(newMaxTrades);
+            await mockRateLimiter.setParameter(4, newMaxTrades);
             expect(await mockRateLimiter.maxTradesPerBlock()).to.equal(newMaxTrades);
             
             // Set trades to the new max

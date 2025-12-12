@@ -19,19 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-black text-white`}>
-        <div className="min-h-screen flex">
-          {/* Sidebar Navigation */}
-          <div className="w-64 border-r border-gray-800 bg-gray-950">
-            <DocsNavigation />
-          </div>
-          
-          {/* Main Content */}
-          <div className="flex-1">
-            <main className="container mx-auto px-6 py-8">
-              {children}
-            </main>
-          </div>
-        </div>
+        {children}
       </body>
     </html>
   );

@@ -9,7 +9,7 @@ library ValidationLibrary {
         string memory initialAnswer,
         uint256 maxQuestionLength,
         uint256 maxAnswerLength
-    ) internal pure {
+    ) public pure {
         bytes memory questionBytes = bytes(question);
         bytes memory answerBytes = bytes(initialAnswer);
 
@@ -27,7 +27,7 @@ library ValidationLibrary {
         uint256 lastUpdateTime,
         uint256 cooldownPeriod,
         uint256 blockTimestamp
-    ) internal pure {
+    ) public pure {
         // Check value is within bounds
         if (value > maxValue) revert("Value exceeds maximum");
 
@@ -37,7 +37,7 @@ library ValidationLibrary {
     }
 
     // Check if address is valid (non-zero)
-    function validateAddress(address addr) internal pure {
+    function validateAddress(address addr) public pure {
         if (addr == address(0)) revert("Zero address not allowed");
     }
 
@@ -47,7 +47,7 @@ library ValidationLibrary {
         uint256 userTradesInBlock,
         uint256 maxTradesPerBlock,
         uint256 blockNumber
-    ) internal pure returns (uint256 newTradesInBlock) {
+    ) public pure returns (uint256 newTradesInBlock) {
         if (userLastBlock != blockNumber) {
             // First trade in this block
             return 1;
@@ -68,7 +68,7 @@ library ValidationLibrary {
      * @param description Answer description (can be empty string)
      * @param maxLength Maximum allowed length for description
      */
-    function validateDescription(string memory description, uint256 maxLength) internal pure {
+    function validateDescription(string memory description, uint256 maxLength) public pure {
         bytes memory descriptionBytes = bytes(description);
         
         // If description is provided, must be at least 2 characters
@@ -83,7 +83,7 @@ library ValidationLibrary {
      * @dev Validates answer description (backward compatibility - deprecated)
      * @param description Answer description (can be empty string)
      */
-    function validateDescription(string memory description) internal pure {
+    function validateDescription(string memory description) public pure {
         bytes memory descriptionBytes = bytes(description);
         
         // If description is provided, must be at least 2 characters
@@ -104,7 +104,7 @@ library ValidationLibrary {
         string[] memory userCategories,
         string[] storage availableCategories,
         uint256 maxCategoriesAllowed
-    ) internal view {
+    ) public view {
         uint256 userLength = userCategories.length;
         
         // 1. Length validation
@@ -146,7 +146,7 @@ library ValidationLibrary {
     function validateOpinionCategories(
         string[] memory userCategories,
         string[] storage availableCategories
-    ) internal view {
+    ) public view {
         uint256 userLength = userCategories.length;
         
         // 1. Length validation - IMPOSED ORDER

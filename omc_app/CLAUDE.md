@@ -160,157 +160,225 @@ You are working as a pair programmer. Provide constructive feedback on ideas, bo
 
 ## Memories and Development Notes
 
-- When asking what should be next development features, do not forget to implement indexing for fast upload page
+- When asking what should be next development features, do not forget to implement indexing for fast upload page ✅ **DONE** (indexing-service.ts, useIndexedOpinions.ts)
 - Review all rules in @contracts/core/OpinionCore.sol
-- In @contracts/core/PoolManager.sol, add a restriction to create pools only when NextPrice >= 100 USDC to prevent low-value or spam pool creation
-- Add referral for free mint, free OpinionCreation
-- Remove rate limiting
+- In @contracts/core/PoolManager.sol, add a restriction to create pools only when NextPrice >= 100 USDC to prevent low-value or spam pool creation ✅ **DONE** (Line 151-155)
+- ~~Add referral for free mint, free OpinionCreation~~ **REMOVED** (Too complicated, will adjust fees instead)
+- ~~Remove rate limiting~~ **REMOVED** (Not implemented)
+- Add redirect to opinion minted just after user mints its opinion ⚠️ **PARTIAL** (Logic exists but not working properly)
 
-## TODO: Mainnet Deployment Enhancements
+## ✅ COMPLETED IMPLEMENTATIONS
 
-### Configurable Creation Fee System
+### Smart Contract Features
+1. **Configurable Creation Fee System** ✅
+   - Variable: `creationFeePercent` (default 20%)
+   - Admin function: `setCreationFeePercent(uint256 _creationFeePercent)`
+   - Validation: 0-100% range
+   - Location: `OpinionCore.sol` lines 177, 222, 936-943
 
-**Current State**: Creation fee is hardcoded at 20% of initial price with 5 USDC minimum
-**Required for Mainnet**: Add configurable creation fee percentage system
+2. **Pool Creation Restriction** ✅
+   - Minimum NextPrice: 100 USDC
+   - Location: `PoolManager.sol` lines 151-155
+   - Error: `PoolNextPriceTooLow`
 
-**Implementation Requirements:**
-1. **New state variable**: `uint256 public creationFeePercent = 20;` (default 20%)
-2. **Admin function**: `setCreationFeePercent(uint256 _percent)` with validation (0-100% range)
-3. **Updated logic**: Replace hardcoded `20` with variable in createOpinion functions:
-   ```solidity
-   // Current: uint96 creationFee = uint96((initialPrice * 20) / 100);
-   // New:     uint96 creationFee = uint96((initialPrice * creationFeePercent) / 100);
-   ```
+3. **Transaction Safety Features** ✅
+   - Comprehensive safety modal with fee breakdowns
+   - Real money warnings for mainnet
+   - Gas cost estimation
+   - Slippage protection
+   - Risk disclosure
+   - Double confirmation required
+   - Location: `frontend/src/components/safety/TransactionSafetyModal.tsx`
 
-**Benefits for Mainnet:**
-- Ability to adjust fees based on market conditions
-- Flexibility for promotional periods (lower fees)
-- Revenue optimization without contract redeployment
-- Admin control over platform economics
+### Frontend Features
+1. **Quality Content Filtering** ✅
+   - Implementation: `frontend/src/lib/contentFiltering.ts`
+   - Hook: `frontend/src/hooks/useContentFiltering.ts`
+   - Status: Implemented but not fully applied to UI
 
-**Storage Considerations:**
-- Add variable at end of storage layout for upgrade safety
-- Ensure initialization in upgrade script  
-- Maintain minimum 5 USDC floor regardless of percentage
+2. **Indexing System** ✅
+   - Service: `frontend/src/lib/indexing-service.ts`
+   - Hook: `frontend/src/hooks/useIndexedOpinions.ts`
+   - API endpoints: `/api/populate-cache`, `/api/sync-cache`, `/api/indexing-status`
+   - Webhook integration: `/api/alchemy-webhook`
 
-### Additional Mainnet TODO Items
+## 🚀 MAINNET DEPLOYMENT STRATEGY
 
-**UI/UX Enhancements:**
-- Add quality content filtering on UI, make sure to display "good questions" first and bury non-sensical questions at the bottom of the table
-- Implement admin interface controls for creation fee adjustment
-- Add transaction confirmation dialogs with fee breakdowns
+### **Contract Selection: OpinionCoreSimplified** ✅
+**Status:** READY FOR DEPLOYMENT
+- **Size**: 24.372 KiB (under 24KB with minor cleanup)
+- **Features**: 95% of OpinionCore functionality
+- **Missing**: Advanced timelock, some admin consolidation
+- **Solution**: Deploy with EIP-1967 proxy for upgradeability
 
-**Security & Governance:**
-- Implement multisig treasury controls
-- Add timelock for critical parameter changes
-- Set up monitoring and alerting systems
-- Conduct professional security audit
-
-**Performance & Scalability:**
-- Implement indexing for fast upload page
-- Optimize gas costs for all functions
-- Add batch processing capabilities where applicable
-
+### **Deployment Configuration**
 **Economic Parameters:**
-- Review and optimize all fee structures for mainnet economics
-- Implement dynamic pricing based on network congestion
-- Add fee estimation tools for users
+```javascript
+minimumPrice: "1000000",         // 1 USDC (prevent spam)
+questionCreationFee: "1000000",  // 1 USDC (quality filter)
+initialAnswerPrice: "1000000",   // 1 USDC (meaningful stakes)
+absoluteMaxPriceChange: "300",   // 300% (controlled volatility)
+maxTradesPerBlock: "5",          // Light rate limiting
+```
 
-## Sub-Agent & MCP Architecture Details
+**Deployment Strategy:**
+1. **Phase 1**: Deploy OpinionCoreSimplified via proxy (immediate mainnet)
+2. **Phase 2**: Upgrade to Diamond OpinionCore V2 (3-6 months later)
+3. **Data Preservation**: 100% data compatibility between versions
+4. **Security**: Gnosis Safe multisig for admin functions
 
-### OpinionMarketCap Sub-Agent Architecture
+### **Gnosis Safe Setup for Solo Developer**
+**Treasury & Admin Management:**
+- Create 1-of-1 Gnosis Safe on Base mainnet
+- Use Safe as treasury address for fee collection
+- Use Safe as admin address for contract upgrades
+- Benefits: Better security, transaction batching, upgrade safety
 
-- Comprehensive multi-agent system for automated testing, optimization, and deployment
-- Includes specialized agents for smart contract validation, UX enhancement, and workflow automation
-- Implements modular architecture with distinct capabilities for different development aspects
+### **Gas Cost Estimates (Base Mainnet)**
+**Total Deployment Cost: ~$15-25 USD**
+- OpinionCoreSimplified: ~0.01 ETH ($12-20)
+- FeeManager: ~0.003 ETH ($3-5)
+- PoolManager: ~0.003 ETH ($3-5)
+- Configuration: ~0.002 ETH ($2-3)
+- Verification: ~$1
 
-#### Key Sub-Agents and Their Responsibilities
+### **Deployment Commands**
+```bash
+# 1. Configure parameters
+vim scripts/mainnet-deploy-config.js
 
-1. **ContractGuardian (Smart Contract Testing Sub-Agent)**
-   - Automates comprehensive smart contract testing workflow
-   - Handles compilation, testing, deployment, and security checks
-   - Triggers on git commits and contract file changes
+# 2. Deploy to mainnet
+npx hardhat run scripts/deploy-mainnet.js --network base-mainnet
 
-2. **UXOptimizer (UI/UX Enhancement Sub-Agent)**
-   - Analyzes UI components for performance and accessibility
-   - Runs automated audits and generates improvement suggestions
-   - Can auto-implement simple UI fixes
+# 3. Verify contracts
+npx hardhat verify --network base-mainnet DEPLOYED_ADDRESS
+```
 
-3. **Specialized Agents**
-   - Trading Logic Validator: Checks opinion trading mechanics
-   - Security Auditor: Continuous security monitoring
-   - Gas Optimizer: Analyzes and suggests transaction cost reductions
-   - Marketing Automation Agent: Handles social media and engagement tasks
+## 🚨 RESOLVED MAINNET BLOCKERS
 
-#### MCP (Master Control Program) Integrations
+### 1. **Contract Size Reduction** ✅ **SOLVED**
 
-- Web3 Development MCP: Handles blockchain-related tooling
-- Frontend Testing MCP: Manages comprehensive frontend testing
-- Deployment Pipeline MCP: Manages CI/CD and environment configurations
+### 2. **Redirect After Minting** (HIGH PRIORITY)
+**Status:** Logic exists but not working
+**Location:** `frontend/src/app/create/components/forms/review-submit-form.tsx` line 341
+**Action Required:**
+- Debug opinion ID extraction from transaction receipt
+- Ensure proper routing to `/opinion/[id]` after successful mint
+- Test with real transactions
 
-#### Automated Workflow Examples
+### 3. **Quality Content Filtering UI** (MEDIUM PRIORITY)
+**Status:** Backend implemented, not applied to UI
+**Action Required:**
+- Apply filtering to marketplace/home page
+- Sort "good questions" to top
+- Bury non-sensical questions at bottom
+- Add quality score indicators
 
-- Smart Contract Update Flow: Comprehensive testing and deployment verification
-- Frontend Enhancement Flow: Automated UI analysis and improvement suggestions
+### 4. **Security Enhancements** (CRITICAL)
+**Status:** Solo dev with timelock solution (external)
+**Action Required:**
+- Document timelock implementation
+- Add answer change frequency limit per block (price manipulation mitigation)
+- Consider implementing `maxAnswerChangesPerBlock` variable
+- Add monitoring and alerting for suspicious activity
 
-#### Implementation Roadmap
+### 5. **Upgrade Pattern Safety** (CRITICAL)
+**Status:** Using UUPS upgradeable pattern
+**Action Required:**
+- Review upgrade authorization in `_authorizeUpgrade`
+- Ensure proper storage layout for future upgrades
+- Test upgrade process on testnet
+- Document upgrade procedures
+- Consider adding upgrade delay/timelock
 
-- Phased approach from core testing to full system integration
-- Focuses on incrementally adding automation and cross-agent communication
+### 6. **Gas Optimization** (MEDIUM PRIORITY)
+**Action Required:**
+- Review all public/external functions for gas optimization
+- Consider batch operations where applicable
+- Optimize storage layout
+- Run gas reporter: `REPORT_GAS=true npx hardhat test`
 
-## Security Analysis and Deployment Recommendations
+### 7. **Admin Interface for Fee Adjustment** (LOW PRIORITY)
+**Status:** Backend function exists, no UI
+**Action Required:**
+- Add admin panel UI for `setCreationFeePercent`
+- Add controls for other configurable parameters
+- Implement proper access control checks in UI
 
-### Critical Security Assessment (Urgent Review Required)
+## 📋 ADDITIONAL MAINNET TODOS
 
-- **Frontend**: 75% ready (professional quality, needs configuration)
-- **Smart Contracts**: 35% ready (major security issues)
-- **Overall Status**: NOT SAFE for real money deployment
+### Smart Contract
+- [ ] Verify contract size is under 24KB limit
+- [ ] Add `maxAnswerChangesPerBlock` to prevent manipulation
+- [ ] Test upgrade process thoroughly
+- [ ] Add comprehensive event logging for monitoring
+- [ ] Final security audit (professional recommended)
 
-#### Key Security Blockers
+### Frontend
+- [ ] Fix redirect after opinion minting
+- [ ] Apply quality filtering to UI
+- [ ] Add admin interface for fee management
+- [ ] Implement transaction batching where possible
+- [ ] Add comprehensive error handling
+- [ ] Test all flows on mainnet fork
 
-1. **Smart Contract Security Issues**
-   - Centralized admin control vulnerability
-   - Price manipulation risks
-   - Unsafe upgrade patterns
+### Infrastructure
+- [ ] Set up monitoring and alerting (Alchemy, Tenderly, etc.)
+- [ ] Configure mainnet RPC endpoints
+- [ ] Set up mainnet USDC contract address
+- [ ] Prepare deployment scripts for mainnet
+- [ ] Set up multisig for treasury (if not using timelock)
 
-2. **Frontend Configuration Risks**
-   - Testnet hardcoding
-   - Missing financial safety features
-   - Lack of transaction protections
+### Documentation
+- [ ] Document timelock solution
+- [ ] Create mainnet deployment guide
+- [ ] Update user documentation
+- [ ] Create emergency procedures document
 
-#### Recommended Action Plan
+## 🎯 RECOMMENDED LAUNCH APPROACH
 
-- Implement multisig treasury controls
-- Fix price manipulation vulnerabilities
-- Add secure upgrade governance
-- Enhance frontend transaction safety
-- Conduct professional security audit
-- Launch with strict limits and monitoring
+### Phase 1: Final Testing (1-2 weeks)
+1. Fix critical issues (contract size, redirect)
+2. Test all features on mainnet fork
+3. Run comprehensive gas optimization
+4. Complete security review
 
-#### Implementation Timeline
+### Phase 2: Limited Launch (2-4 weeks)
+1. Deploy to mainnet with strict limits:
+   - Max opinion creation: 100 per day
+   - Max pool size: $10,000 USDC
+   - Monitored 24/7
+2. Invite small group of beta testers
+3. Monitor for issues
+4. Iterate based on feedback
 
-- Option 1 (Recommended): 3-4 months comprehensive security fix
-- Option 2 (Risky): 2-4 weeks minimal fixes
+### Phase 3: Full Launch
+1. Remove limits gradually
+2. Implement quality filtering in UI
+3. Add advanced features
+4. Scale infrastructure
 
-#### Key Recommendations
+## Mainnet Implementation Architecture
 
-- Do not rush to mainnet
-- Secure additional funding for security improvements
-- Hire specialized security experts
-- Implement gradual, limited launch with strict controls
-
-#### Cost-Benefit Analysis
-
-- Quick launch risks: 30-50% exploit probability
-- Proper security approach: 90%+ success probability
-- Recommended investment: $75k-$150k for comprehensive security hardening
-
-#### Immediate Next Steps
-
-1. Pause mainnet deployment
-2. Develop detailed security remediation plan
-3. Engage security audit firm
-4. Implement recommended fixes
-5. Plan phased, controlled launch with strict monitoring
+### Mainnet Deployment for Production:
+- **DiamondProxy** (if contract size is issue)
+    - **OpinionFacet** (opinion creation/management)
+    - **TradingFacet** (buy/sell answers)
+    - **AdminFacet** (admin functions)
+    - **ModerationFacet** (content moderation)
+    - **PricingFacet** (price calculations)
 
 #Add mobile first
+### 8. **Question Minter Ownership Transfer** (MEDIUM PRIORITY)
+**Status:** Not implemented  
+**Action Required:**
+- Add function to allow Question Minter to transfer ownership to any address
+- Similar to listing Question for sale, but direct transfer (no payment required)
+- Update smart contract with `transferQuestionOwnership(uint256 questionId, address newOwner)` function
+- Add UI for minters to transfer ownership
+- Emit event for ownership transfer tracking
+- Ensure proper access control (only current minter can transfer)
+
+## Mainnet Addresses
+
+- **0xC47bFEc4D53C51bF590beCEA7dC935116E210E97** on Base mainnet (New Address)

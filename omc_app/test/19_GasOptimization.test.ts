@@ -445,13 +445,13 @@ describe("OpinionMarket - Gas Optimization", function () {
       
       // Mesurer le gaz pour le changement de prix minimum
       await measureGas(
-        opinionCore.connect(admin).setMinimumPrice(ethers.parseUnits("2", 6)),
+        opinionCore.connect(admin).setParameter(0, ethers.parseUnits("2", 6)),
         "Set Minimum Price",
         "Changing the minimum price parameter"
       );
       
       // Remettre le prix minimum à 1 USDC
-      await opinionCore.connect(admin).setMinimumPrice(ethers.parseUnits("1", 6));
+      await opinionCore.connect(admin).setParameter(0, ethers.parseUnits("1", 6));
     });
   });
   

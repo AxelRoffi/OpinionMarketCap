@@ -240,7 +240,7 @@ describe("OpinionMarket - Edge Cases", function () {
         try {
           // D'abord définir le prix minimum
           const minimumPrice = ethers.parseUnits("5", 6); // 5 USDC
-          await opinionCore.connect(admin).setMinimumPrice(minimumPrice);
+          await opinionCore.connect(admin).setParameter(0, minimumPrice);
           console.log("Set minimum price to:", minimumPrice);
           
           // Ensuite créer une nouvelle opinion
@@ -283,7 +283,7 @@ describe("OpinionMarket - Edge Cases", function () {
           expect(Number(lastHistory.price)).to.be.at.least(Number(minimumPrice));
           
           // Réinitialiser le prix minimum
-          await opinionCore.connect(admin).setMinimumPrice(ethers.parseUnits("1", 6));
+          await opinionCore.connect(admin).setParameter(0, ethers.parseUnits("1", 6));
         } catch (error) {
           console.error("Error testing minimum price:", error);
           throw error;
@@ -323,7 +323,7 @@ describe("OpinionMarket - Edge Cases", function () {
       
           // Définir le changement de prix maximum à une valeur élevée
           const maxPriceChange = 500; // 500%
-          await opinionCore.connect(admin).setMaxPriceChange(maxPriceChange);
+          await opinionCore.connect(admin).setParameter(3, maxPriceChange);
           console.log("Set maximum price change to:", maxPriceChange, "%");
           
           // Utiliser différents utilisateurs pour chaque soumission
@@ -351,7 +351,7 @@ describe("OpinionMarket - Edge Cases", function () {
           }
           
           // Réinitialiser le changement de prix maximum pour les autres tests
-          await opinionCore.connect(admin).setMaxPriceChange(200); // 200%
+          await opinionCore.connect(admin).setParameter(3, 200); // 200%
         } catch (error) {
           console.error("Error testing large price increases:", error);
           throw error;
@@ -637,7 +637,7 @@ describe("OpinionMarket - Edge Cases", function () {
         
         // Try to set minimum price as a regular user
         try {
-          await opinionCore.connect(user1).setMinimumPrice(ethers.parseUnits("2", 6));
+          await opinionCore.connect(user1).setParameter(0, ethers.parseUnits("2", 6));
           expect.fail("Should have rejected setMinimumPrice from non-admin");
         } catch (error) {
           expect(error.message).to.include("AccessControl");

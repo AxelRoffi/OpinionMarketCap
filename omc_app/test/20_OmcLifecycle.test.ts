@@ -372,7 +372,7 @@ describe("OpinionMarket - Complete Lifecycle Test", function() {
     }
     
     // Parameter updates
-    await opinionCore.connect(deployer).setMinimumPrice(ethers.parseUnits("2", 6)); // 2 USDC
+    await opinionCore.connect(deployer).setParameter(0, ethers.parseUnits("2", 6)); // 2 USDC
     console.log("Minimum price updated");
     
     // Unpause the contract

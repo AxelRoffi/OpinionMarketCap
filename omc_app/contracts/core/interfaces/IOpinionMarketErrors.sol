@@ -17,6 +17,7 @@ interface IOpinionMarketErrors {
     error EmptyString();
     error SameOwner();
     error NotForSale(uint256 opinionId);
+    error NotAnswerOwner();
     error InvalidInitialPrice();
     error InvalidDescriptionLength();
     

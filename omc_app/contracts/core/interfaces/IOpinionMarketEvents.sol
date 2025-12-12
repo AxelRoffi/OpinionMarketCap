@@ -51,6 +51,13 @@ interface IOpinionMarketEvents {
         uint256 timestamp
     );
 
+    event AnswerOwnershipTransferred(
+        uint256 indexed opinionId,
+        address indexed previousOwner,
+        address indexed newOwner,
+        uint256 timestamp
+    );
+
     // Fee events - more detailed for financial tracking
     event FeeDistributed(
         uint256 indexed opinionId,

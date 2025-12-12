@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-12-09T14:32:14.967Z",
+  "network": "base-mainnet",
+  "deployer": "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3",
+  "addresses": {
+    "admin": "0xd903412900e87D71BF3A420cc57757E86326B1C8",
+    "treasury": "0xA81A947CbC8a2441DEDA53687e573e1125F8F08d",
+    "feeManager": "0x64997bd18520d93e7f0da87c69582d06b7f265d5"
+  },
+  "success": false,
+  "error": "The contract OpinionCoreSimplified is missing links for the following libraries:\n* contracts/core/libraries/PriceCalculator.sol:PriceCalculator\n\nLearn more about linking contracts at https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-ethers#library-linking\n"
+}

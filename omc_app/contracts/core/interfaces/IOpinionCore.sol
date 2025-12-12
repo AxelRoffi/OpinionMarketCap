@@ -48,6 +48,8 @@ interface IOpinionCore {
 
     function cancelQuestionSale(uint256 opinionId) external;
 
+    function transferAnswerOwnership(uint256 opinionId, address newOwner) external;
+
     function getOpinionDetails(
         uint256 opinionId
     ) external view returns (OpinionStructs.Opinion memory);
@@ -61,8 +63,16 @@ interface IOpinionCore {
     function updateOpinionOnPoolExecution(
         uint256 opinionId,
         string calldata answer,
-        string calldata description,
+        address poolAddress,
         uint256 price
+    ) external;
+
+    function updateOpinion(
+        uint256 opinionId,
+        string calldata question,
+        string calldata ipfsHash,
+        string calldata link,
+        string[] calldata opinionCategories
     ) external;
 
     // Categories management

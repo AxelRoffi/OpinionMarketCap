@@ -2,12 +2,48 @@
 pragma solidity ^0.8.20;
 
 import "../interfaces/IOpinionMarketErrors.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../interfaces/IFeeManager.sol";
 
 /**
  * @title OpinionAdminLibrary
  * @dev Library for administrative functions and parameter management
  */
 library OpinionAdminLibrary {
+    using SafeERC20 for IERC20;
+
+    /**
+     * @dev Handles emergency token withdrawal
+     * @param token Token contract to withdraw from
+     * @param contractAddress Address of the contract holding tokens  
+     * @param recipient Address to send withdrawn tokens to
+     * @param usdcTokenAddress USDC token address for fee checking
+     * @param feeManager Fee manager interface for checking accumulated fees
+     * @return withdrawnAmount Amount actually withdrawn
+     */
+    function handleEmergencyWithdraw(
+        address token,
+        address contractAddress,
+        address recipient,
+        address usdcTokenAddress,
+        IFeeManager feeManager
+    ) internal returns (uint256 withdrawnAmount) {
+        if (token == address(0)) revert IOpinionMarketErrors.ZeroAddressNotAllowed();
+        
+        IERC20 tokenContract = IERC20(token);
+        uint256 balance = tokenContract.balanceOf(contractAddress);
+        
+        // Don't withdraw accumulated fees if it's USDC
+        if (token == usdcTokenAddress) {
+            uint256 totalFees = feeManager.getTotalAccumulatedFees();
+            if (balance <= totalFees) revert("Insufficient balance after fees");
+            balance -= totalFees;
+        }
+        
+        tokenContract.safeTransfer(recipient, balance);
+        return balance;
+    }
 
     /**
      * @dev Sets configurable parameters with validation

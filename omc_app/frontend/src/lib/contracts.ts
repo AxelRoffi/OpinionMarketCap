@@ -1,12 +1,13 @@
-// Contract addresses from deployment
+// Contract addresses from deployment - BASE MAINNET
 export const CONTRACTS = {
-  OPINION_CORE: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f' as `0x${string}`,
-  FEE_MANAGER: '0xc8f879d86266C334eb9699963ca0703aa1189d8F' as `0x${string}`,
-  POOL_MANAGER: '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`,
-  USDC_TOKEN: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
-  // Referral system (LIVE on Base Sepolia)
-  REFERRAL_MANAGER: '0xD848740cA3Cc6D83F5EF2d3761c65023c371f90C' as `0x${string}`,
-  OPINION_CORE_WITH_REFERRALS: '0x0000000000000000000000000000000000000000' as `0x${string}`, // TODO: Deploy later
+  // 🚀 MAINNET CONTRACTS
+  OPINION_CORE: '0xC47bFEc4D53C51bF590beCEA7dC935116E210E97' as `0x${string}`, // OpinionCoreNoMod
+  FEE_MANAGER: '0x64997bd18520d93e7f0da87c69582d06b7f265d5' as `0x${string}`,
+  POOL_MANAGER: '0xd6f4125e1976c5eee6fc684bdb68d1719ac34259' as `0x${string}`,
+  USDC_TOKEN: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`, // Official Base USDC
+  // Legacy referral system (not deployed on mainnet)
+  REFERRAL_MANAGER: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Not used on mainnet
+  OPINION_CORE_WITH_REFERRALS: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Not used on mainnet
 } as const;
 
 

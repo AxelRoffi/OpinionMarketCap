@@ -1,11 +1,11 @@
 import { ethers, upgrades } from "hardhat";
-import type { 
-  OpinionMarket, 
-  OpinionCore, 
-  FeeManager, 
-  PoolManager, 
+import type {
+  OpinionMarket,
+  OpinionCore,
+  FeeManager,
+  PoolManager,
   TreasurySecure,
-  MockERC20 
+  MockERC20
 } from "../../typechain-types";
 
 export interface TestContracts {
@@ -35,19 +35,19 @@ export interface TestUsers {
  * This deploys the actual OpinionMarketCap V1 production contracts
  * for authentic testing of sophisticated DeFi features
  */
-export async function deployRealOpinionMarketSystem(): Promise<{ 
-  contracts: TestContracts; 
-  users: TestUsers; 
+export async function deployRealOpinionMarketSystem(): Promise<{
+  contracts: TestContracts;
+  users: TestUsers;
 }> {
   console.log("🚀 REAL CONTRACT DEPLOYMENT: 90% Real + 10% Mocks");
-  
+
   // Get test signers
   const [owner, admin, treasury, moderator, operator, user1, user2, user3] = await ethers.getSigners();
-  
+
   const users: TestUsers = {
     owner,
     admin,
-    treasury, 
+    treasury,
     moderator,
     operator,
     user1,
@@ -57,7 +57,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
 
   // ===== STEP 1: Deploy Strategic Mocks (10%) =====
   console.log("📍 Step 1: Deploying Strategic Mocks (10%)...");
-  
+
   // Only mock external dependencies - keep USDC mock for testing
   const MockERC20Factory = await ethers.getContractFactory("MockERC20");
   const usdc = await MockERC20Factory.deploy("USD Coin", "USDC");
@@ -81,7 +81,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
       treasury.address,
       admin.address
     ],
-    { 
+    {
       initializer: "initialize"
     }
   ) as unknown as TreasurySecure;
@@ -97,7 +97,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
       await usdc.getAddress(),
       await treasurySecure.getAddress()
     ],
-    { 
+    {
       initializer: "initialize"
     }
   ) as unknown as FeeManager;
@@ -106,31 +106,47 @@ export async function deployRealOpinionMarketSystem(): Promise<{
 
   // ===== STEP 4: Deploy Required Libraries for OpinionCore =====
   console.log("📍 Step 4: Deploying Libraries for REAL OpinionCore...");
-  
-  const InputValidationFactory = await ethers.getContractFactory("InputValidation");
-  const inputValidation = await InputValidationFactory.deploy();
-  await inputValidation.waitForDeployment();
-  
-  const MevProtectionFactory = await ethers.getContractFactory("MevProtection");
-  const mevProtection = await MevProtectionFactory.deploy();
-  await mevProtection.waitForDeployment();
-  
+
+  // Deploy base libraries first (no dependencies)
   const PriceCalculatorFactory = await ethers.getContractFactory("PriceCalculator");
   const priceCalculator = await PriceCalculatorFactory.deploy();
   await priceCalculator.waitForDeployment();
-  
+
+  // Deploy OpinionCreationLib (no library dependencies)
+  const OpinionCreationLibFactory = await ethers.getContractFactory("OpinionCreationLib");
+  const opinionCreationLib = await OpinionCreationLibFactory.deploy();
+  await opinionCreationLib.waitForDeployment();
+
+  // Deploy OpinionTradingLib (depends on PriceCalculator via OpinionPricingLibrary)
+  const OpinionTradingLibFactory = await ethers.getContractFactory("OpinionTradingLib", {
+    libraries: {
+      "contracts/core/libraries/PriceCalculator.sol:PriceCalculator": await priceCalculator.getAddress(),
+    },
+  });
+  const opinionTradingLib = await OpinionTradingLibFactory.deploy();
+  await opinionTradingLib.waitForDeployment();
+
+  // Deploy OpinionUpdateLib (depends on PriceCalculator via OpinionPricingLibrary)
+  const OpinionUpdateLibFactory = await ethers.getContractFactory("OpinionUpdateLib", {
+    libraries: {
+      "contracts/core/libraries/PriceCalculator.sol:PriceCalculator": await priceCalculator.getAddress(),
+    },
+  });
+  const opinionUpdateLib = await OpinionUpdateLibFactory.deploy();
+  await opinionUpdateLib.waitForDeployment();
+
   console.log("📚 Libraries deployed successfully");
 
   // ===== STEP 5: Deploy Real OpinionCore (Core Logic) =====
   console.log("📍 Step 5: Deploying REAL OpinionCore...");
   const OpinionCoreFactory = await ethers.getContractFactory("OpinionCore", {
     libraries: {
-      InputValidation: await inputValidation.getAddress(),
-      MevProtection: await mevProtection.getAddress(),
-      PriceCalculator: await priceCalculator.getAddress(),
+      "contracts/core/libraries/OpinionCreationLib.sol:OpinionCreationLib": await opinionCreationLib.getAddress(),
+      "contracts/core/libraries/OpinionTradingLib.sol:OpinionTradingLib": await opinionTradingLib.getAddress(),
+      "contracts/core/libraries/OpinionUpdateLib.sol:OpinionUpdateLib": await opinionUpdateLib.getAddress(),
     },
   });
-  
+
   const opinionCore = await upgrades.deployProxy(
     OpinionCoreFactory,
     [
@@ -139,7 +155,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
       admin.address, // Temporary poolManager - will be updated
       await treasurySecure.getAddress()
     ],
-    { 
+    {
       initializer: "initialize",
       unsafeAllowLinkedLibraries: true
     }
@@ -159,7 +175,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
       await treasurySecure.getAddress(),
       admin.address
     ],
-    { 
+    {
       initializer: "initialize"
     }
   ) as unknown as PoolManager;
@@ -181,9 +197,11 @@ export async function deployRealOpinionMarketSystem(): Promise<{
       await opinionCore.getAddress(),
       await feeManager.getAddress(),
       await poolManager.getAddress(),
-      await treasurySecure.getAddress()
+      ethers.ZeroAddress, // monitoringManager (optional)
+      ethers.ZeroAddress, // securityManager (optional)
+      await treasurySecure.getAddress() // treasury
     ],
-    { 
+    {
       initializer: "initialize",
       kind: 'uups'
     }
@@ -206,7 +224,7 @@ export async function deployRealOpinionMarketSystem(): Promise<{
   console.log("📍 Step 10: Setting up USDC allowances for all users...");
   const maxApproval = ethers.MaxUint256;
   const contracts = [opinionMarket, opinionCore, feeManager, poolManager];
-  
+
   for (const user of [owner, admin, treasury, moderator, operator, user1, user2, user3]) {
     for (const contract of contracts) {
       await usdc.connect(user).approve(await contract.getAddress(), maxApproval);
@@ -246,25 +264,25 @@ async function setupRealContractPermissions(contracts: TestContracts, users: Tes
   const DEFAULT_ADMIN_ROLE = await opinionCore.DEFAULT_ADMIN_ROLE();
   const ADMIN_ROLE = await opinionCore.ADMIN_ROLE();
   const MODERATOR_ROLE = await opinionCore.MODERATOR_ROLE();
-  
+
   // Setup OpinionCore roles using deployer (owner) who has DEFAULT_ADMIN_ROLE by default
   await opinionCore.connect(owner).grantRole(ADMIN_ROLE, admin.address);
   await opinionCore.connect(owner).grantRole(MODERATOR_ROLE, moderator.address);
-  
+
   // Setup TreasurySecure roles
   const TREASURY_DEFAULT_ADMIN_ROLE = await treasurySecure.DEFAULT_ADMIN_ROLE();
   const TREASURY_ADMIN_ROLE = await treasurySecure.TREASURY_ADMIN_ROLE();
   await treasurySecure.connect(treasury).grantRole(TREASURY_DEFAULT_ADMIN_ROLE, admin.address);
-  
+
   // Setup cross-contract permissions for real contracts using owner
   await opinionCore.connect(owner).grantRole(ADMIN_ROLE, await opinionMarket.getAddress());
-  
+
   // Allow real contracts to interact with FeeManager using owner
   const FEE_ADMIN_ROLE = await feeManager.ADMIN_ROLE();
   await feeManager.connect(owner).grantRole(FEE_ADMIN_ROLE, admin.address);
   await feeManager.connect(owner).grantRole(FEE_ADMIN_ROLE, await opinionCore.getAddress());
   await feeManager.connect(owner).grantRole(FEE_ADMIN_ROLE, await opinionMarket.getAddress());
-  
+
   // Allow real contracts to interact with PoolManager using owner
   const POOL_ADMIN_ROLE = await poolManager.ADMIN_ROLE();
   await poolManager.connect(owner).grantRole(POOL_ADMIN_ROLE, admin.address);
@@ -301,8 +319,8 @@ export async function validateRealContractDeployment(contracts: TestContracts): 
 
 // Helper function to create opinion for testing
 export async function createTestOpinion(
-  contracts: TestContracts, 
-  creator: any, 
+  contracts: TestContracts,
+  creator: any,
   question: string = "Test Question?",
   initialAnswer: string = "Test Answer",
   description: string = "Test Description",
@@ -317,7 +335,7 @@ export async function createTestOpinion(
     categories
   );
   const receipt = await tx.wait();
-  
+
   // Find OpinionCreated event
   const event = receipt?.logs.find(log => {
     try {
@@ -327,12 +345,12 @@ export async function createTestOpinion(
       return false;
     }
   });
-  
+
   if (event) {
     const parsed = contracts.opinionCore.interface.parseLog(event);
     return parsed?.args[0];
   }
-  
+
   throw new Error("OpinionCreated event not found");
 }
 

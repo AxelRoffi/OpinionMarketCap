@@ -1025,11 +1025,11 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
 
       // Try to execute both - price should fail, trades should succeed
       await expect(
-        opinionCore.connect(admin).setMinimumPrice(newMinPrice)
+        opinionCore.connect(admin).setParameter(0, newMinPrice)
       ).to.be.reverted;
 
       await expect(
-        opinionCore.connect(admin).setMaxTradesPerBlock(Number(newMaxTrades))
+        opinionCore.connect(admin).setParameter(4, Number(newMaxTrades))
       ).to.not.be.reverted;
 
       // Verify only trades parameter changed
@@ -1101,11 +1101,11 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
         await time.increase(25n * 3600n);
 
         // Execute first time
-        await opinionCore.connect(admin).setMinimumPrice(newMinPrice);
+        await opinionCore.connect(admin).setParameter(0, newMinPrice);
 
         // Try to execute again - should fail
         await expect(
-          opinionCore.connect(admin).setMinimumPrice(newMinPrice)
+          opinionCore.connect(admin).setParameter(0, newMinPrice)
         ).to.be.reverted;
 
         // Verify action marked as executed
@@ -1147,7 +1147,7 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
 
         // Wait and execute
         await time.increase(25n * 3600n);
-        await opinionCore.connect(admin).setMaxTradesPerBlock(Number(newMaxTrades));
+        await opinionCore.connect(admin).setParameter(4, Number(newMaxTrades));
 
         // Try to cancel after execution - should fail
         await expect(
@@ -1198,7 +1198,7 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
 
         // Try to execute - should fail
         await expect(
-          opinionCore.connect(admin).setQuestionCreationFee(newQuestionFee)
+          opinionCore.connect(admin).setParameter(6, newQuestionFee)
         ).to.be.reverted;
 
         // Verify action is still cancelled
@@ -1248,7 +1248,7 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
 
         // Try to execute - should fail
         await expect(
-          opinionCore.connect(admin).setMinimumPrice(newMinPrice)
+          opinionCore.connect(admin).setParameter(0, newMinPrice)
         ).to.be.reverted;
       }
     });
@@ -1356,7 +1356,7 @@ describe("22_OpinionCore_Timelock - Comprehensive Test Suite", function () {
       );
 
       await expect(
-        opinionCore.connect(admin).setMinimumPrice(2_000_000n)
+        opinionCore.connect(admin).setParameter(0, 2_000_000n)
       ).to.be.reverted;
 
       console.log("✅ All CRIT-003 security requirements satisfied");

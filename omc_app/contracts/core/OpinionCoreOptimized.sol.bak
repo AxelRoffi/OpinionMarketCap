@@ -1,0 +1,402 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "./interfaces/IOpinionCore.sol";
+import "./interfaces/IFeeManager.sol";
+import "./interfaces/IPoolManager.sol";
+import "./interfaces/IOpinionMarketEvents.sol";
+import "./interfaces/IOpinionMarketErrors.sol";
+import "./structs/OpinionStructs.sol";
+import "./libraries/ValidationLibrary.sol";
+import "./libraries/PriceCalculator.sol";
+
+/**
+ * @title OpinionCoreOptimized
+ * @dev Optimized version of OpinionCoreSimplified to fit under 24KB with UUPS
+ * Removes only non-essential features while keeping all core functionality
+ */
+contract OpinionCoreOptimized is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable,
+    IOpinionCore,
+    IOpinionMarketEvents,
+    IOpinionMarketErrors
+{
+    using SafeERC20 for IERC20;
+
+    // --- ROLES ---
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant POOL_MANAGER_ROLE = keccak256("POOL_MANAGER_ROLE");
+
+    // --- STATE VARIABLES ---
+    IERC20 public usdcToken;
+    IFeeManager public feeManager;
+    IPoolManager public poolManager;
+    address public treasury;
+
+    bool public isPublicCreationEnabled;
+    uint256 public nextOpinionId;
+
+    // Economic parameters
+    uint96 public minimumPrice;
+    uint96 public questionCreationFee;
+    uint96 public initialAnswerPrice;
+    uint256 public absoluteMaxPriceChange;
+    uint256 public maxTradesPerBlock;
+
+    // Categories
+    string[] public categories;
+
+    // Core data structures
+    mapping(uint256 => OpinionStructs.Opinion) public opinions;
+    mapping(uint256 => OpinionStructs.AnswerHistory[]) public answerHistory;
+    
+    // Rate limiting
+    mapping(address => mapping(uint256 => uint256)) private userLastTradeBlock;
+    
+    // Competition tracking (simplified)
+    uint256 private nonce;
+
+    // UUPS authorization
+    function _authorizeUpgrade(address) internal override onlyRole(ADMIN_ROLE) {}
+
+    /**
+     * @dev Initialize the contract
+     */
+    function initialize(
+        address _usdcToken,
+        address _opinionMarket, // Not used, for compatibility
+        address _feeManager,
+        address _poolManager,
+        address _monitoringManager, // Not used
+        address _securityManager, // Not used
+        address _treasury
+    ) public initializer {
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+        __Pausable_init();
+        __UUPSUpgradeable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+
+        require(_usdcToken != address(0) && _feeManager != address(0) && 
+                _poolManager != address(0) && _treasury != address(0), "Zero address");
+
+        usdcToken = IERC20(_usdcToken);
+        feeManager = IFeeManager(_feeManager);
+        poolManager = IPoolManager(_poolManager);
+        treasury = _treasury;
+
+        // Initialize parameters
+        nextOpinionId = 1;
+        minimumPrice = 1_000_000; // 1 USDC
+        questionCreationFee = 1_000_000; // 1 USDC
+        initialAnswerPrice = 2_000_000; // 2 USDC
+        absoluteMaxPriceChange = 200; // 200%
+        maxTradesPerBlock = 5;
+
+        // Initialize categories
+        categories = ["Crypto", "Politics", "Science", "Technology", "Sports", 
+                     "Entertainment", "Culture", "Web3", "Social Media", "Other"];
+    }
+
+    /**
+     * @dev Create opinion with all features
+     */
+    function createOpinion(
+        string calldata question,
+        string calldata answer,
+        uint96 initialPrice,
+        string[] calldata opinionCategories
+    ) external override nonReentrant whenNotPaused {
+        _createOpinionInternal(question, answer, "", "", "", initialPrice, opinionCategories);
+    }
+
+    /**
+     * @dev Create opinion with extras (IPFS, link)
+     */
+    function createOpinionWithExtras(
+        string calldata question,
+        string calldata answer,
+        string calldata description,
+        uint96 initialPrice,
+        string[] calldata opinionCategories,
+        string calldata ipfsHash,
+        string calldata link
+    ) external override nonReentrant whenNotPaused {
+        _createOpinionInternal(question, answer, description, ipfsHash, link, initialPrice, opinionCategories);
+    }
+
+    function _createOpinionInternal(
+        string calldata question,
+        string calldata answer,
+        string calldata description,
+        string calldata ipfsHash,
+        string calldata link,
+        uint96 initialPrice,
+        string[] calldata opinionCategories
+    ) private {
+        require(isPublicCreationEnabled || hasRole(ADMIN_ROLE, msg.sender), "Not authorized");
+        
+        // Validate inputs (simplified)
+        require(bytes(question).length > 0 && bytes(question).length <= 100, "Invalid question");
+        require(bytes(answer).length > 0 && bytes(answer).length <= 100, "Invalid answer");
+        require(opinionCategories.length > 0 && opinionCategories.length <= 3, "Invalid categories");
+        require(initialPrice >= minimumPrice && initialPrice <= 100_000_000, "Invalid price");
+
+        // Validate categories
+        for (uint i = 0; i < opinionCategories.length; i++) {
+            bool validCategory = false;
+            for (uint j = 0; j < categories.length; j++) {
+                if (keccak256(bytes(categories[j])) == keccak256(bytes(opinionCategories[i]))) {
+                    validCategory = true;
+                    break;
+                }
+            }
+            require(validCategory, "Invalid category");
+        }
+
+        // Collect creation fee
+        uint256 totalFee = questionCreationFee + initialPrice;
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalFee);
+        
+        // Distribute fees
+        if (questionCreationFee > 0) {
+            usdcToken.safeTransfer(treasury, questionCreationFee);
+        }
+
+        uint256 opinionId = nextOpinionId++;
+        
+        opinions[opinionId] = OpinionStructs.Opinion({
+            question: question,
+            currentAnswer: answer,
+            description: description,
+            ipfsHash: ipfsHash,
+            link: link,
+            creator: msg.sender,
+            currentAnswerOwner: msg.sender,
+            nextPrice: initialPrice,
+            lastPrice: initialPrice,
+            salePrice: 0,
+            totalVolume: 0,
+            isActive: true,
+            createdAt: block.timestamp,
+            lastTradeAt: block.timestamp,
+            categories: opinionCategories
+        });
+
+        emit OpinionAction(opinionId, 0, question, msg.sender, initialPrice);
+    }
+
+    /**
+     * @dev Submit answer with complex pricing
+     */
+    function submitAnswer(
+        uint256 opinionId,
+        string calldata answer,
+        string calldata description,
+        string calldata link
+    ) external override nonReentrant whenNotPaused {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        OpinionStructs.Opinion storage opinion = opinions[opinionId];
+        require(opinion.isActive, "Not active");
+        
+        // Rate limiting
+        if (maxTradesPerBlock > 0) {
+            require(userLastTradeBlock[msg.sender][opinionId] < block.number, "Rate limited");
+            userLastTradeBlock[msg.sender][opinionId] = block.number;
+        }
+
+        require(bytes(answer).length > 0 && bytes(answer).length <= 100, "Invalid answer");
+
+        uint256 price = opinion.nextPrice;
+        require(price >= minimumPrice, "Price too low");
+
+        address previousOwner = opinion.currentAnswerOwner;
+        require(msg.sender != previousOwner, "Already owner");
+
+        // Transfer payment
+        usdcToken.safeTransferFrom(msg.sender, address(this), price);
+
+        // Calculate fee distribution
+        (uint96 protocolFee, uint96 creatorFeePercent, uint96 previousOwnerPercent) = 
+            feeManager.calculateFeeDistribution(price);
+
+        uint256 protocolAmount = (price * protocolFee) / 10000;
+        uint256 creatorAmount = (price * creatorFeePercent) / 10000;
+        uint256 previousOwnerAmount = price - protocolAmount - creatorAmount;
+
+        // Distribute payments
+        if (protocolAmount > 0) {
+            usdcToken.safeTransfer(treasury, protocolAmount);
+        }
+        if (creatorAmount > 0 && opinion.creator != address(0)) {
+            usdcToken.safeTransfer(opinion.creator, creatorAmount);
+        }
+        if (previousOwnerAmount > 0) {
+            bool isPoolOwned = previousOwner == address(poolManager);
+            if (isPoolOwned) {
+                poolManager.distributePoolRewards(opinionId, previousOwnerAmount, msg.sender);
+            } else {
+                usdcToken.safeTransfer(previousOwner, previousOwnerAmount);
+            }
+        }
+
+        // Update opinion
+        opinion.currentAnswer = answer;
+        opinion.description = description;
+        opinion.link = link;
+        opinion.currentAnswerOwner = msg.sender;
+        opinion.lastPrice = price;
+        opinion.totalVolume += price;
+        opinion.lastTradeAt = block.timestamp;
+
+        // Calculate next price with complex algorithm
+        uint256 newPrice = PriceCalculator.calculateNextPrice(
+            price,
+            nonce++,
+            minimumPrice,
+            absoluteMaxPriceChange
+        );
+        opinion.nextPrice = newPrice;
+
+        // Record history
+        answerHistory[opinionId].push(OpinionStructs.AnswerHistory({
+            answer: answer,
+            submitter: msg.sender,
+            price: price,
+            timestamp: block.timestamp
+        }));
+
+        emit OpinionAction(opinionId, 1, answer, msg.sender, price);
+    }
+
+    /**
+     * @dev Update opinion for pool execution
+     */
+    function updateOpinionOnPoolExecution(
+        uint256 opinionId,
+        string calldata answer,
+        address poolAddress,
+        uint256 price
+    ) external override onlyRole(POOL_MANAGER_ROLE) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        OpinionStructs.Opinion storage opinion = opinions[opinionId];
+        
+        opinion.currentAnswer = answer;
+        opinion.currentAnswerOwner = address(poolManager);
+        opinion.lastPrice = price;
+        opinion.totalVolume += price;
+        
+        uint256 newPrice = PriceCalculator.calculateNextPrice(
+            price,
+            nonce++,
+            minimumPrice,
+            absoluteMaxPriceChange
+        );
+        opinion.nextPrice = newPrice;
+
+        answerHistory[opinionId].push(OpinionStructs.AnswerHistory({
+            answer: answer,
+            submitter: poolAddress,
+            price: price,
+            timestamp: block.timestamp
+        }));
+
+        emit OpinionAction(opinionId, 1, answer, poolAddress, price);
+    }
+
+    // View functions
+    function getNextPrice(uint256 opinionId) external view override returns (uint256) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        return opinions[opinionId].nextPrice;
+    }
+
+    function getOpinionDetails(uint256 opinionId) external view override returns (OpinionStructs.Opinion memory) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        return opinions[opinionId];
+    }
+
+    function getAnswerHistory(uint256 opinionId) external view override returns (OpinionStructs.AnswerHistory[] memory) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        return answerHistory[opinionId];
+    }
+
+    function getTradeCount(uint256 opinionId) external view override returns (uint256) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        return answerHistory[opinionId].length;
+    }
+
+    function getCreatorGain(uint256 opinionId) external view override returns (uint256) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        (, uint96 creatorFeePercent,) = feeManager.calculateFeeDistribution(1_000_000);
+        return (opinions[opinionId].totalVolume * creatorFeePercent) / 10000;
+    }
+
+    function isPoolOwned(uint256 opinionId) external view override returns (bool) {
+        require(opinionId < nextOpinionId, "Invalid opinion");
+        return opinions[opinionId].currentAnswerOwner == address(poolManager);
+    }
+
+    // Admin functions
+    function setMinimumPrice(uint96 _minimumPrice) external onlyRole(ADMIN_ROLE) {
+        minimumPrice = _minimumPrice;
+    }
+
+    function setQuestionCreationFee(uint96 _fee) external onlyRole(ADMIN_ROLE) {
+        questionCreationFee = _fee;
+    }
+
+    function setInitialAnswerPrice(uint96 _price) external onlyRole(ADMIN_ROLE) {
+        initialAnswerPrice = _price;
+    }
+
+    function setMaxPriceChange(uint256 _max) external onlyRole(ADMIN_ROLE) {
+        absoluteMaxPriceChange = _max;
+    }
+
+    function setMaxTradesPerBlock(uint256 _max) external onlyRole(ADMIN_ROLE) {
+        maxTradesPerBlock = _max;
+    }
+
+    function togglePublicCreation() external onlyRole(ADMIN_ROLE) {
+        isPublicCreationEnabled = !isPublicCreationEnabled;
+    }
+
+    function setFeeManager(address _feeManager) external onlyRole(ADMIN_ROLE) {
+        require(_feeManager != address(0), "Zero address");
+        feeManager = IFeeManager(_feeManager);
+    }
+
+    function setPoolManager(address _poolManager) external onlyRole(ADMIN_ROLE) {
+        require(_poolManager != address(0), "Zero address");
+        poolManager = IPoolManager(_poolManager);
+    }
+
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+
+    // Removed functions to save space:
+    // - listQuestionForSale, buyQuestion, cancelQuestionSale (can add later)
+    // - moderateAnswer, deactivateOpinion, reactivateOpinion (can add later)
+    // - updateOpinion (can add later)
+    // - extension system (can add later)
+    // - treasury timelock (use Safe instead)
+}
