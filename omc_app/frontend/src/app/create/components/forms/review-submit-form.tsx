@@ -82,6 +82,13 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
     args: address ? [address, CONTRACTS.OPINION_CORE] : undefined,
     query: { enabled: !!address }
   })
+  
+  const { data: nextOpinionId } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_ABI,
+    functionName: 'nextOpinionId',
+    query: { enabled: true }
+  })
 
   // Contract writes
   const { writeContract: approveUSDC, data: approveHash, error: approveError } = useWriteContract()
@@ -268,6 +275,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         console.log('User Allowance:', allowance ? (Number(allowance) / 1_000_000).toFixed(6) : '0', 'USDC')
         
         console.log('Using createOpinion function')
+        console.log('Current nextOpinionId:', nextOpinionId?.toString())
         console.log('Arguments:', [
           formData.question,
           formData.answer,
@@ -306,7 +314,9 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         if (createReceipt && createReceipt.logs) {
           console.log('🔍 Transaction successful, extracting opinion ID from receipt...')
           console.log('Transaction hash:', createHash)
-          console.log('📋 Transaction receipt logs:', createReceipt.logs)
+          console.log('📋 Transaction receipt:', createReceipt)
+          console.log('📋 Number of logs:', createReceipt.logs.length)
+          console.log('📋 Raw logs:', JSON.stringify(createReceipt.logs, null, 2))
           
           // Look for OpinionAction event with actionType 0 (create)
           // The contract emits OpinionAction(opinionId, 0, question, creator, initialPrice)
@@ -316,9 +326,18 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
               const interface_ = new ethers.Interface(OPINION_CORE_ABI)
               const parsedLog = interface_.parseLog({ topics: log.topics, data: log.data })
               
-              if (parsedLog && parsedLog.name === 'OpinionAction' && parsedLog.args.actionType === 0) {
-                const opinionId = Number(parsedLog.args.opinionId)
-                console.log('✅ Opinion created with ID:', opinionId)
+              if (parsedLog && parsedLog.name === 'OpinionAction') {
+                console.log('🔍 Found OpinionAction event:', {
+                  name: parsedLog.name,
+                  actionType: parsedLog.args.actionType,
+                  opinionId: parsedLog.args.opinionId.toString(),
+                  args: parsedLog.args
+                })
+                
+                // Look for actionType 0 (create)
+                if (Number(parsedLog.args.actionType) === 0) {
+                  const opinionId = Number(parsedLog.args.opinionId)
+                  console.log('✅ Opinion created with ID:', opinionId)
                 
                 setTimeout(() => {
                   onSuccess(opinionId)
@@ -332,11 +351,24 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
           }
         }
         
-        // Fallback: call onSuccess without opinion ID
-        console.log('⚠️ Could not extract opinion ID, proceeding without redirect')
-        setTimeout(() => {
-          onSuccess()
-        }, 2000)
+        // Fallback method: Use the nextOpinionId we captured before the transaction
+        console.log('⚠️ Could not extract opinion ID from logs, using fallback method...')
+        
+        // Since we know the nextOpinionId before creation, the created opinion ID is nextOpinionId - 1
+        if (nextOpinionId) {
+          const estimatedOpinionId = Number(nextOpinionId) - 1
+          console.log('🎯 Using estimated opinion ID:', estimatedOpinionId)
+          console.log('Note: This assumes no other opinions were created in the same block')
+          
+          setTimeout(() => {
+            onSuccess(estimatedOpinionId)
+          }, 2000)
+        } else {
+          console.log('❌ Could not determine opinion ID, proceeding without redirect')
+          setTimeout(() => {
+            onSuccess()
+          }, 2000)
+        }
       } catch (error) {
         console.error('❌ Error extracting opinion ID:', error)
         setTimeout(() => {
@@ -344,7 +376,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         }, 2000)
       }
     }
-  }, [isCreateSuccess, createReceipt, createHash, currentStep, onSuccess])
+  }, [isCreateSuccess, createReceipt, createHash, currentStep, onSuccess, nextOpinionId])
 
   // Handle approval errors
   useEffect(() => {

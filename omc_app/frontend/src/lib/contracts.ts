@@ -13,6 +13,19 @@ export const CONTRACTS = {
 
 // OpinionCore ABI with advanced functions
 export const OPINION_CORE_ABI = [
+  // Events
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'opinionId', type: 'uint256' },
+      { indexed: false, internalType: 'uint8', name: 'actionType', type: 'uint8' },
+      { indexed: false, internalType: 'string', name: 'content', type: 'string' },
+      { indexed: true, internalType: 'address', name: 'actor', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'price', type: 'uint256' }
+    ],
+    name: 'OpinionAction',
+    type: 'event'
+  },
   {
     inputs: [],
     name: 'nextOpinionId',
