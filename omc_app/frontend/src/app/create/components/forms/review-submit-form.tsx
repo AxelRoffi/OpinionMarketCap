@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
+import { ethers } from 'ethers'
 import { 
   CheckCircle, 
   ArrowLeft, 
@@ -88,7 +89,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
 
   // Transaction receipts
   const { isSuccess: isApproveSuccess, error: approveReceiptError } = useWaitForTransactionReceipt({ hash: approveHash })
-  const { isSuccess: isCreateSuccess, error: createReceiptError } = useWaitForTransactionReceipt({ hash: createHash })
+  const { isSuccess: isCreateSuccess, data: createReceipt, error: createReceiptError } = useWaitForTransactionReceipt({ hash: createHash })
 
   // Format functions
   const formatUSDC = (wei: bigint) => {
@@ -296,63 +297,54 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
 
   // Handle create success
   useEffect(() => {
-    if (isCreateSuccess && createData && currentStep === 'submit') {
+    if (isCreateSuccess && createReceipt && currentStep === 'submit') {
       setCurrentStep('success')
       setIsSubmitting(false)
       
       // Extract opinion ID from transaction receipt
-      const extractOpinionId = async () => {
-        try {
-          if (createData) {
-            // The createData contains the transaction hash, we need the receipt to get events
-            console.log('🔍 Transaction successful, extracting opinion ID from receipt...')
-            console.log('Transaction hash:', createData)
-            
-            // Get transaction receipt to access events
-            const receipt = await createData.wait?.()
-            if (receipt && receipt.logs) {
-              console.log('📋 Transaction receipt logs:', receipt.logs)
+      try {
+        if (createReceipt && createReceipt.logs) {
+          console.log('🔍 Transaction successful, extracting opinion ID from receipt...')
+          console.log('Transaction hash:', createHash)
+          console.log('📋 Transaction receipt logs:', createReceipt.logs)
+          
+          // Look for OpinionAction event with actionType 0 (create)
+          // The contract emits OpinionAction(opinionId, 0, question, creator, initialPrice)
+          for (const log of createReceipt.logs) {
+            try {
+              // Parse log as OpinionAction event
+              const interface_ = new ethers.Interface(OPINION_CORE_ABI)
+              const parsedLog = interface_.parseLog({ topics: log.topics, data: log.data })
               
-              // Look for OpinionAction event with actionType 0 (create)
-              // The contract emits OpinionAction(opinionId, 0, question, creator, initialPrice)
-              for (const log of receipt.logs) {
-                try {
-                  // Parse log as OpinionAction event
-                  const interface_ = new ethers.Interface(OPINION_CORE_ABI)
-                  const parsedLog = interface_.parseLog({ topics: log.topics, data: log.data })
-                  
-                  if (parsedLog && parsedLog.name === 'OpinionAction' && parsedLog.args.actionType === 0) {
-                    const opinionId = Number(parsedLog.args.opinionId)
-                    console.log('✅ Opinion created with ID:', opinionId)
-                    
-                    setTimeout(() => {
-                      onSuccess(opinionId)
-                    }, 2000)
-                    return
-                  }
-                } catch (parseError) {
-                  // Ignore parsing errors for other events
-                }
+              if (parsedLog && parsedLog.name === 'OpinionAction' && parsedLog.args.actionType === 0) {
+                const opinionId = Number(parsedLog.args.opinionId)
+                console.log('✅ Opinion created with ID:', opinionId)
+                
+                setTimeout(() => {
+                  onSuccess(opinionId)
+                }, 2000)
+                return
               }
+            } catch (parseError) {
+              console.error('Parse error for log:', parseError)
+              // Ignore parsing errors for other events
             }
           }
-          
-          // Fallback: call onSuccess without opinion ID
-          console.log('⚠️ Could not extract opinion ID, proceeding without redirect')
-          setTimeout(() => {
-            onSuccess()
-          }, 2000)
-        } catch (error) {
-          console.error('❌ Error extracting opinion ID:', error)
-          setTimeout(() => {
-            onSuccess()
-          }, 2000)
         }
+        
+        // Fallback: call onSuccess without opinion ID
+        console.log('⚠️ Could not extract opinion ID, proceeding without redirect')
+        setTimeout(() => {
+          onSuccess()
+        }, 2000)
+      } catch (error) {
+        console.error('❌ Error extracting opinion ID:', error)
+        setTimeout(() => {
+          onSuccess()
+        }, 2000)
       }
-      
-      extractOpinionId()
     }
-  }, [isCreateSuccess, createData, currentStep, onSuccess])
+  }, [isCreateSuccess, createReceipt, createHash, currentStep, onSuccess])
 
   // Handle approval errors
   useEffect(() => {

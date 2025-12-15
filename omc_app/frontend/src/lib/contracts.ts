@@ -410,5 +410,17 @@ export const REFERRAL_MANAGER_ABI = [
       { name: 'referralCode', type: 'uint256' }
     ],
     outputs: []
+  },
+  // Events
+  {
+    name: 'OpinionAction',
+    type: 'event',
+    inputs: [
+      { name: 'opinionId', type: 'uint256', indexed: true },
+      { name: 'actionType', type: 'uint8', indexed: false },
+      { name: 'content', type: 'string', indexed: false },
+      { name: 'actor', type: 'address', indexed: true },
+      { name: 'price', type: 'uint256', indexed: false }
+    ]
   }
 ] as const;
