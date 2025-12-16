@@ -109,8 +109,7 @@ const HeroSection = () => {
         }}
         transition={{ 
           duration: 0.8, 
-          delay: 0.1,
-          hover: { duration: 0.3, ease: "easeOut" }
+          delay: 0.1
         }}
         style={{ cursor: "default" }}
       >
