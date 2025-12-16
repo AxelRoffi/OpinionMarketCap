@@ -218,7 +218,6 @@ const HowItWorksInteractive = () => {
               y: [0, -5, 0]
             }}
             transition={{
-              hover: { duration: 0.3, ease: "easeOut" },
               y: { duration: 3 + index * 0.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }
             }}
           >
@@ -332,7 +331,7 @@ const GenesisVisionSection = () => (
             ]
           }}
           transition={{ 
-            hover: { duration: 0.3, ease: "easeOut" },
+            
             backgroundImage: { duration: 6, repeat: Infinity, ease: "easeInOut" }
           }}
           style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
@@ -349,7 +348,7 @@ const GenesisVisionSection = () => (
             opacity: [0.9, 1, 0.9]
           }}
           transition={{ 
-            hover: { duration: 0.3, ease: "easeOut" },
+            
             opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" }
           }}
         >
@@ -512,7 +511,7 @@ export default function ProfessionalLandingDark() {
                   color: ["#ffffff", "#fca5a5", "#ffffff"]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3, ease: "easeOut" },
+                  
                   color: { duration: 4, repeat: Infinity, ease: "easeInOut" }
                 }}
               >
@@ -533,7 +532,7 @@ export default function ProfessionalLandingDark() {
                   color: ["#60a5fa", "#3b82f6", "#60a5fa"]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3, ease: "easeOut" },
+                  
                   color: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }
                 }}
               >
@@ -559,7 +558,7 @@ export default function ProfessionalLandingDark() {
               whileHover={{ scale: 1.05, y: -10 }}
               animate={{ rotateY: [0, 2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 4, repeat: Infinity, ease: "easeInOut" }
               }}
             >
@@ -574,7 +573,7 @@ export default function ProfessionalLandingDark() {
                   ]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3 },
+                  
                   boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                 }}
               >
@@ -589,7 +588,7 @@ export default function ProfessionalLandingDark() {
               whileHover={{ scale: 1.05, y: -10 }}
               animate={{ rotateY: [0, -2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
               }}
             >
@@ -604,7 +603,7 @@ export default function ProfessionalLandingDark() {
                   ]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3 },
+                  
                   boxShadow: { duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }
                 }}
               >
@@ -619,7 +618,7 @@ export default function ProfessionalLandingDark() {
               whileHover={{ scale: 1.05, y: -10 }}
               animate={{ rotateY: [0, 2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }
               }}
             >
@@ -634,7 +633,7 @@ export default function ProfessionalLandingDark() {
                   ]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3 },
+                  
                   boxShadow: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }
                 }}
               >
@@ -649,7 +648,7 @@ export default function ProfessionalLandingDark() {
               whileHover={{ scale: 1.05, y: -10 }}
               animate={{ rotateY: [0, -2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }
               }}
             >
@@ -664,7 +663,7 @@ export default function ProfessionalLandingDark() {
                   ]
                 }}
                 transition={{ 
-                  hover: { duration: 0.3 },
+                  
                   boxShadow: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.9 }
                 }}
               >
@@ -695,7 +694,7 @@ export default function ProfessionalLandingDark() {
               ]
             }}
             transition={{ 
-              hover: { duration: 0.3, ease: "easeOut" },
+              
               backgroundImage: { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
             }}
             style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
@@ -833,7 +832,7 @@ export default function ProfessionalLandingDark() {
               ]
             }}
             transition={{ 
-              hover: { duration: 0.3, ease: "easeOut" },
+              
               backgroundImage: { duration: 5, repeat: Infinity, ease: "easeInOut" }
             }}
             style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
@@ -929,7 +928,7 @@ export default function ProfessionalLandingDark() {
               ]
             }}
             transition={{ 
-              hover: { duration: 0.3, ease: "easeOut" },
+              
               backgroundImage: { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
             }}
             style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
@@ -947,7 +946,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, 1, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 6, repeat: Infinity, ease: "easeInOut" }
               }}
             >
@@ -971,7 +970,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, -1, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
               }}
             >
@@ -995,7 +994,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, 1, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }
               }}
             >
@@ -1019,7 +1018,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, -1, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 7.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }
               }}
             >
@@ -1052,7 +1051,7 @@ export default function ProfessionalLandingDark() {
               ]
             }}
             transition={{ 
-              hover: { duration: 0.3, ease: "easeOut" },
+              
               backgroundImage: { duration: 4.8, repeat: Infinity, ease: "easeInOut" }
             }}
             style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
@@ -1074,7 +1073,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, 2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 8, repeat: Infinity, ease: "easeInOut" }
               }}
             >
@@ -1098,7 +1097,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, -2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 8.5, repeat: Infinity, ease: "easeInOut", delay: 1 }
               }}
             >
@@ -1122,7 +1121,7 @@ export default function ProfessionalLandingDark() {
               }}
               animate={{ rotateY: [0, 2, 0] }}
               transition={{ 
-                hover: { duration: 0.3, ease: "easeOut" },
+                
                 rotateY: { duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }
               }}
             >
