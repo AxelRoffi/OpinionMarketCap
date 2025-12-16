@@ -119,3 +119,6 @@ If builds fail:
 ---
 
 Need help? Check the deployment logs in Vercel Dashboard.
+
+---
+*Updated: 2025-12-16*
