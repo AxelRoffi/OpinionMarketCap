@@ -1,0 +1,1022 @@
+// PoolManager.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "./interfaces/IPoolManager.sol";
+import "./interfaces/IOpinionCore.sol";
+import "./interfaces/IFeeManager.sol";
+import "./interfaces/IOpinionMarketEvents.sol";
+import "./interfaces/IOpinionMarketErrors.sol";
+import "./structs/PoolStructs.sol";
+import "./libraries/PoolLibrary.sol";
+import "./libraries/ValidationLibrary.sol";
+
+/**
+ * @title PoolManager
+ * @dev Manages pools for collective funding of answer changes
+ */
+contract PoolManager is
+    Initializable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
+    IPoolManager,
+    IOpinionMarketEvents,
+    IOpinionMarketErrors
+{
+    using SafeERC20 for IERC20;
+
+    // --- STATE VARIABLES ---
+    // Core references
+    IOpinionCore public opinionCore;
+    IFeeManager public feeManager;
+    IERC20 public usdcToken;
+    address public treasury;
+
+    // Pool configuration
+    uint96 public poolCreationFee;
+    uint96 public poolContributionFee;
+    uint32 public minPoolDuration;
+    uint32 public maxPoolDuration;
+
+    // Constants
+    uint256 public constant MAX_POOL_NAME_LENGTH = 30;
+    uint256 public constant MAX_IPFS_HASH_LENGTH = 64;
+
+    // Pool storage
+    uint256 public poolCount;
+    mapping(uint256 => PoolStructs.PoolInfo) public pools;
+    mapping(uint256 => PoolStructs.PoolContribution[])
+        private poolContributions;
+    mapping(uint256 => mapping(address => uint96))
+        public poolContributionAmounts;
+    mapping(uint256 => address[]) public poolContributors;
+    mapping(uint256 => uint256[]) public opinionPools;
+    mapping(address => uint256[]) public userPools;
+
+    // --- ROLES ---
+    // --- ROLES ---
+    /**
+     * @dev Administrative role for the pool management system
+     * Accounts with this role can:
+     * - Configure pool creation and contribution fees
+     * - Set minimum/maximum amounts for pool contributions
+     * - Update global pool parameters and thresholds
+     * - Configure time-based settings (deadlines, extension periods)
+     * - Enable or disable specific pool types
+     * - Define pool validation rules
+     * - Grant or revoke other roles in this contract
+     * - Update contract integrations and dependencies
+     */
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    /**
+     * @dev Moderation role for pool operations
+     * Accounts with this role can:
+     * - Extend pool deadlines in exceptional cases
+     * - Cancel problematic or invalid pools
+     * - Force finalize pools under specific conditions
+     * - Moderate pool metadata and descriptions
+     * - Handle dispute resolution for pools
+     * - Cannot modify system parameters (requires ADMIN_ROLE)
+     * - Typically assigned to trusted community moderators or governance participants
+     */
+    bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @dev Initializes the pool manager
+     */
+    function initialize(
+        address _opinionCore,
+        address _feeManager,
+        address _usdcToken,
+        address _treasury,
+        address _admin
+    ) public initializer {
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
+        // Set contract references
+        ValidationLibrary.validateAddress(_opinionCore);
+        ValidationLibrary.validateAddress(_feeManager);
+        ValidationLibrary.validateAddress(_usdcToken);
+        ValidationLibrary.validateAddress(_treasury);
+        ValidationLibrary.validateAddress(_admin);
+
+        opinionCore = IOpinionCore(_opinionCore);
+        feeManager = IFeeManager(_feeManager);
+        usdcToken = IERC20(_usdcToken);
+        treasury = _treasury;
+
+        // Set initial configuration
+        poolCreationFee = 5 * 10 ** 6; // 5 USDC
+        poolContributionFee = 1 * 10 ** 6; // 1 USDC
+        minPoolDuration = 1 days;
+        maxPoolDuration = 30 days;
+
+        // Setup access control
+        _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+        _grantRole(ADMIN_ROLE, _admin);
+        _grantRole(MODERATOR_ROLE, _admin);
+    }
+
+    /**
+     * @dev Creates a new pool to collectively fund an answer change
+     */
+    function createPool(
+        uint256 opinionId,
+        string calldata proposedAnswer,
+        uint256 deadline,
+        uint256 initialContribution,
+        string calldata name,
+        string calldata ipfsHash
+    ) external override nonReentrant {
+        // Get current answer
+        OpinionStructs.Opinion memory opinion = opinionCore.getOpinionDetails(
+            opinionId
+        );
+
+        // Check NextPrice >= 100 USDC requirement for pool creation
+        uint256 nextPrice = opinionCore.getNextPrice(opinionId);
+        if (nextPrice < 100_000_000) { // 100 USDC (6 decimals)
+            revert PoolNextPriceTooLow(nextPrice, 100_000_000);
+        }
+
+        // Validate parameters
+        PoolStructs.PoolCreationParams memory params = PoolStructs
+            .PoolCreationParams({
+                opinionId: opinionId,
+                proposedAnswer: proposedAnswer,
+                deadline: uint32(deadline),
+                initialContribution: uint96(initialContribution),
+                name: name,
+                ipfsHash: ipfsHash
+            });
+
+        PoolLibrary.validatePoolCreationParams(
+            params,
+            minPoolDuration,
+            maxPoolDuration,
+            1_000_000, // Minimum 1 USDC
+            block.timestamp,
+            MAX_POOL_NAME_LENGTH,
+            50, // Max answer length from opinion core
+            MAX_POOL_NAME_LENGTH,
+            MAX_IPFS_HASH_LENGTH,
+            opinion.currentAnswer
+        );
+
+        // Calculate total required amount
+        uint96 totalRequired = poolCreationFee + uint96(initialContribution);
+
+        // Check allowance
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < totalRequired)
+            revert InsufficientAllowance(totalRequired, allowance);
+
+        // Create the pool and get pool ID
+        uint256 poolId = _createPoolRecord(
+            opinionId,
+            proposedAnswer,
+            deadline,
+            initialContribution,
+            name,
+            ipfsHash
+        );
+
+        // Handle funds transfer
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalRequired);
+
+        // Send creation fee directly to treasury (full treasury model)
+        usdcToken.safeTransfer(treasury, poolCreationFee);
+
+        // Emit creation event
+        emit PoolCreated(
+            poolId,
+            opinionId,
+            proposedAnswer,
+            msg.sender,
+            initialContribution,
+            deadline,
+            name,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Allows users to contribute to an existing pool
+     */
+    function contributeToPool(
+        uint256 poolId,
+        uint256 amount
+    ) external override nonReentrant {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Validate pool is active
+        if (pool.status != PoolStructs.PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        // Check deadline
+        if (block.timestamp > pool.deadline)
+            revert PoolDeadlinePassed(poolId, pool.deadline);
+
+        // Use dynamic NextPrice as target (real-time)
+        uint256 opinionId = pool.opinionId;
+        uint96 targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ DYNAMIC: Always current NextPrice
+
+        // Check if pool already has enough funds
+        if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
+
+        // Calculate maximum allowed contribution
+        uint96 maxAllowed = targetPrice - pool.totalAmount;
+
+        // Adjust contribution if needed
+        uint96 actualAmount = amount > maxAllowed ? maxAllowed : uint96(amount);
+
+        // Ensure non-zero contribution
+        if (actualAmount == 0) revert PoolContributionTooLow(actualAmount, 1);
+
+        // No contribution fee anymore - just transfer the contribution amount
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < actualAmount)
+            revert InsufficientAllowance(actualAmount, allowance);
+
+        // Update pool state
+        _updatePoolForContribution(poolId, actualAmount);
+
+        // Transfer funds (no fee)
+        usdcToken.safeTransferFrom(msg.sender, address(this), actualAmount);
+
+        // Emit contribution event
+        emit PoolContribution(
+            poolId,
+            opinionId,
+            msg.sender,
+            actualAmount,
+            pool.totalAmount,
+            block.timestamp
+        );
+
+        // Check if pool is ready to execute
+        _checkAndExecutePoolIfReady(poolId);
+    }
+
+    /**
+     * @dev Complete a pool by contributing the exact remaining amount
+     * @param poolId Pool ID to complete
+     */
+    function completePool(uint256 poolId) external nonReentrant {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Validate pool is active
+        if (pool.status != PoolStructs.PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        // Check deadline
+        if (block.timestamp > pool.deadline)
+            revert PoolDeadlinePassed(poolId, pool.deadline);
+
+        // Calculate exact remaining amount using current NextPrice
+        uint96 targetPrice = uint96(opinionCore.getNextPrice(pool.opinionId));
+        if (pool.totalAmount >= targetPrice) revert PoolAlreadyFunded(poolId);
+        
+        uint96 remainingAmount = targetPrice - pool.totalAmount;
+        
+        // ✅ FIX: If remaining amount is tiny (< 0.01 USDC), allow free completion
+        // This handles precision issues from bonding curve calculations
+        if (remainingAmount > 0 && remainingAmount < 10000) { // < 0.01 USDC
+            // Micro-amount completion - no additional payment needed
+            pool.totalAmount = targetPrice; // Set to exact target
+            
+            emit PoolContribution(
+                poolId,
+                pool.opinionId,
+                msg.sender,
+                remainingAmount, // Show the micro-amount as contributed
+                pool.totalAmount,
+                block.timestamp
+            );
+            
+            // Pool should be ready to execute now
+            _checkAndExecutePoolIfReady(poolId);
+            return;
+        }
+        
+        // Ensure there's actually a meaningful amount to contribute
+        if (remainingAmount == 0) revert PoolAlreadyFunded(poolId);
+
+        // No contribution fee anymore - just transfer the remaining amount
+        uint256 allowance = usdcToken.allowance(msg.sender, address(this));
+        if (allowance < remainingAmount)
+            revert InsufficientAllowance(remainingAmount, allowance);
+
+        // Update pool state
+        _updatePoolForContribution(poolId, remainingAmount);
+
+        // Transfer funds (no fee)
+        usdcToken.safeTransferFrom(msg.sender, address(this), remainingAmount);
+
+        // Emit contribution event
+        emit PoolContribution(
+            poolId,
+            pool.opinionId,
+            msg.sender,
+            remainingAmount,
+            pool.totalAmount,
+            block.timestamp
+        );
+
+        // Pool should be ready to execute now
+        _checkAndExecutePoolIfReady(poolId);
+    }
+
+    /**
+     * @dev Allows contributor to withdraw from an expired pool
+     */
+    function withdrawFromExpiredPool(
+        uint256 poolId
+    ) external override nonReentrant {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Check if already expired or needs to be marked
+        bool isExpired = pool.status == PoolStructs.PoolStatus.Expired;
+        if (!isExpired) {
+            // If not already marked, check if it should be
+            isExpired = block.timestamp > pool.deadline;
+
+            if (isExpired) {
+                // Update status if expired
+                pool.status = PoolStructs.PoolStatus.Expired;
+
+                // Emit expiry event
+                emit PoolExpired(
+                    poolId,
+                    pool.opinionId,
+                    pool.totalAmount,
+                    poolContributors[poolId].length,
+                    block.timestamp
+                );
+            }
+        }
+
+        // Only allow withdrawals from expired pools
+        if (!isExpired) revert PoolNotExpired(poolId, pool.deadline);
+
+        // Check user contribution
+        uint96 userContribution = poolContributionAmounts[poolId][msg.sender];
+        if (userContribution == 0)
+            revert PoolNoContribution(poolId, msg.sender);
+
+        // Reset contribution before transfer
+        poolContributionAmounts[poolId][msg.sender] = 0;
+
+        // Transfer funds back to contributor
+        usdcToken.safeTransfer(msg.sender, userContribution);
+
+        // Emit refund event
+        emit PoolRefund(poolId, msg.sender, userContribution, block.timestamp);
+    }
+
+    /**
+     * @dev Extends the deadline of a pool
+     */
+    function extendPoolDeadline(
+        uint256 poolId,
+        uint256 newDeadline
+    ) external override nonReentrant {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Ensure pool can be extended
+        bool canExtend = pool.status == PoolStructs.PoolStatus.Active ||
+            (pool.status == PoolStructs.PoolStatus.Expired &&
+                block.timestamp <= pool.deadline + 7 days);
+
+        if (!canExtend) revert("Pool cannot be extended");
+
+        // Validate new deadline
+        if (newDeadline <= pool.deadline) revert("New deadline must be later");
+
+        if (newDeadline > block.timestamp + maxPoolDuration)
+            revert PoolDeadlineTooLong(uint256(newDeadline), maxPoolDuration);
+
+        // Update pool deadline and status
+        pool.deadline = uint32(newDeadline);
+        pool.status = PoolStructs.PoolStatus.Extended;
+
+        // Emit deadline extension event
+        emit PoolExtended(
+            poolId,
+            pool.opinionId,
+            msg.sender,
+            newDeadline,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Checks if a pool has expired and updates its status
+     */
+    function checkPoolExpiry(uint256 poolId) external override returns (bool) {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Only check active pools
+        if (pool.status != PoolStructs.PoolStatus.Active) {
+            return pool.status == PoolStructs.PoolStatus.Expired;
+        }
+
+        // Check if deadline has passed
+        if (block.timestamp > pool.deadline) {
+            pool.status = PoolStructs.PoolStatus.Expired;
+
+            // Emit expiry event
+            emit PoolExpired(
+                poolId,
+                pool.opinionId,
+                pool.totalAmount,
+                poolContributors[poolId].length,
+                block.timestamp
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @dev Distributes rewards when a pool-owned answer is purchased
+     */
+    function distributePoolRewards(
+        uint256 opinionId,
+        uint256 purchasePrice,
+        address buyer
+    ) external override {
+        // Only allow calls from the Opinion Core contract
+        require(msg.sender == address(opinionCore), "Unauthorized caller");
+
+        // Find the pool that owns this answer
+        uint256[] memory poolsForOpinion = opinionPools[opinionId];
+        uint256 ownerPoolId;
+        bool foundPool = false;
+
+        for (uint256 i = 0; i < poolsForOpinion.length; i++) {
+            uint256 poolId = poolsForOpinion[i];
+            PoolStructs.PoolInfo storage pool = pools[poolId];
+
+            // Check if this pool owns the answer (is executed and has matching answer)
+            if (pool.status == PoolStructs.PoolStatus.Executed) {
+                OpinionStructs.Opinion memory opinion = opinionCore
+                    .getOpinionDetails(opinionId);
+                if (
+                    keccak256(bytes(pool.proposedAnswer)) ==
+                    keccak256(bytes(opinion.currentAnswer))
+                ) {
+                    ownerPoolId = poolId;
+                    foundPool = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundPool) return;
+
+        // Calculate reward amount (after platform and creator fees)
+        (uint96 platformFee, uint96 creatorFee, ) = feeManager
+            .calculateFeeDistribution(purchasePrice);
+        uint96 rewardAmount = uint96(purchasePrice) - platformFee - creatorFee;
+
+        // Get pool contributors and distribute rewards
+        address[] memory contributors = poolContributors[ownerPoolId];
+        uint96 totalContributed = pools[ownerPoolId].totalAmount;
+
+        for (uint256 i = 0; i < contributors.length; i++) {
+            address contributor = contributors[i];
+            uint96 contribution = poolContributionAmounts[ownerPoolId][
+                contributor
+            ];
+
+            if (contribution > 0) {
+                // Calculate contributor's share
+                uint256 sharePercent = (uint256(contribution) * 100) /
+                    totalContributed;
+                uint96 reward = uint96(
+                    (uint256(rewardAmount) * sharePercent) / 100
+                );
+
+                // Accumulate reward
+                feeManager.accumulateFee(contributor, reward);
+
+                // Emit reward event
+                emit PoolRewardDistributed(
+                    ownerPoolId,
+                    opinionId,
+                    contributor,
+                    contribution,
+                    sharePercent,
+                    reward,
+                    block.timestamp
+                );
+            }
+        }
+    }
+
+    /**
+     * @dev Executes a pool if ready (reached target price)
+     */
+    function executePoolIfReady(
+        uint256 poolId,
+        uint256 opinionId
+    ) external override {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        // Only allow calls from within contract or Opinion Core
+        require(
+            msg.sender == address(this) || msg.sender == address(opinionCore),
+            "Unauthorized caller"
+        );
+
+        _checkAndExecutePoolIfReady(poolId);
+    }
+
+    /**
+     * @dev Returns detailed information about a pool
+     */
+    function getPoolDetails(
+        uint256 poolId
+    )
+        external
+        view
+        override
+        returns (
+            PoolStructs.PoolInfo memory info,
+            uint256 currentPrice,
+            uint256 remainingAmount,
+            uint256 timeRemaining
+        )
+    {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        info = pools[poolId];
+
+        // Use dynamic NextPrice as target (real-time)
+        currentPrice = opinionCore.getNextPrice(info.opinionId); // ✅ DYNAMIC: Current NextPrice
+
+        // Calculate remaining amount needed
+        if (info.totalAmount >= currentPrice) {
+            remainingAmount = 0;
+        } else {
+            remainingAmount = currentPrice - info.totalAmount;
+        }
+
+        // Calculate time remaining
+        if (block.timestamp >= info.deadline) {
+            timeRemaining = 0;
+        } else {
+            timeRemaining = info.deadline - block.timestamp;
+        }
+    }
+
+    /**
+     * @dev Returns all contributor addresses for a pool
+     */
+    function getPoolContributors(
+        uint256 poolId
+    ) external view override returns (address[] memory) {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+        return poolContributors[poolId];
+    }
+
+    /**
+     * @dev Returns all pools for a specific opinion
+     */
+    function getOpinionPools(
+        uint256 opinionId
+    ) external view override returns (uint256[] memory) {
+        return opinionPools[opinionId];
+    }
+
+    /**
+     * @dev Returns reward information for a pool
+     */
+    function getPoolRewardInfo(
+        uint256 poolId
+    )
+        external
+        view
+        override
+        returns (
+            address[] memory contributors,
+            uint96[] memory amounts,
+            uint96 totalAmount
+        )
+    {
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+
+        contributors = poolContributors[poolId];
+        amounts = new uint96[](contributors.length);
+
+        for (uint256 i = 0; i < contributors.length; i++) {
+            amounts[i] = poolContributionAmounts[poolId][contributors[i]];
+        }
+
+        totalAmount = pools[poolId].totalAmount;
+    }
+
+    // --- INTERNAL FUNCTIONS ---
+
+    /**
+     * @dev Creates a new pool record
+     */
+    function _createPoolRecord(
+        uint256 opinionId,
+        string memory proposedAnswer,
+        uint256 deadline,
+        uint256 initialContribution,
+        string memory name,
+        string memory ipfsHash
+    ) internal returns (uint256) {
+        uint256 poolId = poolCount++;
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Initialize pool
+        pool.id = poolId;
+        pool.opinionId = opinionId;
+        pool.proposedAnswer = proposedAnswer;
+        pool.totalAmount = uint96(initialContribution);
+        pool.targetPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ INITIAL: Store initial NextPrice (for reference only)
+        pool.deadline = uint32(deadline);
+        pool.creator = msg.sender;
+        pool.status = PoolStructs.PoolStatus.Active;
+        pool.name = name;
+        pool.ipfsHash = ipfsHash;
+
+        // Track initial contribution
+        poolContributions[poolId].push(
+            PoolStructs.PoolContribution({
+                contributor: msg.sender,
+                amount: uint96(initialContribution),
+                timestamp: uint32(block.timestamp)
+            })
+        );
+
+        poolContributionAmounts[poolId][msg.sender] = uint96(
+            initialContribution
+        );
+        poolContributors[poolId].push(msg.sender);
+
+        // Update mappings
+        opinionPools[opinionId].push(poolId);
+        userPools[msg.sender].push(poolId);
+
+        return poolId;
+    }
+
+    /**
+     * @dev Updates pool state for a contribution
+     */
+    function _updatePoolForContribution(
+        uint256 poolId,
+        uint96 amount
+    ) internal {
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Update pool state
+        if (poolContributionAmounts[poolId][msg.sender] == 0) {
+            // First contribution from this user
+            poolContributors[poolId].push(msg.sender);
+            userPools[msg.sender].push(poolId);
+        }
+
+        // Record contribution
+        poolContributions[poolId].push(
+            PoolStructs.PoolContribution({
+                contributor: msg.sender,
+                amount: amount,
+                timestamp: uint32(block.timestamp)
+            })
+        );
+
+        poolContributionAmounts[poolId][msg.sender] += amount;
+        pool.totalAmount += amount;
+    }
+
+    /**
+     * @dev Checks if pool has reached target price and executes if so
+     * ✅ FIX: Added completion tolerance to handle precision issues
+     */
+    function _checkAndExecutePoolIfReady(uint256 poolId) internal {
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Only execute active pools
+        if (pool.status != PoolStructs.PoolStatus.Active) {
+            return;
+        }
+
+        uint256 opinionId = pool.opinionId;
+        uint96 currentNextPrice = uint96(opinionCore.getNextPrice(opinionId)); // ✅ DYNAMIC: Current NextPrice
+        uint96 currentAmount = pool.totalAmount;
+        
+        // ✅ DYNAMIC: Execute if we have enough funds for CURRENT NextPrice
+        // Allow 0.01% tolerance for precision issues
+        uint96 tolerance = currentNextPrice / 10000; // 0.01% tolerance
+        if (tolerance < 1) tolerance = 1; // Minimum 1 wei tolerance
+        
+        // Execute if we're within tolerance of CURRENT NextPrice
+        if (currentAmount >= currentNextPrice - tolerance) {
+            _executePool(poolId, opinionId, currentNextPrice);
+        }
+    }
+
+    /**
+     * @dev Executes a pool when it has reached the target price
+     */
+    function _executePool(
+        uint256 poolId,
+        uint256 opinionId,
+        uint96 targetPrice
+    ) internal {
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+
+        // Double-check status
+        if (pool.status != PoolStructs.PoolStatus.Active)
+            revert PoolNotActive(poolId, uint8(pool.status));
+
+        // Double-check funds against CURRENT NextPrice (dynamic)
+        uint96 currentNextPrice = uint96(opinionCore.getNextPrice(opinionId));
+        if (pool.totalAmount < currentNextPrice)
+            revert PoolInsufficientFunds(pool.totalAmount, currentNextPrice);
+
+        // Get current answer owner before execution
+        OpinionStructs.Opinion memory opinion = opinionCore.getOpinionDetails(
+            opinionId
+        );
+        address currentOwner = opinion.currentAnswerOwner;
+
+        // Update opinion through core contract using CURRENT NextPrice
+        opinionCore.updateOpinionOnPoolExecution(
+            opinionId,
+            pool.proposedAnswer,
+            address(this), // Pool address as owner
+            targetPrice // This is now the current NextPrice, not fixed
+        );
+
+        // Update pool status
+        pool.status = PoolStructs.PoolStatus.Executed;
+
+        // Emit execution event
+        emit PoolExecuted(
+            poolId,
+            opinionId,
+            pool.proposedAnswer,
+            targetPrice,
+            block.timestamp
+        );
+    }
+
+    // --- ADMIN FUNCTIONS ---
+
+    /**
+     * @dev Sets pool creation fee
+     */
+    function setPoolCreationFee(uint96 newFee) external onlyRole(ADMIN_ROLE) {
+        poolCreationFee = newFee;
+        emit ParameterUpdated(
+            8,
+            poolCreationFee,
+            newFee,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Sets pool contribution fee
+     */
+    function setPoolContributionFee(
+        uint96 newFee
+    ) external onlyRole(ADMIN_ROLE) {
+        poolContributionFee = newFee;
+        emit ParameterUpdated(
+            9,
+            poolContributionFee,
+            newFee,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Sets minimum pool duration
+     */
+    function setMinPoolDuration(
+        uint32 newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        minPoolDuration = newDuration;
+        emit ParameterUpdated(
+            10,
+            minPoolDuration,
+            newDuration,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Sets maximum pool duration
+     */
+    function setMaxPoolDuration(
+        uint32 newDuration
+    ) external onlyRole(ADMIN_ROLE) {
+        maxPoolDuration = newDuration;
+        emit ParameterUpdated(
+            11,
+            maxPoolDuration,
+            newDuration,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    // --- EARLY WITHDRAWAL FEATURE ---
+
+    /**
+     * @dev Allows contributor to withdraw early from pool with 10% penalty
+     * OBLIGATOIRE: Cette signature exacte
+     * @param poolId Pool ID to withdraw from
+     */
+    function withdrawFromPoolEarly(uint256 poolId) external nonReentrant {
+        // === CHECKS === (OBLIGATOIRE: Cet ordre exact de validations)
+        
+        // 1. Pool ID validation FIRST
+        if (poolId >= poolCount) revert PoolInvalidPoolId(poolId);
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        
+        // 2. Pool status validation  
+        if (pool.status != PoolStructs.PoolStatus.Active) revert PoolNotActive(poolId, uint8(pool.status));
+        
+        // 3. Deadline validation
+        if (block.timestamp >= pool.deadline) revert PoolDeadlinePassed(poolId, pool.deadline);
+        
+        // 4. User contribution validation
+        uint96 userContribution = poolContributionAmounts[poolId][msg.sender];
+        if (userContribution == 0) revert PoolNoContribution(poolId, msg.sender);
+        
+        // === EFFECTS === (OBLIGATOIRE: State updates BEFORE transfers for reentrancy protection)
+        
+        // 5. Calculate penalty and splits (SECURITY FIX: Enhanced penalty, 100% treasury)
+        uint96 penalty = userContribution * 20 / 100;           // 🔒 20% total penalty (enhanced deterrent)
+        uint96 userAmount = userContribution - penalty;         // 80% vers user
+        // 🔒 SECURITY: 100% penalty vers treasury (ZERO creator incentive)
+        
+        // 6. Update state (OBLIGATOIRE: Reset user contribution BEFORE transfers)
+        poolContributionAmounts[poolId][msg.sender] = 0;
+        
+        // 7. Update pool total amount
+        pool.totalAmount -= userContribution;
+        
+        // === INTERACTIONS === (SECURITY FIX: Safe transfer pattern)
+        
+        // 8. Transfer to user (80%) - Enhanced penalty applied
+        usdcToken.safeTransfer(msg.sender, userAmount);
+        
+        // 9. Transfer to treasury (100% of penalty) - 🔒 SECURITY FIX: NO creator share
+        if (penalty > 0) {
+            usdcToken.safeTransfer(treasury, penalty);
+        }
+        
+        // 🔒 REMOVED: All creator penalty sharing logic eliminated
+        // 🔒 SECURITY: Zero incentive for gaming attacks
+        
+        // 10. Emit event (Updated with new penalty structure)
+        emit PoolEarlyWithdrawal(poolId, msg.sender, userContribution, penalty, userAmount, block.timestamp);
+    }
+
+    // --- HELPER VIEW FUNCTIONS (CREATIVE FREEDOM ZONE) ---
+
+    /**
+     * @dev Preview early withdrawal amounts for a user
+     * @param poolId Pool ID
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return penalty Total penalty amount (10%)
+     * @return userWillReceive Amount user will receive (90%)
+     * @return canWithdraw Whether withdrawal is currently possible
+     */
+    function getEarlyWithdrawalPreview(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 penalty,
+        uint96 userWillReceive,
+        bool canWithdraw
+    ) {
+        // Validate pool exists
+        if (poolId >= poolCount) {
+            return (0, 0, 0, false);
+        }
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        userContribution = poolContributionAmounts[poolId][user];
+        
+        // Calculate amounts if user has contribution
+        if (userContribution > 0) {
+            penalty = userContribution * 20 / 100;           // 🔒 20% total penalty (security fix)
+            userWillReceive = userContribution - penalty;    // 80% to user
+            
+            // Check if withdrawal is possible
+            canWithdraw = pool.status == PoolStructs.PoolStatus.Active && 
+                         block.timestamp < pool.deadline;
+        } else {
+            penalty = 0;
+            userWillReceive = 0;
+            canWithdraw = false;
+        }
+    }
+
+    /**
+     * @dev Get detailed penalty breakdown for early withdrawal (SECURITY FIX)
+     * @param poolId Pool ID  
+     * @param user User address
+     * @return userContribution Current user contribution
+     * @return totalPenalty Total penalty (20% - enhanced)
+     * @return treasuryReceives Treasury receives (100% of penalty)
+     * @return userReceives Amount user receives (80%)
+     */
+    function getEarlyWithdrawalBreakdown(uint256 poolId, address user) external view returns (
+        uint96 userContribution,
+        uint96 totalPenalty,
+        uint96 treasuryReceives,
+        uint96 userReceives
+    ) {
+        if (poolId >= poolCount) {
+            return (0, 0, 0, 0);
+        }
+        
+        userContribution = poolContributionAmounts[poolId][user];
+        
+        if (userContribution > 0) {
+            totalPenalty = userContribution * 20 / 100;        // 🔒 20% total penalty (security fix)
+            treasuryReceives = totalPenalty;                   // 🔒 100% vers treasury (no creator share)
+            userReceives = userContribution - totalPenalty;    // 80% vers user
+        }
+    }
+
+    /**
+     * @dev Check if early withdrawal is possible for a user
+     * @param poolId Pool ID
+     * @param user User address
+     * @return possible Whether early withdrawal is possible
+     * @return reason Reason if not possible (0=possible, 1=invalid_pool, 2=not_active, 3=deadline_passed, 4=no_contribution)
+     */
+    function canWithdrawEarly(uint256 poolId, address user) external view returns (bool possible, uint8 reason) {
+        // Check pool exists
+        if (poolId >= poolCount) {
+            return (false, 1); // invalid_pool
+        }
+        
+        PoolStructs.PoolInfo storage pool = pools[poolId];
+        
+        // Check pool status
+        if (pool.status != PoolStructs.PoolStatus.Active) {
+            return (false, 2); // not_active
+        }
+        
+        // Check deadline
+        if (block.timestamp >= pool.deadline) {
+            return (false, 3); // deadline_passed
+        }
+        
+        // Check user contribution
+        if (poolContributionAmounts[poolId][user] == 0) {
+            return (false, 4); // no_contribution
+        }
+        
+        return (true, 0); // possible
+    }
+
+    /**
+     * @dev Authorize contract upgrades - only admin can upgrade
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
+}

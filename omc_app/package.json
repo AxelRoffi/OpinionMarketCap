@@ -1,69 +1,26 @@
 {
-  "name": "contract-hardhat",
+  "name": "opinionmarketcap",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    
-    "compile": "hardhat compile",
-    "compile:clean": "hardhat clean && hardhat compile",
-    
-    "test:hardhat": "hardhat test",
-    
-    "mainnet:deploy": "npx hardhat run scripts/deploy-mainnet.ts --network base",
-    "mainnet:verify": "npx hardhat run scripts/verify-mainnet-contracts.ts --network base",
-    "mainnet:setup": "cp .env.mainnet.template .env.mainnet && echo 'Edit .env.mainnet with your values'",
-    "mainnet:validate": "npx hardhat run scripts/validate-mainnet-setup.ts --network base",
-    "mainnet:monitor": "node scripts/monitor-mainnet-health.js",
-    "testnet:deploy": "npx hardhat run scripts/deploy.ts --network baseSepolia",
-    "test:coverage": "hardhat coverage",
-    
-    "deploy:testnet": "hardhat run scripts/deploy-step-by-step.ts --network baseSepolia",
-    "deploy:mainnet": "hardhat run scripts/deploy-mainnet.ts --network base",
-    "deploy:mainnet-safe": "hardhat run scripts/deploy-mainnet-safe.ts --network base",
-    
-    "verify:testnet": "hardhat run scripts/verify-contracts.ts --network baseSepolia",
-    "verify:mainnet": "hardhat run scripts/verify-mainnet-contracts.ts --network base",
-    
-    "validate:usdc": "hardhat run scripts/validate-usdc.ts",
-    "validate:environment": "node -e \"console.log('Environment validation script')\"",
-    
-    "monitor:health": "hardhat run scripts/deployment-monitor.ts",
-    "monitor:setup": "echo 'Setting up monitoring infrastructure'",
-    
-    "mainnet:prepare": "npm run compile:clean && npm run validate:usdc && npm run validate:environment",
-    "mainnet:deploy-safe": "npm run mainnet:prepare && npm run deploy:mainnet-safe",
-    "mainnet:deploy-direct": "npm run mainnet:prepare && npm run deploy:mainnet",
-    "mainnet:verify": "npm run verify:mainnet",
-    "mainnet:monitor": "npm run monitor:health",
-    "mainnet:full-cycle": "npm run mainnet:deploy-safe && npm run mainnet:verify && npm run mainnet:monitor",
-    
-    "size": "hardhat size-contracts",
-    "node": "hardhat node",
-    "flatten": "hardhat flatten",
-    
-    "docs:generate": "echo 'Generating documentation'",
-    "security:audit": "npm audit && echo 'Security audit complete'"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:landing": "turbo run dev --filter=landing",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=web",
+    "build:landing": "turbo run build --filter=landing",
+    "deploy:web": "cd apps/web && vercel --prod",
+    "deploy:landing": "cd apps/landing && vercel --prod",
+    "test:contracts": "cd contracts && npx hardhat test",
+    "compile": "cd contracts && npx hardhat compile"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.13",
-    "@openzeppelin/hardhat-upgrades": "^3.9.0",
-    "dotenv": "^16.4.7",
-    "hardhat": "^2.22.17",
-    "hardhat-contract-sizer": "^2.10.0"
+    "turbo": "latest"
   },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0",
-    "@openzeppelin/contracts-upgradeable": "5.0.0",
-    "framer-motion": "^12.16.0"
+  "engines": {
+    "node": ">=18"
   }
 }
