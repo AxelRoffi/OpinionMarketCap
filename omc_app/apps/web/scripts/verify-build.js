@@ -52,7 +52,7 @@ function verifyLockedDependencies() {
     { name: 'wagmi', expected: '2.15.6' },
     { name: '@rainbow-me/rainbowkit', expected: '2.2.8' },
     { name: 'viem', expected: '2.31.3' },
-    { name: 'next', expected: '15.5.3' }
+    { name: 'next', expected: '15.5.9' }
   ];
   
   let hasErrors = false;

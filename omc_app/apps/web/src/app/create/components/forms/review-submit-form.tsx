@@ -342,7 +342,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
                 setTimeout(() => {
                   onSuccess(opinionId)
                 }, 2000)
-                return
+                return;
               }
             } catch (parseError) {
               console.error('Parse error for log:', parseError)
