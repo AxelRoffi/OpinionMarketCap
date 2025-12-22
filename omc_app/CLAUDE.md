@@ -123,6 +123,26 @@ maxTradesPerBlock = 3;
 - Updated IOpinionCore.sol interface with new function
 - All supporting contracts copied to activeAlternative directory
 
+## Contract Configuration Updates Applied
+### OpinionMarketCapCore.sol Changes:
+- ✅ MAX_QUESTION_LENGTH: 52 → 60 characters
+- ✅ MAX_ANSWER_LENGTH: 52 → 60 characters  
+- ✅ MAX_DESCRIPTION_LENGTH: 120 → 280 characters
+- ✅ MAX_INITIAL_PRICE: constant → admin-configurable (100 USDC default)
+- ✅ questionCreationFee: 5 USDC → 1 USDC minimum (with 20% dynamic logic)
+- ✅ initialAnswerPrice: 2 USDC → 1 USDC
+- ✅ isPublicCreationEnabled: false → true
+- ✅ maxTradesPerBlock: 3 → 0 (no limit)
+- ✅ Dynamic creation fee: MAX(1 USDC, 20% of initial price)
+
+### FeeManager.sol Changes:
+- ✅ mevPenaltyPercent: 20% → 0% (MEV protection disabled)
+
+### PoolManager.sol Changes:
+- ✅ poolContributionFee: 1 USDC → 0 USDC (free to join pools)
+- ✅ maxPoolDuration: 30 days → 60 days
+- ✅ Early exit penalty: 20% (already implemented)
+
 ## Session Completion Status
 ✅ Analysis complete
 ✅ Contracts copied and modified  
