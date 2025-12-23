@@ -129,11 +129,11 @@ maxTradesPerBlock = 3;
 - ✅ MAX_ANSWER_LENGTH: 52 → 60 characters  
 - ✅ MAX_DESCRIPTION_LENGTH: 120 → 280 characters
 - ✅ MAX_INITIAL_PRICE: constant → admin-configurable (100 USDC default)
-- ✅ questionCreationFee: 5 USDC → 1 USDC minimum (with 20% dynamic logic)
+- ✅ questionCreationFee: 5 USDC → 2 USDC minimum (with 20% dynamic logic)
 - ✅ initialAnswerPrice: 2 USDC → 1 USDC
 - ✅ isPublicCreationEnabled: false → true
 - ✅ maxTradesPerBlock: 3 → 0 (no limit)
-- ✅ Dynamic creation fee: MAX(1 USDC, 20% of initial price)
+- ✅ Dynamic creation fee: MAX(2 USDC, 20% of initial price)
 
 ### FeeManager.sol Changes:
 - ✅ mevPenaltyPercent: 20% → 0% (MEV protection disabled)
