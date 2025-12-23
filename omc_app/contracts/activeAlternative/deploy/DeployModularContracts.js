@@ -15,8 +15,8 @@ async function main() {
 
     // Base Mainnet addresses
     const USDC_TOKEN = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // Base USDC
-    const TREASURY = "0xFb7eF00D5C2a87d282F273632e834f9105795067";   // Your treasury
-    const ADMIN = deployer.address; // Admin is deployer
+    const TREASURY = "0x644541778b26D101b6E6516B7796768631217b68";   // Your treasury
+    const ADMIN = "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3";       // Admin wallet
 
     console.log("📋 Deployment Configuration:");
     console.log("- USDC Token:", USDC_TOKEN);
