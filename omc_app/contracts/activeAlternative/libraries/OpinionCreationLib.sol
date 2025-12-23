@@ -99,11 +99,11 @@ library OpinionCreationLib {
             revert IOpinionMarketErrors.InvalidInitialPrice();
         }
 
-        // Calculate creation fee: MAX(1 USDC, 20% of initial price)
+        // Calculate creation fee: MAX(2 USDC, 20% of initial price)
         uint96 creationFee = OpinionPricingLibrary.calculateCreationFee(
             params.initialPrice,
             20, // 20% of initial price
-            1_000_000 // 1 USDC minimum
+            2_000_000 // 2 USDC minimum
         );
 
         // Check allowance
