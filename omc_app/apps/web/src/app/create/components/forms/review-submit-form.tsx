@@ -56,9 +56,9 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
 
-  // Correct fee calculation matching smart contract: 20% with 5 USDC minimum
+  // Correct fee calculation matching smart contract: 20% with 2 USDC minimum
   const calculatedFee = formData.initialPrice * 0.2
-  const creationFee = calculatedFee < 5 ? 5 : calculatedFee
+  const creationFee = calculatedFee < 2 ? 2 : calculatedFee
   const creationFeeWei = BigInt(Math.round(creationFee * 1_000_000)) // Convert to USDC wei (6 decimals)
   const initialPriceWei = BigInt(Math.round(formData.initialPrice * 1_000_000))
 
@@ -568,7 +568,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">
-                Creation Fee {creationFee === 5 ? '(5 USDC Min)' : '(20%)'}:
+                Creation Fee {creationFee === 2 ? '(2 USDC Min)' : '(20%)'}:
               </span>
               <span className="text-yellow-400 font-medium">${creationFee.toFixed(2)}</span>
             </div>
@@ -682,7 +682,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
           <a href="#" className="text-emerald-400 hover:text-emerald-300">
             terms and conditions
           </a>{' '}
-          and understand that creating an opinion requires paying a creation fee (20% of initial price with 5 USDC minimum).
+          and understand that creating an opinion requires paying a creation fee (20% of initial price with 2 USDC minimum).
         </Label>
       </div>
 

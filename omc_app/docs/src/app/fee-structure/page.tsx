@@ -94,7 +94,7 @@ export default function FeeStructurePage() {
                 </div>
                 <div className="bg-red-900/20 border border-red-500/30 rounded p-3">
                   <h5 className="text-red-400 text-sm font-semibold mb-1">Minimum Floor</h5>
-                  <p className="text-gray-300 text-xs mb-1">5 USDC absolute minimum</p>
+                  <p className="text-gray-300 text-xs mb-1">2 USDC absolute minimum</p>
                   <p className="text-gray-400 text-xs">Ensures all opinions contribute meaningful value</p>
                 </div>
               </div>
@@ -104,8 +104,8 @@ export default function FeeStructurePage() {
               <h4 className="text-white font-semibold mb-3">Fee Examples</h4>
               <div className="space-y-2 text-sm">
                 <div className="bg-gray-800 rounded p-3 flex justify-between">
-                  <span className="text-gray-300">Initial Price: 5 USDC</span>
-                  <span className="text-orange-400">Fee: 5 USDC (minimum)</span>
+                  <span className="text-gray-300">Initial Price: 3 USDC</span>
+                  <span className="text-orange-400">Fee: 2 USDC (minimum)</span>
                 </div>
                 <div className="bg-gray-800 rounded p-3 flex justify-between">
                   <span className="text-gray-300">Initial Price: 30 USDC</span>
@@ -227,7 +227,7 @@ export default function FeeStructurePage() {
                 <div className="text-sm text-gray-400">Total Trade Price</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-red-400 mb-1">5 USDC</div>
+                <div className="text-lg font-bold text-red-400 mb-1">2 USDC</div>
                 <div className="text-sm text-gray-400">Platform Fee (10%)</div>
               </div>
               <div>
@@ -401,14 +401,14 @@ export default function FeeStructurePage() {
               <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
                 <h4 className="text-emerald-400 font-semibold mb-3">Low-Volume Opinion</h4>
                 <div className="space-y-2 text-sm text-gray-300">
-                  <p><strong>Initial Price:</strong> 5 USDC</p>
+                  <p><strong>Initial Price:</strong> 3 USDC</p>
                   <p><strong>Monthly Trades:</strong> 3</p>
                   <p><strong>Avg Trade Price:</strong> 8 USDC</p>
                   <p><strong>Monthly Creator Royalty:</strong> ~0.72 USDC (3%)</p>
                   <p><strong>Annual Projection:</strong> ~8.64 USDC</p>
                 </div>
                 <div className="mt-3 p-2 bg-emerald-800/30 rounded">
-                  <p className="text-emerald-400 text-xs"><strong>ROI:</strong> 173% annually on 5 USDC creation fee</p>
+                  <p className="text-emerald-400 text-xs"><strong>ROI:</strong> 432% annually on 2 USDC creation fee</p>
                 </div>
               </div>
               
@@ -422,7 +422,7 @@ export default function FeeStructurePage() {
                   <p><strong>Annual Projection:</strong> ~194.40 USDC</p>
                 </div>
                 <div className="mt-3 p-2 bg-cyan-800/30 rounded">
-                  <p className="text-cyan-400 text-xs"><strong>ROI:</strong> 3,888% annually on 5 USDC creation fee</p>
+                  <p className="text-cyan-400 text-xs"><strong>ROI:</strong> 9,720% annually on 5 USDC creation fee</p>
                 </div>
               </div>
               
@@ -596,7 +596,7 @@ export default function FeeStructurePage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Minimum Fee:</span>
-                  <span className="text-indigo-400">5 USDC</span>
+                  <span className="text-indigo-400">2 USDC</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Recipient:</span>

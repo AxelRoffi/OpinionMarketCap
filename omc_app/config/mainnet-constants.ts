@@ -24,8 +24,8 @@ export const MAINNET_CONFIG = {
   
   // OpinionMarketCap Production Settings
   PLATFORM_SETTINGS: {
-    // Initial creation fee (5 USDC)
-    INITIAL_QUESTION_FEE: "5000000", // 5 * 10^6 (USDC has 6 decimals)
+    // Initial creation fee (2 USDC minimum)
+    INITIAL_QUESTION_FEE: "2000000", // 2 * 10^6 (USDC has 6 decimals)
     
     // Initial answer price (10 USDC) 
     INITIAL_ANSWER_PRICE: "10000000", // 10 * 10^6

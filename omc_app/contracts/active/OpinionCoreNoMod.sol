@@ -150,7 +150,7 @@ contract OpinionMarketCapCore is
         isPublicCreationEnabled = true;
         maxTradesPerBlock = 0; // No trade limit per block
         minimumPrice = 1_000_000; // 1 USDC (6 decimals)
-        questionCreationFee = 1_000_000; // 1 USDC minimum
+        questionCreationFee = 2_000_000; // 2 USDC minimum
         initialAnswerPrice = 1_000_000; // 1 USDC
         absoluteMaxPriceChange = 200; // 200%
         maxInitialPrice = 100_000_000; // 100 USDC

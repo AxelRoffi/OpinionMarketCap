@@ -80,7 +80,7 @@ export default function CreatingOpinionsPage() {
               <div className="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0 mt-1">5</div>
               <div>
                 <h4 className="text-white font-semibold mb-1">Pay Creation Fee</h4>
-                <p className="text-gray-300 text-sm">Pay 20% of initial price (minimum 5 USDC) to mint your opinion on-chain.</p>
+                <p className="text-gray-300 text-sm">Pay 20% of initial price (minimum 2 USDC) to mint your opinion on-chain.</p>
               </div>
             </div>
           </div>
@@ -253,10 +253,10 @@ export default function CreatingOpinionsPage() {
           <h3 className="text-lg font-semibold text-yellow-400 mb-4">💰 Revenue Calculation Examples</h3>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h4 className="text-white font-semibold mb-2">Low Price Strategy (5 USDC initial)</h4>
+              <h4 className="text-white font-semibold mb-2">Low Price Strategy (3 USDC initial)</h4>
               <ul className="space-y-1 text-sm text-gray-300">
-                <li>• Creation fee: 5 USDC (20%, but minimum)</li>
-                <li>• Your cost: 5 USDC total</li>
+                <li>• Creation fee: 2 USDC (20%, but minimum)</li>
+                <li>• Your cost: 2 USDC total</li>
                 <li>• Per trade royalty: ~0.15-0.60 USDC (3% of trade price)</li>
                 <li>• Break even: ~15-30 trades</li>
                 <li>• Potential: High volume = high total returns</li>

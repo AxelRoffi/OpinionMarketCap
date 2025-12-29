@@ -167,9 +167,9 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     return CATEGORIES
   }
 
-  // Correct fee calculation matching smart contract: 20% with 5 USDC minimum
+  // Correct fee calculation matching smart contract: 20% with 2 USDC minimum
   const calculatedFee = formData.initialPrice * 0.2
-  const creationFee = calculatedFee < 5 ? 5 : calculatedFee
+  const creationFee = calculatedFee < 2 ? 2 : calculatedFee
 
   return (
     <div className="space-y-6">
@@ -326,7 +326,7 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">
-                  Creation Fee {creationFee === 5 ? '(5 USDC Min)' : '(20%)'}:
+                  Creation Fee {creationFee === 2 ? '(2 USDC Min)' : '(20%)'}:
                 </span>
                 <span className="text-yellow-400 font-medium">${creationFee.toFixed(2)}</span>
               </div>
@@ -338,8 +338,8 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
               </div>
               <div className="text-xs text-gray-500 space-y-1">
                 <p className="font-medium text-gray-400">Fee Structure:</p>
-                <p>• 20% of initial price with 5 USDC minimum</p>
-                <p>• Example: $3 → $5 fee, $50 → $10 fee</p>
+                <p>• 20% of initial price with 2 USDC minimum</p>
+                <p>• Example: $3 → $2 fee, $50 → $10 fee</p>
                 <p className="pt-1">
                   Users will pay ${formData.initialPrice.toFixed(2)} to take ownership of your answer.
                 </p>
