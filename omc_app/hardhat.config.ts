@@ -78,8 +78,14 @@ const config: HardhatUserConfig = {
     alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
-    strict: false,  // Temporarily disabled to run tests while over 24KB limit
-    only: ['OpinionCore'],
+    strict: false,
+    only: ['OpinionCore', 'OpinionAdmin', 'OpinionExtensions', 'FeeManager', 'PoolManager'],
+  },
+  paths: {
+    sources: "./contracts/active",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
   },
   sourcify: {
     enabled: true

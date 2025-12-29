@@ -122,9 +122,9 @@ contract PoolManager is
 
         // Set initial configuration
         poolCreationFee = 5 * 10 ** 6; // 5 USDC
-        poolContributionFee = 1 * 10 ** 6; // 1 USDC
+        poolContributionFee = 0; // Free to contribute to pools
         minPoolDuration = 1 days;
-        maxPoolDuration = 30 days;
+        maxPoolDuration = 60 days;
 
         // Setup access control
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);

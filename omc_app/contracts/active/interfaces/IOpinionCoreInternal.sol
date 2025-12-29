@@ -21,5 +21,4 @@ interface IOpinionCoreInternal {
     
     // System status
     function isPaused() external view returns (bool);
-    function hasRole(bytes32 role, address account) external view returns (bool);
 }

@@ -222,24 +222,24 @@ contract OpinionCore is
         _checkTradeAllowed(opinionId);
 
         // Validation
-        ValidationLibrary.validateAnswer(answer, MAX_ANSWER_LENGTH);
+        // Validate answer length
+        if (bytes(answer).length < 2 || bytes(answer).length > MAX_ANSWER_LENGTH) {
+            revert InvalidStringParameter("answer", "Length out of bounds");
+        }
         ValidationLibrary.validateDescription(description);
-        _validateExtras("", link);
+        // Skip ipfs validation for now
+        if (bytes(link).length > MAX_LINK_LENGTH) {
+            revert InvalidStringParameter("link", "Too long");
+        }
 
-        uint96 price = uint96(getNextPrice(opinionId));
+        uint96 price = uint96(this.getNextPrice(opinionId));
         
         // Check allowance
         uint256 allowance = usdcToken.allowance(msg.sender, address(this));
         if (allowance < price) revert InsufficientAllowance(price, allowance);
 
-        // Process fees
-        uint96 ownerAmount = feeManager.processTradeFees(
-            price, 
-            opinion.creator,
-            opinion.currentAnswerOwner,
-            msg.sender,
-            opinionId
-        );
+        // Calculate fees
+        (uint96 platformFee, uint96 creatorFee, uint96 ownerAmount) = feeManager.calculateFeeDistribution(price);
 
         // Transfer payment
         usdcToken.safeTransferFrom(msg.sender, address(this), price);
@@ -247,6 +247,11 @@ contract OpinionCore is
         // Transfer to previous answer owner
         if (ownerAmount > 0) {
             usdcToken.safeTransfer(opinion.currentAnswerOwner, ownerAmount);
+        }
+        
+        // Accumulate fees
+        if (creatorFee > 0) {
+            feeManager.accumulateFee(opinion.creator, creatorFee);
         }
 
         // Update opinion state
@@ -267,9 +272,9 @@ contract OpinionCore is
         );
 
         // Track with monitoring manager if available
-        if (address(monitoringManager) != address(0)) {
-            try monitoringManager.trackAnswerSubmission(opinionId, msg.sender, price) {} catch {}
-        }
+        // if (address(monitoringManager) != address(0)) {
+        //     try monitoringManager.trackAnswerSubmission(opinionId, msg.sender, price) {} catch {}
+        // }
 
         emit OpinionAction(opinionId, 1, answer, msg.sender, price);
         emit OpinionAnswered(opinionId, answer, opinion.currentAnswerOwner, msg.sender, price, block.timestamp);
@@ -494,10 +499,10 @@ contract OpinionCore is
         bytes memory linkBytes = bytes(link);
         
         if (ipfsHashBytes.length > MAX_IPFS_HASH_LENGTH) {
-            revert IValidationErrors.InvalidInput();
+            revert InvalidStringParameter("ipfsHash", "Too long");
         }
         if (linkBytes.length > MAX_LINK_LENGTH) {
-            revert IValidationErrors.InvalidInput();
+            revert InvalidStringParameter("link", "Too long");
         }
     }
 
@@ -505,10 +510,7 @@ contract OpinionCore is
         string calldata question,
         string calldata answer,
         string calldata description,
-        string calldata ipfsHash,
-        string calldata link,
-        uint96 initialPrice,
-        string[] calldata
+        uint96 initialPrice
     ) internal returns (uint256 opinionId) {
         opinionId = nextOpinionId++;
 
@@ -516,14 +518,13 @@ contract OpinionCore is
         newOpinion.question = question;
         newOpinion.creator = msg.sender;
         newOpinion.questionOwner = msg.sender;
-        newOpinion.createdAt = uint32(block.timestamp);
         newOpinion.isActive = true;
         
         newOpinion.currentAnswer = answer;
         newOpinion.currentAnswerDescription = description;
         newOpinion.currentAnswerOwner = msg.sender;
-        newOpinion.ipfsHash = ipfsHash;
-        newOpinion.link = link;
+        newOpinion.ipfsHash = "";
+        newOpinion.link = "";
         newOpinion.lastPrice = initialPrice;
         newOpinion.nextPrice = uint96(_estimateNextPrice(initialPrice));
 
@@ -559,18 +560,17 @@ contract OpinionCore is
     }
 
     function _estimateNextPrice(uint96 currentPrice) internal view returns (uint256) {
-        return PriceCalculator.estimateNextPrice(currentPrice, minimumPrice, absoluteMaxPriceChange);
+        // Simple estimation without activity data
+        uint256 baseIncrease = (currentPrice * 110) / 100; // 10% increase
+        if (baseIncrease > currentPrice + (currentPrice * absoluteMaxPriceChange / 100)) {
+            return currentPrice + (currentPrice * absoluteMaxPriceChange / 100);
+        }
+        return baseIncrease;
     }
 
     function _calculateNextPrice(uint256 opinionId, uint256 currentPrice) internal view returns (uint256) {
-        return PriceCalculator.calculateNextPrice(
-            opinionId,
-            currentPrice,
-            priceMetadata[opinionId],
-            minimumPrice,
-            absoluteMaxPriceChange,
-            nonce
-        );
+        // Simple price calculation for now
+        return _estimateNextPrice(uint96(currentPrice));
     }
 
     function _updatePriceMetadata(uint256 opinionId, uint256 newPrice) internal {

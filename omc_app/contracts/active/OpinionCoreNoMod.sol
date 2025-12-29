@@ -21,11 +21,11 @@ import "./libraries/PriceCalculator.sol";
 import "./interfaces/IValidationErrors.sol";
 
 /**
- * @title OpinionCoreSimplified
- * @dev Simplified core contract for managing opinions, answers, and related functionality
+ * @title OpinionMarketCapCore
+ * @dev Core contract for managing opinions, answers, and related functionality
  * Security and monitoring features have been extracted to separate contracts
  */
-contract OpinionCoreNoMod is
+contract OpinionMarketCapCore is
     Initializable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -44,16 +44,16 @@ contract OpinionCoreNoMod is
     bytes32 public constant POOL_MANAGER_ROLE = keccak256("POOL_MANAGER_ROLE");
 
     // --- CONSTANTS ---
-    uint256 public constant MAX_QUESTION_LENGTH = 52;
-    uint256 public constant MAX_ANSWER_LENGTH = 52;
+    uint256 public constant MAX_QUESTION_LENGTH = 60;
+    uint256 public constant MAX_ANSWER_LENGTH = 60;
     uint256 public constant MAX_LINK_LENGTH = 260;
     uint256 public constant MAX_IPFS_HASH_LENGTH = 68;
-    uint256 public constant MAX_DESCRIPTION_LENGTH = 120;
+    uint256 public constant MAX_DESCRIPTION_LENGTH = 280;
     uint256 public constant MAX_CATEGORIES_PER_OPINION = 3;
     
     // --- INITIAL PRICE RANGE CONSTANTS ---
-    uint96 public constant MIN_INITIAL_PRICE = 2_000_000;   // 2 USDC (6 decimals)
-    uint96 public constant MAX_INITIAL_PRICE = 100_000_000; // 100 USDC (6 decimals)
+    uint96 public constant MIN_INITIAL_PRICE = 1_000_000;   // 1 USDC (6 decimals)
+    uint96 public maxInitialPrice = 100_000_000; // 100 USDC (6 decimals) - Admin configurable
 
     // --- STATE VARIABLES ---
     IERC20 public usdcToken;
@@ -147,16 +147,26 @@ contract OpinionCoreNoMod is
 
         // Initialize parameters
         nextOpinionId = 1;
-        isPublicCreationEnabled = false;
-        maxTradesPerBlock = 3;
+        isPublicCreationEnabled = true;
+        maxTradesPerBlock = 0; // No trade limit per block
         minimumPrice = 1_000_000; // 1 USDC (6 decimals)
-        questionCreationFee = 5_000_000; // 5 USDC
-        initialAnswerPrice = 2_000_000; // 2 USDC
+        questionCreationFee = 1_000_000; // 1 USDC minimum
+        initialAnswerPrice = 1_000_000; // 1 USDC
         absoluteMaxPriceChange = 200; // 200%
+        maxInitialPrice = 100_000_000; // 100 USDC
         
         // Initialize default categories
-        categories = ["Crypto", "Politics", "Science", "Technology", "Sports", 
-                      "Entertainment", "Culture", "Web", "Social Media", "Other"];
+        categories = [
+            "Technology", "AI & Robotics", "Crypto & Web3", "DeFi (Decentralized Finance)", 
+            "Science", "Environment & Climate", "Business & Finance", "Real Estate", 
+            "Politics", "Law & Legal", "News", "Sports", "Automotive", "Gaming", 
+            "Movies", "TV Shows", "Music", "Podcasts", "Literature", "Art & Design", 
+            "Photography", "Celebrities & Pop Culture", "Social Media", "Humor & Memes", 
+            "Fashion", "Beauty & Skincare", "Health & Fitness", "Food & Drink", "Travel", 
+            "History", "Philosophy", "Spirituality & Religion", "Education", 
+            "Career & Workplace", "Relationships", "Parenting & Family", "Pets & Animals", 
+            "DIY & Home Improvement", "True Crime", "Adult (NSFW)"
+        ];
     }
 
     // --- MODIFIERS ---
@@ -416,6 +426,27 @@ contract OpinionCoreNoMod is
         emit QuestionSaleAction(opinionId, 2, msg.sender, address(0), 0);
     }
 
+    /**
+     * @notice Transfer question ownership and future royalties to another address (free transfer)
+     * @param opinionId The ID of the opinion/question
+     * @param newOwner The address to transfer ownership to
+     */
+    function transferQuestionOwnership(uint256 opinionId, address newOwner) external nonReentrant whenNotPaused {
+        if (newOwner == address(0)) revert ZeroAddressNotAllowed();
+        
+        OpinionStructs.Opinion storage opinion = opinions[opinionId];
+        if (opinion.creator == address(0)) revert OpinionNotFound();
+        if (opinion.questionOwner != msg.sender) revert NotTheOwner(msg.sender, opinion.questionOwner);
+        
+        address previousOwner = opinion.questionOwner;
+        opinion.questionOwner = newOwner;
+        
+        // Clear any existing sale listing
+        opinion.salePrice = 0;
+        
+        emit QuestionOwnershipTransferred(opinionId, previousOwner, newOwner);
+    }
+
     // --- MODERATION FUNCTIONS (REMOVED FOR SIZE OPTIMIZATION) ---
     // Can be added back in future upgrades
     
@@ -641,6 +672,12 @@ contract OpinionCoreNoMod is
         emit ParameterUpdated(7, _initialAnswerPrice);
     }
 
+    function setMaxInitialPrice(uint96 _maxInitialPrice) external onlyRole(ADMIN_ROLE) {
+        if (_maxInitialPrice < MIN_INITIAL_PRICE) revert InvalidInitialPrice();
+        maxInitialPrice = _maxInitialPrice;
+        emit ParameterUpdated(8, _maxInitialPrice);
+    }
+
     function setMaxPriceChange(uint256 _maxPriceChange) external onlyRole(ADMIN_ROLE) {
         absoluteMaxPriceChange = _maxPriceChange;
         emit ParameterUpdated(3, _maxPriceChange);
@@ -743,7 +780,7 @@ contract OpinionCoreNoMod is
         ValidationLibrary.validateOpinionParams(question, answer, MAX_QUESTION_LENGTH, MAX_ANSWER_LENGTH);
         ValidationLibrary.validateDescription(description);
         
-        if (initialPrice < MIN_INITIAL_PRICE || initialPrice > MAX_INITIAL_PRICE) {
+        if (initialPrice < MIN_INITIAL_PRICE || initialPrice > maxInitialPrice) {
             revert InvalidInitialPrice();
         }
     }
@@ -854,6 +891,9 @@ contract OpinionCoreNoMod is
     }
 
     function _checkAndUpdateTradesInBlock() internal {
+        // Skip rate limiting if maxTradesPerBlock is 0
+        if (maxTradesPerBlock == 0) return;
+        
         if (userLastBlock[msg.sender] != block.number) {
             userTradesInBlock[msg.sender] = 1;
             userLastBlock[msg.sender] = block.number;
