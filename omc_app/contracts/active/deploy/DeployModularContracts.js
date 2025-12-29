@@ -1,4 +1,5 @@
 const { ethers, upgrades } = require("hardhat");
+require('dotenv').config();
 
 /**
  * Deployment script for modular OpinionMarketCap contracts
@@ -13,10 +14,19 @@ async function main() {
     console.log("Deployer address:", deployer.address);
     console.log("Deployer balance:", ethers.utils.formatEther(await deployer.getBalance()), "ETH\n");
 
-    // Base Mainnet addresses
-    const USDC_TOKEN = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // Base USDC
-    const TREASURY = "0x644541778b26D101b6E6516B7796768631217b68";   // Your treasury
-    const ADMIN = "0x3E41d4F16Ccee680DBD4eAC54dE7Cc2E3D0cA1E3";       // Admin wallet
+    // Load addresses from environment variables
+    const USDC_TOKEN = process.env.USDC_TOKEN_ADDRESS;
+    const TREASURY = process.env.TREASURY_ADDRESS;
+    const ADMIN = process.env.ADMIN_ADDRESS;
+
+    // Validate environment variables
+    if (!USDC_TOKEN || !TREASURY || !ADMIN) {
+        console.error("❌ Missing required environment variables:");
+        console.error("- USDC_TOKEN_ADDRESS:", USDC_TOKEN || "MISSING");
+        console.error("- TREASURY_ADDRESS:", TREASURY || "MISSING");
+        console.error("- ADMIN_ADDRESS:", ADMIN || "MISSING");
+        process.exit(1);
+    }
 
     console.log("📋 Deployment Configuration:");
     console.log("- USDC Token:", USDC_TOKEN);
