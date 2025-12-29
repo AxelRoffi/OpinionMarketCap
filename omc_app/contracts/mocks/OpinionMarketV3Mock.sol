@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../core/OpinionMarket.sol";
+// import "../core/OpinionMarket.sol"; // Disabled - file moved
 
 /**
  * @title OpinionMarketV3Mock

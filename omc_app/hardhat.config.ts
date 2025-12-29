@@ -27,13 +27,16 @@ const config: HardhatUserConfig = {
       }
     }
   },
+  paths: {
+    sources: "./contracts/active",  // Only compile active contracts for deployment
+  },
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true  // Allow large contracts for testing
     },
     "baseSepolia": {
       url: "https://sepolia.base.org",
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 100000000, // Reduced gas price (0.1 gwei)
     },
     "base": {
@@ -42,11 +45,10 @@ const config: HardhatUserConfig = {
       gasPrice: 1000000000, // 1 gwei (mainnet)
       gas: 5000000,
       timeout: 300000, // 5 minutes
-      confirmations: 2, // Wait for 2 confirmations on mainnet
     },
     "sepolia": {
       url: "https://rpc.sepolia.org",
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 2000000000,
     }
   },

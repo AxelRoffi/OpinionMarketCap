@@ -231,18 +231,6 @@ interface IOpinionMarketEvents {
     );
 
     /**
-     * @dev Emitted when question ownership is transferred (free transfer)
-     * @param opinionId Opinion ID
-     * @param previousOwner Previous owner address
-     * @param newOwner New owner address
-     */
-    event QuestionOwnershipTransferred(
-        uint256 indexed opinionId,
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    /**
      * @dev Emitted when a pool action occurs
      * @param poolId Pool ID
      * @param opinionId Opinion ID

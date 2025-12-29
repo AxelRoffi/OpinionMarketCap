@@ -48,6 +48,8 @@ interface IOpinionCore {
 
     function cancelQuestionSale(uint256 opinionId) external;
 
+    function transferQuestionOwnership(uint256 opinionId, address newOwner) external;
+
     function transferAnswerOwnership(uint256 opinionId, address newOwner) external;
 
     function getOpinionDetails(

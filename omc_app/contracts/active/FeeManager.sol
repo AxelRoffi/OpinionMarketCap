@@ -136,7 +136,7 @@ contract FeeManager is
         // Initialize fee parameters
         platformFeePercent = 2; // 2%
         creatorFeePercent = 3; // 3%
-        mevPenaltyPercent = 20; // 20%
+        mevPenaltyPercent = 0; // 0% - MEV protection disabled
         rapidTradeWindow = 30 seconds;
         parameterUpdateCooldown = 1 days;
 
