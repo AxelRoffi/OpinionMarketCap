@@ -1,150 +1,123 @@
-# Claude Code Session Memory - OpinionMarketCap Deployment Ready
+# Claude Code Session Memory - OpinionMarketCap Base Mainnet Deployment
 
-## Session Summary
-Successfully prepared OpinionMarketCap contracts for Base mainnet deployment by copying and modifying working Sepolia testnet contracts.
+## Current Status: READY FOR MAINNET DEPLOYMENT
 
-## What Was Accomplished
+Contracts verified and deployment tested on local Hardhat network. All systems ready for Base mainnet.
 
-### 1. Contract Analysis
-- **Source**: Analyzed working Sepolia contracts at:
-  - OpinionCore: `0xB2D35055550e2D49E5b2C21298528579A8bF7D2f`
-  - FeeManager: `0xc8f879d86266C334eb9699963ca0703aa1189d8F`
-  - PoolManager: `0x3B4584e690109484059D95d7904dD9fEbA246612`
+## Architecture: Modular (5 Contracts)
 
-### 2. Contract Preparation
-- **Location**: `/contracts/activeAlternative/`
-- **Status**: Ready for mainnet deployment
+The monolithic `OpinionMarketCapCore` (25.1KB) exceeded the 24KB limit, so we use the **modular architecture**:
 
-### 3. Key Modifications Made
+| Contract | Size | Location |
+|----------|------|----------|
+| ValidationLibrary | 0.02 KB | `contracts/active/libraries/` |
+| FeeManager | 9.09 KB | `contracts/active/` |
+| PoolManager | 17.51 KB | `contracts/active/` |
+| OpinionAdmin | 8.02 KB | `contracts/active/` |
+| OpinionExtensions | 11.89 KB | `contracts/active/` |
+| OpinionCore | 17.57 KB | `contracts/active/` |
 
-#### OpinionMarketCapCore.sol (renamed from OpinionCoreNoMod.sol)
-```solidity
-// CHANGED: Minimum initial price reduced
-uint96 public constant MIN_INITIAL_PRICE = 1_000_000; // 1 USDC (was 2 USDC)
+All contracts are under the 24KB Base blockchain limit.
 
-// CHANGED: Updated to 39 categories (was 10)
-categories = [
-    "Technology", "AI & Robotics", "Crypto & Web3", "DeFi (Decentralized Finance)", 
-    "Science", "Environment & Climate", "Business & Finance", "Real Estate", 
-    "Politics", "Law & Legal", "News", "Sports", "Automotive", "Gaming", 
-    "Movies", "TV Shows", "Music", "Podcasts", "Literature", "Art & Design", 
-    "Photography", "Celebrities & Pop Culture", "Social Media", "Humor & Memes", 
-    "Fashion", "Beauty & Skincare", "Health & Fitness", "Food & Drink", "Travel", 
-    "History", "Philosophy", "Spirituality & Religion", "Education", 
-    "Career & Workplace", "Relationships", "Parenting & Family", "Pets & Animals", 
-    "DIY & Home Improvement", "True Crime", "Adult (NSFW)"
-];
+## Deployment Script
 
-// CHANGED: Contract name
-contract OpinionMarketCapCore is // (was OpinionCoreNoMod)
+**Location**: `contracts/active/deploy/DeployModularContracts.js`
+
+**Deployment Order**:
+1. ValidationLibrary (required for linking)
+2. FeeManager
+3. PoolManager (with ValidationLibrary linking)
+4. OpinionAdmin
+5. OpinionExtensions
+6. OpinionCore (with ValidationLibrary linking)
+
+## Configuration Verified
+
+| Parameter | Value |
+|-----------|-------|
+| minimumPrice | 1 USDC |
+| questionCreationFee | 2 USDC (or 20% of initial price, whichever is higher) |
+| initialAnswerPrice | 1 USDC |
+| maxInitialPrice | 100 USDC |
+| maxTradesPerBlock | 0 (unlimited) |
+| platformFeePercent | 2% |
+| creatorFeePercent | 3% |
+| mevPenaltyPercent | 0% (disabled) |
+| poolContributionFee | 0 USDC (free) |
+| maxPoolDuration | 60 days |
+| earlyExitPenalty | 20% |
+| poolThreshold | 100 USDC |
+| categories | 40 |
+| isPublicCreationEnabled | true |
+
+## Pre-Deployment Checklist
+
+Update `.env` file with:
+```bash
+TREASURY_ADDRESS=<your-treasury-safe-address>
+ADMIN_ADDRESS=<your-admin-safe-address>
+USDC_TOKEN_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913  # Base Mainnet USDC
 ```
 
-## Contract Features Confirmed Working
+**Important**: The `.env` currently has placeholder values that MUST be replaced.
 
-### Core Features ✅
+## Deployment Command
+
+```bash
+npx hardhat run contracts/active/deploy/DeployModularContracts.js --network base
+```
+
+## Features
+
+### Core Features
 - Opinion creation with 1-100 USDC initial price range
 - Answer submission with dynamic bonding curve pricing
 - Question trading marketplace
-- **Question ownership transfer** - Free transfer with one button
-- 39 categories system
+- Question ownership transfer (free)
+- Answer ownership transfer (free)
+- 40 categories system
 - Extension slots for future features
-- IPFS integration for metadata
 
-### Pool System ✅
-- 100 USDC threshold for pool creation (confirmed working)
-- Dynamic pricing with real-time NextPrice targeting
+### Pool System
+- 100 USDC threshold for pool creation
+- Free pool contribution (0 USDC fee)
+- Dynamic pricing with NextPrice targeting
 - Early withdrawal with 20% penalty
-- Complete reward distribution system
+- Max 60 days duration
 
-### Fee System ✅
-- Platform fees (2%) + Creator fees (3%)
-- MEV protection removed (as requested)
+### Fee System
+- Platform fees: 2%
+- Creator fees: 3%
+- MEV protection: Disabled (0%)
 - Fee accumulation and claiming
 - Treasury management with timelock
 
-### Admin Controls ✅
-- `questionCreationFee` - configurable minimum creation fee
-- `minimumPrice` - configurable minimum price
-- `initialAnswerPrice` - configurable initial answer price
-- Categories - admin can add more via `addCategoryToCategories()`
+### Admin Controls
+- All parameters configurable post-deployment
+- Pause/unpause functionality
+- Emergency withdraw capability
+- Role-based access control
 
-## Contract Sizes
-- **OpinionMarketCapCore**: ~22-24KB ✅ (within 24KB limit)
-- **PoolManager**: ~20-22KB ✅ 
-- **FeeManager**: ~12-15KB ✅
+## Documentation
 
-## Deployment Plan for Next Session
+- `contracts/active/MODULAR_DEPLOYMENT_SUMMARY.md` - Full architecture details
+- `contracts/active/PRE_DEPLOYMENT_CHECKLIST.md` - Deployment checklist
 
-### 1. Pre-deployment
-- Verify contract compilation in `contracts/activeAlternative/`
-- Test deployment on Base Sepolia first (optional)
-- Prepare constructor parameters
+## Test Script
 
-### 2. Deployment Order
-1. Deploy PriceCalculator library
-2. Deploy FeeManager
-3. Deploy PoolManager
-4. Deploy OpinionMarketCapCore (with library linking)
-5. Configure parameters and grant roles
+A deployment test script was created at `scripts/test-deploy.js` that:
+- Deploys all 6 contracts with proper library linking
+- Verifies all configuration parameters
+- Confirms contract interactions work correctly
 
-### 3. Configuration Parameters
-```solidity
-// Default values in contract
-questionCreationFee = 5_000_000; // 5 USDC (admin configurable)
-minimumPrice = 1_000_000; // 1 USDC
-initialAnswerPrice = 2_000_000; // 2 USDC
-absoluteMaxPriceChange = 200; // 200%
-maxTradesPerBlock = 3;
-```
+Run with: `npx hardhat run scripts/test-deploy.js`
 
-### 4. Required Addresses for Deployment
-- USDC Token: `0x036CbD53842c5426634e7929541eC2318f3dCF7e` (Base mainnet)
-- Treasury: (to be specified)
-- Admin wallet: (deployer address)
+## Session History
 
-## Key Points for Next Session
-1. **Deployment ready**: All contracts in `contracts/activeAlternative/` 
-2. **Feature complete**: 1-100 USDC range, 39 categories, 100 USDC pool threshold
-3. **Size optimized**: All contracts under 24KB limit
-4. **Production tested**: Based on working Sepolia deployment
-5. **Admin configurable**: All key parameters adjustable post-deployment
-
-## Important Notes
-- Removed MEV penalty system as requested
-- Contract size is within Base blockchain limits
-- Based on proven working Sepolia testnet contracts
-- Full feature parity achieved with requirements
-- Ready for immediate mainnet deployment when needed
-
-## Files Modified
-- `/contracts/activeAlternative/OpinionCoreNoMod.sol` → renamed and updated
-- Added `transferQuestionOwnership()` function for free ownership transfer
-- Added `QuestionOwnershipTransferred` event in IOpinionMarketEvents.sol
-- Updated IOpinionCore.sol interface with new function
-- All supporting contracts copied to activeAlternative directory
-
-## Contract Configuration Updates Applied
-### OpinionMarketCapCore.sol Changes:
-- ✅ MAX_QUESTION_LENGTH: 52 → 60 characters
-- ✅ MAX_ANSWER_LENGTH: 52 → 60 characters  
-- ✅ MAX_DESCRIPTION_LENGTH: 120 → 280 characters
-- ✅ MAX_INITIAL_PRICE: constant → admin-configurable (100 USDC default)
-- ✅ questionCreationFee: 5 USDC → 2 USDC minimum (with 20% dynamic logic)
-- ✅ initialAnswerPrice: 2 USDC → 1 USDC
-- ✅ isPublicCreationEnabled: false → true
-- ✅ maxTradesPerBlock: 3 → 0 (no limit)
-- ✅ Dynamic creation fee: MAX(2 USDC, 20% of initial price)
-
-### FeeManager.sol Changes:
-- ✅ mevPenaltyPercent: 20% → 0% (MEV protection disabled)
-
-### PoolManager.sol Changes:
-- ✅ poolContributionFee: 1 USDC → 0 USDC (free to join pools)
-- ✅ maxPoolDuration: 30 days → 60 days
-- ✅ Early exit penalty: 20% (already implemented)
-
-## Session Completion Status
-✅ Analysis complete
-✅ Contracts copied and modified  
-✅ Feature requirements met
-✅ Ready for deployment
+### January 2025 Session
+- Verified modular architecture is the correct deployment target
+- Confirmed all contracts compile and are under 24KB
+- Created and ran deployment simulation on local Hardhat
+- All 6 contracts deployed successfully
+- All configuration parameters verified correct
+- Updated documentation to reflect current state
