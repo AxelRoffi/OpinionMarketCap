@@ -213,4 +213,11 @@ Run with: `npx hardhat run scripts/test-deploy.js`
   - Fixed pool max duration: 30 → 60 days
   - Fixed description length: 240 → 280 chars
   - Synced categories: 25 → 40 (matching contract)
-- Updated CLAUDE.md documentation
+- **Project cleanup**: Removed 182 obsolete files (70k+ lines deleted):
+  - Old deployment JSONs and configuration files
+  - Old verification scripts
+  - Old analysis/utility scripts
+  - Flattened contracts and temp files
+  - Old HTML test files
+  - Old contract folders (`_archive`, `core`, `fixed`, `simple`, `documentation`, `src`)
+- Committed cleanup to GitHub (`b9dd517`)
