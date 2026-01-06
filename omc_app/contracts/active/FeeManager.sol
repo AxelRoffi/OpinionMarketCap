@@ -666,4 +666,15 @@ contract FeeManager is
 
     // --- UUPS UPGRADE AUTHORIZATION ---
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
+
+    // --- ADMIN TRANSFER ---
+    function transferFullAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(newAdmin != address(0), "Invalid address");
+        _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
+        _grantRole(ADMIN_ROLE, newAdmin);
+        _grantRole(TREASURY_ROLE, newAdmin);
+        _revokeRole(TREASURY_ROLE, msg.sender);
+        _revokeRole(ADMIN_ROLE, msg.sender);
+        _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 }
