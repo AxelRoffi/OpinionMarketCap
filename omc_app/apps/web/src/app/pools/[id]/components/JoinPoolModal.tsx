@@ -34,7 +34,7 @@ export function JoinPoolModal({ isOpen, onClose, poolDetails, onSuccess }: JoinP
 
   const contributionAmountFloat = parseFloat(contributionAmount) || 0;
   const remainingAmount = parseFloat(poolDetails.remainingAmount);
-  const contributionFee = 1; // 1 USDC fee
+  const contributionFee = 0; // Free to contribute to pools
   const totalCost = contributionAmountFloat + contributionFee;
 
   // Validation

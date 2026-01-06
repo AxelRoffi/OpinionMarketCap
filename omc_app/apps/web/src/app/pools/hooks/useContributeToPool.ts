@@ -116,7 +116,7 @@ export function useContributeToPool() {
       setPendingContribution({ poolId, amount: contributionAmount });
 
       // Constants from smart contract (Real PoolManager)
-      const CONTRIBUTION_FEE = 1; // 1 USDC per contribution
+      const CONTRIBUTION_FEE = 0; // Free to contribute to pools
       const totalRequired = contributionAmount + CONTRIBUTION_FEE;
 
       console.log('💰 Fee Calculation:', {

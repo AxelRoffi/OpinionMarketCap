@@ -176,8 +176,8 @@ export const usePoolCompletion = (poolId: number) => {
     // Pool is completable if active, not expired, and has remaining amount
     const isCompletable = poolStatus === 0 && !isExpired && remainingAmount > 0n;
     
-    // User can complete if they have enough USDC (including 1 USDC contribution fee)
-    const contributionFee = 1_000_000n; // 1 USDC in 6 decimals
+    // User can complete if they have enough USDC (no contribution fee)
+    const contributionFee = 0n; // Free to contribute to pools
     const totalRequired = remainingAmount + contributionFee;
     const canUserComplete = isCompletable && userBalanceAmount >= totalRequired;
     

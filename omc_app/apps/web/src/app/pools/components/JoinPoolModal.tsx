@@ -142,8 +142,8 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
     }
   };
   
-  // Real PoolManager rules - USDC fees required
-  const CONTRIBUTION_FEE = 1; // 1 USDC per contribution
+  // Real PoolManager rules - no contribution fee
+  const CONTRIBUTION_FEE = 0; // Free to contribute to pools
   const EARLY_WITHDRAWAL_PENALTY = 20; // 20% penalty
 
   // Calculations

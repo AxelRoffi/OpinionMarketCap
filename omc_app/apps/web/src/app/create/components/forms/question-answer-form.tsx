@@ -32,27 +32,23 @@ interface QuestionAnswerFormProps {
   onNext: () => void
 }
 
-// All categories (original + new) - based on our agreed list
+// Categories matching smart contract OpinionExtensions.sol (40 categories)
 const ALL_CATEGORIES = [
-  // Original categories (some will be hidden)
-  'Crypto', 'Politics', 'Science', 'Technology', 'Sports',
-  'Entertainment', 'Culture', 'Web', 'Social Media', 'Other',
-  
-  // New agreed categories
-  'AI', 'Automotive', 'Books & Literature', 'Celebrities', 
-  'Conspiracy', 'Dating & Relationships', 'Investing', 
-  'Luxury', 'Mobile Apps', 'Movies & TV', 'Music', 'Parenting', 
-  'Podcasts', 'Real Estate', 'Adult'
+  'Technology', 'AI & Robotics', 'Crypto & Web3', 'DeFi (Decentralized Finance)',
+  'Science', 'Environment & Climate', 'Business & Finance', 'Real Estate',
+  'Politics', 'Law & Legal', 'News', 'Sports', 'Automotive', 'Gaming',
+  'Movies', 'TV Shows', 'Music', 'Podcasts', 'Literature', 'Art & Design',
+  'Photography', 'Celebrities & Pop Culture', 'Social Media', 'Humor & Memes',
+  'Fashion', 'Beauty & Skincare', 'Health & Fitness', 'Food & Drink', 'Travel',
+  'History', 'Philosophy', 'Spirituality & Religion', 'Education',
+  'Career & Workplace', 'Relationships', 'Parenting & Family', 'Pets & Animals',
+  'DIY & Home Improvement', 'True Crime', 'Adult (NSFW)'
 ]
-
-// Categories to hide in frontend (deprecated/redundant)
-const HIDDEN_CATEGORIES = ['Science', 'Technology', 'Culture', 'Web']
 
 // Active categories (visible in UI) - sorted alphabetically with Adult at end
 const CATEGORIES = (() => {
-  const active = ALL_CATEGORIES.filter(cat => !HIDDEN_CATEGORIES.includes(cat))
-  const nonAdult = active.filter(cat => cat !== 'Adult').sort()
-  const adult = active.filter(cat => cat === 'Adult')
+  const nonAdult = ALL_CATEGORIES.filter(cat => cat !== 'Adult (NSFW)').sort()
+  const adult = ALL_CATEGORIES.filter(cat => cat === 'Adult (NSFW)')
   return [...nonAdult, ...adult]
 })()
 

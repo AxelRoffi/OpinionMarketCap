@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/IOpinionExtensionsInternal.sol";
@@ -15,6 +16,7 @@ import "./interfaces/IOpinionMarketErrors.sol";
  */
 contract OpinionExtensions is
     Initializable,
+    UUPSUpgradeable,
     AccessControlUpgradeable,
     IOpinionExtensionsInternal,
     IOpinionMarketEvents,
@@ -265,7 +267,7 @@ contract OpinionExtensions is
     function _hasExtensionKey(uint256 opinionId, string calldata key) internal view returns (bool) {
         string[] storage keys = opinionExtensionKeys[opinionId];
         bytes32 keyHash = keccak256(bytes(key));
-        
+
         for (uint256 i = 0; i < keys.length; i++) {
             if (keccak256(bytes(keys[i])) == keyHash) {
                 return true;
@@ -273,4 +275,7 @@ contract OpinionExtensions is
         }
         return false;
     }
+
+    // --- UUPS UPGRADE AUTHORIZATION ---
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
 }

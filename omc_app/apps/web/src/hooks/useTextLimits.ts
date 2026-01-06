@@ -63,7 +63,7 @@ const DEFAULT_LIMITS: TextLimits = {
   maxAnswerLength: 60,
   maxLinkLength: 260,
   maxIpfsHashLength: 68,
-  maxDescriptionLength: 240,
+  maxDescriptionLength: 280,
   maxCategoriesPerOpinion: 3
 }
 

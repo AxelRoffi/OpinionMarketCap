@@ -39,7 +39,7 @@ export interface CreatePoolForm {
   proposedAnswer: string;        // Max 40 characters
   poolName: string;             // Max 30 characters
   initialContribution: number;   // Minimum 1 USDC (in regular USDC units)
-  deadline: Date;               // 1-30 days from now
+  deadline: Date;               // 1-60 days from now
   description?: string;         // Optional, max 300 characters
   externalLink?: string;        // Optional, must be valid URL
 }

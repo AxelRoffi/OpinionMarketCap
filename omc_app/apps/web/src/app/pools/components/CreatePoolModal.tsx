@@ -247,17 +247,17 @@ export function CreatePoolModal({
     // Deadline validation
     const now = new Date();
     const oneDayLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysLater = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
 
     if (formData.deadline < oneDayLater) {
       newErrors.deadline = {
         isValid: false,
         error: 'Deadline must be at least 1 day from now'
       };
-    } else if (formData.deadline > thirtyDaysLater) {
+    } else if (formData.deadline > sixtyDaysLater) {
       newErrors.deadline = {
         isValid: false,
-        error: 'Deadline cannot be more than 30 days from now'
+        error: 'Deadline cannot be more than 60 days from now'
       };
     }
 

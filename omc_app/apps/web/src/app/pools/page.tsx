@@ -284,7 +284,7 @@ export default function PoolsPage() {
               <h4 className="font-semibold text-white mb-2">1. Create or Join a Pool</h4>
               <p>
                 Users can create a new pool for an opinion with a proposed answer, a deadline, and an initial contribution.
-                Others can then join the pool by contributing USDC. A 5usdc fee is charged for creating and a 1 usdc fee for contributing to a pool. This prevents gaming, pump and dump or spamming.
+                Others can then join the pool by contributing USDC. A 5 USDC fee is charged for creating a pool (contributing is free). This prevents gaming, pump and dump or spamming.
               </p>
             </div>
             <div>

@@ -166,8 +166,8 @@ export default function Tutorial() {
       field: "Creation Fee",
       type: "Auto-Calculated",
       required: true,
-      description: "Automatically calculated: MAX(5 USDC, 20% of initial price)",
-      example: "25 USDC price → 5 USDC fee (20% = 5, min = 5) | 30 USDC price → 6 USDC fee (20% = 6 > min)",
+      description: "Automatically calculated: MAX(2 USDC, 20% of initial price)",
+      example: "10 USDC price → 2 USDC fee (minimum) | 20 USDC price → 4 USDC fee (20%)",
       validation: "Automatically deducted from your wallet",
       purpose: "Prevents spam questions, ensures creator commitment"
     }
@@ -524,18 +524,18 @@ export default function Tutorial() {
                     </h4>
                     <div className="space-y-4 text-red-200">
                       <div>
-                        <strong>Formula:</strong> <code>MAX(5 USDC, initial_price × 0.20)</code>
+                        <strong>Formula:</strong> <code>MAX(2 USDC, initial_price × 0.20)</code>
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="bg-red-900/30 rounded p-3">
-                          <strong>Example 1:</strong> 20 USDC initial price<br/>
-                          20 × 0.20 = 4 USDC<br/>
-                          MAX(5, 4) = <strong>5 USDC fee</strong>
+                          <strong>Example 1:</strong> 10 USDC initial price<br/>
+                          10 × 0.20 = 2 USDC<br/>
+                          MAX(2, 2) = <strong>2 USDC fee</strong>
                         </div>
                         <div className="bg-red-900/30 rounded p-3">
-                          <strong>Example 2:</strong> 35 USDC initial price<br/>
-                          35 × 0.20 = 7 USDC<br/>
-                          MAX(5, 7) = <strong>7 USDC fee</strong>
+                          <strong>Example 2:</strong> 20 USDC initial price<br/>
+                          20 × 0.20 = 4 USDC<br/>
+                          MAX(2, 4) = <strong>4 USDC fee</strong>
                         </div>
                       </div>
                       <p className="text-sm">This prevents spam questions while ensuring creators have skin in the game. Higher initial prices require proportionally higher commitment.</p>

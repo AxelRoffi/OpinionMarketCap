@@ -28,8 +28,8 @@ export const useCompletePool = () => {
         approach: 'Accept Overpayment - Let Contract Handle Precision'
       });
 
-      // Step 1: Approve USDC (remaining amount + 1 USDC fee)
-      const contributionFee = 1_000_000n; // 1 USDC in 6 decimals
+      // Step 1: Approve USDC (remaining amount only - no fee)
+      const contributionFee = 0n; // Free to contribute to pools
       const totalRequired = remainingAmount + contributionFee;
       
       console.log('⏳ Step 1: Approving USDC...');
