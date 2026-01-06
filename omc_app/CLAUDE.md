@@ -4,18 +4,18 @@
 
 Contracts verified and deployment tested on local Hardhat network. All systems ready for Base mainnet.
 
-## Architecture: Modular (5 Contracts)
+## Architecture: Modular (5 Contracts + Library)
 
 The monolithic `OpinionMarketCapCore` (25.1KB) exceeded the 24KB limit, so we use the **modular architecture**:
 
 | Contract | Size | Location |
 |----------|------|----------|
 | ValidationLibrary | 0.02 KB | `contracts/active/libraries/` |
-| FeeManager | 9.09 KB | `contracts/active/` |
-| PoolManager | 17.51 KB | `contracts/active/` |
-| OpinionAdmin | 8.02 KB | `contracts/active/` |
-| OpinionExtensions | 11.89 KB | `contracts/active/` |
-| OpinionCore | 17.57 KB | `contracts/active/` |
+| FeeManager | 10.5 KB | `contracts/active/` |
+| PoolManager | 18.1 KB | `contracts/active/` |
+| OpinionAdmin | 9.6 KB | `contracts/active/` |
+| OpinionExtensions | 13.2 KB | `contracts/active/` |
+| OpinionCore | 19.0 KB | `contracts/active/` |
 
 All contracts are under the 24KB Base blockchain limit.
 
@@ -31,6 +31,60 @@ All contracts are under the 24KB Base blockchain limit.
 5. OpinionExtensions
 6. OpinionCore (with ValidationLibrary linking)
 
+## Contract Upgradability (UUPS)
+
+All contracts are UUPS upgradeable:
+
+| Contract | UUPS | Authorization |
+|----------|------|---------------|
+| OpinionCore | ✅ | `ADMIN_ROLE` |
+| FeeManager | ✅ | `ADMIN_ROLE` |
+| OpinionAdmin | ✅ | `ADMIN_ROLE` |
+| OpinionExtensions | ✅ | `ADMIN_ROLE` |
+| PoolManager | ✅ | `ADMIN_ROLE` |
+
+### How to Upgrade
+```javascript
+const NewImplementation = await ethers.getContractFactory("OpinionCoreV2", {
+  libraries: { ValidationLibrary: libAddr }
+});
+await upgrades.upgradeProxy(proxyAddress, NewImplementation, {
+  unsafeAllowLinkedLibraries: true
+});
+```
+
+## Admin Management
+
+### transferFullAdmin() Function
+All contracts have a `transferFullAdmin(address newAdmin)` function for single-call admin transfer:
+
+| Contract | Roles Transferred |
+|----------|-------------------|
+| OpinionCore | DEFAULT_ADMIN, ADMIN, MODERATOR |
+| FeeManager | DEFAULT_ADMIN, ADMIN, TREASURY |
+| OpinionAdmin | DEFAULT_ADMIN, ADMIN, MODERATOR, TREASURY |
+| OpinionExtensions | DEFAULT_ADMIN, ADMIN |
+| PoolManager | DEFAULT_ADMIN, ADMIN, MODERATOR |
+
+**Usage**:
+```solidity
+// Transfer full admin to new address (call on each contract)
+opinionCore.transferFullAdmin(newAdminAddress);
+feeManager.transferFullAdmin(newAdminAddress);
+poolManager.transferFullAdmin(newAdminAddress);
+opinionAdmin.transferFullAdmin(newAdminAddress);
+opinionExtensions.transferFullAdmin(newAdminAddress);
+```
+
+### Treasury Changes
+Treasury address can be changed post-deployment via `setTreasury()` with 48h timelock.
+
+### Individual Role Management
+Standard OpenZeppelin AccessControl functions available:
+- `grantRole(role, account)`
+- `revokeRole(role, account)`
+- `renounceRole(role, account)`
+
 ## Configuration Verified
 
 | Parameter | Value |
@@ -43,12 +97,28 @@ All contracts are under the 24KB Base blockchain limit.
 | platformFeePercent | 2% |
 | creatorFeePercent | 3% |
 | mevPenaltyPercent | 0% (disabled) |
+| poolCreationFee | 5 USDC |
 | poolContributionFee | 0 USDC (free) |
 | maxPoolDuration | 60 days |
 | earlyExitPenalty | 20% |
 | poolThreshold | 100 USDC |
 | categories | 40 |
+| maxDescriptionLength | 280 chars |
+| maxQuestionLength | 60 chars |
+| maxAnswerLength | 60 chars |
 | isPublicCreationEnabled | true |
+
+## Frontend/Landing Alignment
+
+All frontend and landing page values are now aligned with smart contract specs:
+
+| Item | Contract | Frontend | Landing |
+|------|----------|----------|---------|
+| Creation fee min | 2 USDC | ✅ | ✅ |
+| Pool contribution fee | 0 USDC | ✅ | ✅ |
+| Pool max duration | 60 days | ✅ | ✅ |
+| Description length | 280 chars | ✅ | N/A |
+| Categories | 40 | ✅ | N/A |
 
 ## Pre-Deployment Checklist
 
@@ -80,6 +150,7 @@ npx hardhat run contracts/active/deploy/DeployModularContracts.js --network base
 
 ### Pool System
 - 100 USDC threshold for pool creation
+- 5 USDC pool creation fee
 - Free pool contribution (0 USDC fee)
 - Dynamic pricing with NextPrice targeting
 - Early withdrawal with 20% penalty
@@ -97,6 +168,20 @@ npx hardhat run contracts/active/deploy/DeployModularContracts.js --network base
 - Pause/unpause functionality
 - Emergency withdraw capability
 - Role-based access control
+- Single-call admin transfer via `transferFullAdmin()`
+- UUPS upgradeable contracts
+
+## Admin Frontend
+
+Located at `apps/web/src/app/admin/` with full functionality:
+- Role management (grant/revoke admin/moderator)
+- Contract pause/unpause
+- Price settings (min price, creation fee, max change)
+- Text length settings (all configurable)
+- Category management
+- Treasury management (with 48h timelock)
+- Contract upgrade scheduling (with 72h timelock)
+- Moderation tools
 
 ## Documentation
 
@@ -105,7 +190,7 @@ npx hardhat run contracts/active/deploy/DeployModularContracts.js --network base
 
 ## Test Script
 
-A deployment test script was created at `scripts/test-deploy.js` that:
+A deployment test script exists at `scripts/test-deploy.js` that:
 - Deploys all 6 contracts with proper library linking
 - Verifies all configuration parameters
 - Confirms contract interactions work correctly
@@ -114,10 +199,18 @@ Run with: `npx hardhat run scripts/test-deploy.js`
 
 ## Session History
 
-### January 2025 Session
+### January 6, 2025 Session
 - Verified modular architecture is the correct deployment target
 - Confirmed all contracts compile and are under 24KB
 - Created and ran deployment simulation on local Hardhat
 - All 6 contracts deployed successfully
 - All configuration parameters verified correct
-- Updated documentation to reflect current state
+- Added UUPS upgradability to all contracts (OpinionCore, FeeManager, OpinionAdmin, OpinionExtensions)
+- Added `transferFullAdmin()` function to all contracts for single-call admin transfer
+- Aligned frontend with contract specs:
+  - Fixed creation fee: 5 USDC → 2 USDC minimum in landing/tutorial
+  - Fixed pool contribution fee: 1 USDC → 0 USDC (free)
+  - Fixed pool max duration: 30 → 60 days
+  - Fixed description length: 240 → 280 chars
+  - Synced categories: 25 → 40 (matching contract)
+- Updated CLAUDE.md documentation
