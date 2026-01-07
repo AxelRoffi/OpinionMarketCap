@@ -1,13 +1,17 @@
 // Contract addresses from deployment - BASE MAINNET
+// Deployed: 2025-01-07
 export const CONTRACTS = {
-  // 🚀 MAINNET CONTRACTS
-  OPINION_CORE: '0xC47bFEc4D53C51bF590beCEA7dC935116E210E97' as `0x${string}`, // OpinionCoreNoMod
-  FEE_MANAGER: '0x64997bd18520d93e7f0da87c69582d06b7f265d5' as `0x${string}`,
-  POOL_MANAGER: '0xd6f4125e1976c5eee6fc684bdb68d1719ac34259' as `0x${string}`,
+  // 🚀 MAINNET CONTRACTS (Modular Architecture)
+  OPINION_CORE: '0x7b5d97fb78fbf41432F34f46a901C6da7754A726' as `0x${string}`,
+  FEE_MANAGER: '0x31D604765CD76Ff098A283881B2ca57e7F703199' as `0x${string}`,
+  POOL_MANAGER: '0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e' as `0x${string}`,
+  OPINION_ADMIN: '0x4F0A1938E8707292059595275F9BBD067A301FD2' as `0x${string}`,
+  OPINION_EXTENSIONS: '0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA' as `0x${string}`,
+  VALIDATION_LIBRARY: '0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5' as `0x${string}`,
   USDC_TOKEN: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`, // Official Base USDC
-  // Legacy referral system (not deployed on mainnet)
-  REFERRAL_MANAGER: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Not used on mainnet
-  OPINION_CORE_WITH_REFERRALS: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Not used on mainnet
+  // Legacy (not used)
+  REFERRAL_MANAGER: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  OPINION_CORE_WITH_REFERRALS: '0x0000000000000000000000000000000000000000' as `0x${string}`,
 } as const;
 
 
@@ -240,11 +244,11 @@ export const USDC_ABI = [
   },
 ] as const;
 
-// USDC contract address on Base Sepolia (Real USDC)
-export const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`;
+// USDC contract address on Base Mainnet
+export const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`;
 
-// Treasury address
-export const TREASURY_ADDRESS = '0xFb7eF00D5C2a87d282F273632e834f9105795067' as `0x${string}`;
+// Treasury address (Base Mainnet)
+export const TREASURY_ADDRESS = '0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9' as `0x${string}`;
 
 // FeeManager ABI for fee-related operations
 export const FEE_MANAGER_ABI = [

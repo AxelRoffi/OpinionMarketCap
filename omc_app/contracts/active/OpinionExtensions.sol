@@ -83,6 +83,25 @@ contract OpinionExtensions is
         ];
     }
 
+    // --- CONTRACT MANAGEMENT ---
+
+    /**
+     * @dev Sets the core contract address. Essential for post-deployment linking.
+     */
+    function setCoreContract(address _coreContract) external onlyRole(ADMIN_ROLE) {
+        require(_coreContract != address(0), "Zero address");
+
+        // Revoke role from old address if it exists
+        address oldCore = address(coreContract);
+        if (oldCore != address(0)) {
+            _revokeRole(CORE_CONTRACT_ROLE, oldCore);
+        }
+
+        // Grant role to new address and update reference
+        _grantRole(CORE_CONTRACT_ROLE, _coreContract);
+        coreContract = IOpinionCoreInternal(_coreContract);
+    }
+
     // --- EXTENSION SLOTS FUNCTIONS ---
 
     function setOpinionStringExtension(

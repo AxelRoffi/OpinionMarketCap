@@ -108,14 +108,16 @@ contract PoolManager is
         __AccessControl_init();
         __ReentrancyGuard_init();
 
-        // Set contract references
-        ValidationLibrary.validateAddress(_opinionCore);
+        // Set contract references (opinionCore can be zero, set via setOpinionCore later)
         ValidationLibrary.validateAddress(_feeManager);
         ValidationLibrary.validateAddress(_usdcToken);
         ValidationLibrary.validateAddress(_treasury);
         ValidationLibrary.validateAddress(_admin);
 
-        opinionCore = IOpinionCore(_opinionCore);
+        // OpinionCore can be set later via setOpinionCore() for circular dependency resolution
+        if (_opinionCore != address(0)) {
+            opinionCore = IOpinionCore(_opinionCore);
+        }
         feeManager = IFeeManager(_feeManager);
         usdcToken = IERC20(_usdcToken);
         treasury = _treasury;
@@ -796,6 +798,21 @@ contract PoolManager is
     }
 
     // --- ADMIN FUNCTIONS ---
+
+    /**
+     * @dev Sets the OpinionCore contract address. Essential for post-deployment linking.
+     */
+    function setOpinionCore(address _opinionCore) external onlyRole(ADMIN_ROLE) {
+        require(_opinionCore != address(0), "Zero address");
+        opinionCore = IOpinionCore(_opinionCore);
+        emit ParameterUpdated(
+            100,
+            0,
+            uint256(uint160(_opinionCore)),
+            msg.sender,
+            block.timestamp
+        );
+    }
 
     /**
      * @dev Sets pool creation fee

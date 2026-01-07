@@ -1,8 +1,24 @@
 # Claude Code Session Memory - OpinionMarketCap Base Mainnet Deployment
 
-## Current Status: READY FOR MAINNET DEPLOYMENT
+## Current Status: DEPLOYED ON BASE MAINNET
 
-Contracts verified and deployment tested on local Hardhat network. All systems ready for Base mainnet.
+All contracts successfully deployed and linked on Base Mainnet (Chain ID: 8453) on January 7, 2025.
+
+## Deployed Contract Addresses (Base Mainnet)
+
+| Contract | Address |
+|----------|---------|
+| ValidationLibrary | `0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5` |
+| FeeManager | `0x31D604765CD76Ff098A283881B2ca57e7F703199` |
+| PoolManager | `0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e` |
+| OpinionAdmin | `0x4F0A1938E8707292059595275F9BBD067A301FD2` |
+| OpinionExtensions | `0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA` |
+| OpinionCore | `0x7b5d97fb78fbf41432F34f46a901C6da7754A726` |
+
+**Configuration:**
+- USDC: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+- Treasury: `0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9`
+- Admin: `0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C`
 
 ## Architecture: Modular (5 Contracts + Library)
 
@@ -221,3 +237,13 @@ Run with: `npx hardhat run scripts/test-deploy.js`
   - Old HTML test files
   - Old contract folders (`_archive`, `core`, `fixed`, `simple`, `documentation`, `src`)
 - Committed cleanup to GitHub (`b9dd517`)
+
+### January 7, 2025 Session - MAINNET DEPLOYMENT
+- Fixed deployment script for ethers v6 compatibility
+- Added `setCoreContract()` to OpinionAdmin and OpinionExtensions for post-deployment linking
+- Added `setOpinionCore()` to PoolManager for post-deployment linking
+- Added `unsafeAllowLinkedLibraries: true` for ValidationLibrary linking
+- **Successfully deployed all 6 contracts to Base Mainnet**
+- Linked all contracts (PoolManager, OpinionAdmin, OpinionExtensions → OpinionCore)
+- Updated frontend with new contract addresses (`apps/web/src/lib/contracts.ts` and `contracts-mainnet.ts`)
+- Deployment info saved to `deployments/base-mainnet-final.json`

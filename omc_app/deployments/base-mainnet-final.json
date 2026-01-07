@@ -1,0 +1,21 @@
+{
+  "network": "base-mainnet",
+  "chainId": 8453,
+  "deployedAt": "2025-01-07T16:10:00.000Z",
+  "contracts": {
+    "ValidationLibrary": "0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5",
+    "FeeManager": "0x31D604765CD76Ff098A283881B2ca57e7F703199",
+    "PoolManager": "0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e",
+    "OpinionAdmin": "0x4F0A1938E8707292059595275F9BBD067A301FD2",
+    "OpinionExtensions": "0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA",
+    "OpinionCore": "0x7b5d97fb78fbf41432F34f46a901C6da7754A726"
+  },
+  "configuration": {
+    "usdcToken": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "treasury": "0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9",
+    "admin": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C"
+  },
+  "proxies": {
+    "note": "FeeManager, PoolManager, OpinionAdmin, OpinionExtensions, OpinionCore are UUPS proxies"
+  }
+}

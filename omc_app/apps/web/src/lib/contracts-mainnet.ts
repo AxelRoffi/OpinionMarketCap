@@ -1,17 +1,21 @@
 // 🚀 MAINNET CONTRACT CONFIGURATION
 // Base Mainnet (Chain ID: 8453) contract addresses and configuration
+// Deployed: 2025-01-07
 
-// Contract addresses - UPDATE THESE AFTER MAINNET DEPLOYMENT
+// Contract addresses - LIVE ON BASE MAINNET
 export const MAINNET_CONTRACTS = {
-  OPINION_CORE: process.env.NEXT_PUBLIC_OPINION_CORE_ADDRESS as `0x${string}` || '0x0000000000000000000000000000000000000000' as `0x${string}`,
-  FEE_MANAGER: process.env.NEXT_PUBLIC_FEE_MANAGER_ADDRESS as `0x${string}` || '0x0000000000000000000000000000000000000000' as `0x${string}`,
-  POOL_MANAGER: process.env.NEXT_PUBLIC_POOL_MANAGER_ADDRESS as `0x${string}` || '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  OPINION_CORE: '0x7b5d97fb78fbf41432F34f46a901C6da7754A726' as `0x${string}`,
+  FEE_MANAGER: '0x31D604765CD76Ff098A283881B2ca57e7F703199' as `0x${string}`,
+  POOL_MANAGER: '0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e' as `0x${string}`,
+  OPINION_ADMIN: '0x4F0A1938E8707292059595275F9BBD067A301FD2' as `0x${string}`,
+  OPINION_EXTENSIONS: '0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA' as `0x${string}`,
+  VALIDATION_LIBRARY: '0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5' as `0x${string}`,
   // Real USDC on Base Mainnet
   USDC_TOKEN: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`,
 } as const;
 
-// Treasury address (multisig on mainnet)
-export const MAINNET_TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}` || '0x0000000000000000000000000000000000000000' as `0x${string}`;
+// Treasury address
+export const MAINNET_TREASURY_ADDRESS = '0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9' as `0x${string}`;
 
 // Network configuration
 export const MAINNET_NETWORK = {
@@ -45,22 +49,19 @@ export function validateMainnetEnvironment(): boolean {
     MAINNET_CONTRACTS.OPINION_CORE,
     MAINNET_CONTRACTS.FEE_MANAGER,
     MAINNET_CONTRACTS.POOL_MANAGER,
+    MAINNET_CONTRACTS.OPINION_ADMIN,
+    MAINNET_CONTRACTS.OPINION_EXTENSIONS,
   ];
-  
+
   const hasValidAddresses = requiredAddresses.every(
     address => address !== '0x0000000000000000000000000000000000000000'
   );
-  
+
   if (!hasValidAddresses) {
-    console.error('❌ Mainnet environment not configured. Missing contract addresses.');
-    console.error('Please update environment variables after mainnet deployment:');
-    console.error('- NEXT_PUBLIC_OPINION_CORE_ADDRESS');
-    console.error('- NEXT_PUBLIC_FEE_MANAGER_ADDRESS');
-    console.error('- NEXT_PUBLIC_POOL_MANAGER_ADDRESS');
-    console.error('- NEXT_PUBLIC_TREASURY_ADDRESS');
+    console.error('❌ Mainnet contracts not properly configured.');
     return false;
   }
-  
+
   return true;
 }
 

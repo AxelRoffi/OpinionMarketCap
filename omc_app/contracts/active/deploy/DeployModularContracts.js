@@ -3,16 +3,20 @@ require('dotenv').config();
 
 /**
  * Deployment script for modular OpinionMarketCap contracts
- * Deploys 5 contracts total, ensuring all are under 24KB limit
+ * Deploys 5 contracts + ValidationLibrary, ensuring all are under 24KB limit
+ *
+ * Compatible with ethers v6 / hardhat-ethers
  */
 
 async function main() {
     console.log("🚀 Starting Modular OpinionMarketCap Deployment...\n");
-    
+
     // Get deployment parameters
     const [deployer] = await ethers.getSigners();
+    const deployerBalance = await ethers.provider.getBalance(deployer.address);
+
     console.log("Deployer address:", deployer.address);
-    console.log("Deployer balance:", ethers.utils.formatEther(await deployer.getBalance()), "ETH\n");
+    console.log("Deployer balance:", ethers.formatEther(deployerBalance), "ETH\n");
 
     // Load addresses from environment variables
     const USDC_TOKEN = process.env.USDC_TOKEN_ADDRESS;
@@ -28,164 +32,220 @@ async function main() {
         process.exit(1);
     }
 
+    // Validate addresses are not placeholders
+    if (TREASURY.includes("YOUR_") || ADMIN.includes("YOUR_")) {
+        console.error("❌ Please replace placeholder addresses in .env file!");
+        process.exit(1);
+    }
+
     console.log("📋 Deployment Configuration:");
     console.log("- USDC Token:", USDC_TOKEN);
     console.log("- Treasury:", TREASURY);
-    console.log("- Admin:", ADMIN);
+    console.log("- Final Admin:", ADMIN);
+    console.log("- Deployer (initial admin):", deployer.address);
     console.log("");
 
     const deployedContracts = {};
-    let totalGasUsed = ethers.BigNumber.from(0);
+    let totalGasUsed = 0n;
+
+    // Use deployer as initial admin for deployment, then transfer to final admin
+    const INITIAL_ADMIN = deployer.address;
 
     try {
-        // ========== STEP 1: Deploy FeeManager ==========
-        console.log("1️⃣ Deploying FeeManager...");
+        // ========== STEP 1: Deploy ValidationLibrary ==========
+        console.log("1️⃣ Deploying ValidationLibrary...");
+        const ValidationLibrary = await ethers.getContractFactory("ValidationLibrary");
+        const validationLibrary = await ValidationLibrary.deploy();
+        await validationLibrary.waitForDeployment();
+
+        const validationLibraryAddress = await validationLibrary.getAddress();
+        deployedContracts.validationLibrary = validationLibraryAddress;
+
+        console.log("✅ ValidationLibrary deployed at:", validationLibraryAddress);
+        console.log("");
+
+        // ========== STEP 2: Deploy FeeManager ==========
+        console.log("2️⃣ Deploying FeeManager...");
         const FeeManager = await ethers.getContractFactory("FeeManager");
         const feeManager = await upgrades.deployProxy(FeeManager, [USDC_TOKEN, TREASURY], {
             initializer: "initialize"
         });
-        await feeManager.deployed();
-        
-        const feeManagerTx = await feeManager.deployTransaction.wait();
-        totalGasUsed = totalGasUsed.add(feeManagerTx.gasUsed);
-        deployedContracts.feeManager = feeManager.address;
-        
-        console.log("✅ FeeManager deployed at:", feeManager.address);
-        console.log("   Gas used:", feeManagerTx.gasUsed.toString());
+        await feeManager.waitForDeployment();
+
+        const feeManagerAddress = await feeManager.getAddress();
+        deployedContracts.feeManager = feeManagerAddress;
+
+        console.log("✅ FeeManager deployed at:", feeManagerAddress);
         console.log("");
 
-        // ========== STEP 2: Deploy PoolManager ==========  
-        console.log("2️⃣ Deploying PoolManager...");
-        const PoolManager = await ethers.getContractFactory("PoolManager");
+        // ========== STEP 3: Deploy PoolManager ==========
+        console.log("3️⃣ Deploying PoolManager...");
+        const PoolManager = await ethers.getContractFactory("PoolManager", {
+            libraries: {
+                ValidationLibrary: validationLibraryAddress
+            }
+        });
         const poolManager = await upgrades.deployProxy(PoolManager, [
-            "0x0000000000000000000000000000000000000000", // OpinionCore (placeholder)
-            feeManager.address,
+            ethers.ZeroAddress, // OpinionCore (placeholder - will be set later)
+            feeManagerAddress,
             USDC_TOKEN,
             TREASURY,
-            ADMIN
+            INITIAL_ADMIN // Use deployer as initial admin
         ], {
-            initializer: "initialize"
+            initializer: "initialize",
+            unsafeAllowLinkedLibraries: true
         });
-        await poolManager.deployed();
-        
-        const poolManagerTx = await poolManager.deployTransaction.wait();
-        totalGasUsed = totalGasUsed.add(poolManagerTx.gasUsed);
-        deployedContracts.poolManager = poolManager.address;
-        
-        console.log("✅ PoolManager deployed at:", poolManager.address);
-        console.log("   Gas used:", poolManagerTx.gasUsed.toString());
+        await poolManager.waitForDeployment();
+
+        const poolManagerAddress = await poolManager.getAddress();
+        deployedContracts.poolManager = poolManagerAddress;
+
+        console.log("✅ PoolManager deployed at:", poolManagerAddress);
         console.log("");
 
-        // ========== STEP 3: Deploy OpinionAdmin ==========
-        console.log("3️⃣ Deploying OpinionAdmin...");
+        // ========== STEP 4: Deploy OpinionAdmin ==========
+        console.log("4️⃣ Deploying OpinionAdmin...");
         const OpinionAdmin = await ethers.getContractFactory("OpinionAdmin");
         const opinionAdmin = await upgrades.deployProxy(OpinionAdmin, [
-            "0x0000000000000000000000000000000000000000", // OpinionCore (placeholder)
+            ethers.ZeroAddress, // OpinionCore (placeholder - will be set later)
             USDC_TOKEN,
             TREASURY,
-            ADMIN
+            INITIAL_ADMIN // Use deployer as initial admin
         ], {
             initializer: "initialize"
         });
-        await opinionAdmin.deployed();
-        
-        const opinionAdminTx = await opinionAdmin.deployTransaction.wait();
-        totalGasUsed = totalGasUsed.add(opinionAdminTx.gasUsed);
-        deployedContracts.opinionAdmin = opinionAdmin.address;
-        
-        console.log("✅ OpinionAdmin deployed at:", opinionAdmin.address);
-        console.log("   Gas used:", opinionAdminTx.gasUsed.toString());
+        await opinionAdmin.waitForDeployment();
+
+        const opinionAdminAddress = await opinionAdmin.getAddress();
+        deployedContracts.opinionAdmin = opinionAdminAddress;
+
+        console.log("✅ OpinionAdmin deployed at:", opinionAdminAddress);
         console.log("");
 
-        // ========== STEP 4: Deploy OpinionExtensions ==========
-        console.log("4️⃣ Deploying OpinionExtensions...");
+        // ========== STEP 5: Deploy OpinionExtensions ==========
+        console.log("5️⃣ Deploying OpinionExtensions...");
         const OpinionExtensions = await ethers.getContractFactory("OpinionExtensions");
         const opinionExtensions = await upgrades.deployProxy(OpinionExtensions, [
-            "0x0000000000000000000000000000000000000000", // OpinionCore (placeholder)
-            ADMIN
+            ethers.ZeroAddress, // OpinionCore (placeholder - will be set later)
+            INITIAL_ADMIN // Use deployer as initial admin
         ], {
             initializer: "initialize"
         });
-        await opinionExtensions.deployed();
-        
-        const opinionExtensionsTx = await opinionExtensions.deployTransaction.wait();
-        totalGasUsed = totalGasUsed.add(opinionExtensionsTx.gasUsed);
-        deployedContracts.opinionExtensions = opinionExtensions.address;
-        
-        console.log("✅ OpinionExtensions deployed at:", opinionExtensions.address);
-        console.log("   Gas used:", opinionExtensionsTx.gasUsed.toString());
+        await opinionExtensions.waitForDeployment();
+
+        const opinionExtensionsAddress = await opinionExtensions.getAddress();
+        deployedContracts.opinionExtensions = opinionExtensionsAddress;
+
+        console.log("✅ OpinionExtensions deployed at:", opinionExtensionsAddress);
         console.log("");
 
-        // ========== STEP 5: Deploy OpinionCore ==========
-        console.log("5️⃣ Deploying OpinionCore...");
-        const OpinionCore = await ethers.getContractFactory("OpinionCore");
+        // ========== STEP 6: Deploy OpinionCore ==========
+        console.log("6️⃣ Deploying OpinionCore...");
+        const OpinionCore = await ethers.getContractFactory("OpinionCore", {
+            libraries: {
+                ValidationLibrary: validationLibraryAddress
+            }
+        });
         const opinionCore = await upgrades.deployProxy(OpinionCore, [
             USDC_TOKEN,
-            deployer.address, // Opinion market contract (deployer for now)
-            feeManager.address,
-            poolManager.address,
-            "0x0000000000000000000000000000000000000000", // Monitoring manager (optional)
-            "0x0000000000000000000000000000000000000000", // Security manager (optional)
+            deployer.address, // Opinion market contract (deployer initially)
+            feeManagerAddress,
+            poolManagerAddress,
+            ethers.ZeroAddress, // Monitoring manager (optional)
+            ethers.ZeroAddress, // Security manager (optional)
             TREASURY,
-            opinionExtensions.address,
-            opinionAdmin.address
+            opinionExtensionsAddress,
+            opinionAdminAddress
         ], {
-            initializer: "initialize"
+            initializer: "initialize",
+            unsafeAllowLinkedLibraries: true
         });
-        await opinionCore.deployed();
-        
-        const opinionCoreTx = await opinionCore.deployTransaction.wait();
-        totalGasUsed = totalGasUsed.add(opinionCoreTx.gasUsed);
-        deployedContracts.opinionCore = opinionCore.address;
-        
-        console.log("✅ OpinionCore deployed at:", opinionCore.address);
-        console.log("   Gas used:", opinionCoreTx.gasUsed.toString());
+        await opinionCore.waitForDeployment();
+
+        const opinionCoreAddress = await opinionCore.getAddress();
+        deployedContracts.opinionCore = opinionCoreAddress;
+
+        console.log("✅ OpinionCore deployed at:", opinionCoreAddress);
         console.log("");
 
-        // ========== STEP 6: Link Contracts ==========
-        console.log("6️⃣ Linking contracts...");
-        
+        // ========== STEP 7: Link Contracts ==========
+        console.log("7️⃣ Linking contracts (setting OpinionCore address)...\n");
+
         // Update PoolManager with correct OpinionCore address
-        console.log("   Updating PoolManager with OpinionCore address...");
-        // Note: This would require admin functions in PoolManager
-        
-        // Grant roles and permissions
-        console.log("   Setting up roles and permissions...");
-        // Note: Additional role setup may be needed
-        
-        console.log("✅ Contract linking completed");
+        console.log("   Setting OpinionCore in PoolManager...");
+        const setPoolManagerCoreTx = await poolManager.setOpinionCore(opinionCoreAddress);
+        await setPoolManagerCoreTx.wait();
+        console.log("   ✅ PoolManager linked to OpinionCore");
+
+        // Update OpinionAdmin with correct OpinionCore address (uses setCoreContract)
+        console.log("   Setting coreContract in OpinionAdmin...");
+        const setAdminCoreTx = await opinionAdmin.setCoreContract(opinionCoreAddress);
+        await setAdminCoreTx.wait();
+        console.log("   ✅ OpinionAdmin linked to OpinionCore");
+
+        // Update OpinionExtensions with correct OpinionCore address (uses setCoreContract)
+        console.log("   Setting coreContract in OpinionExtensions...");
+        const setExtensionsCoreTx = await opinionExtensions.setCoreContract(opinionCoreAddress);
+        await setExtensionsCoreTx.wait();
+        console.log("   ✅ OpinionExtensions linked to OpinionCore");
+
+        console.log("\n✅ All contracts linked successfully!");
+        console.log("");
+
+        // ========== STEP 8: Grant Admin Roles ==========
+        console.log("8️⃣ Granting admin roles to Admin EOA...\n");
+
+        const ADMIN_ROLE = ethers.keccak256(ethers.toUtf8Bytes("ADMIN_ROLE"));
+        const DEFAULT_ADMIN_ROLE = ethers.ZeroHash;
+
+        // Grant ADMIN_ROLE to Admin EOA on OpinionCore
+        if (ADMIN !== deployer.address) {
+            console.log("   Granting ADMIN_ROLE on OpinionCore to:", ADMIN);
+            const grantAdminCoreTx = await opinionCore.grantRole(ADMIN_ROLE, ADMIN);
+            await grantAdminCoreTx.wait();
+
+            console.log("   Granting ADMIN_ROLE on FeeManager to:", ADMIN);
+            const grantAdminFeeTx = await feeManager.grantRole(ADMIN_ROLE, ADMIN);
+            await grantAdminFeeTx.wait();
+
+            console.log("   Granting ADMIN_ROLE on PoolManager to:", ADMIN);
+            const grantAdminPoolTx = await poolManager.grantRole(ADMIN_ROLE, ADMIN);
+            await grantAdminPoolTx.wait();
+
+            console.log("   ✅ Admin roles granted");
+        } else {
+            console.log("   Deployer is Admin - no additional role grants needed");
+        }
         console.log("");
 
         // ========== DEPLOYMENT SUMMARY ==========
         console.log("🎉 DEPLOYMENT COMPLETED SUCCESSFULLY! 🎉\n");
         console.log("📊 Deployment Summary:");
         console.log("========================");
-        console.log(`OpinionCore:       ${deployedContracts.opinionCore}`);
-        console.log(`OpinionExtensions: ${deployedContracts.opinionExtensions}`);
-        console.log(`OpinionAdmin:      ${deployedContracts.opinionAdmin}`);
+        console.log(`ValidationLibrary: ${deployedContracts.validationLibrary}`);
         console.log(`FeeManager:        ${deployedContracts.feeManager}`);
         console.log(`PoolManager:       ${deployedContracts.poolManager}`);
-        console.log("");
-        console.log(`Total Gas Used:    ${totalGasUsed.toString()}`);
-        console.log(`Estimated Cost:    ${ethers.utils.formatEther(totalGasUsed.mul(await deployer.provider.getGasPrice()))} ETH`);
+        console.log(`OpinionAdmin:      ${deployedContracts.opinionAdmin}`);
+        console.log(`OpinionExtensions: ${deployedContracts.opinionExtensions}`);
+        console.log(`OpinionCore:       ${deployedContracts.opinionCore}`);
         console.log("");
 
         // ========== CONTRACT SIZE VERIFICATION ==========
         console.log("📏 Contract Size Verification:");
         console.log("===============================");
-        
-        // Get contract bytecode sizes
+
         const contracts = [
-            { name: "OpinionCore", address: opinionCore.address },
-            { name: "OpinionExtensions", address: opinionExtensions.address },
-            { name: "OpinionAdmin", address: opinionAdmin.address },
-            { name: "FeeManager", address: feeManager.address },
-            { name: "PoolManager", address: poolManager.address }
+            { name: "ValidationLibrary", address: validationLibraryAddress },
+            { name: "FeeManager", address: feeManagerAddress },
+            { name: "PoolManager", address: poolManagerAddress },
+            { name: "OpinionAdmin", address: opinionAdminAddress },
+            { name: "OpinionExtensions", address: opinionExtensionsAddress },
+            { name: "OpinionCore", address: opinionCoreAddress }
         ];
 
         for (const contract of contracts) {
-            const code = await deployer.provider.getCode(contract.address);
-            const sizeKB = (code.length / 2 - 1) / 1024; // Convert hex to KB
+            const code = await ethers.provider.getCode(contract.address);
+            const sizeKB = (code.length / 2 - 1) / 1024;
             const status = sizeKB < 24 ? "✅" : "❌";
             console.log(`${contract.name}: ${sizeKB.toFixed(2)} KB ${status}`);
         }
@@ -193,11 +253,11 @@ async function main() {
 
         // ========== SAVE DEPLOYMENT INFO ==========
         const deploymentInfo = {
-            network: "base-mainnet", 
+            network: (await ethers.provider.getNetwork()).name,
+            chainId: Number((await ethers.provider.getNetwork()).chainId),
             deployedAt: new Date().toISOString(),
             deployer: deployer.address,
             contracts: deployedContracts,
-            gasUsed: totalGasUsed.toString(),
             configuration: {
                 usdcToken: USDC_TOKEN,
                 treasury: TREASURY,
@@ -205,20 +265,30 @@ async function main() {
             },
             features: {
                 modularArchitecture: true,
+                uupsUpgradeable: true,
                 contractSizes: "All contracts under 24KB",
-                initialPrice: "1-100 USDC with dynamic fees",
-                categories: "39 comprehensive categories",
-                poolSystem: "100 USDC threshold, free joining",
-                fees: "2% platform + 3% creator, no MEV penalties"
+                initialPrice: "1-100 USDC",
+                categories: 40,
+                poolSystem: "100 USDC threshold, free contributions",
+                fees: "2% platform + 3% creator"
             }
         };
 
         const fs = require('fs');
-        fs.writeFileSync(
-            './deployments/modular-opinion-deployment.json', 
-            JSON.stringify(deploymentInfo, null, 2)
-        );
-        console.log("💾 Deployment info saved to ./deployments/modular-opinion-deployment.json");
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `./deployments/deployment-${deploymentInfo.network}-${timestamp}.json`;
+
+        fs.writeFileSync(filename, JSON.stringify(deploymentInfo, null, 2));
+        console.log(`💾 Deployment info saved to ${filename}`);
+        console.log("");
+
+        // ========== VERIFICATION COMMANDS ==========
+        console.log("🔍 Contract Verification Commands:");
+        console.log("===================================");
+        console.log(`npx hardhat verify --network base ${validationLibraryAddress}`);
+        console.log("");
+        console.log("For proxy contracts, use hardhat-upgrades verify:");
+        console.log(`npx hardhat verify --network base ${feeManagerAddress}`);
         console.log("");
 
         // ========== NEXT STEPS ==========
@@ -226,9 +296,8 @@ async function main() {
         console.log("===============");
         console.log("1. Verify contracts on BaseScan");
         console.log("2. Test contract interactions");
-        console.log("3. Set up frontend integration");
-        console.log("4. Configure monitoring and alerts");
-        console.log("5. Update documentation");
+        console.log("3. Update frontend with new contract addresses");
+        console.log("4. Transfer admin roles if needed (transferFullAdmin)");
         console.log("");
         console.log("🚀 Modular OpinionMarketCap is ready for production!");
 
@@ -239,7 +308,6 @@ async function main() {
     }
 }
 
-// Error handling
 main()
     .then(() => process.exit(0))
     .catch((error) => {

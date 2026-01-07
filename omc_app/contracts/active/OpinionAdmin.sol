@@ -128,6 +128,26 @@ contract OpinionAdmin is
 
     // --- CONTRACT MANAGEMENT ---
 
+    /**
+     * @dev Sets the core contract address. Can only be called once if initially zero,
+     *      or by admin for updates. Essential for post-deployment linking.
+     */
+    function setCoreContract(address _coreContract) external onlyRole(ADMIN_ROLE) {
+        require(_coreContract != address(0), "Zero address");
+
+        // Revoke role from old address if it exists
+        address oldCore = address(coreContract);
+        if (oldCore != address(0)) {
+            _revokeRole(CORE_CONTRACT_ROLE, oldCore);
+        }
+
+        // Grant role to new address and update reference
+        _grantRole(CORE_CONTRACT_ROLE, _coreContract);
+        coreContract = IOpinionCoreInternal(_coreContract);
+
+        emit AdminAction(100, msg.sender, bytes32(uint256(uint160(_coreContract))), 0);
+    }
+
     function setFeeManager(address _feeManager) external onlyRole(ADMIN_ROLE) {
         require(_feeManager != address(0), "Zero address");
         coreContract.updateCoreParameterAddress(0, _feeManager);
