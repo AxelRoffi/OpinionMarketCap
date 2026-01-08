@@ -247,3 +247,64 @@ Run with: `npx hardhat run scripts/test-deploy.js`
 - Linked all contracts (PoolManager, OpinionAdmin, OpinionExtensions → OpinionCore)
 - Updated frontend with new contract addresses (`apps/web/src/lib/contracts.ts` and `contracts-mainnet.ts`)
 - Deployment info saved to `deployments/base-mainnet-final.json`
+
+### January 8, 2025 Session - CONTRACT VERIFICATION
+All contracts successfully verified on BaseScan:
+- ✅ ValidationLibrary: `0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5`
+- ✅ OpinionCore impl: `0xe4fe91ddef3e656905da64b6194233c5f8dcbf26`
+- ✅ FeeManager impl: `0xa427dD680a9F56A26646e89A7DE74235486D07b9`
+- ✅ PoolManager impl: `0xb0461E420f65d711F84A7dAa0e94893482435617`
+- ✅ OpinionAdmin impl: `0xeF10FdFaf7876F63450207e62fba9d4b4A70DcBc`
+- ✅ OpinionExtensions impl: `0x5B84109Bf13E4564EA6F4d6F6c24c161d7597c98`
+
+**Key insights for verification**:
+- Must use exact build-info from `artifacts/build-info/*.json` (includes `debug.revertStrings: "strip"`)
+- For contracts with many dependencies, create minimal JSON with only required imports
+- Use `scripts/extract-minimal-json.js [ContractName]` to generate verification JSONs
+- Verification files saved in `deployments/`: `*-minimal.json` and `*-exact.json`
+
+---
+
+## Security Concerns for V2 Upgrade (per contract)
+
+### ValidationLibrary
+1. **Empty description handling**: `validateDescription` allows empty strings - consider if desired in all contexts
+2. **keccak256 collisions**: Category name comparison via `keccak256` may have collisions - consider alternatives
+3. **Edge case validation**: No validation for negative values or overflow/underflow scenarios
+4. **Comprehensive input validation**: Not all functions have thorough input validation
+
+### OpinionCore
+1. **SafeERC20**: Continue using SafeERC20 for token transfers ✅
+2. **Access Control**: Properly implements role-based access ✅
+3. **ReentrancyGuard**: Protected against reentrancy ✅
+4. **Rate Limiting**: Ensure rate limit is set appropriately for system requirements
+5. **Parameter Updates**: Ensure only authorized contracts can update core parameters
+6. **Event Emission**: Events logged for monitoring ✅
+
+### FeeManager
+1. **Treasury Management**: Ensure treasury change process (with timelock) cannot be manipulated
+2. **Parameter Cooldown**: Cooldown period may impact flexibility - evaluate trade-offs
+3. **MEV Protection**: Verify MEV penalty mechanism effectively mitigates risks
+4. **Withdrawal Security**: Ensure only treasury can withdraw accumulated fees
+5. **Zero Address Checks**: Implemented ✅
+6. **SafeERC20**: Using SafeERC20 ✅
+
+### PoolManager
+1. **Insufficient Access Control**: Consider more granular role permissions with minimal privileges
+2. **Integer Overflow**: Ensure all token amount calculations are secure (SafeMath)
+3. **Address Validation**: Validate all addresses passed to functions
+4. **External Calls**: Secure trust boundaries in `distributePoolRewards` and similar
+5. **Consistent Error Handling**: Provide informative error messages
+6. **Gas Optimization**: Consider minimizing storage reads/writes
+
+### OpinionAdmin
+1. **Treasury Timelock**: Delay mechanism may introduce risks - cannot be exploited to delay critical updates
+2. **Deactivate/Reactivate**: Currently stubs - implement proper moderation logic to prevent abuse
+3. **Input Validation**: Ensure all external function inputs are validated
+4. **Pending Treasury Change**: Potential attack vector if not handled securely
+5. **External Calls**: Verify role grant/revoke functions are secure
+
+### OpinionExtensions
+1. **Category Management**: Validate category additions/removals cannot cause inconsistencies
+2. **Extension Slots**: Future extensions should follow same security patterns
+3. **Role Permissions**: Ensure only authorized accounts can modify extensions
