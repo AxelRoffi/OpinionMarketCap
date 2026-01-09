@@ -24,7 +24,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts'
-import { ethers } from 'ethers'
 
 interface ReviewSubmitFormProps {
   formData: {
@@ -338,11 +337,12 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
                 if (Number(parsedLog.args.actionType) === 0) {
                   const opinionId = Number(parsedLog.args.opinionId)
                   console.log('✅ Opinion created with ID:', opinionId)
-                
-                setTimeout(() => {
-                  onSuccess(opinionId)
-                }, 2000)
-                return;
+
+                  setTimeout(() => {
+                    onSuccess(opinionId)
+                  }, 2000)
+                  return;
+                }
               }
             } catch (parseError) {
               console.error('Parse error for log:', parseError)

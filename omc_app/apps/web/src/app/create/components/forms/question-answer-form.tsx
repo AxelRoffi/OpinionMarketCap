@@ -122,24 +122,25 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
       setShowAdultModal(true)
       return
     }
-    
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        // Remove category if already selected
-        const updated = prev.filter(c => c !== category)
-        onUpdate('categories', updated)
-        return updated
-      } else if (prev.length < 3) {
-        // Add category if under limit
-        const updated = [...prev, category]
-        onUpdate('categories', updated)
-        return updated
-      } else {
-        // Already at limit, don't add
-        return prev
-      }
-    })
-    
+
+    // Calculate new categories first, then update state and parent
+    let newCategories: string[]
+    if (selectedCategories.includes(category)) {
+      // Remove category if already selected
+      newCategories = selectedCategories.filter(c => c !== category)
+    } else if (selectedCategories.length < 3) {
+      // Add category if under limit
+      newCategories = [...selectedCategories, category]
+    } else {
+      // Already at limit, don't change
+      return
+    }
+
+    // Update local state
+    setSelectedCategories(newCategories)
+    // Update parent (outside of setState callback)
+    onUpdate('categories', newCategories)
+
     // Clear category errors when user makes selection
     if (errors.categories) {
       setErrors(prev => ({ ...prev, categories: '' }))
