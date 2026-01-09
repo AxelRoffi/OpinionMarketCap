@@ -282,6 +282,19 @@ All contracts successfully verified on BaseScan:
 
 **Fix for V2:** Change the call to `ValidationLibrary.validateDescription(description, MAX_DESCRIPTION_LENGTH)` to use the configurable limit.
 
+### Poor Transaction Error Messages
+**Severity:** Low (UX issue)
+**Status:** Needs improvement
+**Affected:** Frontend transaction handling
+
+**Issue:** When transactions revert on-chain, users see generic error messages like "Transaction reverted" without clear explanation of why (e.g., description too long, invalid category, insufficient allowance).
+
+**Improvement needed:**
+- Parse revert reasons from contract errors
+- Map common revert messages to user-friendly explanations
+- Show specific validation errors before transaction is sent (client-side pre-validation)
+- Add better error decoding in `review-submit-form.tsx` and other transaction forms
+
 ---
 
 ## Security Concerns for V2 Upgrade (per contract)
