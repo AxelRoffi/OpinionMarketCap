@@ -63,7 +63,7 @@ const DEFAULT_LIMITS: TextLimits = {
   maxAnswerLength: 60,
   maxLinkLength: 260,
   maxIpfsHashLength: 68,
-  maxDescriptionLength: 280,
+  maxDescriptionLength: 120, // Note: Contract bug - calls validateDescription() without maxLength param, defaults to 120
   maxCategoriesPerOpinion: 3
 }
 

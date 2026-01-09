@@ -61,7 +61,7 @@ export function useCreateForm(): UseCreateFormReturn {
       case 2: // Additional Info step (optional fields)
         // All fields are optional, so always valid
         // But validate format if provided
-        if (formData.description && (formData.description.length < 2 || formData.description.length > 280)) {
+        if (formData.description && (formData.description.length < 2 || formData.description.length > 120)) {
           return false
         }
         if (formData.externalLink && !isValidUrl(formData.externalLink)) {

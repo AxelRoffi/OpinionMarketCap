@@ -119,7 +119,7 @@ Standard OpenZeppelin AccessControl functions available:
 | earlyExitPenalty | 20% |
 | poolThreshold | 100 USDC |
 | categories | 40 |
-| maxDescriptionLength | 280 chars |
+| maxDescriptionLength | 120 chars | ⚠️ Contract bug - see Known Issues |
 | maxQuestionLength | 60 chars |
 | maxAnswerLength | 60 chars |
 | isPublicCreationEnabled | true |
@@ -133,7 +133,7 @@ All frontend and landing page values are now aligned with smart contract specs:
 | Creation fee min | 2 USDC | ✅ | ✅ |
 | Pool contribution fee | 0 USDC | ✅ | ✅ |
 | Pool max duration | 60 days | ✅ | ✅ |
-| Description length | 280 chars | ✅ | N/A |
+| Description length | 120 chars | ✅ | N/A |
 | Categories | 40 | ✅ | N/A |
 
 ## Pre-Deployment Checklist
@@ -227,7 +227,7 @@ Run with: `npx hardhat run scripts/test-deploy.js`
   - Fixed creation fee: 5 USDC → 2 USDC minimum in landing/tutorial
   - Fixed pool contribution fee: 1 USDC → 0 USDC (free)
   - Fixed pool max duration: 30 → 60 days
-  - Fixed description length: 240 → 280 chars
+  - Fixed description length: 240 → 280 chars (Note: Actual limit is 120 due to contract bug)
   - Synced categories: 25 → 40 (matching contract)
 - **Project cleanup**: Removed 182 obsolete files (70k+ lines deleted):
   - Old deployment JSONs and configuration files
@@ -262,6 +262,25 @@ All contracts successfully verified on BaseScan:
 - For contracts with many dependencies, create minimal JSON with only required imports
 - Use `scripts/extract-minimal-json.js [ContractName]` to generate verification JSONs
 - Verification files saved in `deployments/`: `*-minimal.json` and `*-exact.json`
+
+---
+
+## Known Issues (Deployed Contracts)
+
+### Description Length Limit Bug
+**Severity:** Medium
+**Status:** Active in deployed contracts
+**Affected:** OpinionCore.sol, ValidationLibrary.sol
+
+**Issue:** The contract defines `MAX_DESCRIPTION_LENGTH = 280` but calls `ValidationLibrary.validateDescription(description)` without passing the maxLength parameter. The overloaded function without the parameter defaults to **120 characters**.
+
+**Location:**
+- `contracts/active/OpinionCore.sol:231` - calls `ValidationLibrary.validateDescription(description)`
+- `contracts/active/libraries/ValidationLibrary.sol:89` - defaults to 120 chars
+
+**Impact:** Users cannot create opinions with descriptions longer than 120 characters, even though the UI previously showed 280 as the limit.
+
+**Fix for V2:** Change the call to `ValidationLibrary.validateDescription(description, MAX_DESCRIPTION_LENGTH)` to use the configurable limit.
 
 ---
 
