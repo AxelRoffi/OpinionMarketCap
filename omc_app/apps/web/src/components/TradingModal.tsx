@@ -592,7 +592,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         </Card>
                       )}
 
-                      {/* Trading Info */}
+                      {/* Trading Info - Fee Breakdown */}
                       <Card className="bg-blue-900/20 border-blue-500/50">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm font-medium text-blue-400 flex items-center gap-2">
@@ -602,9 +602,11 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm text-gray-300">
                           <p>• Submit your answer to become the new owner</p>
-                          <p>• Pay {formatUSDC(opinionData.nextPrice)} to take ownership</p>
-                          <p>• Previous owner receives the payment</p>
-                          <p>• Price changes with each trade</p>
+                          <p>• You pay {formatUSDC(opinionData.nextPrice)} to take ownership</p>
+                          <p className="text-gray-400 pl-4">→ Previous owner receives {formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))} (95%)</p>
+                          <p className="text-gray-400 pl-4">→ Opinion creator receives {formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))} (3%)</p>
+                          <p className="text-gray-400 pl-4">→ OMC platform fee {formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))} (2%)</p>
+                          <p>• Price increases with each trade</p>
                         </CardContent>
                       </Card>
 
