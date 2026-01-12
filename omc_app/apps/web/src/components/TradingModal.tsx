@@ -606,7 +606,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           <p className="text-gray-400 pl-4">→ Previous owner receives {formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))} (95%)</p>
                           <p className="text-gray-400 pl-4">→ Opinion creator receives {formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))} (3%)</p>
                           <p className="text-gray-400 pl-4">→ OMC platform fee {formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))} (2%)</p>
-                          <p>• Price increases with each trade</p>
+                          <p>• Price changes with each trade</p>
                         </CardContent>
                       </Card>
 
