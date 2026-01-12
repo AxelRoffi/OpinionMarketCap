@@ -1,6 +1,6 @@
 // interfaces/IOpinionCore.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "../structs/OpinionStructs.sol";
 

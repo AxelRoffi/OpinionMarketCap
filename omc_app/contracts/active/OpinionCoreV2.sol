@@ -25,10 +25,16 @@ import "./libraries/PriceCalculator.sol";
 import "./interfaces/IValidationErrors.sol";
 
 /**
- * @title OpinionCore
- * @dev Core trading contract for opinions and answers - Size optimized (~16KB)
+ * @title OpinionCoreV2
+ * @dev Core trading contract - UPGRADED VERSION
+ *
+ * V2 Changes:
+ * - Fixed fee transfer: fees now properly sent to FeeManager
+ * - Added pause()/unpause() admin functions
+ * - Added emergencyWithdraw() function
+ * - Added rescueStuckFees() to recover fees from V1
  */
-contract OpinionCore is
+contract OpinionCoreV2 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -246,12 +252,18 @@ contract OpinionCore is
         // Transfer payment
         usdcToken.safeTransferFrom(msg.sender, address(this), price);
         
-        // Transfer to previous answer owner
+        // Transfer to previous answer owner (95%)
         if (ownerAmount > 0) {
             usdcToken.safeTransfer(opinion.currentAnswerOwner, ownerAmount);
         }
-        
-        // Accumulate fees
+
+        // V2 FIX: Transfer fees to FeeManager (5% = 2% platform + 3% creator)
+        uint96 totalFees = platformFee + creatorFee;
+        if (totalFees > 0) {
+            usdcToken.safeTransfer(address(feeManager), totalFees);
+        }
+
+        // Record creator fee in FeeManager for claiming
         if (creatorFee > 0) {
             feeManager.accumulateFee(opinion.creator, creatorFee);
         }
@@ -608,6 +620,56 @@ contract OpinionCore is
     }
 
     // Removed stub functions to save space - functions moved to appropriate contracts
+
+    // --- V2 ADMIN FUNCTIONS ---
+
+    /**
+     * @dev Pauses all trading operations
+     */
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+        emit ContractPaused(msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Unpauses all trading operations
+     */
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+        emit ContractUnpaused(msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Emergency withdrawal of any token from this contract
+     * @param token Token address (use address(0) for ETH)
+     * @param to Recipient address
+     * @param amount Amount to withdraw
+     */
+    function emergencyWithdraw(address token, address to, uint256 amount) external nonReentrant whenPaused onlyRole(ADMIN_ROLE) {
+        require(to != address(0), "Zero address");
+
+        if (token == address(0)) {
+            (bool success, ) = to.call{value: amount}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(token).safeTransfer(to, amount);
+        }
+
+        emit EmergencyWithdrawal(token, to, amount, block.timestamp);
+    }
+
+    /**
+     * @dev Rescue stuck fees from V1 and send to FeeManager
+     * Call this once after upgrade to move accumulated fees to FeeManager
+     */
+    function rescueStuckFees() external onlyRole(ADMIN_ROLE) {
+        uint256 balance = usdcToken.balanceOf(address(this));
+        require(balance > 0, "No fees to rescue");
+
+        usdcToken.safeTransfer(address(feeManager), balance);
+
+        emit EmergencyWithdrawal(address(usdcToken), address(feeManager), balance, block.timestamp);
+    }
 
     // --- UUPS UPGRADE AUTHORIZATION ---
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) {}
