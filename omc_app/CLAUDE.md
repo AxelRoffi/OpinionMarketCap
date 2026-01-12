@@ -101,6 +101,75 @@ Standard OpenZeppelin AccessControl functions available:
 - `revokeRole(role, account)`
 - `renounceRole(role, account)`
 
+## Complete Admin Functions Reference
+
+### OpinionCore (V2)
+
+| Function | Role Required | Description |
+|----------|---------------|-------------|
+| `pause()` | ADMIN_ROLE | Pause all trading operations |
+| `unpause()` | ADMIN_ROLE | Resume trading operations |
+| `emergencyWithdraw(token, to, amount)` | ADMIN_ROLE | Emergency withdrawal (only when paused) |
+| `rescueStuckFees()` | ADMIN_ROLE | Transfer stuck V1 fees to FeeManager |
+| `transferFullAdmin(newAdmin)` | DEFAULT_ADMIN_ROLE | Transfer all admin roles |
+
+### OpinionAdmin
+
+| Function | Role Required | Description |
+|----------|---------------|-------------|
+| `pause()` | ADMIN_ROLE | Pause OpinionAdmin |
+| `unpause()` | ADMIN_ROLE | Unpause OpinionAdmin |
+| `emergencyWithdraw(token, to, amount)` | ADMIN_ROLE | Withdraw from OpinionAdmin |
+| `setMinimumPrice(price)` | ADMIN_ROLE | Set min price (via OpinionCore) |
+| `setQuestionCreationFee(fee)` | ADMIN_ROLE | Set creation fee |
+| `setInitialAnswerPrice(price)` | ADMIN_ROLE | Set initial answer price |
+| `setMaxInitialPrice(price)` | ADMIN_ROLE | Set max initial price |
+| `setMaxPriceChange(change)` | ADMIN_ROLE | Set price change limit |
+| `setMaxTradesPerBlock(max)` | ADMIN_ROLE | Set rate limit |
+| `togglePublicCreation()` | ADMIN_ROLE | Enable/disable public creation |
+| `setCoreContract(addr)` | ADMIN_ROLE | Update OpinionCore address |
+| `setFeeManager(addr)` | ADMIN_ROLE | Update FeeManager address |
+| `setPoolManager(addr)` | ADMIN_ROLE | Update PoolManager address |
+| `setTreasury(addr)` | TREASURY_ROLE | Change treasury (48h timelock) |
+| `confirmTreasuryChange()` | TREASURY_ROLE | Confirm treasury change |
+| `deactivateOpinion(opinionId)` | MODERATOR_ROLE | Deactivate an opinion |
+| `reactivateOpinion(opinionId)` | MODERATOR_ROLE | Reactivate an opinion |
+| `moderateAnswer(opinionId, reason)` | MODERATOR_ROLE | Moderate an answer |
+| `transferFullAdmin(newAdmin)` | DEFAULT_ADMIN_ROLE | Transfer all roles |
+
+### FeeManager
+
+| Function | Role Required | Description |
+|----------|---------------|-------------|
+| `pause()` | ADMIN_ROLE | Pause FeeManager |
+| `unpause()` | ADMIN_ROLE | Unpause FeeManager |
+| `withdrawPlatformFees(token, recipient)` | TREASURY_ROLE | Withdraw platform fees to treasury |
+| `claimAccumulatedFees()` | Any user | Claim accumulated creator fees |
+| `setPlatformFeePercent(percent)` | ADMIN_ROLE | Set platform fee (max 10%) |
+| `setCreatorFeePercent(percent)` | ADMIN_ROLE | Set creator fee (max 10%) |
+| `setMevPenaltyPercent(percent)` | ADMIN_ROLE | Set MEV penalty (max 50%) |
+| `setTreasury(addr)` | ADMIN_ROLE | Change treasury (48h timelock) |
+| `confirmTreasuryChange()` | ADMIN_ROLE | Confirm treasury change |
+| `grantCoreContractRole(addr)` | ADMIN_ROLE | Grant CORE_CONTRACT_ROLE |
+| `revokeCoreContractRole(addr)` | ADMIN_ROLE | Revoke CORE_CONTRACT_ROLE |
+| `transferFullAdmin(newAdmin)` | DEFAULT_ADMIN_ROLE | Transfer all roles |
+
+### PoolManager
+
+| Function | Role Required | Description |
+|----------|---------------|-------------|
+| `setOpinionCore(addr)` | ADMIN_ROLE | Set OpinionCore address |
+| `setPoolCreationFee(fee)` | ADMIN_ROLE | Set pool creation fee |
+| `transferFullAdmin(newAdmin)` | DEFAULT_ADMIN_ROLE | Transfer all roles |
+
+### OpinionExtensions
+
+| Function | Role Required | Description |
+|----------|---------------|-------------|
+| `setCoreContract(addr)` | ADMIN_ROLE | Set OpinionCore address |
+| `addCategoryToCategories(category)` | ADMIN_ROLE | Add new category |
+| `transferFullAdmin(newAdmin)` | DEFAULT_ADMIN_ROLE | Transfer all roles |
+
 ## Configuration Verified
 
 | Parameter | Value |
@@ -263,9 +332,32 @@ All contracts successfully verified on BaseScan:
 - Use `scripts/extract-minimal-json.js [ContractName]` to generate verification JSONs
 - Verification files saved in `deployments/`: `*-minimal.json` and `*-exact.json`
 
+### January 12, 2025 Session - V2 UPGRADE
+- **Fixed critical fee transfer bug**: Fees were stuck in OpinionCore instead of being transferred to FeeManager
+- **Upgraded OpinionCore to V2** with:
+  - `pause()` / `unpause()` admin functions
+  - `emergencyWithdraw()` function (when paused)
+  - `rescueStuckFees()` to recover V1 fees
+  - Fixed `submitAnswer()` to transfer fees to FeeManager
+- **Rescued 0.3641 USDC** stuck fees from V1 to FeeManager
+- **Fixed FeeManager permissions**: Granted CORE_CONTRACT_ROLE to OpinionCore
+- **Fixed hardcoded contract addresses** in frontend hooks (old testnet addresses)
+- **Updated frontend**: Transparent fee breakdown in trading modal
+- **Updated Solidity to 0.8.22** for OpenZeppelin 5.x compatibility
+
+**V2 Implementation**: `0xe4fE91DDeF3E656905dA64b6194233c5f8DCBf26`
+
 ---
 
 ## Known Issues (Deployed Contracts)
+
+### Fee Transfer Bug (V1) - FIXED in V2
+**Severity:** Critical
+**Status:** ✅ FIXED in V2 upgrade (January 12, 2025)
+
+**Issue:** In V1, `submitAnswer()` collected fees but didn't transfer them to FeeManager. Fees (5% = 2% platform + 3% creator) were stuck in OpinionCore.
+
+**Fix:** V2 now transfers fees to FeeManager after each trade. Stuck V1 fees (0.3641 USDC) were rescued.
 
 ### Description Length Limit Bug
 **Severity:** Medium
