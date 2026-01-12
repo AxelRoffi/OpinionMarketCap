@@ -176,8 +176,8 @@ export default function EnhancedSubmitModal({
       },
       'InvalidDescriptionLength': {
         name: 'Description Too Long',
-        message: 'Your description exceeds the maximum length of 240 characters.',
-        solution: 'Shorten your description to 240 characters or less.',
+        message: 'Your description exceeds the maximum length of 120 characters.',
+        solution: 'Shorten your description to 120 characters or less.',
         canRetry: true
       }
     };

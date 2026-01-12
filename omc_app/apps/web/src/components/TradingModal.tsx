@@ -85,9 +85,11 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   // Convenience accessors for form data
   const { answer, description, externalLink: link, acceptedTerms } = formData
 
-  // Character limits
+  // Character limits (must match deployed contract)
+  // Note: Contract has a bug where MAX_DESCRIPTION_LENGTH=280 is defined but
+  // ValidationLibrary.validateDescription() defaults to 120 when called without maxLength
   const ANSWER_LIMIT = 60
-  const DESCRIPTION_LIMIT = 240
+  const DESCRIPTION_LIMIT = 120
   
   // Conservative "infinite" approval amount - use a reasonable large number
   // Equivalent to 1 million USDC (6 decimals) - should be enough for any reasonable use
