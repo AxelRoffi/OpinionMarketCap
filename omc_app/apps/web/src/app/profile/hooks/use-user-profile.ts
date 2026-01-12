@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
 import { CONTRACTS, USDC_ADDRESS } from '@/lib/contracts';
 
+// Re-export CONTRACTS for backward compatibility with components that import from this file
+export { CONTRACTS } from '@/lib/contracts';
+
 // ABIs
 const FEE_MANAGER_ABI = [
   {
