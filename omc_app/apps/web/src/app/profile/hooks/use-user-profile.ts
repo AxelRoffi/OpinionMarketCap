@@ -3,13 +3,7 @@
 import { useReadContract, useWriteContract, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { useEffect, useState } from 'react';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
-
-// Contract addresses
-export const CONTRACTS = {
-  OPINION_CORE: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f' as `0x${string}`,
-  FEE_MANAGER: '0xc8f879d86266C334eb9699963ca0703aa1189d8F' as `0x${string}`,
-  USDC_TOKEN: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
-};
+import { CONTRACTS, USDC_ADDRESS } from '@/lib/contracts';
 
 // ABIs
 const FEE_MANAGER_ABI = [

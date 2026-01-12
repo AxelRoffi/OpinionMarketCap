@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Interface } from 'ethers';
 import { indexingService, IndexedEvent } from '@/lib/indexing-service';
+import { CONTRACTS } from '@/lib/contracts';
 
 // Types pour les événements OMC
 interface AlchemyWebhookPayload {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
       const log = activity.log;
       
       // Vérifier que c'est bien notre contrat
-      if (log.address.toLowerCase() !== '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f'.toLowerCase()) {
+      if (log.address.toLowerCase() !== CONTRACTS.OPINION_CORE.toLowerCase()) {
         continue;
       }
 
@@ -241,10 +242,10 @@ function getActionTypeName(actionType: number): string {
 export async function GET() {
   console.log('ℹ️ GET request to webhook endpoint');
   
-  return NextResponse.json({ 
+  return NextResponse.json({
     status: 'active',
-    contract: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f',
-    network: 'base-sepolia',
+    contract: CONTRACTS.OPINION_CORE,
+    network: 'base-mainnet',
     timestamp: new Date().toISOString(),
     message: 'Webhook is active and ready to receive POST requests from Alchemy'
   });

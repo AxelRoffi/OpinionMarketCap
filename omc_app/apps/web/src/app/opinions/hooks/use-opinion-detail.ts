@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useReadContract } from 'wagmi';
 import { OpinionDetail, AnswerHistory, OpinionStats, TradingActivity } from '../types/opinion-types';
-
-// Contract configuration
-const CONTRACTS = {
-  OPINION_CORE: '0xB2D35055550e2D49E5b2C21298528579A8bF7D2f' as `0x${string}`,
-};
+import { CONTRACTS } from '@/lib/contracts';
 
 // ABI for the functions we need - CORRECTED TO MATCH ACTUAL CONTRACT
 const OPINION_CORE_ABI = [
