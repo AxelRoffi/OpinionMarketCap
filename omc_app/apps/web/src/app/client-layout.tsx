@@ -24,13 +24,12 @@ export function ClientLayout({ children }: ClientLayoutProps) {
     setMounted(true);
   }, []);
 
-  // During SSR/static generation, render a minimal layout
+  // During SSR/static generation, render a minimal loading state
+  // Do NOT render children - they might try to use wagmi hooks before providers are ready
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-        <main className="flex-grow">
-          {children}
-        </main>
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }

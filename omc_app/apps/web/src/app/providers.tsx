@@ -54,10 +54,14 @@ export default function Providers({
     })
   );
 
-  // During SSR/static generation, render children without providers
-  // This prevents the "useContext" error during build
+  // During SSR/static generation, render a minimal loading state
+  // Do NOT render children - they might try to use wagmi hooks before provider is ready
   if (!mounted) {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
   }
 
   return (
