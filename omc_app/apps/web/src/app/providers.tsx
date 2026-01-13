@@ -13,8 +13,12 @@ export default function Providers({
 }: {
   children: React.ReactNode;
 }) {
+  // Track if we're mounted on the client
+  const [mounted, setMounted] = useState(false);
+
   // Suppress extension errors on mount
   useEffect(() => {
+    setMounted(true);
     suppressExtensionErrors();
   }, []);
 
@@ -49,6 +53,12 @@ export default function Providers({
       },
     })
   );
+
+  // During SSR/static generation, render children without providers
+  // This prevents the "useContext" error during build
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
     <WagmiProvider config={wagmiConfig}>

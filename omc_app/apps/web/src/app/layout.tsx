@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Providers from "./providers";
-import { Toaster } from "sonner";
-import { GlobalNavbar } from "@/components/GlobalNavbar";
-import { ExtensionErrorSuppressor } from "@/components/ExtensionErrorSuppressor";
-import { ExtensionErrorBoundary } from "@/components/ExtensionErrorBoundary";
-import { WalletPersistence } from "@/components/WalletPersistence";
-import { WalletRoutePersistence } from "@/components/WalletRoutePersistence";
-import { ModeratedAnswersNotification } from "@/components/ModeratedAnswersNotification";
-import { AdminModerationPanel } from "@/components/AdminModerationPanel";
-import { Footer } from "@/components/Footer";
+import { ClientLayout } from "./client-layout";
+
+// Force dynamic rendering to avoid SSR issues with wallet providers
+export const dynamic = 'force-dynamic';
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -37,23 +31,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <ExtensionErrorBoundary>
-          <Providers>
-            <ExtensionErrorSuppressor />
-            <div className="min-h-screen bg-background text-foreground flex flex-col">
-              <GlobalNavbar />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-              <ModeratedAnswersNotification />
-              <AdminModerationPanel isAdmin={false} />
-            </div>
-            <Toaster 
-              position="top-right"
-            />
-          </Providers>
-        </ExtensionErrorBoundary>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

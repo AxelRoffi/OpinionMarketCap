@@ -234,8 +234,8 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                           borderRadius: '8px',
                           color: '#F9FAFB'
                         }}
-                        formatter={(value: number, name: string) => [
-                          name === 'value' ? formatCurrency(value) : formatCurrency(value),
+                        formatter={(value, name) => [
+                          formatCurrency(typeof value === 'number' ? value : 0),
                           name === 'value' ? 'Portfolio Value' : 'P&L'
                         ]}
                         labelFormatter={(label) => new Date(label).toLocaleDateString()}
@@ -282,7 +282,7 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                           <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>

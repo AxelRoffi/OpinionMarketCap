@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAccount, useReconnect, useConnect } from 'wagmi';
 
-export function WalletPersistence() {
+// Inner component that uses wagmi hooks (only rendered on client)
+function WalletPersistenceInner() {
   const { isConnected, isConnecting, isReconnecting, address, connector } = useAccount();
   const { reconnect } = useReconnect();
   const { connectors } = useConnect();
@@ -138,4 +139,21 @@ export function WalletPersistence() {
   }, [isConnected, isConnecting, isReconnecting, reconnect]);
 
   return null;
+}
+
+// Outer wrapper that ensures component only renders on client (after mount)
+// This prevents SSR/static generation issues with wagmi hooks
+export function WalletPersistence() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR/static generation, return null to avoid wagmi context errors
+  if (!mounted) {
+    return null;
+  }
+
+  return <WalletPersistenceInner />;
 }

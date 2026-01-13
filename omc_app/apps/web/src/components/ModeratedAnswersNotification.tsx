@@ -12,7 +12,8 @@ interface ModeratedAnswer {
   opinionQuestion: string
 }
 
-export function ModeratedAnswersNotification() {
+// Inner component that uses wagmi hooks (only rendered on client)
+function ModeratedAnswersNotificationInner() {
   const { address } = useAccount()
   const [moderatedAnswers, setModeratedAnswers] = useState<ModeratedAnswer[]>([])
   const [isVisible, setIsVisible] = useState(false)
@@ -125,4 +126,21 @@ export function ModeratedAnswersNotification() {
       </div>
     </motion.div>
   )
+}
+
+// Outer wrapper that ensures component only renders on client (after mount)
+// This prevents SSR/static generation issues with wagmi hooks
+export function ModeratedAnswersNotification() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // During SSR/static generation, return null to avoid wagmi context errors
+  if (!mounted) {
+    return null
+  }
+
+  return <ModeratedAnswersNotificationInner />
 }
