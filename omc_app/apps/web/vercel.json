@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "npm run build:production",
   "outputDirectory": ".next",
-  "installCommand": "npm ci",
+  "installCommand": "cd ../.. && npm install",
   "env": {
     "NODE_ENV": "production"
   },
