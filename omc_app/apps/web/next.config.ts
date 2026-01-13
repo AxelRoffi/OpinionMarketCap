@@ -5,9 +5,6 @@ import path from "path";
 const monorepoRoot = path.resolve(__dirname, '../../');
 
 const nextConfig: NextConfig = {
-  // Use standalone output to avoid static page generation issues
-  output: 'standalone',
-
   // Fix multiple lockfiles warning - set workspace root to monorepo
   outputFileTracingRoot: monorepoRoot,
 
