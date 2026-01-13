@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   TrendingUp, 
@@ -115,7 +114,8 @@ interface MarketStats {
   totalOpinions: number;
 }
 
-export default function HomePage() {
+// Inner component that uses wagmi hooks (only rendered after mount)
+function HomePageInner() {
   const { address } = useAccount();
   const router = useRouter();
   console.log('Connected address:', address); // For debugging
@@ -1501,4 +1501,26 @@ export default function HomePage() {
 
     </>
   );
+}
+
+// Wrapper component that ensures wagmi provider is ready before rendering
+export default function HomePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading state until providers are ready
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return <HomePageInner />;
 }
