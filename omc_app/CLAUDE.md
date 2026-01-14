@@ -374,6 +374,32 @@ All contracts successfully verified on BaseScan:
 
 **Fix for V2:** Change the call to `ValidationLibrary.validateDescription(description, MAX_DESCRIPTION_LENGTH)` to use the configurable limit.
 
+### Empty Categories Validation Bug
+**Severity:** Medium
+**Status:** V2 Fix Ready (OpinionExtensionsV2.sol created)
+**Affected:** OpinionExtensions.sol
+
+**Issue:** The `validateCategories()` function in OpinionExtensions only checks if there are **too many** categories (max 3), but doesn't check if there are **zero** categories. An empty array passes validation and returns `true`, allowing opinions to be created without any categories.
+
+**Location:**
+- `contracts/active/OpinionExtensions.sol:263-278` - `validateCategories()` missing minimum check
+- Note: `ValidationLibrary.validateOpinionCategories()` has the correct check at line 111, but OpinionCore uses OpinionExtensions
+
+**Impact:** Opinions can be created without categories. Opinion #1 on mainnet has empty categories array.
+
+**Fix:** OpinionExtensionsV2.sol created with:
+```solidity
+uint256 public constant MIN_CATEGORIES_PER_OPINION = 1;
+
+function validateCategories(string[] memory _categories) external view returns (bool) {
+    if (_categories.length < MIN_CATEGORIES_PER_OPINION) return false;  // V2 FIX
+    if (_categories.length > MAX_CATEGORIES_PER_OPINION) return false;
+    // ... rest of validation
+}
+```
+
+**Upgrade Script:** `contracts/active/deploy/UpgradeOpinionExtensionsV2.js`
+
 ### Poor Transaction Error Messages
 **Severity:** Low (UX issue)
 **Status:** Needs improvement
