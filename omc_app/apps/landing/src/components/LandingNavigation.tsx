@@ -41,7 +41,7 @@ export function LandingNavigation() {
               asChild
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium"
             >
-              <Link href="http://test.opinionmarketcap.xyz" target="_blank">
+              <Link href="http://app.opinionmarketcap.xyz" target="_blank">
                 <Rocket className="w-4 h-4 mr-2" />
                 Launch App
               </Link>
@@ -80,7 +80,7 @@ export function LandingNavigation() {
                 className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium"
                 onClick={() => setIsOpen(false)}
               >
-                <Link href="http://test.opinionmarketcap.xyz" target="_blank">
+                <Link href="http://app.opinionmarketcap.xyz" target="_blank">
                   <Rocket className="w-4 h-4 mr-2" />
                   Launch App
                 </Link>

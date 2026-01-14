@@ -46,12 +46,12 @@ export default function QuickStartPage() {
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400 font-semibold">🚀 Launch dApp</span>
                 <a 
-                  href="https://test.opinionmarketcap.xyz" 
+                  href="https://app.opinionmarketcap.xyz" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
                 >
-                  test.opinionmarketcap.xyz
+                  app.opinionmarketcap.xyz
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>

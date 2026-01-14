@@ -99,7 +99,7 @@ function getAppMetadata() {
       : 'OpinionMarketCap Testnet - Safe Testing Environment',
     url: env === 'mainnet' 
       ? 'https://opinionmarketcap.xyz' 
-      : 'https://test.opinionmarketcap.xyz',
+      : 'https://app.opinionmarketcap.xyz',
     icons: ['https://opinionmarketcap.xyz/favicon.ico'],
   };
 }

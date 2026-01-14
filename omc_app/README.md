@@ -57,7 +57,7 @@ npm run build:landing
 
 - **Main App**: [app.opinionmarketcap.xyz](https://app.opinionmarketcap.xyz)
 - **Landing**: [opinionmarketcap.xyz](https://opinionmarketcap.xyz)
-- **Testnet**: [test.opinionmarketcap.xyz](https://test.opinionmarketcap.xyz)
+- **Testnet**: [app.opinionmarketcap.xyz](https://app.opinionmarketcap.xyz)
 
 ## 📚 Documentation
 

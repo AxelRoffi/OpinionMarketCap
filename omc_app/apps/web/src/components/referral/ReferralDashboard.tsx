@@ -42,7 +42,7 @@ export function ReferralDashboard() {
 
   // Generate referral URL
   const referralUrl = myReferralCode 
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://test.opinionmarketcap.xyz'}?ref=${myReferralCode}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://app.opinionmarketcap.xyz'}?ref=${myReferralCode}`
     : '';
 
   const handleCopyReferralCode = async () => {

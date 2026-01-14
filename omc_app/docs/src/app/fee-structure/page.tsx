@@ -669,7 +669,7 @@ export default function FeeStructurePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="https://test.opinionmarketcap.xyz" 
+              href="https://app.opinionmarketcap.xyz" 
               target="_blank"
               rel="noopener noreferrer"
               className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg"

@@ -1150,22 +1150,22 @@ export default function DocsHome() {
               <h4 className="text-white font-semibold">Platform</h4>
               <ul className="space-y-2">
                 <li>
-                  <a href="https://test.opinionmarketcap.xyz/create" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  <a href="https://app.opinionmarketcap.xyz/create" className="text-gray-400 hover:text-white text-sm transition-colors">
                     Create Opinion
                   </a>
                 </li>
                 <li>
-                  <a href="https://test.opinionmarketcap.xyz/marketplace" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  <a href="https://app.opinionmarketcap.xyz/marketplace" className="text-gray-400 hover:text-white text-sm transition-colors">
                     Marketplace
                   </a>
                 </li>
                 <li>
-                  <a href="https://test.opinionmarketcap.xyz/pools" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  <a href="https://app.opinionmarketcap.xyz/pools" className="text-gray-400 hover:text-white text-sm transition-colors">
                     Funding Pools
                   </a>
                 </li>
                 <li>
-                  <a href="https://test.opinionmarketcap.xyz/leaderboard" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  <a href="https://app.opinionmarketcap.xyz/leaderboard" className="text-gray-400 hover:text-white text-sm transition-colors">
                     Leaderboard
                   </a>
                 </li>

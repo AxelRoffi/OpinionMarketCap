@@ -599,7 +599,7 @@ export default function TradingOpinionsPage() {
           <p className="text-gray-300 mb-6">Put these concepts into practice on the OpinionMarketCap testnet</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="https://test.opinionmarketcap.xyz" 
+              href="https://app.opinionmarketcap.xyz" 
               target="_blank"
               rel="noopener noreferrer"
               className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-semibold transition-colors"

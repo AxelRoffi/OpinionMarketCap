@@ -17,6 +17,6 @@ export async function GET() {
       lastUpdated: new Date(op.lastUpdated).toISOString(),
       cacheAge: Date.now() - op.lastUpdated
     })),
-    webhookUrl: 'https://test.opinionmarketcap.xyz/api/alchemy-webhook'
+    webhookUrl: 'https://app.opinionmarketcap.xyz/api/alchemy-webhook'
   });
 }

@@ -528,7 +528,7 @@ export default function CreatingOpinionsPage() {
           <p className="text-gray-300 mb-6">Start building your reputation as an Opinion Leader and earn from every future trade</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="https://test.opinionmarketcap.xyz" 
+              href="https://app.opinionmarketcap.xyz" 
               target="_blank"
               rel="noopener noreferrer"
               className="bg-orange-600 hover:bg-orange-500 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg"

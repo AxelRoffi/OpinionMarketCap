@@ -98,10 +98,10 @@ export default function Tutorial() {
   ])
 
   const contractAddresses = [
-    { name: "USDC Token", address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", purpose: "Trading currency", explorerUrl: "https://sepolia.basescan.org/token/0x036CbD53842c5426634e7929541eC2318f3dCF7e" },
-    { name: "OpinionCore", address: "0xB2D35055550e2D49E5b2C21298528579A8bF7D2f", purpose: "Main opinion markets", explorerUrl: "https://sepolia.basescan.org/address/0xB2D35055550e2D49E5b2C21298528579A8bF7D2f" },
-    { name: "PoolManager", address: "0x3B4584e690109484059D95d7904dD9fEbA246612", purpose: "Collaborative pools", explorerUrl: "https://sepolia.basescan.org/address/0x3B4584e690109484059D95d7904dD9fEbA246612" },
-    { name: "FeeManager", address: "0xc8f879d86266C334eb9699963ca0703aa1189d8F", purpose: "Creator fee claims", explorerUrl: "https://sepolia.basescan.org/address/0xc8f879d86266C334eb9699963ca0703aa1189d8F" }
+    { name: "USDC Token", address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", purpose: "Trading currency", explorerUrl: "https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+    { name: "OpinionCore", address: "0x7b5d97fb78fbf41432F34f46a901C6da7754A726", purpose: "Main opinion markets", explorerUrl: "https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" },
+    { name: "PoolManager", address: "0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e", purpose: "Collaborative pools", explorerUrl: "https://basescan.org/address/0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e" },
+    { name: "FeeManager", address: "0x31D604765CD76Ff098A283881B2ca57e7F703199", purpose: "Creator fee claims", explorerUrl: "https://basescan.org/address/0x31D604765CD76Ff098A283881B2ca57e7F703199" }
   ]
 
 

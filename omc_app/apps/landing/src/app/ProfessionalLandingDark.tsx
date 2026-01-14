@@ -167,10 +167,10 @@ const HeroSection = () => {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
       >
         <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(59,130,246,0)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-          <a href="https://test.opinionmarketcap.xyz/create" target="_blank" rel="noopener noreferrer">Mint & Earn</a>
+          <a href="https://app.opinionmarketcap.xyz/create" target="_blank" rel="noopener noreferrer">Mint & Earn</a>
         </Button>
         <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(100,116,139,0)] hover:shadow-[0_0_20px_rgba(100,116,139,0.3)]">
-          <a href="https://test.opinionmarketcap.xyz/" target="_blank" rel="noopener noreferrer">Browse Questions</a>
+          <a href="https://app.opinionmarketcap.xyz/" target="_blank" rel="noopener noreferrer">Browse Questions</a>
         </Button>
       </motion.div>
       <motion.div 

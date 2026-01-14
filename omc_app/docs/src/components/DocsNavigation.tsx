@@ -88,7 +88,7 @@ export function DocsNavigation() {
         <ul className="space-y-2">
           <li>
             <a
-              href="https://test.opinionmarketcap.xyz"
+              href="https://app.opinionmarketcap.xyz"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors"

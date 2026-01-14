@@ -111,7 +111,7 @@ export default function OverviewPage() {
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-gray-700">
               <span className="text-gray-300">dApp (Trading)</span>
-              <a href="https://test.opinionmarketcap.xyz" className="text-cyan-400 hover:underline">test.opinionmarketcap.xyz</a>
+              <a href="https://app.opinionmarketcap.xyz" className="text-cyan-400 hover:underline">app.opinionmarketcap.xyz</a>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-700">
               <span className="text-gray-300">Landing Page</span>
@@ -167,7 +167,7 @@ export default function OverviewPage() {
               Quick Start Guide
             </a>
             <a 
-              href="https://test.opinionmarketcap.xyz" 
+              href="https://app.opinionmarketcap.xyz" 
               className="border border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               target="_blank"
               rel="noopener noreferrer"

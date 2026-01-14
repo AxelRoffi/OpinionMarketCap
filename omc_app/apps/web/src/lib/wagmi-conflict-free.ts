@@ -84,8 +84,8 @@ const connectors = [
     metadata: {
       name: 'OpinionMarketCap',
       description: 'Prediction market platform',
-      url: 'https://test.opinionmarketcap.xyz',
-      icons: ['https://test.opinionmarketcap.xyz/favicon.ico']
+      url: 'https://app.opinionmarketcap.xyz',
+      icons: ['https://app.opinionmarketcap.xyz/favicon.ico']
     },
   }),
 ];
