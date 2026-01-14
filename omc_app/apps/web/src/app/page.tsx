@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   TrendingUp, 
   Search, 
@@ -118,11 +118,29 @@ interface MarketStats {
 function HomePageInner() {
   const { address } = useAccount();
   const router = useRouter();
+  const searchParams = useSearchParams();
   console.log('Connected address:', address); // For debugging
-  
+
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+
+  // Read category from URL query params on mount
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      // Validate it's a valid category
+      const allCategories = getSmartContractCategories();
+      if (allCategories.includes(categoryFromUrl)) {
+        // If it's Adult category, need to check adult content enabled
+        if (categoryFromUrl === 'Adult') {
+          setShowAdultModal(true);
+        } else {
+          setSelectedCategory(categoryFromUrl);
+        }
+      }
+    }
+  }, [searchParams]);
   const [sortBy, setSortBy] = useState('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState('all');
@@ -437,6 +455,12 @@ function HomePageInner() {
     }
     // For all other categories, proceed normally
     setSelectedCategory(value);
+    // Update URL to reflect the selected category (for shareable links)
+    if (value === 'All Categories') {
+      router.push('/', { scroll: false });
+    } else {
+      router.push(`/?category=${encodeURIComponent(value)}`, { scroll: false });
+    }
   };
 
   const handleAdultContentAccept = () => {
@@ -1100,7 +1124,7 @@ function HomePageInner() {
                       </div>
                       {/* Category Badge integrated in Question */}
                       <div className="mt-1 mb-2">
-                        <Badge 
+                        <Badge
                           className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1109,6 +1133,7 @@ function HomePageInner() {
                             } else {
                               setSelectedCategory(displayCategory);
                               setActiveTab('all');
+                              router.push(`/?category=${encodeURIComponent(displayCategory)}`, { scroll: false });
                             }
                           }}
                         >
@@ -1226,7 +1251,7 @@ function HomePageInner() {
                         </div>
                         {/* Category Badge integrated under author */}
                         <div className="mt-1">
-                          <Badge 
+                          <Badge
                             className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1235,6 +1260,7 @@ function HomePageInner() {
                               } else {
                                 setSelectedCategory(displayCategory);
                                 setActiveTab('all');
+                                router.push(`/?category=${encodeURIComponent(displayCategory)}`, { scroll: false });
                               }
                             }}
                           >

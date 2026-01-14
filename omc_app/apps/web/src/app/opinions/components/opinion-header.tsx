@@ -13,6 +13,7 @@ import {
   Tag
 } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { useRouter } from 'next/navigation';
 import { OpinionDetail } from '../types/opinion-types';
 import { formatUSDC, formatAddress, calculateChange } from '../hooks/use-opinion-detail';
 import { ClickableAddress } from '@/components/ui/clickable-address';
@@ -60,6 +61,7 @@ interface OpinionHeaderProps {
 
 export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListForSale, onCancelListing }: OpinionHeaderProps) {
   const { address } = useAccount();
+  const router = useRouter();
   const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
   const marketCap = Number(opinion.totalVolume) / 1_000_000;
 
@@ -69,6 +71,12 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
   // Watchlist functionality
   const { isWatched, toggleWatchlist } = useWatchlist();
   const isOpinionWatched = isWatched(opinion.id);
+
+  // Handle category click - navigate to main page filtered by category
+  const handleCategoryClick = (category: string) => {
+    // Navigate to main page with category query param
+    router.push(`/?category=${encodeURIComponent(category)}`);
+  };
 
   // Handle share button click - opens modal instead of direct sharing
   const handleShare = () => {
@@ -143,7 +151,8 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
               {(opinion.categories && opinion.categories.length > 0 ? opinion.categories : ['Other']).map((category, index) => (
                 <Badge
                   key={index}
-                  className={`${getCategoryColor(category)} px-2 py-1 rounded-full text-xs font-medium cursor-default`}
+                  onClick={() => handleCategoryClick(category)}
+                  className={`${getCategoryColor(category)} px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-transform hover:scale-105`}
                 >
                   {category}
                   {category === 'Adult' && ' 🔞'}
