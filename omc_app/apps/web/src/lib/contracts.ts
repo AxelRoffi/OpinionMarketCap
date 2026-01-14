@@ -508,3 +508,21 @@ export const REFERRAL_MANAGER_ABI = [
     ]
   }
 ] as const;
+
+// OpinionExtensions ABI for category fetching
+export const OPINION_EXTENSIONS_ABI = [
+  {
+    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
+    name: 'getOpinionCategories',
+    outputs: [{ internalType: 'string[]', name: '', type: 'string[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getAvailableCategories',
+    outputs: [{ internalType: 'string[]', name: '', type: 'string[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;

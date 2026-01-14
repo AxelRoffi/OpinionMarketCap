@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useReadContract } from 'wagmi';
 import { OpinionDetail, AnswerHistory, OpinionStats, TradingActivity } from '../types/opinion-types';
-import { CONTRACTS } from '@/lib/contracts';
+import { CONTRACTS, OPINION_EXTENSIONS_ABI } from '@/lib/contracts';
 
 // ABI for the functions we need - CORRECTED TO MATCH ACTUAL CONTRACT
 const OPINION_CORE_ABI = [
@@ -91,6 +91,21 @@ export function useOpinionDetail(opinionId: number) {
     },
   });
 
+  // Fetch categories from OpinionExtensions (separate contract)
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useReadContract({
+    address: CONTRACTS.OPINION_EXTENSIONS,
+    abi: OPINION_EXTENSIONS_ABI,
+    functionName: 'getOpinionCategories',
+    args: [BigInt(opinionId)],
+    query: {
+      enabled: isValidOpinionId,
+    },
+  });
+
   // Transform contract data to our interface
   const opinion: OpinionDetail | null = opinionData ? {
     id: opinionId,
@@ -105,7 +120,7 @@ export function useOpinionDetail(opinionId: number) {
     isActive: opinionData.isActive,
     totalVolume: opinionData.totalVolume,
     question: opinionData.question,
-    categories: [...opinionData.categories],
+    categories: categoriesData ? [...categoriesData] : [], // Use categories from OpinionExtensions
     createdAt: Date.now(), // Would be better to get from contract events
     link: opinionData.link || undefined, // Include link if available from contract
   } : null;
@@ -198,8 +213,8 @@ export function useOpinionDetail(opinionId: number) {
     history,
     stats,
     activity,
-    loading: loading || opinionLoading || historyLoading,
-    error: error || opinionError?.message || historyError?.message || null,
+    loading: loading || opinionLoading || historyLoading || categoriesLoading,
+    error: error || opinionError?.message || historyError?.message || categoriesError?.message || null,
   };
 }
 

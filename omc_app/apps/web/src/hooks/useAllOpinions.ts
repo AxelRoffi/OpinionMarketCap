@@ -1,6 +1,6 @@
 import { useReadContract, useReadContracts } from 'wagmi';
 import { useMemo } from 'react';
-import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
+import { CONTRACTS, OPINION_CORE_ABI, OPINION_EXTENSIONS_ABI } from '@/lib/contracts';
 
 interface OpinionData {
   id: number;
@@ -35,7 +35,7 @@ export function useAllOpinions() {
   // Create batch contract calls for ALL opinions
   const opinionContracts = useMemo(() => {
     if (!nextOpinionId || totalOpinionsCount === 0) return [];
-    
+
     const contracts = [];
     for (let i = 1; i <= totalOpinionsCount; i++) {
       contracts.push({
@@ -45,22 +45,54 @@ export function useAllOpinions() {
         args: [BigInt(i)],
       } as const);
     }
-    
+
     console.log(`🔄 Creating ${contracts.length} contract calls for opinions 1-${totalOpinionsCount}`);
     return contracts;
   }, [nextOpinionId, totalOpinionsCount]);
 
+  // Create batch contract calls to fetch categories from OpinionExtensions
+  const categoryContracts = useMemo(() => {
+    if (!nextOpinionId || totalOpinionsCount === 0) return [];
+
+    const contracts = [];
+    for (let i = 1; i <= totalOpinionsCount; i++) {
+      contracts.push({
+        address: CONTRACTS.OPINION_EXTENSIONS,
+        abi: OPINION_EXTENSIONS_ABI,
+        functionName: 'getOpinionCategories',
+        args: [BigInt(i)],
+      } as const);
+    }
+
+    console.log(`🔄 Creating ${contracts.length} category contract calls`);
+    return contracts;
+  }, [nextOpinionId, totalOpinionsCount]);
+
   // Fetch ALL opinions in parallel using useReadContracts
-  const { 
-    data: opinionsRawData, 
+  const {
+    data: opinionsRawData,
     isLoading: isLoadingOpinions,
-    error: opinionsError 
+    error: opinionsError
   } = useReadContracts({
     contracts: opinionContracts,
     query: {
       enabled: opinionContracts.length > 0,
       staleTime: 30000, // Cache for 30 seconds
       gcTime: 60000, // Keep in cache for 1 minute (renamed from cacheTime)
+    }
+  });
+
+  // Fetch ALL categories from OpinionExtensions
+  const {
+    data: categoriesRawData,
+    isLoading: isLoadingCategories,
+    error: categoriesError
+  } = useReadContracts({
+    contracts: categoryContracts,
+    query: {
+      enabled: categoryContracts.length > 0,
+      staleTime: 30000,
+      gcTime: 60000,
     }
   });
 
@@ -74,23 +106,33 @@ export function useAllOpinions() {
     console.log('Next Opinion ID:', nextOpinionId?.toString());
     console.log('Total Opinions to fetch:', totalOpinionsCount);
     console.log('Raw data received:', opinionsRawData.length);
+    console.log('Categories data received:', categoriesRawData?.length || 0);
 
     const opinions: OpinionData[] = [];
-    
+
     opinionsRawData.forEach((result, index) => {
       const opinionId = index + 1;
-      
+
       if (result.status === 'success' && result.result) {
         const data = result.result as Record<string, unknown>;
-        
+
+        // Get categories from the separate OpinionExtensions call
+        let categories: string[] = [];
+        if (categoriesRawData && categoriesRawData[index]) {
+          const catResult = categoriesRawData[index];
+          if (catResult.status === 'success' && catResult.result) {
+            categories = catResult.result as string[];
+          }
+        }
+
         console.log(`✅ Processing Opinion ${opinionId}:`, {
           question: data?.question,
           answer: data?.currentAnswer,
-          categories: data?.categories,
+          categories: categories,
           isActive: data?.isActive,
           link: data?.link
         });
-        
+
         opinions.push({
           id: opinionId,
           question: String(data?.question || ''),
@@ -103,7 +145,7 @@ export function useAllOpinions() {
           salePrice: (data?.salePrice as bigint) || BigInt(0),
           isActive: Boolean(data?.isActive),
           creator: String(data?.creator || ''),
-          categories: (data?.categories as string[]) || [],
+          categories: categories, // Use categories from OpinionExtensions
           currentAnswerDescription: String(data?.currentAnswerDescription || ''),
           link: String(data?.link || ''),
           tradesCount: Math.ceil(Number(data?.totalVolume || BigInt(0)) / Number(data?.lastPrice || BigInt(1_000_000))),
@@ -112,23 +154,23 @@ export function useAllOpinions() {
         console.log(`❌ Opinion ${opinionId} failed:`, result.status, result.error?.message);
       }
     });
-    
+
     console.log('Final opinions processed:', opinions.length);
     console.log('Expected vs Actual:', totalOpinionsCount, 'vs', opinions.length);
-    
+
     // Sort by ID to ensure proper ordering
     return opinions.sort((a, b) => a.id - b.id);
-  }, [opinionsRawData, isLoadingOpinions, nextOpinionId, totalOpinionsCount]);
+  }, [opinionsRawData, isLoadingOpinions, nextOpinionId, totalOpinionsCount, categoriesRawData]);
 
   // Overall loading state
-  const isLoading = isLoadingCount || isLoadingOpinions;
+  const isLoading = isLoadingCount || isLoadingOpinions || isLoadingCategories;
 
   console.log(`🎯 FINAL HOOK RESULT: ${allOpinions.length} opinions loaded, loading: ${isLoading}`);
 
   return {
     opinions: allOpinions,
     isLoading,
-    error: opinionsError,
+    error: opinionsError || categoriesError,
     nextOpinionId,
     totalOpinions: totalOpinionsCount
   };
