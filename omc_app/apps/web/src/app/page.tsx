@@ -632,30 +632,71 @@ function HomePageInner() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  // Get category badge color
+  // Get category badge color - all 40 categories with distinct colors
   const getCategoryColor = (category: string) => {
     const colorMap: { [key: string]: string } = {
-      'Crypto': 'bg-orange-600 text-white hover:bg-orange-700',
-      'Politics': 'bg-red-600 text-white hover:bg-red-700',
-      'Sports': 'bg-yellow-600 text-white hover:bg-yellow-700',
-      'Entertainment': 'bg-purple-600 text-white hover:bg-purple-700',
-      'Social Media': 'bg-indigo-600 text-white hover:bg-indigo-700',
-      'Other': 'bg-gray-600 text-white hover:bg-gray-700',
-      'AI': 'bg-teal-600 text-white hover:bg-teal-700',
-      'Automotive': 'bg-slate-600 text-white hover:bg-slate-700',
-      'Books & Literature': 'bg-amber-600 text-white hover:bg-amber-700',
-      'Celebrities': 'bg-rose-600 text-white hover:bg-rose-700',
-      'Conspiracy': 'bg-violet-600 text-white hover:bg-violet-700',
-      'Dating & Relationships': 'bg-pink-600 text-white hover:bg-pink-700',
-      'Investing': 'bg-emerald-600 text-white hover:bg-emerald-700',
-      'Luxury': 'bg-amber-700 text-white hover:bg-amber-800',
-      'Mobile Apps': 'bg-cyan-600 text-white hover:bg-cyan-700',
-      'Movies & TV': 'bg-purple-700 text-white hover:bg-purple-800',
-      'Music': 'bg-pink-700 text-white hover:bg-pink-800',
-      'Parenting': 'bg-lime-600 text-white hover:bg-lime-700',
-      'Podcasts': 'bg-green-700 text-white hover:bg-green-800',
+      // Tech & Digital
+      'Technology': 'bg-blue-600 text-white hover:bg-blue-700',
+      'AI & Robotics': 'bg-cyan-600 text-white hover:bg-cyan-700',
+      'Crypto & Web3': 'bg-orange-500 text-white hover:bg-orange-600',
+      'DeFi (Decentralized Finance)': 'bg-yellow-500 text-white hover:bg-yellow-600',
+      'Gaming': 'bg-purple-600 text-white hover:bg-purple-700',
+      'Social Media': 'bg-indigo-500 text-white hover:bg-indigo-600',
+
+      // Science & Environment
+      'Science': 'bg-indigo-600 text-white hover:bg-indigo-700',
+      'Environment & Climate': 'bg-green-600 text-white hover:bg-green-700',
+
+      // Business & Finance
+      'Business & Finance': 'bg-emerald-600 text-white hover:bg-emerald-700',
       'Real Estate': 'bg-stone-600 text-white hover:bg-stone-700',
-      'Adult': 'bg-red-900 text-white hover:bg-red-800'
+      'Career & Workplace': 'bg-teal-600 text-white hover:bg-teal-700',
+
+      // Politics & Society
+      'Politics': 'bg-red-600 text-white hover:bg-red-700',
+      'Law & Legal': 'bg-slate-600 text-white hover:bg-slate-700',
+      'News': 'bg-sky-600 text-white hover:bg-sky-700',
+
+      // Sports & Automotive
+      'Sports': 'bg-yellow-600 text-white hover:bg-yellow-700',
+      'Automotive': 'bg-zinc-600 text-white hover:bg-zinc-700',
+
+      // Entertainment & Media
+      'Movies': 'bg-purple-700 text-white hover:bg-purple-800',
+      'TV Shows': 'bg-violet-600 text-white hover:bg-violet-700',
+      'Music': 'bg-pink-600 text-white hover:bg-pink-700',
+      'Podcasts': 'bg-green-700 text-white hover:bg-green-800',
+      'Literature': 'bg-amber-700 text-white hover:bg-amber-800',
+
+      // Arts & Culture
+      'Art & Design': 'bg-fuchsia-600 text-white hover:bg-fuchsia-700',
+      'Photography': 'bg-sky-500 text-white hover:bg-sky-600',
+      'Celebrities & Pop Culture': 'bg-rose-500 text-white hover:bg-rose-600',
+      'Humor & Memes': 'bg-orange-400 text-white hover:bg-orange-500',
+      'Fashion': 'bg-pink-500 text-white hover:bg-pink-600',
+
+      // Lifestyle
+      'Beauty & Skincare': 'bg-rose-400 text-white hover:bg-rose-500',
+      'Health & Fitness': 'bg-lime-600 text-white hover:bg-lime-700',
+      'Food & Drink': 'bg-amber-500 text-white hover:bg-amber-600',
+      'Travel': 'bg-cyan-500 text-white hover:bg-cyan-600',
+      'DIY & Home Improvement': 'bg-orange-600 text-white hover:bg-orange-700',
+      'Pets & Animals': 'bg-amber-600 text-white hover:bg-amber-700',
+
+      // Knowledge & Learning
+      'History': 'bg-stone-500 text-white hover:bg-stone-600',
+      'Philosophy': 'bg-purple-500 text-white hover:bg-purple-600',
+      'Spirituality & Religion': 'bg-violet-500 text-white hover:bg-violet-600',
+      'Education': 'bg-blue-500 text-white hover:bg-blue-600',
+
+      // Relationships & Family
+      'Relationships': 'bg-pink-400 text-white hover:bg-pink-500',
+      'Parenting & Family': 'bg-lime-500 text-white hover:bg-lime-600',
+
+      // Other
+      'True Crime': 'bg-red-700 text-white hover:bg-red-800',
+      'Adult (NSFW)': 'bg-red-900 text-white hover:bg-red-800',
+      'Other': 'bg-gray-600 text-white hover:bg-gray-700',
     };
     return colorMap[category] || 'bg-gray-600 text-white hover:bg-gray-700';
   };
