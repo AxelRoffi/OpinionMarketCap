@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, 
-  TrendingUp, 
-  TrendingDown, 
-  Share2, 
+import {
+  ArrowLeft,
+  TrendingUp,
+  TrendingDown,
+  Share2,
   BookmarkPlus,
   Bookmark,
   Zap,
@@ -20,6 +20,34 @@ import { formatQuestion } from '@/lib/format-utils';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { SocialShareModal } from '@/components/ui/social-share-modal';
 import { useState } from 'react';
+
+// Category color mapping - consistent with main page
+const getCategoryColor = (category: string) => {
+  const colorMap: { [key: string]: string } = {
+    'Crypto': 'bg-orange-600 text-white hover:bg-orange-700',
+    'Politics': 'bg-red-600 text-white hover:bg-red-700',
+    'Sports': 'bg-yellow-600 text-white hover:bg-yellow-700',
+    'Entertainment': 'bg-purple-600 text-white hover:bg-purple-700',
+    'Social Media': 'bg-indigo-600 text-white hover:bg-indigo-700',
+    'Other': 'bg-gray-600 text-white hover:bg-gray-700',
+    'AI': 'bg-teal-600 text-white hover:bg-teal-700',
+    'Automotive': 'bg-slate-600 text-white hover:bg-slate-700',
+    'Books & Literature': 'bg-amber-600 text-white hover:bg-amber-700',
+    'Celebrities': 'bg-rose-600 text-white hover:bg-rose-700',
+    'Conspiracy': 'bg-violet-600 text-white hover:bg-violet-700',
+    'Dating & Relationships': 'bg-pink-600 text-white hover:bg-pink-700',
+    'Investing': 'bg-emerald-600 text-white hover:bg-emerald-700',
+    'Luxury': 'bg-amber-700 text-white hover:bg-amber-800',
+    'Mobile Apps': 'bg-cyan-600 text-white hover:bg-cyan-700',
+    'Movies & TV': 'bg-purple-700 text-white hover:bg-purple-800',
+    'Music': 'bg-pink-700 text-white hover:bg-pink-800',
+    'Parenting': 'bg-lime-600 text-white hover:bg-lime-700',
+    'Podcasts': 'bg-green-700 text-white hover:bg-green-800',
+    'Real Estate': 'bg-stone-600 text-white hover:bg-stone-700',
+    'Adult': 'bg-red-900 text-white hover:bg-red-800'
+  };
+  return colorMap[category] || 'bg-gray-600 text-white hover:bg-gray-700';
+};
 
 interface OpinionHeaderProps {
   opinion: OpinionDetail;
@@ -107,17 +135,18 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
         {/* Question Header */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-blue-400 text-sm font-medium bg-blue-600/10 px-3 py-1.5 rounded-md border border-blue-600/20">
                 Question #{opinion.id}
               </span>
-              {opinion.categories.map((category, index) => (
+              {/* Show categories or fallback to "Other" */}
+              {(opinion.categories && opinion.categories.length > 0 ? opinion.categories : ['Other']).map((category, index) => (
                 <Badge
                   key={index}
-                  variant="secondary"
-                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  className={`${getCategoryColor(category)} px-2 py-1 rounded-full text-xs font-medium cursor-default`}
                 >
                   {category}
+                  {category === 'Adult' && ' 🔞'}
                 </Badge>
               ))}
             </div>
