@@ -3,7 +3,7 @@
 ## Current Status: DEPLOYED ON BASE MAINNET
 
 All contracts successfully deployed and linked on Base Mainnet (Chain ID: 8453) on January 7, 2025.
-Last upgrade: January 14, 2025 (OpinionExtensionsV2)
+Last upgrade: January 15, 2025 (OpinionCoreV3 - Dynamic Pricing)
 
 ## Deployed Contract Addresses (Base Mainnet)
 
@@ -24,7 +24,9 @@ Last upgrade: January 14, 2025 (OpinionExtensionsV2)
 | PoolManager | V1 | `0xb0461E420f65d711F84A7dAa0e94893482435617` |
 | OpinionAdmin | V1 | `0xeF10FdFaf7876F63450207e62fba9d4b4A70DcBc` |
 | OpinionExtensions | **V2** | `0x3c04ea0fb84622b263fbdc91d2a3fe5adb4c6682` |
-| OpinionCore | **V2** | `0xe4fE91DDeF3E656905dA64b6194233c5f8DCBf26` |
+| OpinionCore | **V3** | *Pending deployment* (upgrade script ready) |
+
+**Note:** V3 upgrade script ready at `contracts/scripts/upgrade_to_v3.js`
 
 ### Configuration
 | Setting | Address |
@@ -38,6 +40,7 @@ Last upgrade: January 14, 2025 (OpinionExtensionsV2)
 |----------|------|---------|---------|
 | OpinionCore | Jan 12, 2025 | V2 | Fixed fee transfer bug, added pause/unpause |
 | OpinionExtensions | Jan 14, 2025 | V2 | Fixed empty categories validation bug |
+| OpinionCore | Jan 15, 2025 | **V3** | Dynamic pricing with PriceCalculator (pending deploy) |
 
 ## Architecture: Modular (5 Contracts + Library)
 
@@ -275,6 +278,46 @@ npx hardhat run contracts/active/deploy/DeployModularContracts.js --network base
 - Single-call admin transfer via `transferFullAdmin()`
 - UUPS upgradeable contracts
 
+## V3 Dynamic Pricing System
+
+OpinionCoreV3 introduces dynamic pricing using the `PriceCalculator` library, replacing the fixed 10% increase.
+
+### Market Regimes
+The pricing system simulates realistic market behavior with 4 trading regimes:
+
+| Regime | Probability | Price Range | Description |
+|--------|-------------|-------------|-------------|
+| **CONSOLIDATION** | 25% | -10% to +15% | Range trading, slight bullish bias |
+| **BULLISH_TRENDING** | 60% | +5% to +40% | Steady gains, most common regime |
+| **MILD_CORRECTION** | 15% | -20% to +5% | Limited pullbacks |
+| **PARABOLIC** | 2% | +40% to +80% | Extreme moves on hot topics |
+
+### Activity-Based Selection
+Regime probabilities adjust based on topic activity level:
+
+| Activity Level | Threshold | Regime Adjustments |
+|----------------|-----------|-------------------|
+| **COLD** | < 5 trades | 40% Consolidation, 45% Bullish, 2% Parabolic |
+| **WARM** | 5-15 trades | Normal probabilities |
+| **HOT** | 15+ trades | 15% Consolidation, 62% Bullish, 10% Parabolic |
+
+### Anti-Bot Protection
+- **$10 USDC minimum** for activity scoring
+- **Max 3 transactions/user/day** for activity contribution
+- **Min 3 unique users** required for HOT status
+- **Parabolic capped at 80%** (vs 100%) to limit guaranteed profits
+- **14 entropy sources** for unpredictable price calculation
+
+### Key Files
+- `contracts/active/OpinionCoreV3.sol` - Core contract with dynamic pricing
+- `contracts/active/libraries/PriceCalculator.sol` - Market regime library
+- `contracts/scripts/upgrade_to_v3.js` - Upgrade script
+
+### Upgrade Command
+```bash
+npx hardhat run contracts/scripts/upgrade_to_v3.js --network base
+```
+
 ## Admin Frontend
 
 Located at `apps/web/src/app/admin/` with full functionality:
@@ -365,6 +408,22 @@ All contracts successfully verified on BaseScan:
 - **Updated Solidity to 0.8.22** for OpenZeppelin 5.x compatibility
 
 **V2 Implementation**: `0xe4fE91DDeF3E656905dA64b6194233c5f8DCBf26`
+
+### January 15, 2025 Session - V3 DYNAMIC PRICING
+- **Identified fixed 10% pricing issue**: `_calculateNextPrice()` was using simple `currentPrice * 110 / 100`
+- **Created OpinionCoreV3** with PriceCalculator integration for dynamic market regime pricing
+- **Price changes now vary**: -20% to +80% based on market conditions (vs fixed +10%)
+- **Contract size**: 20.3 KB (under 24 KB limit)
+- **Created upgrade script**: `contracts/scripts/upgrade_to_v3.js`
+- **Frontend fixes**:
+  - Fixed categories not displaying (fetching from OpinionExtensions separately)
+  - Added colors for all 40 categories
+  - Fixed main table to show all categories (not just first one)
+  - Simplified "DeFi (Decentralized Finance)" to "DeFi"
+- **Updated URLs**: Changed `test.opinionmarketcap.xyz` to `app.opinionmarketcap.xyz`
+
+**V3 Contract**: `contracts/active/OpinionCoreV3.sol`
+**Upgrade Script**: `contracts/scripts/upgrade_to_v3.js`
 
 ---
 
