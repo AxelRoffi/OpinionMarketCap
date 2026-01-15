@@ -1104,9 +1104,9 @@ function HomePageInner() {
           <div className="divide-y divide-gray-700/20">
             {paginatedOpinions.map((opinion, index) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
-              const displayCategory = opinion.categories && opinion.categories.length > 0 
-                ? opinion.categories[0] 
-                : 'Other';
+              const displayCategories = opinion.categories && opinion.categories.length > 0
+                ? opinion.categories
+                : ['Other'];
               
               // Get real data flags for this opinion
               const realCreationTime = getCreationTimestamp(opinion.id);
@@ -1163,24 +1163,27 @@ function HomePageInner() {
                           <span className="ml-2">{getMarketStatusBadge(opinion.marketStatus)}</span>
                         )}
                       </div>
-                      {/* Category Badge integrated in Question */}
-                      <div className="mt-1 mb-2">
-                        <Badge
-                          className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (displayCategory === 'Adult' && !adultContentEnabled) {
-                              setShowAdultModal(true);
-                            } else {
-                              setSelectedCategory(displayCategory);
-                              setActiveTab('all');
-                              router.push(`/?category=${encodeURIComponent(displayCategory)}`, { scroll: false });
-                            }
-                          }}
-                        >
-                          {displayCategory}
-                          {displayCategory === 'Adult' && ' 🔞'}
-                        </Badge>
+                      {/* Category Badges integrated in Question */}
+                      <div className="mt-1 mb-2 flex flex-wrap gap-1">
+                        {displayCategories.map((category, catIndex) => (
+                          <Badge
+                            key={catIndex}
+                            className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (category === 'Adult (NSFW)' && !adultContentEnabled) {
+                                setShowAdultModal(true);
+                              } else {
+                                setSelectedCategory(category);
+                                setActiveTab('all');
+                                router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
+                              }
+                            }}
+                          >
+                            {category}
+                            {category === 'Adult (NSFW)' && ' 🔞'}
+                          </Badge>
+                        ))}
                       </div>
                       <div className="text-white font-bold text-sm mb-2 flex items-center gap-2">
                         <button 
@@ -1290,24 +1293,27 @@ function HomePageInner() {
                           </span>
                           {getMarketStatusBadge(opinion.marketStatus)}
                         </div>
-                        {/* Category Badge integrated under author */}
-                        <div className="mt-1">
-                          <Badge
-                            className={`${getCategoryColor(displayCategory)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (displayCategory === 'Adult' && !adultContentEnabled) {
-                                setShowAdultModal(true);
-                              } else {
-                                setSelectedCategory(displayCategory);
-                                setActiveTab('all');
-                                router.push(`/?category=${encodeURIComponent(displayCategory)}`, { scroll: false });
-                              }
-                            }}
-                          >
-                            {displayCategory}
-                            {displayCategory === 'Adult' && ' 🔞'}
-                          </Badge>
+                        {/* Category Badges integrated under author */}
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {displayCategories.map((category, catIndex) => (
+                            <Badge
+                              key={catIndex}
+                              className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (category === 'Adult (NSFW)' && !adultContentEnabled) {
+                                  setShowAdultModal(true);
+                                } else {
+                                  setSelectedCategory(category);
+                                  setActiveTab('all');
+                                  router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
+                                }
+                              }}
+                            >
+                              {category}
+                              {category === 'Adult (NSFW)' && ' 🔞'}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>
