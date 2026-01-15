@@ -34,7 +34,7 @@ interface QuestionAnswerFormProps {
 
 // Categories matching smart contract OpinionExtensions.sol (40 categories)
 const ALL_CATEGORIES = [
-  'Technology', 'AI & Robotics', 'Crypto & Web3', 'DeFi (Decentralized Finance)',
+  'Technology', 'AI & Robotics', 'Crypto & Web3', 'DeFi',
   'Science', 'Environment & Climate', 'Business & Finance', 'Real Estate',
   'Politics', 'Law & Legal', 'News', 'Sports', 'Automotive', 'Gaming',
   'Movies', 'TV Shows', 'Music', 'Podcasts', 'Literature', 'Art & Design',

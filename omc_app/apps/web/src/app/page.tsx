@@ -639,7 +639,7 @@ function HomePageInner() {
       'Technology': 'bg-blue-600 text-white hover:bg-blue-700',
       'AI & Robotics': 'bg-cyan-600 text-white hover:bg-cyan-700',
       'Crypto & Web3': 'bg-orange-500 text-white hover:bg-orange-600',
-      'DeFi (Decentralized Finance)': 'bg-yellow-500 text-white hover:bg-yellow-600',
+      'DeFi': 'bg-yellow-500 text-white hover:bg-yellow-600',
       'Gaming': 'bg-purple-600 text-white hover:bg-purple-700',
       'Social Media': 'bg-indigo-500 text-white hover:bg-indigo-600',
 
