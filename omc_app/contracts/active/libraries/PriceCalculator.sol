@@ -36,7 +36,7 @@ library PriceCalculator {
     // === GAMING PREVENTION CONSTANTS ===
     
     uint256 private constant MAX_USER_ACTIVITY_PER_DAY = 3;    // Max 3 tx/user/day for activity scoring
-    uint256 private constant MIN_USERS_FOR_HOT = 3;           // Minimum 3 different users for HOT status
+    uint256 private constant MIN_USERS_FOR_HOT = 1;           // No minimum - even 1-2 user bidding wars can trigger HOT
     uint256 private constant MAX_USER_ACTIVITY_SHARE = 40;    // Max 40% individual contribution to activity
     
     // === ANTI-BOT PROTECTION CONSTANTS ===
@@ -401,12 +401,9 @@ library PriceCalculator {
             return ActivityLevel.COLD;
         }
         
-        // HOT: 15+ eligible transactions AND minimum 3 different users
-        if (eligible >= HOT_THRESHOLD && users >= MIN_USERS_FOR_HOT) {
-            // Additional whale prevention: no single user can dominate
-            if (_isUserDiversityGood(data)) {
-                return ActivityLevel.HOT;
-            }
+        // HOT: 15+ eligible transactions (user count no longer required - allows 2-user bidding wars)
+        if (eligible >= HOT_THRESHOLD) {
+            return ActivityLevel.HOT;
         }
         
         // WARM: Everything in between (5-15 transactions or insufficient user diversity)
