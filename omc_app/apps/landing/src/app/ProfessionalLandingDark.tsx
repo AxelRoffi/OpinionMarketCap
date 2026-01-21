@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { LandingNavigation } from "@/components/LandingNavigation"
-import { motion } from "framer-motion"
-import { 
-  Users, 
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  Users,
   Coins,
   DollarSign,
   Zap,
@@ -13,9 +13,56 @@ import {
   TrendingUp,
   Shield,
   Clock,
-  Globe
+  Globe,
+  Play,
+  Share2,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Activity,
+  BarChart3,
+  Twitter,
+  MessageCircle,
+  Copy,
+  ArrowUpRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useState, useEffect, useCallback } from "react"
+
+// Share functionality
+const shareOnTwitter = (text: string, url: string) => {
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+};
+
+const copyToClipboard = async (text: string) => {
+  await navigator.clipboard.writeText(text);
+};
+
+// Animated counter component
+const AnimatedCounter = ({ end, duration = 2, prefix = "", suffix = "" }: { end: number, duration?: number, prefix?: string, suffix?: string }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      setCount(Math.floor(progress * end));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [end, duration]);
+
+  return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
+};
 
 // --- Animation Variants ---
 const fadeIn = {
@@ -65,6 +112,92 @@ const Separator = () => <div className="border-t border-gray-800/60 max-w-4xl mx
 
 // --- Enhanced Sections ---
 
+// Live Stats Data (simulated - would be fetched from blockchain in production)
+const useLiveStats = () => {
+  const [stats, setStats] = useState({
+    activeOpinions: 47,
+    totalVolume: 12847,
+    tradesToday: 156,
+    activeTraders: 89
+  });
+
+  useEffect(() => {
+    // Simulate live updates
+    const interval = setInterval(() => {
+      setStats(prev => ({
+        ...prev,
+        tradesToday: prev.tradesToday + Math.floor(Math.random() * 3),
+        totalVolume: prev.totalVolume + Math.floor(Math.random() * 50)
+      }));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return stats;
+};
+
+const LiveStatsBar = () => {
+  const stats = useLiveStats();
+
+  return (
+    <motion.div
+      className="flex flex-wrap justify-center gap-4 md:gap-8 mb-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.5 }}
+    >
+      <motion.div
+        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
+        whileHover={{ scale: 1.05, borderColor: "rgba(59, 130, 246, 0.5)" }}
+      >
+        <Activity className="w-4 h-4 text-green-400" />
+        <span className="text-gray-400 text-sm">Active Opinions:</span>
+        <span className="text-white font-bold">
+          <AnimatedCounter end={stats.activeOpinions} />
+        </span>
+        <motion.span
+          className="w-2 h-2 bg-green-400 rounded-full"
+          animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        />
+      </motion.div>
+
+      <motion.div
+        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
+        whileHover={{ scale: 1.05, borderColor: "rgba(34, 197, 94, 0.5)" }}
+      >
+        <DollarSign className="w-4 h-4 text-green-400" />
+        <span className="text-gray-400 text-sm">Total Volume:</span>
+        <span className="text-green-400 font-bold">
+          $<AnimatedCounter end={stats.totalVolume} suffix=" USDC" />
+        </span>
+      </motion.div>
+
+      <motion.div
+        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
+        whileHover={{ scale: 1.05, borderColor: "rgba(147, 51, 234, 0.5)" }}
+      >
+        <Flame className="w-4 h-4 text-orange-400" />
+        <span className="text-gray-400 text-sm">Trades Today:</span>
+        <span className="text-orange-400 font-bold">
+          <AnimatedCounter end={stats.tradesToday} />
+        </span>
+      </motion.div>
+
+      <motion.div
+        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
+        whileHover={{ scale: 1.05, borderColor: "rgba(59, 130, 246, 0.5)" }}
+      >
+        <Users className="w-4 h-4 text-blue-400" />
+        <span className="text-gray-400 text-sm">Active Traders:</span>
+        <span className="text-blue-400 font-bold">
+          <AnimatedCounter end={stats.activeTraders} />
+        </span>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const HeroSection = () => {
   // Create predictable particle data to avoid hydration mismatch
   const particles = Array.from({ length: 20 }, (_, i) => ({
@@ -78,7 +211,7 @@ const HeroSection = () => {
   }));
 
   return (
-    <section className="relative pt-40 pb-24 px-4 text-center overflow-hidden">
+    <section className="relative pt-32 pb-16 px-4 text-center overflow-hidden">
       {/* Subtle, professional particle background */}
       <div className="absolute inset-0 z-0">
           {particles.map((particle) => (
@@ -99,21 +232,21 @@ const HeroSection = () => {
       </div>
 
     <div className="relative z-10">
-      <motion.h1 
+      <motion.h1
         className="text-5xl md:text-7xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ 
+        whileHover={{
           scale: 1.05,
           textShadow: "0 0 30px rgba(59, 130, 246, 0.8)"
         }}
-        transition={{ 
-          duration: 0.8, 
+        transition={{
+          duration: 0.8,
           delay: 0.1
         }}
         style={{ cursor: "default" }}
       >
-        <motion.span 
+        <motion.span
           className="text-white"
           animate={{
             opacity: [0.7, 1, 0.7],
@@ -122,7 +255,7 @@ const HeroSection = () => {
               "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%)",
               "linear-gradient(45deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.7) 100%)"
             ]
-          }} 
+          }}
           transition={{
             opacity: { duration: 3, repeat: Infinity, ease: "easeInOut" },
             backgroundImage: { duration: 4, repeat: Infinity, ease: "easeInOut" }
@@ -130,14 +263,14 @@ const HeroSection = () => {
           style={{ backgroundClip: "text", WebkitBackgroundClip: "text" }}
         >OPINION
         </motion.span>
-        <motion.span 
+        <motion.span
           className="text-blue-400"
           animate={{
             color: ["#60a5fa", "#3b82f6", "#1d4ed8", "#3b82f6", "#60a5fa"]
           }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         > MARKET</motion.span>
-        <motion.span 
+        <motion.span
           className="text-white"
           animate={{
             opacity: [1, 0.8, 1],
@@ -150,45 +283,458 @@ const HeroSection = () => {
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
         > CAP</motion.span>
       </motion.h1>
-      <motion.p 
-        className="text-2xl md:text-3xl text-gray-300 font-semibold mb-4"
+
+      <motion.p
+        className="text-xl md:text-2xl text-blue-400 font-bold mb-4"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
       >
-        The First Opinion Lab, a New Digital Primitive.
+        Pay to Impose Your Truth - Earn Royalties Forever on Base
       </motion.p>
-      <motion.p 
-        className="text-xl md:text-2xl text-blue-400 font-bold mb-8"
+      <motion.p
+        className="text-lg md:text-xl text-gray-300 font-medium mb-8 max-w-2xl mx-auto"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
       >
-        Own The Narrative, Earn The Profits
+        The First Opinion Lab: Own The Narrative, Earn The Profits
       </motion.p>
-      <motion.div 
-        className="flex flex-col sm:flex-row gap-6 justify-center items-center my-12"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }}
+
+      {/* Live Stats Bar */}
+      <LiveStatsBar />
+
+      <motion.div
+        className="flex flex-col sm:flex-row gap-4 justify-center items-center my-8"
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(59,130,246,0)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-          <a href="https://app.opinionmarketcap.xyz/create" target="_blank" rel="noopener noreferrer">Mint & Earn</a>
+        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+          <a href="https://app.opinionmarketcap.xyz/create" target="_blank" rel="noopener noreferrer">
+            Connect Wallet & Mint Now
+            <ArrowUpRight className="w-5 h-5 ml-2" />
+          </a>
         </Button>
-        <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(100,116,139,0)] hover:shadow-[0_0_20px_rgba(100,116,139,0.3)]">
+        <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
           <a href="https://app.opinionmarketcap.xyz/" target="_blank" rel="noopener noreferrer">Browse Questions</a>
         </Button>
       </motion.div>
-      <motion.div 
+
+      <motion.div
         className="inline-flex items-center justify-center py-3"
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ duration: 0.8, delay: 0.5 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.7 }}
       >
-        <motion.p 
-          className="text-blue-300 font-semibold tracking-widest text-3xl md:text-4xl"
-          animate={{ y: [-3, 3, -3] }} 
+        <motion.p
+          className="text-blue-300 font-semibold tracking-widest text-2xl md:text-3xl"
+          animate={{ y: [-3, 3, -3] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
           OMC IS BASE BASED
         </motion.p>
       </motion.div>
+
+      {/* Share CTA */}
+      <motion.div
+        className="flex justify-center gap-4 mt-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <button
+          onClick={() => shareOnTwitter("Just discovered @OpinionMarketCap - trade opinions for profit on Base!", "https://opinionmarketcap.xyz")}
+          className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors text-sm"
+        >
+          <Twitter className="w-4 h-4" />
+          Share on X
+        </button>
+      </motion.div>
     </div>
     </section>
+  );
+};
+
+// Testimonials Carousel
+const testimonials = [
+  {
+    quote: "Minted 'Best Layer 2?' and earned 200 USDC in royalties in the first week!",
+    author: "0x7d3...8f2a",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234ade80'/%3E%3C/svg%3E",
+    profit: "+$200",
+    category: "Crypto"
+  },
+  {
+    quote: "Finally a platform where my hot takes actually make money. Soccer GOAT debates are fire!",
+    author: "soccerfan.eth",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2360a5fa'/%3E%3C/svg%3E",
+    profit: "+$450",
+    category: "Sports"
+  },
+  {
+    quote: "As a food blogger, I turned my restaurant knowledge into passive income. Game changer!",
+    author: "foodie_nyc",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f472b6'/%3E%3C/svg%3E",
+    profit: "+$180",
+    category: "Food"
+  },
+  {
+    quote: "The pool system is genius - teamed up with others to take over the 'Best DEX' answer!",
+    author: "defi_maxi.eth",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23a855f7'/%3E%3C/svg%3E",
+    profit: "+$320",
+    category: "DeFi"
+  },
+  {
+    quote: "Local knowledge pays. My 'Best coffee in Austin' question generates $50/week royalties.",
+    author: "austin_local",
+    avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fbbf24'/%3E%3C/svg%3E",
+    profit: "+$200/mo",
+    category: "Local"
+  }
+];
+
+const TestimonialsCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const goToSlide = (index: number) => setCurrentIndex(index);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+
+  return (
+    <Section className="bg-gradient-to-b from-gray-900 to-gray-800/50">
+      <SectionTitle>What Traders Are Saying</SectionTitle>
+
+      <div className="relative max-w-4xl mx-auto">
+        {/* Main testimonial */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.5 }}
+            className="bg-gray-800/70 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 md:p-12"
+          >
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <img
+                src={testimonials[currentIndex].avatar}
+                alt={testimonials[currentIndex].author}
+                className="w-20 h-20 rounded-full border-2 border-gray-600"
+              />
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-xl md:text-2xl text-white mb-4 italic">
+                  &ldquo;{testimonials[currentIndex].quote}&rdquo;
+                </p>
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                  <span className="text-gray-400">- {testimonials[currentIndex].author}</span>
+                  <span className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">
+                    {testimonials[currentIndex].category}
+                  </span>
+                  <span className="text-green-400 font-bold text-lg">
+                    {testimonials[currentIndex].profit}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Share this testimonial */}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => shareOnTwitter(
+                  `"${testimonials[currentIndex].quote}" - ${testimonials[currentIndex].author} on @OpinionMarketCap`,
+                  "https://opinionmarketcap.xyz"
+                )}
+                className="flex items-center gap-2 text-gray-500 hover:text-blue-400 transition-colors text-sm"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={prevSlide}
+            className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex gap-2">
+            {testimonials.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  index === currentIndex ? "w-8 bg-blue-500" : "bg-gray-600 hover:bg-gray-500"
+                )}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={nextSlide}
+            className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </Section>
+  );
+};
+
+// Explainer Video Section
+const ExplainerVideoSection = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  return (
+    <Section>
+      <SectionTitle>See How It Works in 90 Seconds</SectionTitle>
+
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          className="relative aspect-video bg-gray-800 rounded-2xl overflow-hidden border border-gray-700"
+          whileHover={{ scale: 1.02 }}
+          transition={{ duration: 0.3 }}
+        >
+          {!isPlaying ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-900/50 to-purple-900/50">
+              {/* Video thumbnail/placeholder */}
+              <div className="text-center">
+                <motion.button
+                  onClick={() => setIsPlaying(true)}
+                  className="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center mb-6 mx-auto shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Play className="w-10 h-10 text-white ml-1" />
+                </motion.button>
+                <h3 className="text-2xl font-bold text-white mb-2">How Opinion Trading Works</h3>
+                <p className="text-gray-400">Learn the mechanics: Mint, Trade, Pool & Profit</p>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute top-4 left-4 flex gap-2">
+                <span className="px-3 py-1 bg-red-500/80 rounded-full text-xs text-white">LIVE</span>
+                <span className="px-3 py-1 bg-gray-700/80 rounded-full text-xs text-gray-300">1:30</span>
+              </div>
+            </div>
+          ) : (
+            <iframe
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+              title="OMC Explainer Video"
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          )}
+        </motion.div>
+
+        {/* Quick infographic below video */}
+        <motion.div
+          className="grid grid-cols-4 gap-4 mt-8"
+          variants={fadeIn}
+        >
+          {[
+            { step: "1", title: "Mint", desc: "Create a question", color: "text-red-400" },
+            { step: "2", title: "Trade", desc: "Buy/sell answers", color: "text-green-400" },
+            { step: "3", title: "Pool", desc: "Team up for power", color: "text-purple-400" },
+            { step: "4", title: "Profit", desc: "Earn royalties forever", color: "text-yellow-400" }
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              className="text-center p-4 bg-gray-800/50 rounded-xl border border-gray-700/50"
+              whileHover={{ y: -5, borderColor: "rgba(59, 130, 246, 0.3)" }}
+            >
+              <div className={`text-3xl font-black ${item.color} mb-2`}>{item.step}</div>
+              <div className="text-white font-semibold">{item.title}</div>
+              <div className="text-gray-400 text-sm">{item.desc}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </Section>
+  );
+};
+
+// Trending Opinions Section
+const trendingOpinions = [
+  {
+    id: 1,
+    question: "Best Layer 2 for DeFi?",
+    currentAnswer: "Arbitrum",
+    price: 45.20,
+    volume24h: 1240,
+    trades: 23,
+    trend: "up",
+    category: "Crypto"
+  },
+  {
+    id: 2,
+    question: "GOAT of Basketball?",
+    currentAnswer: "Michael Jordan",
+    price: 78.50,
+    volume24h: 3420,
+    trades: 67,
+    trend: "up",
+    category: "Sports"
+  },
+  {
+    id: 3,
+    question: "Best Pizza in NYC?",
+    currentAnswer: "Di Fara Pizza",
+    price: 23.10,
+    volume24h: 890,
+    trades: 18,
+    trend: "down",
+    category: "Food"
+  },
+  {
+    id: 4,
+    question: "Most Overrated Tech Company?",
+    currentAnswer: "Apple",
+    price: 52.80,
+    volume24h: 2100,
+    trades: 41,
+    trend: "up",
+    category: "Tech"
+  },
+  {
+    id: 5,
+    question: "Best Anime of All Time?",
+    currentAnswer: "Attack on Titan",
+    price: 31.40,
+    volume24h: 1560,
+    trades: 34,
+    trend: "up",
+    category: "Entertainment"
+  }
+];
+
+const TrendingOpinionsSection = () => {
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopy = async (id: number) => {
+    await copyToClipboard(`https://app.opinionmarketcap.xyz/opinion/${id}`);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <Section className="bg-gray-800/30">
+      <div className="flex items-center justify-center gap-3 mb-4">
+        <Flame className="w-8 h-8 text-orange-500" />
+        <SectionTitle className="mb-0">Trending Now</SectionTitle>
+        <motion.span
+          className="px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-400 text-sm font-semibold"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          LIVE
+        </motion.span>
+      </div>
+      <p className="text-center text-gray-400 mb-12">Hot opinions with the most activity right now</p>
+
+      <div className="space-y-4 max-w-4xl mx-auto">
+        {trendingOpinions.map((opinion, index) => (
+          <motion.div
+            key={opinion.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 md:p-6 hover:border-blue-500/30 transition-all"
+            whileHover={{ scale: 1.01 }}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
+                    {opinion.category}
+                  </span>
+                  {opinion.trend === "up" ? (
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <TrendingUp className="w-4 h-4 text-red-400 rotate-180" />
+                  )}
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-1">{opinion.question}</h4>
+                <p className="text-gray-400">
+                  Current Answer: <span className="text-blue-400 font-medium">{opinion.currentAnswer}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-green-400 font-bold text-xl">${opinion.price.toFixed(2)}</div>
+                  <div className="text-gray-500 text-xs">Next Price</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-white font-semibold">{opinion.trades}</div>
+                  <div className="text-gray-500 text-xs">Trades 24h</div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://app.opinionmarketcap.xyz/opinion/${opinion.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    Trade
+                  </a>
+
+                  <button
+                    onClick={() => shareOnTwitter(
+                      `Check out this trending opinion on @OpinionMarketCap: "${opinion.question}" - Current answer: ${opinion.currentAnswer}`,
+                      `https://app.opinionmarketcap.xyz/opinion/${opinion.id}`
+                    )}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-blue-400"
+                    title="Share on X"
+                  >
+                    <Twitter className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => handleCopy(opinion.id)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    title="Copy link"
+                  >
+                    {copiedId === opinion.id ? (
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.div
+        className="text-center mt-8"
+        whileHover={{ scale: 1.05 }}
+      >
+        <a
+          href="https://app.opinionmarketcap.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold"
+        >
+          View All Opinions
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </motion.div>
+    </Section>
   );
 };
 
@@ -426,14 +972,62 @@ const AnatomyOfATradeSection = () => (
 const Footer = () => (
     <footer className="py-16 bg-gray-900">
         <div className="max-w-6xl mx-auto px-4">
+          {/* Newsletter signup */}
+          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-gray-700 rounded-2xl p-8 mb-12">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">Stay Updated</h3>
+                <p className="text-gray-400">Get notified about new features, trending opinions, and platform updates.</p>
+              </div>
+              <div className="flex gap-2 w-full md:w-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 md:w-64 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors">
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h4 className="font-bold text-white mb-4">OpinionMarketCap</h4>
-              <p className="text-gray-300 text-sm">
-                The infinite marketplace where opinions become tradable assets.
+              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-400" />
+                OpinionMarketCap
+              </h4>
+              <p className="text-gray-300 text-sm mb-4">
+                The infinite marketplace where opinions become tradable assets on Base.
               </p>
+              {/* Social share buttons */}
+              <div className="flex gap-3">
+                <a
+                  href="https://twitter.com/OpinionMarketCap"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
+                >
+                  <Twitter className="w-5 h-5" />
+                </a>
+                <a
+                  href="#"
+                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+                <a
+                  href="https://github.com/opinionmarketcap"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
+                >
+                  <Globe className="w-5 h-5" />
+                </a>
+              </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <div className="space-y-2 text-sm">
@@ -441,32 +1035,59 @@ const Footer = () => (
                 <a href="/how-it-works" className="block text-gray-300 hover:text-blue-400">How it Works</a>
                 <a href="/tutorial" className="block text-gray-300 hover:text-blue-400">Tutorial</a>
                 <a href="/influences" className="block text-gray-300 hover:text-blue-400">Influences</a>
+                <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Whitepaper</a>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-4">Community</h4>
               <div className="space-y-2 text-sm">
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Discord</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Twitter</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">GitHub</a>
+                <a href="https://discord.gg/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Discord</a>
+                <a href="https://twitter.com/OpinionMarketCap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Twitter/X</a>
+                <a href="https://github.com/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">GitHub</a>
+                <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Launch App</a>
               </div>
             </div>
-            
+
             <div>
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
+              <h4 className="font-semibold text-white mb-4">Resources</h4>
               <div className="space-y-2 text-sm">
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Terms</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Privacy</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Docs</a>
+                <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Documentation</a>
+                <a href="https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Smart Contract</a>
+                <a href="#" className="block text-gray-300 hover:text-blue-400">API (Coming Soon)</a>
+                <a href="#" className="block text-gray-300 hover:text-blue-400">Brand Kit</a>
               </div>
             </div>
           </div>
-          
-          <div className="border-t border-gray-700 mt-12 pt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              © 2024 OpinionMarketCap. An Opinion Labs Project. All rights reserved.
-            </p>
+
+          {/* Legal Disclaimer */}
+          <div className="border-t border-gray-800 mt-12 pt-8">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
+              <h5 className="text-sm font-semibold text-yellow-500 mb-3 flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Risk Disclaimer
+              </h5>
+              <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                <strong className="text-gray-300">Trading opinions involves significant risk.</strong> The value of opinions can fluctuate rapidly and you may lose some or all of your investment. Past performance is not indicative of future results. OpinionMarketCap is a decentralized protocol on the Base blockchain - we do not hold custody of your funds. Always do your own research (DYOR) and never invest more than you can afford to lose.
+              </p>
+              <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                <strong className="text-gray-300">Not financial advice.</strong> Nothing on this website constitutes investment advice, financial advice, trading advice, or any other sort of advice. You should conduct your own research and consult with independent financial advisors before making any investment decisions.
+              </p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                <strong className="text-gray-300">Regulatory notice.</strong> OpinionMarketCap may not be available in all jurisdictions. It is your responsibility to ensure compliance with your local laws and regulations. This platform is not intended for residents of prohibited jurisdictions.
+              </p>
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-gray-500 text-sm">
+                © 2025 OpinionMarketCap. An Opinion Labs Project. All rights reserved.
+              </p>
+              <div className="flex gap-6 text-sm">
+                <a href="#" className="text-gray-500 hover:text-gray-300">Terms of Service</a>
+                <a href="#" className="text-gray-500 hover:text-gray-300">Privacy Policy</a>
+                <a href="#" className="text-gray-500 hover:text-gray-300">Cookie Policy</a>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
@@ -483,8 +1104,8 @@ export default function ProfessionalLandingDark() {
           .rotate-y-180 { transform: rotateY(180deg); }
           .flip-card-inner { transition: transform 0.7s; transform-style: preserve-3d; }
           .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
-          .flip-card-front, .flip-card-back { 
-            backface-visibility: hidden; 
+          .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
             position: absolute;
             width: 100%;
@@ -494,9 +1115,21 @@ export default function ProfessionalLandingDark() {
         `
       }} />
       <LandingNavigation />
-      
+
+      {/* Hero with Live Stats */}
       <HeroSection />
+
+      {/* Trending Opinions - Creates FOMO */}
+      <TrendingOpinionsSection />
+
       <Separator />
+
+      {/* Explainer Video */}
+      <ExplainerVideoSection />
+
+      <Separator />
+
+      {/* Problem/Solution */}
       <Section className="py-20 bg-gray-800/50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -1139,6 +1772,10 @@ export default function ProfessionalLandingDark() {
         </div>
       </section>
       <GenesisVisionSection />
+
+      {/* Testimonials Carousel */}
+      <TestimonialsCarousel />
+
       <Footer />
     </div>
   )
