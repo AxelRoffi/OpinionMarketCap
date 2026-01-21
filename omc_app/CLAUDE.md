@@ -24,9 +24,8 @@ Last upgrade: January 15, 2025 (OpinionCoreV3 - Dynamic Pricing)
 | PoolManager | V1 | `0xb0461E420f65d711F84A7dAa0e94893482435617` |
 | OpinionAdmin | V1 | `0xeF10FdFaf7876F63450207e62fba9d4b4A70DcBc` |
 | OpinionExtensions | **V2** | `0x3c04ea0fb84622b263fbdc91d2a3fe5adb4c6682` |
-| OpinionCore | **V3** | *Pending deployment* (upgrade script ready) |
-
-**Note:** V3 upgrade script ready at `contracts/scripts/upgrade_to_v3.js`
+| OpinionCore | **V3** | `0x8de10cFABaEE6dB8aA0c0fD88e6d3E228a59Ee6d` |
+| PriceCalculator | **V1** | `0x99677761a6908EBde8BaD60cEfb2374C9f9afCEE` |
 
 ### Configuration
 | Setting | Address |
@@ -40,7 +39,7 @@ Last upgrade: January 15, 2025 (OpinionCoreV3 - Dynamic Pricing)
 |----------|------|---------|---------|
 | OpinionCore | Jan 12, 2025 | V2 | Fixed fee transfer bug, added pause/unpause |
 | OpinionExtensions | Jan 14, 2025 | V2 | Fixed empty categories validation bug |
-| OpinionCore | Jan 15, 2025 | **V3** | Dynamic pricing with PriceCalculator (pending deploy) |
+| OpinionCore | Jan 15, 2025 | **V3** | Dynamic pricing with PriceCalculator ✅ |
 
 ## Architecture: Modular (5 Contracts + Library)
 
@@ -302,9 +301,8 @@ Regime probabilities adjust based on topic activity level:
 | **HOT** | 15+ trades | 15% Consolidation, 62% Bullish, 10% Parabolic |
 
 ### Anti-Bot Protection
-- **$10 USDC minimum** for activity scoring
-- **Max 3 transactions/user/day** for activity contribution
-- **Min 3 unique users** required for HOT status
+- **$10 USDC minimum** for activity scoring (doesn't limit trades, just weights activity)
+- **Max 3 transactions/user/day** for activity contribution (doesn't limit trades)
 - **Parabolic capped at 80%** (vs 100%) to limit guaranteed profits
 - **14 entropy sources** for unpredictable price calculation
 
@@ -409,12 +407,17 @@ All contracts successfully verified on BaseScan:
 
 **V2 Implementation**: `0xe4fE91DDeF3E656905dA64b6194233c5f8DCBf26`
 
-### January 15, 2025 Session - V3 DYNAMIC PRICING
+### January 15, 2025 Session - V3 DYNAMIC PRICING ✅ DEPLOYED
 - **Identified fixed 10% pricing issue**: `_calculateNextPrice()` was using simple `currentPrice * 110 / 100`
 - **Created OpinionCoreV3** with PriceCalculator integration for dynamic market regime pricing
 - **Price changes now vary**: -20% to +80% based on market conditions (vs fixed +10%)
 - **Contract size**: 20.3 KB (under 24 KB limit)
-- **Created upgrade script**: `contracts/scripts/upgrade_to_v3.js`
+- **Removed Min 3 users requirement**: Changed from 3 to 1 for HOT status (allows bidding wars)
+- **Successfully deployed V3 to Base Mainnet**:
+  - PriceCalculator library: `0x99677761a6908EBde8BaD60cEfb2374C9f9afCEE`
+  - OpinionCoreV3 impl: `0x8de10cFABaEE6dB8aA0c0fD88e6d3E228a59Ee6d`
+  - Upgrade tx: `0x8831f3573f45fed1ca251e4d05649b043a4efd40e1425840a62696797eea5e49`
+- **V3 functions verified**: `getPriceNonce()` returns 0, state preserved
 - **Frontend fixes**:
   - Fixed categories not displaying (fetching from OpinionExtensions separately)
   - Added colors for all 40 categories
@@ -423,7 +426,8 @@ All contracts successfully verified on BaseScan:
 - **Updated URLs**: Changed `test.opinionmarketcap.xyz` to `app.opinionmarketcap.xyz`
 
 **V3 Contract**: `contracts/active/OpinionCoreV3.sol`
-**Upgrade Script**: `contracts/scripts/upgrade_to_v3.js`
+**PriceCalculator Library**: `contracts/active/libraries/PriceCalculator.sol`
+**Deployment Info**: `deployments/v3-upgrade-info.json`
 
 ---
 

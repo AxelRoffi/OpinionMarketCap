@@ -16,6 +16,9 @@ const { ethers, upgrades } = require("hardhat");
 const OPINION_CORE_PROXY = "0x7b5d97fb78fbf41432F34f46a901C6da7754A726";
 const VALIDATION_LIBRARY = "0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5";
 
+// PriceCalculator will be deployed as part of this upgrade
+let PRICE_CALCULATOR_ADDRESS = null;
+
 async function main() {
     console.log("=".repeat(60));
     console.log("OpinionCore V2 -> V3 Upgrade");
@@ -60,12 +63,22 @@ async function main() {
         process.exit(1);
     }
 
+    console.log("\n--- Deploying PriceCalculator Library ---");
+
+    // Deploy PriceCalculator library first
+    const PriceCalculatorFactory = await ethers.getContractFactory("PriceCalculator");
+    const priceCalculator = await PriceCalculatorFactory.deploy();
+    await priceCalculator.waitForDeployment();
+    PRICE_CALCULATOR_ADDRESS = await priceCalculator.getAddress();
+    console.log("PriceCalculator deployed at:", PRICE_CALCULATOR_ADDRESS);
+
     console.log("\n--- Deploying V3 Implementation ---");
 
-    // Get OpinionCoreV3 factory with ValidationLibrary linked
+    // Get OpinionCoreV3 factory with both libraries linked
     const OpinionCoreV3 = await ethers.getContractFactory("OpinionCoreV3", {
         libraries: {
-            ValidationLibrary: VALIDATION_LIBRARY
+            ValidationLibrary: VALIDATION_LIBRARY,
+            PriceCalculator: PRICE_CALCULATOR_ADDRESS
         }
     });
 
@@ -130,6 +143,8 @@ async function main() {
             proxyAddress: OPINION_CORE_PROXY,
             oldImplementation: currentImpl,
             newImplementation: newImpl,
+            priceCalculatorLibrary: PRICE_CALCULATOR_ADDRESS,
+            validationLibrary: VALIDATION_LIBRARY,
             version: "V3",
             features: [
                 "Dynamic pricing with PriceCalculator",

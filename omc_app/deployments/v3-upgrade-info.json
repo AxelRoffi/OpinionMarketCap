@@ -1,0 +1,38 @@
+{
+  "network": "base-mainnet",
+  "chainId": 8453,
+  "upgradedAt": "2025-01-15T12:00:00.000Z",
+  "proxyAddress": "0x7b5d97fb78fbf41432F34f46a901C6da7754A726",
+  "oldImplementation": "0x735b3a7b8511d1db6cbbd6a4efbbf3b1145fa021",
+  "newImplementation": "0x8de10cFABaEE6dB8aA0c0fD88e6d3E228a59Ee6d",
+  "priceCalculatorLibrary": "0x99677761a6908EBde8BaD60cEfb2374C9f9afCEE",
+  "validationLibrary": "0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5",
+  "version": "V3",
+  "upgradeTransaction": "0x8831f3573f45fed1ca251e4d05649b043a4efd40e1425840a62696797eea5e49",
+  "features": [
+    "Dynamic pricing with PriceCalculator library",
+    "4 market regimes: CONSOLIDATION, BULLISH_TRENDING, MILD_CORRECTION, PARABOLIC",
+    "Activity-based regime selection (COLD/WARM/HOT)",
+    "Price changes range from -20% to +80% (vs fixed 10% in V2)",
+    "getPriceNonce() for tracking price updates",
+    "getPriceMetadata() for historical activity data"
+  ],
+  "marketRegimes": {
+    "CONSOLIDATION": {
+      "probability": "25%",
+      "priceRange": "-10% to +15%"
+    },
+    "BULLISH_TRENDING": {
+      "probability": "60%",
+      "priceRange": "+5% to +40%"
+    },
+    "MILD_CORRECTION": {
+      "probability": "15%",
+      "priceRange": "-20% to +5%"
+    },
+    "PARABOLIC": {
+      "probability": "2%",
+      "priceRange": "+40% to +80%"
+    }
+  }
+}
