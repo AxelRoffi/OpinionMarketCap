@@ -3,16 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { 
+import {
   BarChart3,
   Menu,
-  X
+  X,
+  GraduationCap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { NotificationCenter } from '@/components/notifications';
+import { useOnboardingContext } from '@/components/onboarding';
 
 export function GlobalNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { open: openTutorial } = useOnboardingContext();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-sm bg-card/80">
@@ -38,6 +42,21 @@ export function GlobalNavbar() {
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
+            {/* Tutorial Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openTutorial}
+              className="hidden sm:flex items-center gap-1.5 text-muted-foreground hover:text-emerald-400 transition-colors"
+              title="Open Tutorial"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span className="text-sm">Tutorial</span>
+            </Button>
+
+            {/* Notifications */}
+            <NotificationCenter />
+
             {/* Wallet Connection */}
             <div className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">
               <ConnectButton />
@@ -71,6 +90,16 @@ export function GlobalNavbar() {
                 <Link href="/leaderboard" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Leaderboard</Link>
                 <Link href="/pools" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Pools</Link>
                 <Link href="/portfolio" className="text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200">Portfolio</Link>
+                <button
+                  onClick={() => {
+                    openTutorial();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left text-muted-foreground hover:text-emerald hover:font-bold transition-colors duration-200 flex items-center gap-2"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  Tutorial
+                </button>
               </div>
             </motion.nav>
           )}
