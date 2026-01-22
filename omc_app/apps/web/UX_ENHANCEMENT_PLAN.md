@@ -12,15 +12,15 @@
 
 | Feature | Existing Code | Status | Action Required |
 |---------|---------------|--------|-----------------|
-| Onboarding Tutorial | `UserEducationModal.tsx` | Partial | ENHANCE - Add wizard flow, simulation |
+| Onboarding Tutorial | `OnboardingWizard.tsx` | ✅ DONE | 6-step interactive wizard with simulation |
 | Personal Dashboard | `/profile` page | Complete | ENHANCE - Add notifications |
-| Leaderboard | `/leaderboard` page | Basic | ENHANCE - Add category filters |
+| Leaderboard | `/leaderboard` page | ✅ DONE | Category filters, ranking types, time periods |
 | Search & Filters | Homepage components | Complete | POLISH - Minor UX improvements |
 | Watchlist | `/watchlist` page | Complete | KEEP - Already works well |
 | Pools Management | `/pools` page | Complete | POLISH - One-click contribute |
 | Gamification/Badges | Rank badge only | Minimal | NEW - Build badge system |
-| Analytics | None | Missing | NEW - Mixpanel integration |
-| Notifications | Toast only | Missing | NEW - Push notifications |
+| Analytics | `lib/analytics.ts` | ✅ DONE | Mixpanel integration with all events |
+| Notifications | `NotificationCenter.tsx` | ✅ DONE | In-app notifications with preferences |
 
 ---
 
@@ -98,29 +98,30 @@ src/components/notifications/
 
 ---
 
-#### 1.3 Enhanced Leaderboard with Categories
-**File**: `src/app/leaderboard/page.tsx` (ENHANCE)
+#### 1.3 Enhanced Leaderboard with Categories ✅ DONE
+**File**: `src/app/leaderboard/page.tsx` (ENHANCED)
 
-**Current State**: Basic global leaderboard exists
+**Status**: Implemented January 22, 2025
 
-**Enhancements**:
-- [ ] Add category filter dropdown (top by category)
-- [ ] Time period selector (24h, 7d, 30d, All-time)
-- [ ] Multiple ranking types:
-  - By earnings (current)
+**Completed Features**:
+- [x] Add category filter dropdown (21 categories)
+- [x] Time period selector (24h, 7d, 30d, All-time)
+- [x] Multiple ranking types:
+  - By Total Earnings
   - By ROI %
-  - By volume traded
-  - By questions created
-- [ ] User comparison feature ("Compare with...")
-- [ ] Share rank to social media
+  - By Volume Generated
+  - By Questions Created
+- [ ] User comparison feature ("Compare with...") - Future
+- [ ] Share rank to social media - Future
 
-**Modified Files**:
+**Files Created/Modified**:
 ```
-src/app/leaderboard/page.tsx           # Add filters
-src/components/leaderboard/
-├── LeaderboardFilters.tsx             # NEW - Filter UI
-├── CategoryLeaderboard.tsx            # NEW - Category-specific
-└── LeaderboardTable.tsx               # ENHANCE - Add columns
+src/app/leaderboard/page.tsx                    # Added filter state management
+src/app/leaderboard/components/
+├── LeaderboardFilters.tsx                      # NEW - Filter UI
+├── LeaderboardStats.tsx                        # ENHANCED - Category-aware stats
+└── LeaderboardTable.tsx                        # ENHANCED - Accept filters
+src/hooks/useLeaderboardData.ts                 # ENHANCED - Category filtering, ranking types
 ```
 
 **KPIs**:
