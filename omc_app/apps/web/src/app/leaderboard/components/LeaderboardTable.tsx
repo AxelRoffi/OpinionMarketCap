@@ -4,18 +4,21 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronUp, ChevronDown, Trophy, Medal, Award, Info } from 'lucide-react';
 import { useEnsName } from 'wagmi';
-import { useEnhancedLeaderboardData, LeaderboardUser } from '@/hooks/useLeaderboardData';
+import { useEnhancedLeaderboardData, LeaderboardUser, LeaderboardFilters, RankingType } from '@/hooks/useLeaderboardData';
 
 // Type for sorting
 type SortField = keyof LeaderboardUser;
 
-export function LeaderboardTable() {
+interface LeaderboardTableProps {
+  filters?: LeaderboardFilters;
+}
+
+export function LeaderboardTable({ filters }: LeaderboardTableProps) {
   const [sortField, setSortField] = useState<SortField>('trueROI');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [timePeriod, setTimePeriod] = useState<'24h' | '7d' | '30d' | 'all'>('all');
   const router = useRouter();
 
-  const { users: leaderboardUsers, isLoading } = useEnhancedLeaderboardData();
+  const { users: leaderboardUsers, isLoading, allCategories } = useEnhancedLeaderboardData(filters);
 
   const sortedData = useMemo(() => {
     if (!leaderboardUsers || leaderboardUsers.length === 0) return [];
@@ -278,28 +281,6 @@ export function LeaderboardTable() {
 
   return (
     <div className="bg-gray-800 shadow rounded-lg overflow-hidden">
-      {/* Time Period Filter */}
-      <div className="px-6 py-4 border-b border-gray-700 bg-gray-750">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-white">Rankings</h3>
-          <div className="flex items-center space-x-1">
-            <span className="text-sm text-gray-400 mr-3">Time Period:</span>
-            {(['all', '30d', '7d', '24h'] as const).map((period) => (
-              <button
-                key={period}
-                onClick={() => setTimePeriod(period)}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                  timePeriod === period
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {period === 'all' ? 'All Time' : period.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>

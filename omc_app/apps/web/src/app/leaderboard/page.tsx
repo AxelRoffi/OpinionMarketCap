@@ -1,12 +1,26 @@
 'use client';
 
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { LeaderboardTable } from './components/LeaderboardTable';
 import { LeaderboardStats } from './components/LeaderboardStats';
+import { LeaderboardFilters, RankingType, TimePeriod } from './components/LeaderboardFilters';
 import { UserRankBadge } from './components/UserRankBadge';
+import { LeaderboardFilters as FilterType } from '@/hooks/useLeaderboardData';
 
 export default function LeaderboardPage() {
   const { address } = useAccount();
+
+  // Filter state
+  const [category, setCategory] = useState<string>('all');
+  const [rankingType, setRankingType] = useState<RankingType>('earnings');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('all');
+
+  // Build filters object for the hook
+  const filters: FilterType = {
+    category: category,
+    rankingType: rankingType,
+  };
 
   return (
     <>
@@ -32,12 +46,22 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
+      {/* Filters */}
+      <LeaderboardFilters
+        category={category}
+        rankingType={rankingType}
+        timePeriod={timePeriod}
+        onCategoryChange={setCategory}
+        onRankingTypeChange={setRankingType}
+        onTimePeriodChange={setTimePeriod}
+      />
+
       {/* Stats Cards */}
-      <LeaderboardStats />
+      <LeaderboardStats filters={filters} />
 
       {/* Main Table */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <LeaderboardTable />
+        <LeaderboardTable filters={filters} />
       </div>
 
       {/* User Rank Badge if connected */}

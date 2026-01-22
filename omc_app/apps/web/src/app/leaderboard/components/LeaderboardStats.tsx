@@ -1,13 +1,17 @@
 'use client';
 
 import { Users, DollarSign, MessageSquare, TrendingUp } from 'lucide-react';
-import { useLeaderboardData } from '@/hooks/useLeaderboardData';
+import { useLeaderboardData, LeaderboardFilters } from '@/hooks/useLeaderboardData';
 
-interface LeaderboardStats {
+interface StatsData {
   totalUsers: number;
   totalVolume: number; // USDC
   totalQuestions: number;
   totalTrades: number;
+}
+
+interface LeaderboardStatsProps {
+  filters?: LeaderboardFilters;
 }
 
 const formatNumber = (num: number): string => {
@@ -29,8 +33,8 @@ const formatUSDC = (amount: number): string => {
   }).format(amount);
 };
 
-export function LeaderboardStats() {
-  const { stats, isLoading } = useLeaderboardData();
+export function LeaderboardStats({ filters }: LeaderboardStatsProps) {
+  const { stats, isLoading } = useLeaderboardData(filters);
 
   // Show loading skeleton while data is being fetched
   if (isLoading) {
@@ -56,38 +60,41 @@ export function LeaderboardStats() {
     );
   }
 
+  const isFiltered = filters?.category && filters.category !== 'all';
+  const categoryLabel = isFiltered ? ` (${filters.category})` : '';
+
   const statsConfig = [
     {
-      title: 'Total Active Users',
+      title: isFiltered ? 'Active Users' : 'Total Active Users',
       value: formatNumber(stats.totalUsers),
       icon: Users,
       color: 'text-blue-400',
       bgColor: 'bg-blue-900/20',
-      description: 'Unique traders',
+      description: isFiltered ? `In ${filters.category}` : 'Unique traders',
     },
     {
-      title: 'Total Volume Traded',
+      title: isFiltered ? 'Volume' : 'Total Volume Traded',
       value: formatUSDC(stats.totalVolume),
       icon: DollarSign,
       color: 'text-green-400',
       bgColor: 'bg-green-900/20',
-      description: 'USDC volume',
+      description: isFiltered ? `${filters.category} USDC` : 'USDC volume',
     },
     {
-      title: 'Total Questions Created',
+      title: isFiltered ? 'Questions' : 'Total Questions Created',
       value: formatNumber(stats.totalQuestions),
       icon: MessageSquare,
       color: 'text-purple-400',
       bgColor: 'bg-purple-900/20',
-      description: 'Active opinions',
+      description: isFiltered ? `${filters.category} opinions` : 'Active opinions',
     },
     {
-      title: 'Total Successful Trades',
+      title: isFiltered ? 'Trades' : 'Total Successful Trades',
       value: formatNumber(stats.totalTrades),
       icon: TrendingUp,
       color: 'text-orange-400',
       bgColor: 'bg-orange-900/20',
-      description: 'Completed transactions',
+      description: isFiltered ? `${filters.category} transactions` : 'Completed transactions',
     },
   ];
 
