@@ -204,8 +204,12 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
     setError(null);
   };
 
-  // Quick amount buttons (removed 5 USDC as requested)
-  const quickAmounts = [10, 25, 50].filter(amt => amt <= maxContribution);
+  // Quick contribution percentages (of remaining needed)
+  const quickPercentages = [25, 50, 75, 100];
+  const getAmountForPercentage = (pct: number) => {
+    const amount = (remainingNeeded * pct) / 100;
+    return Math.min(amount, maxContribution); // Cap at user's max contribution
+  };
 
   // Handle join pool
   const handleJoinPool = async () => {
@@ -492,20 +496,35 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                 </div>
               )}
               
-              {/* Quick amounts */}
-              {quickAmounts.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {quickAmounts.map((quickAmount) => (
-                    <Button
-                      key={quickAmount}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAmount(quickAmount.toString())}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                    >
-                      ${quickAmount}
-                    </Button>
-                  ))}
+              {/* Quick contribution by percentage */}
+              {remainingNeeded > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-400">Quick Contribute (% of remaining)</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {quickPercentages.map((pct) => {
+                      const pctAmount = getAmountForPercentage(pct);
+                      const isDisabled = pctAmount <= 0 || pctAmount > usdcBalance;
+                      const wouldComplete = pct === 100 || pctAmount >= remainingNeeded;
+
+                      return (
+                        <Button
+                          key={pct}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAmount(pctAmount.toFixed(2))}
+                          disabled={isDisabled}
+                          className={`flex flex-col items-center py-2 h-auto ${
+                            wouldComplete
+                              ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                              : 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                          } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <span className="font-bold">{pct}%</span>
+                          <span className="text-xs opacity-75">${pctAmount.toFixed(2)}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </CardContent>

@@ -36,8 +36,8 @@ const DEMO_POOL = {
   progress: 85,
 };
 
-// Quick contribute amounts
-const QUICK_AMOUNTS = [5, 10, 25, 50];
+// Quick contribute percentages
+const QUICK_PERCENTAGES = [25, 50, 75, 100];
 
 export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
   const [pool, setPool] = useState(DEMO_POOL);
@@ -286,36 +286,36 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
             </div>
           </div>
 
-          {/* One-Click Contribute Buttons */}
+          {/* One-Click Contribute Buttons (Percentage-based) */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm font-medium text-white">Quick Contribute</span>
+              <span className="text-sm font-medium text-white">Quick Contribute (% of remaining)</span>
             </div>
 
             <div className="grid grid-cols-4 gap-2">
-              {QUICK_AMOUNTS.map((amount) => {
-                const wouldComplete = pool.currentAmount + amount >= pool.targetPrice;
-                const isDisabled = amount > remaining && !wouldComplete;
+              {QUICK_PERCENTAGES.map((pct) => {
+                const pctAmount = (remaining * pct) / 100;
+                const wouldComplete = pct === 100 || pctAmount >= remaining;
 
                 return (
                   <motion.button
-                    key={amount}
-                    onClick={() => handleContribute(Math.min(amount, remaining))}
-                    disabled={isContributing || isDisabled}
+                    key={pct}
+                    onClick={() => handleContribute(Math.min(pctAmount, remaining))}
+                    disabled={isContributing}
                     className={`
-                      relative py-3 px-2 rounded-lg font-bold text-sm transition-all
+                      relative py-3 px-2 rounded-lg font-bold text-sm transition-all flex flex-col items-center
                       ${wouldComplete
                         ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
                         : 'bg-gray-700 text-white hover:bg-gray-600'
                       }
-                      ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                       disabled:opacity-50
                     `}
-                    whileHover={{ scale: isDisabled ? 1 : 1.05 }}
-                    whileTap={{ scale: isDisabled ? 1 : 0.95 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    ${amount}
+                    <span>{pct}%</span>
+                    <span className="text-xs opacity-75">${pctAmount.toFixed(2)}</span>
                     {wouldComplete && (
                       <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping" />
                     )}
@@ -324,8 +324,8 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
               })}
             </div>
 
-            {/* Complete Pool Button (if close) */}
-            {remaining <= 50 && remaining > 0 && (
+            {/* Complete Pool Button - Always visible as a prominent action */}
+            {remaining > 0 && (
               <motion.button
                 onClick={() => handleContribute(remaining)}
                 disabled={isContributing}
@@ -341,7 +341,7 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
                 />
                 <span className="relative flex items-center justify-center gap-2">
                   <PartyPopper className="w-5 h-5" />
-                  Complete Pool (${remaining.toFixed(2)})
+                  Complete Pool - 100% (${remaining.toFixed(2)})
                 </span>
               </motion.button>
             )}
