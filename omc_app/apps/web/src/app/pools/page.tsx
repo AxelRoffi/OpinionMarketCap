@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Target, 
-  DollarSign, 
-  TrendingUp, 
-  Search, 
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Target,
+  DollarSign,
+  TrendingUp,
+  Search,
   Timer,
   RefreshCw,
   Users,
@@ -16,7 +16,9 @@ import {
   History,
   TrendingDown,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkles,
+  Play
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,7 @@ import { useRouter } from 'next/navigation';
 import JoinPoolModal from './components/JoinPoolModal';
 import { TreasuryBalanceChecker } from '@/components/TreasuryBalanceChecker';
 import { useCompletePool } from './hooks/useCompletePool';
+import { DemoPoolCard } from './components/DemoPoolCard';
 
 // Helper functions with exact specifications
 const formatNumber = (amount: number) => {
@@ -147,6 +150,9 @@ export default function PoolsPage() {
   // Join Pool Modal states
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useState<any>(null);
+
+  // Demo mode state
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleJoinPool = (pool: any) => {
     setSelectedPool(pool);
@@ -262,14 +268,45 @@ export default function PoolsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Target className="w-8 h-8 text-emerald-500" />
-            Collective Pools
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Fund opinion changes together and share the rewards
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                <Target className="w-8 h-8 text-emerald-500" />
+                Collective Pools
+              </h1>
+              <p className="text-gray-400 text-lg">
+                Fund opinion changes together and share the rewards
+              </p>
+            </div>
+            {/* Demo Mode Button */}
+            <Button
+              onClick={() => setShowDemo(!showDemo)}
+              variant={showDemo ? "default" : "outline"}
+              className={`flex items-center gap-2 ${
+                showDemo
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                  : 'border-purple-500/50 text-purple-400 hover:bg-purple-500/10'
+              }`}
+            >
+              {showDemo ? <Sparkles className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {showDemo ? 'Hide Demo' : 'Try Demo'}
+            </Button>
+          </div>
         </motion.div>
+
+        {/* Demo Pool Card */}
+        <AnimatePresence>
+          {showDemo && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-8"
+            >
+              <DemoPoolCard onClose={() => setShowDemo(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* How it works alert */}
         <motion.div
