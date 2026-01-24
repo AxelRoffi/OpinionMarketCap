@@ -104,6 +104,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import { ReferralDashboard } from '@/components/referral/ReferralDashboard';
 import CancelListingModal from '@/components/modals/CancelListingModal';
+import { BadgeShowcase, BadgeDisplay, BadgeModal, BadgeNotificationContainer, useBadges, BadgeDefinition } from '@/components/gamification';
 
 function ProfilePageContent() {
   const { address: connectedAddress } = useAccount();
@@ -121,6 +122,8 @@ function ProfilePageContent() {
   const [showListForSaleModal, setShowListForSaleModal] = useState(false);
   const [showCancelListingModal, setShowCancelListingModal] = useState(false);
   const [selectedOpinion, setSelectedOpinion] = useState<any>(null);
+  const [selectedBadge, setSelectedBadge] = useState<BadgeDefinition | null>(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
   
   const { stats, opinions, transactions, loading, error } = useUserProfile(targetAddress);
   const { claimFees, isClaimingFees, claimSuccess, claimError, transactionHash } = useClaimFees();
@@ -446,6 +449,30 @@ function ProfilePageContent() {
           </Card>
         </div>
 
+        {/* Badges & Achievements Section */}
+        <Card className="glass-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                Badges & Achievements
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveTab('badges')}
+                className="bg-transparent border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+              >
+                View All
+              </Button>
+            </div>
+            <BadgeShowcase
+              maxBadges={6}
+              onViewAll={() => setActiveTab('badges')}
+            />
+          </CardContent>
+        </Card>
+
         {/* Enhanced Fee Claiming Section */}
         {stats.accumulatedFees > 0 ? (
           <Card className="glass-card border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-slate-800/50 to-cyan-500/5 shadow-2xl">
@@ -553,13 +580,14 @@ function ProfilePageContent() {
 
         {/* Detailed Tabs System */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="glass-card grid w-full grid-cols-6">
+          <TabsList className="glass-card grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="fees">Fee Center</TabsTrigger>
             <TabsTrigger value="history">Trading</TabsTrigger>
             <TabsTrigger value="pools">Pools</TabsTrigger>
+            <TabsTrigger value="badges">Badges</TabsTrigger>
           </TabsList>
 
 
@@ -1316,6 +1344,20 @@ function ProfilePageContent() {
               loading={loading}
             />
           </TabsContent>
+
+          {/* Badges Tab - Full Badge Display */}
+          <TabsContent value="badges" className="space-y-6">
+            <Card className="glass-card">
+              <CardContent className="p-6">
+                <BadgeDisplay
+                  onBadgeClick={(badge) => {
+                    setSelectedBadge(badge);
+                    setShowBadgeModal(true);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
       
@@ -1366,6 +1408,24 @@ function ProfilePageContent() {
           }}
         />
       )}
+
+      {/* Badge Modal */}
+      <BadgeModal
+        badge={selectedBadge}
+        isOpen={showBadgeModal}
+        onClose={() => {
+          setShowBadgeModal(false);
+          setSelectedBadge(null);
+        }}
+      />
+
+      {/* Badge Notification Container - shows new badge toasts */}
+      <BadgeNotificationContainer
+        onBadgeClick={(badge) => {
+          setSelectedBadge(badge);
+          setShowBadgeModal(true);
+        }}
+      />
     </>
   );
 }
