@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 
 interface DemoPoolCardProps {
   onClose?: () => void;
@@ -35,14 +36,13 @@ const DEMO_POOL = {
   progress: 85,
 };
 
-// Quick contribute percentages
-const QUICK_PERCENTAGES = [25, 50, 75, 100];
 
 export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
   const [pool, setPool] = useState(DEMO_POOL);
   const [isContributing, setIsContributing] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastContribution, setLastContribution] = useState<number | null>(null);
+  const [sliderPercentage, setSliderPercentage] = useState(50);
 
   // Calculate remaining and progress
   const remaining = pool.targetPrice - pool.currentAmount;
@@ -288,65 +288,95 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
             </div>
           </div>
 
-          {/* One-Click Contribute Buttons (Percentage-based) */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm font-medium text-white">Quick Contribute (% of remaining)</span>
+          {/* Contribution Slider */}
+          <div className="space-y-4 p-4 bg-gray-700/30 border border-gray-600/40 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-400" />
+                <span className="text-sm font-medium text-white">Choose contribution</span>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-emerald-400">{sliderPercentage}%</span>
+                <span className="text-sm text-gray-400 ml-2">of remaining</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
-              {QUICK_PERCENTAGES.map((pct) => {
-                const pctAmount = (remaining * pct) / 100;
-                const wouldComplete = pct === 100 || pctAmount >= remaining;
-
-                return (
-                  <motion.button
-                    key={pct}
-                    onClick={() => handleContribute(Math.min(pctAmount, remaining))}
-                    disabled={isContributing}
-                    className={`
-                      relative py-3 px-2 rounded-lg font-bold text-sm transition-all flex flex-col items-center
-                      ${wouldComplete
-                        ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
-                        : 'bg-gray-700 text-white hover:bg-gray-600'
-                      }
-                      disabled:opacity-50
-                    `}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span>{pct}%</span>
-                    <span className="text-xs opacity-75">${pctAmount.toFixed(2)}</span>
-                    {wouldComplete && (
-                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping" />
-                    )}
-                  </motion.button>
-                );
-              })}
+            {/* Slider */}
+            <div className="py-2">
+              <Slider
+                value={[sliderPercentage]}
+                onValueChange={(value) => setSliderPercentage(value[0])}
+                max={100}
+                min={1}
+                step={1}
+                className="w-full"
+              />
             </div>
 
-            {/* Complete Pool Button - Always visible as a prominent action */}
-            {remaining > 0 && (
-              <motion.button
-                onClick={() => handleContribute(remaining)}
-                disabled={isContributing}
-                className="w-full py-4 rounded-lg font-bold text-white bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 transition-all relative overflow-hidden"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {/* Animated background */}
+            {/* Amount Display */}
+            <div className="flex items-center justify-between bg-gray-800/50 rounded-lg p-3">
+              <div>
+                <p className="text-xs text-gray-400">You will contribute</p>
+                <p className="text-xl font-bold text-white">${((remaining * sliderPercentage) / 100).toFixed(2)} USDC</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Pool will be at</p>
+                <p className="text-lg font-medium text-emerald-400">
+                  {Math.min(100, progress + (sliderPercentage * (100 - progress)) / 100).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
+            {/* Quick percentage buttons */}
+            <div className="flex gap-2">
+              {[25, 50, 75, 100].map((pct) => (
+                <button
+                  key={pct}
+                  onClick={() => setSliderPercentage(pct)}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    sliderPercentage === pct
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {pct}%
+                </button>
+              ))}
+            </div>
+
+            {/* Contribute Button */}
+            <motion.button
+              onClick={() => handleContribute((remaining * sliderPercentage) / 100)}
+              disabled={isContributing}
+              className={`w-full py-4 rounded-lg font-bold text-white transition-all relative overflow-hidden ${
+                sliderPercentage === 100
+                  ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600'
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {sliderPercentage === 100 && (
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
                   animate={{ x: ['-100%', '200%'] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
-                <span className="relative flex items-center justify-center gap-2">
-                  <PartyPopper className="w-5 h-5" />
-                  Complete Pool - 100% (${remaining.toFixed(2)})
-                </span>
-              </motion.button>
-            )}
+              )}
+              <span className="relative flex items-center justify-center gap-2">
+                {sliderPercentage === 100 ? (
+                  <>
+                    <PartyPopper className="w-5 h-5" />
+                    Complete Pool (${remaining.toFixed(2)})
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="w-5 h-5" />
+                    Contribute ${((remaining * sliderPercentage) / 100).toFixed(2)}
+                  </>
+                )}
+              </span>
+            </motion.button>
           </div>
 
           {/* Contributing State */}

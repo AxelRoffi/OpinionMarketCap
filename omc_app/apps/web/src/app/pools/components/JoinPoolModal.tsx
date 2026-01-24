@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 import {
   Dialog,
   DialogContent,
@@ -204,11 +205,21 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
     setError(null);
   };
 
-  // Quick contribution percentages (of remaining needed)
-  const quickPercentages = [25, 50, 75, 100];
+  // Slider state for percentage
+  const [sliderPercentage, setSliderPercentage] = useState(50);
+
+  // Calculate amount from percentage
   const getAmountForPercentage = (pct: number) => {
     const amount = (remainingNeeded * pct) / 100;
     return Math.min(amount, maxContribution); // Cap at user's max contribution
+  };
+
+  // Update amount when slider changes
+  const handleSliderChange = (value: number[]) => {
+    const pct = value[0];
+    setSliderPercentage(pct);
+    const newAmount = getAmountForPercentage(pct);
+    setAmount(newAmount.toFixed(2));
   };
 
   // Handle join pool
@@ -496,34 +507,58 @@ export default function JoinPoolModal({ isOpen, onClose, pool }: JoinPoolModalPr
                 </div>
               )}
               
-              {/* Quick contribution by percentage */}
+              {/* Percentage Slider */}
               {remainingNeeded > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm text-gray-400">Quick Contribute (% of remaining)</Label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {quickPercentages.map((pct) => {
-                      const pctAmount = getAmountForPercentage(pct);
-                      const isDisabled = pctAmount <= 0 || pctAmount > usdcBalance;
-                      const wouldComplete = pct === 100 || pctAmount >= remainingNeeded;
+                <div className="space-y-4 p-4 bg-gray-700/30 border border-gray-600/40 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-gray-400">Choose contribution amount</Label>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-emerald-400">{sliderPercentage}%</span>
+                      <span className="text-sm text-gray-400 ml-2">of remaining</span>
+                    </div>
+                  </div>
 
-                      return (
-                        <Button
-                          key={pct}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setAmount(pctAmount.toFixed(2))}
-                          disabled={isDisabled}
-                          className={`flex flex-col items-center py-2 h-auto ${
-                            wouldComplete
-                              ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                              : 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                          } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <span className="font-bold">{pct}%</span>
-                          <span className="text-xs opacity-75">${pctAmount.toFixed(2)}</span>
-                        </Button>
-                      );
-                    })}
+                  {/* Slider */}
+                  <div className="py-2">
+                    <Slider
+                      value={[sliderPercentage]}
+                      onValueChange={handleSliderChange}
+                      max={100}
+                      min={1}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Amount Display */}
+                  <div className="flex items-center justify-between bg-gray-800/50 rounded-lg p-3">
+                    <div>
+                      <p className="text-xs text-gray-400">You will contribute</p>
+                      <p className="text-xl font-bold text-white">${getAmountForPercentage(sliderPercentage).toFixed(2)} USDC</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Remaining after</p>
+                      <p className="text-lg font-medium text-gray-300">
+                        ${Math.max(0, remainingNeeded - getAmountForPercentage(sliderPercentage)).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Quick percentage buttons */}
+                  <div className="flex gap-2">
+                    {[25, 50, 75, 100].map((pct) => (
+                      <button
+                        key={pct}
+                        onClick={() => handleSliderChange([pct])}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                          sliderPercentage === pct
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
