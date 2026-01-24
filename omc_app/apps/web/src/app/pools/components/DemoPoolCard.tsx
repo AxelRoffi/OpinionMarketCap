@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import {
   Target,
   Users,
@@ -63,9 +62,12 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
     return `${hours}h ${minutes}m left`;
   };
 
-  // Trigger celebration confetti
-  const triggerCelebration = () => {
+  // Trigger celebration confetti (dynamically imported to avoid SSR issues)
+  const triggerCelebration = useCallback(async () => {
     setShowCelebration(true);
+
+    // Dynamically import confetti to avoid SSR issues
+    const confetti = (await import('canvas-confetti')).default;
 
     // Fire confetti
     const duration = 3000;
@@ -102,7 +104,7 @@ export function DemoPoolCard({ onClose }: DemoPoolCardProps) {
         colors: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ec4899']
       });
     }, 500);
-  };
+  }, []);
 
   // Simulate contribution
   const handleContribute = async (amount: number) => {
