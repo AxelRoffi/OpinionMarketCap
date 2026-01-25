@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AdultContentModal } from '@/components/AdultContentModal'
 import { useTextLimits } from '@/hooks/useTextLimits'
+import { validateContentForSubmission, scoreOpinionContent } from '@/lib/contentFiltering'
 
 interface FormData {
   question: string
@@ -54,15 +55,22 @@ const CATEGORIES = (() => {
 
 export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswerFormProps) {
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [warnings, setWarnings] = useState<{ [key: string]: string }>({})
   const [showAdultModal, setShowAdultModal] = useState(false)
   const [adultContentEnabled, setAdultContentEnabled] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+
+  // Calculate quality score in real-time
+  const qualityScore = formData.question && formData.answer
+    ? scoreOpinionContent({ question: formData.question, currentAnswer: formData.answer })
+    : null
   
   // Get dynamic text limits from contract
   const textLimits = useTextLimits()
   
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
+    const newWarnings: { [key: string]: string } = {}
 
     // Question validation
     if (!formData.question?.trim()) {
@@ -75,13 +83,23 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
       newErrors.question = `Question must be ${textLimits.maxQuestionLength} characters or less`
     }
 
-    // Answer validation  
+    // Answer validation
     if (!formData.answer?.trim()) {
       newErrors.answer = 'Answer is required'
     } else if (formData.answer.trim().length < 2) {
       newErrors.answer = 'Answer must be at least 2 characters'
     } else if (formData.answer.trim().length > textLimits.maxAnswerLength) {
       newErrors.answer = `Answer must be ${textLimits.maxAnswerLength} characters or less`
+    }
+
+    // Content quality validation (gibberish, spam detection)
+    if (formData.question && formData.answer) {
+      const contentValidation = validateContentForSubmission(formData.question, formData.answer)
+      if (!contentValidation.valid && contentValidation.error) {
+        newErrors.quality = contentValidation.error
+      } else if (contentValidation.warning) {
+        newWarnings.quality = contentValidation.warning
+      }
     }
 
     // Category validation
@@ -99,6 +117,7 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     }
 
     setErrors(newErrors)
+    setWarnings(newWarnings)
     return Object.keys(newErrors).length === 0
   }
 
@@ -230,6 +249,70 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
           </span>
         </div>
       </div>
+
+      {/* Content Quality Indicator */}
+      {qualityScore && formData.question && formData.answer && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-lg border ${
+            qualityScore.category === 'high' ? 'bg-emerald-900/20 border-emerald-500/30' :
+            qualityScore.category === 'medium' ? 'bg-blue-900/20 border-blue-500/30' :
+            qualityScore.category === 'low' ? 'bg-yellow-900/20 border-yellow-500/30' :
+            'bg-red-900/20 border-red-500/30'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-300">Content Quality</span>
+            <span className={`text-sm font-bold ${
+              qualityScore.category === 'high' ? 'text-emerald-400' :
+              qualityScore.category === 'medium' ? 'text-blue-400' :
+              qualityScore.category === 'low' ? 'text-yellow-400' :
+              'text-red-400'
+            }`}>
+              {qualityScore.qualityScore}/100 ({qualityScore.category.toUpperCase()})
+            </span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                qualityScore.category === 'high' ? 'bg-emerald-500' :
+                qualityScore.category === 'medium' ? 'bg-blue-500' :
+                qualityScore.category === 'low' ? 'bg-yellow-500' :
+                'bg-red-500'
+              }`}
+              style={{ width: `${qualityScore.qualityScore}%` }}
+            />
+          </div>
+          {qualityScore.reasons.length > 0 && qualityScore.category !== 'high' && (
+            <div className="mt-2 text-xs text-gray-400">
+              {qualityScore.reasons.slice(0, 2).map((reason, i) => (
+                <div key={i}>• {reason}</div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Quality Error Display */}
+      {errors.quality && (
+        <Alert className="bg-red-900/20 border-red-500/50">
+          <AlertCircle className="w-4 h-4 text-red-400" />
+          <AlertDescription className="text-red-400">
+            {errors.quality}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Quality Warning Display */}
+      {warnings.quality && !errors.quality && (
+        <Alert className="bg-yellow-900/20 border-yellow-500/50">
+          <AlertCircle className="w-4 h-4 text-yellow-400" />
+          <AlertDescription className="text-yellow-400">
+            {warnings.quality}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Category Selection */}
       <div className="space-y-2">

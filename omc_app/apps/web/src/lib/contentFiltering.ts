@@ -69,23 +69,85 @@ function hasEnglishCharacteristics(text: string): boolean {
 
 /**
  * Check for common spam patterns
+ * Note: crypto/bitcoin are legitimate topics for this platform, so not flagged
  */
 function hasSpamCharacteristics(question: string, answer: string): boolean {
   const combined = (question + ' ' + answer).toLowerCase();
-  
-  // Common spam indicators
+
+  // Common spam indicators (NOT including crypto terms since this is a crypto platform)
   const spamPatterns = [
-    /crypto|bitcoin|money|invest|profit|earn/i, // Financial spam
-    /click|link|visit|website|url/i, // Link spam
-    /buy|sell|cheap|discount|offer/i, // Commercial spam
-    /test|testing|asdf|qwer/i, // Test content
+    /click here|visit my|check out my/i, // Link spam
+    /free money|get rich|guaranteed profit/i, // Scam language
+    /\btest\b|\btesting\b|asdf|qwer|zxcv/i, // Test content
+    /lorem ipsum/i, // Placeholder text
   ];
-  
+
   const hasSpamWords = spamPatterns.some(pattern => pattern.test(combined));
   const isQAIdentical = question.toLowerCase().trim() === answer.toLowerCase().trim();
   const hasExcessiveSpecialChars = /[!@#$%^&*()]{3,}/.test(combined);
-  
+
   return hasSpamWords || isQAIdentical || hasExcessiveSpecialChars;
+}
+
+/**
+ * Validate content before submission - returns rejection reason or null if valid
+ * This should be used BEFORE allowing a transaction to proceed
+ */
+export function validateContentForSubmission(
+  question: string,
+  answer: string
+): { valid: boolean; error?: string; warning?: string } {
+  // Check for empty/too short
+  if (!question || question.trim().length < 5) {
+    return { valid: false, error: 'Question is too short (minimum 5 characters)' };
+  }
+  if (!answer || answer.trim().length < 2) {
+    return { valid: false, error: 'Answer is too short (minimum 2 characters)' };
+  }
+
+  // Check for gibberish
+  if (isLikelyGibberish(question)) {
+    return { valid: false, error: 'Question appears to be gibberish or random characters. Please enter a meaningful question.' };
+  }
+  if (isLikelyGibberish(answer)) {
+    return { valid: false, error: 'Answer appears to be gibberish or random characters. Please enter a meaningful answer.' };
+  }
+
+  // Check for spam patterns
+  if (hasSpamCharacteristics(question, answer)) {
+    return { valid: false, error: 'Content contains spam patterns. Please write genuine content.' };
+  }
+
+  // Check for all-caps shouting
+  const questionUpperRatio = (question.match(/[A-Z]/g) || []).length / question.length;
+  const answerUpperRatio = (answer.match(/[A-Z]/g) || []).length / answer.length;
+  if (questionUpperRatio > 0.7 && question.length > 10) {
+    return { valid: false, error: 'Please don\'t use ALL CAPS for your question.' };
+  }
+  if (answerUpperRatio > 0.7 && answer.length > 10) {
+    return { valid: false, error: 'Please don\'t use ALL CAPS for your answer.' };
+  }
+
+  // Check for excessive repetition
+  if (/(.)\1{5,}/.test(question) || /(.)\1{5,}/.test(answer)) {
+    return { valid: false, error: 'Content contains excessive character repetition.' };
+  }
+
+  // Check for number-only content
+  if (/^\d+$/.test(question.trim()) || /^\d+$/.test(answer.trim())) {
+    return { valid: false, error: 'Content cannot be numbers only.' };
+  }
+
+  // Soft warning for low quality (but still allowed)
+  const score = scoreOpinionContent({ question, currentAnswer: answer });
+  if (score.qualityScore < 40) {
+    return {
+      valid: true,
+      warning: 'Your content may be ranked lower due to quality. Consider improving clarity.'
+    };
+  }
+
+  return { valid: true };
 }
 
 /**
