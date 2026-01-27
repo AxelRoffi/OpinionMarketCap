@@ -144,7 +144,7 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
   const canCancelListing = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && isForSale;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 md:p-6 border border-gray-700">
+    <div className="bg-card rounded-lg p-4 md:p-6 border border-border">
       {/* Header Navigation */}
       <div className="flex items-center justify-end mb-4">
         <div className="flex items-center space-x-2">
@@ -152,7 +152,7 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             onClick={handleShare}
             variant="outline"
             size="sm"
-            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors duration-200"
+            className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors duration-200"
           >
             <Share2 className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Share</span>
@@ -162,9 +162,9 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
             variant="outline"
             size="sm"
             className={`transition-colors duration-200 ${
-              isOpinionWatched 
-                ? 'border-yellow-500 text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500 hover:text-white' 
-                : 'border-gray-500 text-gray-300 hover:bg-gray-500 hover:text-white'
+              isOpinionWatched
+                ? 'border-yellow-500 text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500 hover:text-white'
+                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
             {isOpinionWatched ? (
@@ -200,23 +200,23 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                 </Badge>
               ))}
             </div>
-            <Badge 
+            <Badge
               variant={opinion.isActive ? 'default' : 'secondary'}
-              className={opinion.isActive ? 'bg-emerald-600 text-white' : 'bg-gray-600'}
+              className={opinion.isActive ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}
             >
               {opinion.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
-          
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
+
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2 leading-tight">
             {formatQuestion(opinion.question)}
           </h1>
-          
-          <div className="text-gray-400 text-sm">
+
+          <div className="text-muted-foreground text-sm">
             <span>Created by </span>
-            <ClickableAddress 
+            <ClickableAddress
               address={opinion.creator}
-              className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
+              className="text-emerald-500 hover:text-emerald-400 cursor-pointer"
             >
               {formatAddress(opinion.creator)}
             </ClickableAddress>
@@ -226,9 +226,9 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
         {/* Balanced Layout - Answer 50%, Price & Volume 25% each */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Current Answer - Takes 2/4 (50%) width */}
-          <div className="lg:col-span-2 bg-gray-900 rounded-lg p-4 border border-gray-600">
+          <div className="lg:col-span-2 bg-muted rounded-lg p-4 border border-border">
             <div className="mb-2">
-              <span className="text-gray-400 text-sm font-medium">Current Answer</span>
+              <span className="text-muted-foreground text-sm font-medium">Current Answer</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               {opinion.link ? (
@@ -236,28 +236,28 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                   href={opinion.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white font-semibold text-xl hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-2 group"
+                  className="text-foreground font-semibold text-xl hover:text-emerald-500 transition-colors cursor-pointer flex items-center gap-2 group"
                   title="View source link"
                 >
                   {opinion.currentAnswer}
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-emerald-400 transition-colors" />
+                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
                 </a>
               ) : (
-                <p className="text-white font-semibold text-xl">
+                <p className="text-foreground font-semibold text-xl">
                   {opinion.currentAnswer}
                 </p>
               )}
             </div>
             {opinion.currentAnswerDescription && (
-              <p className="text-gray-300 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 {opinion.currentAnswerDescription}
               </p>
             )}
-            <div className="text-gray-400 text-sm">
+            <div className="text-muted-foreground text-sm">
               <span>Owned by </span>
-              <ClickableAddress 
+              <ClickableAddress
                 address={opinion.currentAnswerOwner}
-                className="text-emerald-400 hover:text-emerald-300 cursor-pointer"
+                className="text-emerald-500 hover:text-emerald-400 cursor-pointer"
               >
                 {formatAddress(opinion.currentAnswerOwner)}
               </ClickableAddress>
@@ -265,10 +265,10 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
           </div>
 
           {/* Current Price - Takes 1/4 (25%) width */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+          <div className="bg-muted rounded-lg p-4 border border-border">
             <div className="text-center">
-              <div className="text-gray-400 text-sm mb-2">Current Price</div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-muted-foreground text-sm mb-2">Current Price</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                 {formatUSDC(opinion.nextPrice)}
               </div>
               <div className={`flex items-center justify-center space-x-1 text-sm ${
@@ -282,7 +282,7 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                 <span className="font-medium">
                   {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
                 </span>
-                <span className="text-gray-400 text-xs">
+                <span className="text-muted-foreground text-xs">
                   (${change.absolute.toFixed(2)})
                 </span>
               </div>
@@ -290,10 +290,10 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
           </div>
 
           {/* Total Volume - Takes 1/4 (25%) width */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-600">
+          <div className="bg-muted rounded-lg p-4 border border-border">
             <div className="text-center">
-              <div className="text-gray-400 text-sm mb-2">Total Volume</div>
-              <div className="text-2xl md:text-3xl font-bold text-white">
+              <div className="text-muted-foreground text-sm mb-2">Total Volume</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground">
                 {formatUSDC(opinion.totalVolume)}
               </div>
             </div>
@@ -326,12 +326,12 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
               <Button
                 disabled
                 variant="outline"
-                className="w-full border-gray-600 text-gray-500 cursor-not-allowed font-semibold py-3"
+                className="w-full border-border text-muted-foreground cursor-not-allowed font-semibold py-3"
               >
                 <Target className="w-5 h-5 mr-2" />
                 Create Pool
               </Button>
-              <p className="text-xs text-gray-400 mt-1 text-center">
+              <p className="text-xs text-muted-foreground mt-1 text-center">
                 Pool creation requires NextPrice ≥ 100 USDC<br />
                 Current: {formatUSDC(opinion.nextPrice)}
               </p>

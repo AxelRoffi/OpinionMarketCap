@@ -2,10 +2,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function OpinionDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Header Skeleton */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div className="bg-card rounded-lg p-6 border border-border">
           <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-10 w-24" />
@@ -23,7 +23,7 @@ export function OpinionDetailSkeleton() {
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div key={i} className="bg-card rounded-lg p-6 border border-border">
               <Skeleton className="h-4 w-24 mb-2" />
               <Skeleton className="h-8 w-16 mb-1" />
               <Skeleton className="h-3 w-20" />
@@ -34,17 +34,17 @@ export function OpinionDetailSkeleton() {
         {/* Chart and Activity Grid Skeleton */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Chart Skeleton */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div className="bg-card rounded-lg p-6 border border-border">
             <Skeleton className="h-6 w-32 mb-4" />
             <Skeleton className="h-64 w-full" />
           </div>
 
           {/* Activity Skeleton */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div className="bg-card rounded-lg p-6 border border-border">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center space-x-3">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div>
@@ -60,7 +60,7 @@ export function OpinionDetailSkeleton() {
         </div>
 
         {/* Detailed Stats Skeleton */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div className="bg-card rounded-lg p-6 border border-border">
           <Skeleton className="h-6 w-32 mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
@@ -79,7 +79,7 @@ export function OpinionDetailSkeleton() {
 
 export function OpinionCardSkeleton() {
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div className="bg-card rounded-lg p-6 border border-border">
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-5 w-20" />
         <Skeleton className="h-5 w-16" />

@@ -40,9 +40,9 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
-          <p className="text-gray-300 text-sm">{label}</p>
-          <p className="text-white font-semibold">
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-muted-foreground text-sm">{label}</p>
+          <p className="text-foreground font-semibold">
             {chartType === 'price' ? `$${payload[0].value.toFixed(2)}` : `${payload[0].value} vol`}
           </p>
         </div>
@@ -55,19 +55,19 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
     <div>
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white mb-4 sm:mb-0">
+        <h2 className="text-xl font-bold text-foreground mb-4 sm:mb-0">
           {chartType === 'price' ? 'Price History' : 'Volume History'}
         </h2>
-        
+
         <div className="flex items-center space-x-2">
           {/* Chart Type Toggle */}
-          <div className="flex bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1">
             <button
               onClick={() => setChartType('price')}
               className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                chartType === 'price' 
-                  ? 'bg-emerald-600 text-white' 
-                  : 'text-gray-300 hover:text-white'
+                chartType === 'price'
+                  ? 'bg-emerald-600 text-white'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -76,9 +76,9 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
             <button
               onClick={() => setChartType('volume')}
               className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                chartType === 'volume' 
-                  ? 'bg-emerald-600 text-white' 
-                  : 'text-gray-300 hover:text-white'
+                chartType === 'volume'
+                  ? 'bg-emerald-600 text-white'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -87,15 +87,15 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
           </div>
 
           {/* Time Range Toggle */}
-          <div className="flex bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1">
             {(['1d', '7d', '30d', 'all'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  timeRange === range 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-300 hover:text-white'
+                  timeRange === range
+                    ? 'bg-blue-600 text-white'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {range}
@@ -165,12 +165,12 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h4 className="text-lg font-medium text-gray-400 mb-2">No Historical Data Available</h4>
-              <p className="text-gray-500 text-sm">
+              <TrendingUp className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-muted-foreground mb-2">No Historical Data Available</h4>
+              <p className="text-muted-foreground/70 text-sm">
                 {chartType === 'price' ? 'Price history' : 'Volume history'} will appear here once trading begins.
               </p>
-              <p className="text-gray-600 text-xs mt-2">
+              <p className="text-muted-foreground/50 text-xs mt-2">
                 Current price: ${currentPrice.toFixed(2)}
               </p>
             </div>
@@ -180,28 +180,28 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
 
       {/* Chart Statistics */}
       {hasRealData && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-700">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-border">
           <div className="text-center">
-            <div className="text-gray-400 text-sm">Current</div>
-            <div className="text-white font-semibold">
+            <div className="text-muted-foreground text-sm">Current</div>
+            <div className="text-foreground font-semibold">
               ${currentPrice.toFixed(2)}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-gray-400 text-sm">Period High</div>
-            <div className="text-white font-semibold">
+            <div className="text-muted-foreground text-sm">Period High</div>
+            <div className="text-foreground font-semibold">
               ${Math.max(...chartData.map(d => d.price)).toFixed(2)}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-gray-400 text-sm">Period Low</div>
-            <div className="text-white font-semibold">
+            <div className="text-muted-foreground text-sm">Period Low</div>
+            <div className="text-foreground font-semibold">
               ${Math.min(...chartData.map(d => d.price)).toFixed(2)}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-gray-400 text-sm">Data Points</div>
-            <div className="text-white font-semibold">
+            <div className="text-muted-foreground text-sm">Data Points</div>
+            <div className="text-foreground font-semibold">
               {chartData.length}
             </div>
           </div>

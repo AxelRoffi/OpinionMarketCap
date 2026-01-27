@@ -768,72 +768,72 @@ function HomePageInner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6"
+            className="bg-card border border-border rounded-lg p-6"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-500 font-bold text-lg">$</span>
-                <span className="text-gray-400 text-sm font-medium">Total Market Cap</span>
+                <span className="text-muted-foreground text-sm font-medium">Total Market Cap</span>
               </div>
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-muted-foreground">
                 (24h: soon)
               </div>
             </div>
-            <div className="text-white text-2xl font-bold">{formatLargeUSDC(marketStats.totalMarketCap)}</div>
+            <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalMarketCap)}</div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6"
+            className="bg-card border border-border rounded-lg p-6"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-400 text-sm font-medium">Total Volume</span>
+                <span className="text-muted-foreground text-sm font-medium">Total Volume</span>
               </div>
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-muted-foreground">
                 (24h: soon)
               </div>
             </div>
-            <div className="text-white text-2xl font-bold">{formatLargeUSDC(marketStats.totalVolume)}</div>
+            <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalVolume)}</div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6"
+            className="bg-card border border-border rounded-lg p-6"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-orange-500" />
-                <span className="text-gray-400 text-sm font-medium">Total Participants</span>
+                <span className="text-muted-foreground text-sm font-medium">Total Participants</span>
               </div>
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-muted-foreground">
                 (24h: soon)
               </div>
             </div>
-            <div className="text-white text-2xl font-bold">{marketStats.activeTraders.toLocaleString()}</div>
+            <div className="text-foreground text-2xl font-bold">{marketStats.activeTraders.toLocaleString()}</div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6"
+            className="bg-card border border-border rounded-lg p-6"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-purple-500" />
-                <span className="text-gray-400 text-sm font-medium">Total Opinions</span>
+                <span className="text-muted-foreground text-sm font-medium">Total Opinions</span>
               </div>
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-muted-foreground">
                 (today: soon)
               </div>
             </div>
-            <div className="text-white text-2xl font-bold">{marketStats.totalOpinions}</div>
+            <div className="text-foreground text-2xl font-bold">{marketStats.totalOpinions}</div>
           </motion.div>
         </div>
 
@@ -846,35 +846,35 @@ function HomePageInner() {
           className="flex flex-col md:flex-row gap-4 mb-6"
         >
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               type="text"
               placeholder="Search opinions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-emerald-500"
+              className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
             />
           </div>
-          
+
           <Select value={selectedCategory} onValueChange={handleCategorySelect}>
-            <SelectTrigger className="bg-gray-800 border-gray-700 text-white w-full md:w-48">
+            <SelectTrigger className="bg-muted border-border text-foreground w-full md:w-48">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
+            <SelectContent className="bg-card border-border">
               {getSmartContractCategories().map((category) => (
-                <SelectItem key={category} value={category} className="text-white hover:bg-gray-700">
+                <SelectItem key={category} value={category} className="text-foreground hover:bg-muted">
                   {category === 'Adult' ? '🔞 Adult' : category}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          
+
           {/* Quality Filter Toggle */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowQualityFilter(!showQualityFilter)}
-            className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 w-full md:w-auto"
+            className="bg-muted border-border text-foreground hover:bg-accent w-full md:w-auto"
           >
             <Filter className="w-4 h-4 mr-2" />
             Quality Filter
@@ -892,14 +892,14 @@ function HomePageInner() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-6 p-4 bg-gray-800/30 border border-gray-700/50 rounded-lg"
+            className="mb-6 p-4 bg-muted/30 border border-border rounded-lg"
           >
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-300">Content Quality Settings</span>
+                <Settings className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">Content Quality Settings</span>
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-4">
                 {/* Enable/Disable Toggle */}
                 <Button
@@ -907,9 +907,9 @@ function HomePageInner() {
                   size="sm"
                   onClick={() => updateFilterSettings({ enableQualityFilter: !filterSettings.enableQualityFilter })}
                   className={`${
-                    filterSettings.enableQualityFilter 
-                      ? 'bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-700' 
-                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                    filterSettings.enableQualityFilter
+                      ? 'bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-700'
+                      : 'bg-muted border-border text-foreground hover:bg-accent'
                   }`}
                 >
                   {filterSettings.enableQualityFilter ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
@@ -919,19 +919,19 @@ function HomePageInner() {
                 {/* Quality Threshold Slider */}
                 {filterSettings.enableQualityFilter && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">Min Quality:</span>
-                    <Select 
-                      value={filterSettings.minQualityScore.toString()} 
+                    <span className="text-xs text-muted-foreground">Min Quality:</span>
+                    <Select
+                      value={filterSettings.minQualityScore.toString()}
                       onValueChange={(value) => updateFilterSettings({ minQualityScore: parseInt(value) })}
                     >
-                      <SelectTrigger className="w-20 h-8 bg-gray-800 border-gray-700 text-white text-xs">
+                      <SelectTrigger className="w-20 h-8 bg-muted border-border text-foreground text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="0" className="text-white hover:bg-gray-700 text-xs">Show All</SelectItem>
-                        <SelectItem value="25" className="text-white hover:bg-gray-700 text-xs">Hide Spam</SelectItem>
-                        <SelectItem value="40" className="text-white hover:bg-gray-700 text-xs">Basic Quality</SelectItem>
-                        <SelectItem value="60" className="text-white hover:bg-gray-700 text-xs">High Quality</SelectItem>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="0" className="text-foreground hover:bg-muted text-xs">Show All</SelectItem>
+                        <SelectItem value="25" className="text-foreground hover:bg-muted text-xs">Hide Spam</SelectItem>
+                        <SelectItem value="40" className="text-foreground hover:bg-muted text-xs">Basic Quality</SelectItem>
+                        <SelectItem value="60" className="text-foreground hover:bg-muted text-xs">High Quality</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -943,9 +943,9 @@ function HomePageInner() {
                   size="sm"
                   onClick={() => updateFilterSettings({ sortByQuality: !filterSettings.sortByQuality })}
                   className={`${
-                    filterSettings.sortByQuality 
-                      ? 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700' 
-                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                    filterSettings.sortByQuality
+                      ? 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700'
+                      : 'bg-muted border-border text-foreground hover:bg-accent'
                   } text-xs`}
                 >
                   <TrendingUp className="w-4 h-4 mr-1" />
@@ -956,22 +956,22 @@ function HomePageInner() {
 
             {/* Filter Stats */}
             {filterSettings.showFilterStats && (
-              <div className="mt-3 pt-3 border-t border-gray-700/50">
+              <div className="mt-3 pt-3 border-t border-border">
                 <div className="flex flex-wrap gap-4 text-xs">
-                  <div className="text-gray-400">
-                    Total: <span className="text-white">{filterStats.total}</span>
+                  <div className="text-muted-foreground">
+                    Total: <span className="text-foreground">{filterStats.total}</span>
                   </div>
-                  <div className="text-emerald-400">
-                    High Quality: <span className="text-white">{filterStats.high}</span>
+                  <div className="text-emerald-500">
+                    High Quality: <span className="text-foreground">{filterStats.high}</span>
                   </div>
-                  <div className="text-yellow-400">
-                    Medium Quality: <span className="text-white">{filterStats.medium}</span>
+                  <div className="text-yellow-500">
+                    Medium Quality: <span className="text-foreground">{filterStats.medium}</span>
                   </div>
-                  <div className="text-orange-400">
-                    Low Quality: <span className="text-white">{filterStats.low}</span>
+                  <div className="text-orange-500">
+                    Low Quality: <span className="text-foreground">{filterStats.low}</span>
                   </div>
-                  <div className="text-red-400">
-                    Spam/Hidden: <span className="text-white">{filterStats.spam}</span>
+                  <div className="text-red-500">
+                    Spam/Hidden: <span className="text-foreground">{filterStats.spam}</span>
                   </div>
                 </div>
               </div>
@@ -987,12 +987,12 @@ function HomePageInner() {
           className="mb-6"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-gray-800/50 border border-gray-700/50 p-1 rounded-lg">
-              <TabsTrigger value="all" className="flex items-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-gray-700">
+            <TabsList className="bg-muted/50 border border-border p-1 rounded-lg">
+              <TabsTrigger value="all" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-accent">
                 <BarChart3 className="w-4 h-4" />
                 All Opinions
               </TabsTrigger>
-              <TabsTrigger value="trending" className="flex items-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-gray-700">
+              <TabsTrigger value="trending" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-accent">
                 <Flame className="w-4 h-4" />
                 Trending
               </TabsTrigger>
@@ -1005,21 +1005,21 @@ function HomePageInner() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden"
+          className="bg-card border border-border rounded-lg overflow-hidden"
         >
-          <div className="p-4 border-b border-gray-700/50">
-            <h2 className="text-white text-xl font-semibold mb-2 flex items-center gap-2">
+          <div className="p-4 border-b border-border">
+            <h2 className="text-foreground text-xl font-semibold mb-2 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Opinion Market ({totalFiltered})
             </h2>
           </div>
 
           {/* Table Header - ENHANCED: ADDED NEW COLUMNS */}
-          <div className="hidden lg:grid gap-2 px-4 py-3 bg-gray-800/50 border-b border-gray-700/50" style={{
+          <div className="hidden lg:grid gap-2 px-4 py-3 bg-muted/50 border-b border-border" style={{
             gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
           }}>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('id')}
             >
               <span className="text-sm">#</span>
@@ -1029,10 +1029,10 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div className="text-white text-base font-bold">question</div>
-            <div className="text-white text-base font-bold">🔗 answer</div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div className="text-foreground text-base font-bold">question</div>
+            <div className="text-foreground text-base font-bold">answer</div>
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('lastPrice')}
             >
               <span className="text-sm whitespace-nowrap">last price</span>
@@ -1042,8 +1042,8 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('price')}
             >
               <span className="text-sm whitespace-nowrap">next price</span>
@@ -1053,8 +1053,8 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('change')}
             >
               <span className="text-sm">var %</span>
@@ -1064,8 +1064,8 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('trades')}
             >
               <span className="text-sm">trades</span>
@@ -1075,8 +1075,8 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div 
-              className="text-white text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
+            <div
+              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
               onClick={() => handleSort('volume')}
             >
               <span className="text-sm">vol</span>
@@ -1086,22 +1086,22 @@ function HomePageInner() {
                 <ChevronsUpDown className="w-3 h-3" />
               )}
             </div>
-            <div className="text-white text-base font-bold text-center hidden lg:block">chart</div>
-            <div className="text-white text-base font-bold text-center">actions</div>
+            <div className="text-foreground text-base font-bold text-center hidden lg:block">chart</div>
+            <div className="text-foreground text-base font-bold text-center">actions</div>
           </div>
 
           {/* Pagination Info */}
-          <div className="px-4 py-3 bg-gray-800/30 border-b border-gray-700/50 flex items-center justify-between">
-            <div className="text-sm text-gray-400">
-              Showing <span className="text-white font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-white font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-white font-medium">{totalFiltered}</span> opinions
+          <div className="px-4 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing <span className="text-foreground font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-foreground font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-foreground font-medium">{totalFiltered}</span> opinions
             </div>
-            <div className="text-sm text-gray-400">
-              Page <span className="text-white font-medium">{currentPage}</span> of <span className="text-white font-medium">{totalPages}</span>
+            <div className="text-sm text-muted-foreground">
+              Page <span className="text-foreground font-medium">{currentPage}</span> of <span className="text-foreground font-medium">{totalPages}</span>
             </div>
           </div>
 
           {/* Table Body - REAL CONTRACT DATA */}
-          <div className="divide-y divide-gray-700/20">
+          <div className="divide-y divide-border/20">
             {paginatedOpinions.map((opinion, index) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
               const displayCategories = opinion.categories && opinion.categories.length > 0
@@ -1132,7 +1132,7 @@ function HomePageInner() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="grid grid-cols-1 lg:grid-cols-10 md:gap-2 px-4 py-4 bg-gray-800/30 hover:bg-gray-700/30 transition-colors duration-200 cursor-pointer items-center"
+                  className="grid grid-cols-1 lg:grid-cols-10 md:gap-2 px-4 py-4 bg-card/30 hover:bg-muted/50 transition-colors duration-200 cursor-pointer items-center"
                   style={{
                     gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
                   }}
@@ -1142,20 +1142,20 @@ function HomePageInner() {
                   <div className="lg:hidden col-span-1 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <span className="text-gray-400 font-medium">#{opinion.id}</span>
+                        <span className="text-muted-foreground font-medium">#{opinion.id}</span>
                         {activeTab === 'trending' && <Flame className="w-4 h-4 text-orange-400" />}
                         {activeTab === 'featured' && <Star className="w-4 h-4 text-purple-400" />}
                       </div>
                     </div>
-                    
+
                     <div className="w-full">
-                      <div className="text-white font-bold text-base mb-1 leading-tight">
+                      <div className="text-foreground font-bold text-base mb-1 leading-tight">
                         {formatQuestion(opinion.question)}
                       </div>
                       <div className="text-xs mb-2">
-                        by <ClickableAddress 
+                        by <ClickableAddress
                           address={opinion.creator}
-                          className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                          className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
                         >
                           {truncateAddress(opinion.creator)}
                         </ClickableAddress>
@@ -1185,8 +1185,8 @@ function HomePageInner() {
                           </Badge>
                         ))}
                       </div>
-                      <div className="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                        <button 
+                      <div className="text-foreground font-bold text-sm mb-2 flex items-center gap-2">
+                        <button
                           className="hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none focus:text-emerald-400"
                           onClick={(e) => {
                             e.preventDefault();
@@ -1209,29 +1209,29 @@ function HomePageInner() {
                         </button>
                       </div>
                       <div className="text-xs">
-                        by <ClickableAddress 
+                        by <ClickableAddress
                           address={opinion.currentAnswerOwner}
-                          className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                          className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
                         >
                           {truncateAddress(opinion.currentAnswerOwner)}
                         </ClickableAddress>
                       </div>
                     </div>
-                    
+
                     {/* Mobile Price and Trade Section - ENHANCED */}
-                    <div className="bg-gray-800/30 rounded-lg p-4">
+                    <div className="bg-muted/30 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-4">
                           <div className="text-center">
-                            <div className="text-xs text-gray-500 mb-1">Current Price</div>
-                            <div className="font-bold text-lg text-emerald-400">
+                            <div className="text-xs text-muted-foreground mb-1">Current Price</div>
+                            <div className="font-bold text-lg text-emerald-500">
                               {formatUSDC(opinion.nextPrice)}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-xs text-gray-500 mb-1">24h Change</div>
-                            <div className={`flex items-center justify-center space-x-1 ${ 
-                              change.isPositive ? 'text-emerald-400' : 'text-red-400'
+                            <div className="text-xs text-muted-foreground mb-1">24h Change</div>
+                            <div className={`flex items-center justify-center space-x-1 ${
+                              change.isPositive ? 'text-emerald-500' : 'text-red-500'
                             }`}>
                               {change.isPositive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               <span className="text-sm font-semibold">{change.percentage.toFixed(1)}%</span>
@@ -1239,15 +1239,15 @@ function HomePageInner() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs text-gray-500 mb-1">Volume</div>
-                          <div className="text-gray-300 font-medium">
+                          <div className="text-xs text-muted-foreground mb-1">Volume</div>
+                          <div className="text-foreground font-medium">
                             {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-gray-400">
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <span>{opinion.tradesCount} trades</span>
                           <span>•</span>
                           <span>Last: {formatUSDC(opinion.lastPrice)}</span>
@@ -1271,7 +1271,7 @@ function HomePageInner() {
                   <div className="hidden lg:contents">
                     {/* Rank - COMPACT */}
                     <div className="flex items-center justify-center">
-                      <span className="text-gray-400 font-medium text-sm">{opinion.id}</span>
+                      <span className="text-muted-foreground font-medium text-sm">{opinion.id}</span>
                       {activeTab === 'trending' && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
                       {activeTab === 'featured' && <Star className="w-3 h-3 text-purple-400 ml-1" />}
                     </div>
@@ -1279,14 +1279,14 @@ function HomePageInner() {
                     {/* Question Column - MODIFIED: WITH INTEGRATED BADGE */}
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
-                        <div className="text-white font-bold text-base leading-tight mb-1">
+                        <div className="text-foreground font-bold text-base leading-tight mb-1">
                           {formatQuestion(opinion.question)}
                         </div>
                         <div className="text-xs mb-1 flex items-center gap-2">
                           <span>
-                            by <ClickableAddress 
+                            by <ClickableAddress
                               address={opinion.creator}
-                              className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                              className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
                             >
                               {truncateAddress(opinion.creator)}
                             </ClickableAddress>
@@ -1322,7 +1322,7 @@ function HomePageInner() {
                     <div className="flex items-center min-h-[60px] pr-2">
                       <div className="w-full">
                         <button
-                          className="text-white font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left w-full focus:outline-none focus:text-emerald-400"
+                          className="text-foreground font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left w-full focus:outline-none focus:text-emerald-400"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1347,27 +1347,27 @@ function HomePageInner() {
                             // Show loading state while pool data is fetching
                             if (poolDataLoading && opinion.currentAnswerOwner.toLowerCase() === '0x3b4584e690109484059d95d7904dd9feba246612') {
                               return (
-                                <span className="text-gray-400 animate-pulse">
+                                <span className="text-muted-foreground animate-pulse">
                                   by Loading...
                                 </span>
                               );
                             }
-                            
+
                             const ownerDisplay = getOwnerDisplay(
-                              opinion.currentAnswerOwner, 
-                              opinion.id, 
+                              opinion.currentAnswerOwner,
+                              opinion.id,
                               opinion.currentAnswer
                             );
-                            
+
                             return ownerDisplay.isPoolOwned ? (
-                              <span className="text-emerald-400 font-medium">
+                              <span className="text-emerald-500 font-medium">
                                 by {ownerDisplay.displayName}
                               </span>
                             ) : (
                               <span>
-                                by <ClickableAddress 
+                                by <ClickableAddress
                                   address={opinion.currentAnswerOwner}
-                                  className="text-gray-400 hover:text-emerald-500 cursor-pointer transition-colors"
+                                  className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
                                 >
                                   {ownerDisplay.displayName}
                                 </ClickableAddress>
@@ -1380,14 +1380,14 @@ function HomePageInner() {
 
                     {/* Last Price - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="font-medium text-white text-sm">
+                      <span className="font-medium text-foreground text-sm">
                         {formatUSDC(opinion.lastPrice)}
                       </span>
                     </div>
 
                     {/* Next Price - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="font-medium text-white text-sm">
+                      <span className="font-medium text-foreground text-sm">
                         {formatUSDC(opinion.nextPrice)}
                       </span>
                     </div>
@@ -1404,14 +1404,14 @@ function HomePageInner() {
 
                     {/* Trades - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="text-white font-medium text-sm">
+                      <span className="text-foreground font-medium text-sm">
                         {opinion.tradesCount}
                       </span>
                     </div>
 
                     {/* Volume - COMPACT */}
                     <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="text-white font-medium text-sm">
+                      <span className="text-foreground font-medium text-sm">
                         {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
                       </span>
                     </div>
@@ -1451,14 +1451,14 @@ function HomePageInner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden mt-4"
+            className="bg-card border border-border rounded-lg overflow-hidden mt-4"
           >
             <div className="px-4 py-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-muted-foreground">
                   Page {currentPage} of {totalPages} • {totalFiltered} total opinions
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   {/* First Page */}
                   <Button
@@ -1466,22 +1466,22 @@ function HomePageInner() {
                     size="sm"
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                    className="bg-muted border-border text-foreground hover:bg-accent"
                   >
                     First
                   </Button>
-                  
+
                   {/* Previous Page */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                    className="bg-muted border-border text-foreground hover:bg-accent"
                   >
                     ← Previous
                   </Button>
-                  
+
                   {/* Page Numbers */}
                   <div className="flex items-center space-x-1">
                     {(() => {
@@ -1489,12 +1489,12 @@ function HomePageInner() {
                       const showPages = 5; // Show 5 page numbers
                       let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
                       let endPage = Math.min(totalPages, startPage + showPages - 1);
-                      
+
                       // Adjust if we're near the end
                       if (endPage - startPage + 1 < showPages) {
                         startPage = Math.max(1, endPage - showPages + 1);
                       }
-                      
+
                       for (let i = startPage; i <= endPage; i++) {
                         pages.push(
                           <Button
@@ -1502,39 +1502,39 @@ function HomePageInner() {
                             variant={i === currentPage ? "default" : "outline"}
                             size="sm"
                             onClick={() => setCurrentPage(i)}
-                            className={i === currentPage 
+                            className={i === currentPage
                               ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                              : "bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                              : "bg-muted border-border text-foreground hover:bg-accent"
                             }
                           >
                             {i}
                           </Button>
                         );
                       }
-                      
+
                       return pages;
                     })()
                     }
                   </div>
-                  
+
                   {/* Next Page */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                    className="bg-muted border-border text-foreground hover:bg-accent"
                   >
                     Next →
                   </Button>
-                  
+
                   {/* Last Page */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+                    className="bg-muted border-border text-foreground hover:bg-accent"
                   >
                     Last
                   </Button>

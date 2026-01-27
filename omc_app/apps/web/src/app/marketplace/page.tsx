@@ -204,10 +204,10 @@ export default function MarketplacePage() {
   };
 
   const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
-    return sortDirection === 'asc' ? 
-      <ArrowUp className="w-4 h-4 text-emerald-400" /> : 
-      <ArrowDown className="w-4 h-4 text-emerald-400" />;
+    if (sortField !== field) return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-emerald-500" /> :
+      <ArrowDown className="w-4 h-4 text-emerald-500" />;
   };
 
   const handleBuyQuestion = (question: MarketplaceQuestion) => {
@@ -217,15 +217,15 @@ export default function MarketplacePage() {
 
   if (isLoadingOpinions) {
     return (
-      <div className="min-h-screen bg-gray-900 p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="space-y-2">
-            <Skeleton className="h-8 w-64 bg-gray-800" />
-            <Skeleton className="h-4 w-96 bg-gray-800" />
+            <Skeleton className="h-8 w-64 bg-muted" />
+            <Skeleton className="h-4 w-96 bg-muted" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-24 bg-gray-800" />
+              <Skeleton key={i} className="h-24 bg-muted" />
             ))}
           </div>
         </div>
@@ -234,41 +234,41 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
           <div>
-            <h1 className="text-3xl font-bold text-white">Questions for Sale</h1>
-            <p className="text-gray-400 mt-2">Browse and purchase question ownership from other users</p>
+            <h1 className="text-3xl font-bold text-foreground">Questions for Sale</h1>
+            <p className="text-muted-foreground mt-2">Browse and purchase question ownership from other users</p>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gray-800/50 border-gray-700">
+            <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <Hash className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Questions for Sale</p>
-                    <p className="text-xl font-bold text-white">{marketplaceQuestions.length}</p>
+                    <p className="text-sm text-muted-foreground">Questions for Sale</p>
+                    <p className="text-xl font-bold text-foreground">{marketplaceQuestions.length}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
-            <Card className="bg-gray-800/50 border-gray-700">
+
+            <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <DollarSign className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Avg Sale Price</p>
-                    <p className="text-xl font-bold text-white">
-                      {marketplaceQuestions.length > 0 
+                    <p className="text-sm text-muted-foreground">Avg Sale Price</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {marketplaceQuestions.length > 0
                         ? `$${(marketplaceQuestions.reduce((sum, q) => sum + Number(q.salePrice), 0) / marketplaceQuestions.length / 1_000_000).toFixed(2)}`
                         : '$0.00'
                       }
@@ -278,13 +278,13 @@ export default function MarketplacePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gray-800/50 border-gray-700">
+            <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <TrendingUp className="w-5 h-5 text-yellow-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Total Volume</p>
-                    <p className="text-xl font-bold text-white">
+                    <p className="text-sm text-muted-foreground">Total Volume</p>
+                    <p className="text-xl font-bold text-foreground">
                       ${(marketplaceQuestions.reduce((sum, q) => sum + Number(q.totalVolume), 0) / 1_000_000).toFixed(2)}
                     </p>
                   </div>
@@ -292,13 +292,13 @@ export default function MarketplacePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gray-800/50 border-gray-700">
+            <Card className="bg-card/50 border-border">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <Users className="w-5 h-5 text-purple-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Total Royalties</p>
-                    <p className="text-xl font-bold text-white">
+                    <p className="text-sm text-muted-foreground">Total Royalties</p>
+                    <p className="text-xl font-bold text-foreground">
                       ${(marketplaceQuestions.reduce((sum, q) => sum + Number(q.totalRoyalties), 0) / 1_000_000).toFixed(2)}
                     </p>
                   </div>
@@ -314,18 +314,18 @@ export default function MarketplacePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="bg-card/50 border-border">
             <CardContent className="p-4">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Search */}
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Search by question text or ID..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-gray-900 border-gray-600 text-white placeholder:text-gray-400 pl-10"
+                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground pl-10"
                     />
                   </div>
                 </div>
@@ -337,14 +337,14 @@ export default function MarketplacePage() {
                     type="number"
                     value={priceRange.min}
                     onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                    className="bg-gray-900 border-gray-600 text-white placeholder:text-gray-400 w-24"
+                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground w-24"
                   />
                   <Input
                     placeholder="Max price"
                     type="number"
                     value={priceRange.max}
                     onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                    className="bg-gray-900 border-gray-600 text-white placeholder:text-gray-400 w-24"
+                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground w-24"
                   />
                 </div>
               </div>
@@ -358,14 +358,14 @@ export default function MarketplacePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="bg-card/50 border-border">
             <CardContent className="p-0">
               {filteredAndSortedQuestions.length === 0 ? (
                 <div className="p-8 text-center">
-                  <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">No Questions for Sale</h3>
-                  <p className="text-gray-400">
-                    {marketplaceQuestions.length === 0 
+                  <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No Questions for Sale</h3>
+                  <p className="text-muted-foreground">
+                    {marketplaceQuestions.length === 0
                       ? "There are currently no questions listed for sale."
                       : "No questions match your search criteria."
                     }
@@ -374,12 +374,12 @@ export default function MarketplacePage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-700/30">
+                    <thead className="bg-muted/30">
                       <tr>
-                        <th className="text-left p-4 text-gray-300 font-medium">Question Info</th>
+                        <th className="text-left p-4 text-muted-foreground font-medium">Question Info</th>
                         
-                        <th 
-                          className="text-left p-4 text-gray-300 font-medium cursor-pointer hover:text-white transition-colors"
+                        <th
+                          className="text-left p-4 text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors"
                           onClick={() => handleSort('nextPrice')}
                         >
                           <div className="flex items-center gap-2">
@@ -387,9 +387,9 @@ export default function MarketplacePage() {
                             {getSortIcon('nextPrice')}
                           </div>
                         </th>
-                        
-                        <th 
-                          className="text-left p-4 text-gray-300 font-medium cursor-pointer hover:text-white transition-colors"
+
+                        <th
+                          className="text-left p-4 text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors"
                           onClick={() => handleSort('tradesCount')}
                         >
                           <div className="flex items-center gap-2">
@@ -397,9 +397,9 @@ export default function MarketplacePage() {
                             {getSortIcon('tradesCount')}
                           </div>
                         </th>
-                        
-                        <th 
-                          className="text-left p-4 text-gray-300 font-medium cursor-pointer hover:text-white transition-colors"
+
+                        <th
+                          className="text-left p-4 text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors"
                           onClick={() => handleSort('totalVolume')}
                         >
                           <div className="flex items-center gap-2">
@@ -407,9 +407,9 @@ export default function MarketplacePage() {
                             {getSortIcon('totalVolume')}
                           </div>
                         </th>
-                        
-                        <th 
-                          className="text-left p-4 text-gray-300 font-medium cursor-pointer hover:text-white transition-colors"
+
+                        <th
+                          className="text-left p-4 text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors"
                           onClick={() => handleSort('totalRoyalties')}
                         >
                           <div className="flex items-center gap-2">
@@ -417,9 +417,9 @@ export default function MarketplacePage() {
                             {getSortIcon('totalRoyalties')}
                           </div>
                         </th>
-                        
-                        <th 
-                          className="text-left p-4 text-gray-300 font-medium cursor-pointer hover:text-white transition-colors"
+
+                        <th
+                          className="text-left p-4 text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors"
                           onClick={() => handleSort('salePrice')}
                         >
                           <div className="flex items-center gap-2">
@@ -437,40 +437,40 @@ export default function MarketplacePage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="border-t border-gray-700/40 hover:bg-gray-700/20 transition-colors"
+                          className="border-t border-border/40 hover:bg-muted/20 transition-colors"
                         >
                           {/* Question Info */}
                           <td className="p-4">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-xs">#{question.id}</Badge>
-                                <span className="text-xs text-gray-400">{formatAddress(question.questionOwner)}</span>
+                                <span className="text-xs text-muted-foreground">{formatAddress(question.questionOwner)}</span>
                               </div>
-                              <p className="text-white font-medium">{truncateText(question.question, 60)}</p>
-                              <div className="text-sm text-gray-400">
-                                Current: <span className="text-emerald-400">{question.currentAnswer}</span>
+                              <p className="text-foreground font-medium">{truncateText(question.question, 60)}</p>
+                              <div className="text-sm text-muted-foreground">
+                                Current: <span className="text-emerald-500">{question.currentAnswer}</span>
                               </div>
                             </div>
                           </td>
-                          
+
                           {/* Next Price */}
                           <td className="p-4">
-                            <span className="text-emerald-400 font-medium">{formatUSDC(question.nextPrice)}</span>
+                            <span className="text-emerald-500 font-medium">{formatUSDC(question.nextPrice)}</span>
                           </td>
-                          
+
                           {/* Trades Count */}
                           <td className="p-4">
-                            <span className="text-white">{question.tradesCount} trades</span>
+                            <span className="text-foreground">{question.tradesCount} trades</span>
                           </td>
-                          
+
                           {/* Total Volume */}
                           <td className="p-4">
-                            <span className="text-white">{formatUSDC(question.totalVolume)}</span>
+                            <span className="text-foreground">{formatUSDC(question.totalVolume)}</span>
                           </td>
-                          
+
                           {/* Total Royalties */}
                           <td className="p-4">
-                            <span className="text-yellow-400">{formatUSDC(question.totalRoyalties)}</span>
+                            <span className="text-yellow-500">{formatUSDC(question.totalRoyalties)}</span>
                           </td>
                           
                           {/* Buy Action */}
