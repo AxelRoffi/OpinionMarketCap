@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { TrendingUp, BarChart3 } from 'lucide-react';
 import { PricePoint } from '../types/opinion-types';
 
@@ -11,6 +12,26 @@ interface OpinionChartProps {
 export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
   const [chartType, setChartType] = useState<'price' | 'volume'>('price');
   const [timeRange, setTimeRange] = useState<'1d' | '7d' | '30d' | 'all'>('7d');
+  const [mounted, setMounted] = useState(false);
+  const [RechartsComponents, setRechartsComponents] = useState<any>(null);
+
+  // Dynamically import recharts on client side only
+  useEffect(() => {
+    setMounted(true);
+    import('recharts').then((mod) => {
+      setRechartsComponents({
+        ResponsiveContainer: mod.ResponsiveContainer,
+        AreaChart: mod.AreaChart,
+        LineChart: mod.LineChart,
+        Area: mod.Area,
+        Line: mod.Line,
+        XAxis: mod.XAxis,
+        YAxis: mod.YAxis,
+        CartesianGrid: mod.CartesianGrid,
+        Tooltip: mod.Tooltip,
+      });
+    });
+  }, []);
 
   // Filter data based on time range
   const filteredData = data.filter(point => {
@@ -107,51 +128,58 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
 
       {/* Chart */}
       <div className="h-80">
-        {hasRealData ? (
-          <ResponsiveContainer width="100%" height="100%">
+        {!mounted || !RechartsComponents ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading chart...</p>
+            </div>
+          </div>
+        ) : hasRealData ? (
+          <RechartsComponents.ResponsiveContainer width="100%" height="100%">
             {chartType === 'price' ? (
-              <AreaChart data={chartData}>
+              <RechartsComponents.AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="time" 
+                <RechartsComponents.CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <RechartsComponents.XAxis
+                  dataKey="time"
                   stroke="#9ca3af"
                   fontSize={12}
                 />
-                <YAxis 
+                <RechartsComponents.YAxis
                   stroke="#9ca3af"
                   fontSize={12}
-                  tickFormatter={(value) => `$${value.toFixed(2)}`}
+                  tickFormatter={(value: number) => `$${value.toFixed(2)}`}
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Area
+                <RechartsComponents.Tooltip content={<CustomTooltip />} />
+                <RechartsComponents.Area
                   type="monotone"
                   dataKey="price"
                   stroke="#10b981"
                   strokeWidth={2}
                   fill="url(#priceGradient)"
                 />
-              </AreaChart>
+              </RechartsComponents.AreaChart>
             ) : (
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="time" 
+              <RechartsComponents.LineChart data={chartData}>
+                <RechartsComponents.CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <RechartsComponents.XAxis
+                  dataKey="time"
                   stroke="#9ca3af"
                   fontSize={12}
                 />
-                <YAxis 
+                <RechartsComponents.YAxis
                   stroke="#9ca3af"
                   fontSize={12}
-                  tickFormatter={(value) => `${value}`}
+                  tickFormatter={(value: number) => `${value}`}
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
+                <RechartsComponents.Tooltip content={<CustomTooltip />} />
+                <RechartsComponents.Line
                   type="monotone"
                   dataKey="volume"
                   stroke="#3b82f6"
@@ -159,9 +187,9 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
                   dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                   activeDot={{ r: 6, fill: '#3b82f6' }}
                 />
-              </LineChart>
+              </RechartsComponents.LineChart>
             )}
-          </ResponsiveContainer>
+          </RechartsComponents.ResponsiveContainer>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">

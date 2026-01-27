@@ -56,7 +56,7 @@ function OpinionDetailPageComponent() {
   // Validate opinion ID
   if (isNaN(opinionId) || opinionId <= 0) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Alert className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -111,11 +111,11 @@ function OpinionDetailPageComponent() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
-          <h1 className="text-2xl font-bold text-white">Error Loading Opinion</h1>
-          <p className="text-gray-400 max-w-md">{error}</p>
+          <h1 className="text-2xl font-bold text-foreground">Error Loading Opinion</h1>
+          <p className="text-muted-foreground max-w-md">{error}</p>
           <div className="flex space-x-4 justify-center">
             <Button onClick={() => window.location.reload()} variant="outline">
               Try Again
@@ -135,7 +135,7 @@ function OpinionDetailPageComponent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-4 space-y-4 pb-20 md:pb-4">
         {/* Hero Section */}
         <OpinionHeader
@@ -158,9 +158,9 @@ function OpinionDetailPageComponent() {
         )}
 
         {/* Main Content Tabs */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700">
+        <div className="bg-card rounded-lg border border-border">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-700/50 rounded-t-lg">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-t-lg">
               <TabsTrigger value="chart" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
                 Chart
               </TabsTrigger>
@@ -200,11 +200,11 @@ function OpinionDetailPageComponent() {
 
         {/* Connect Wallet Prompt */}
         {!address && (
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
-            <h3 className="text-lg font-semibold text-white mb-2">
+          <div className="bg-card rounded-lg p-6 border border-border text-center">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Connect Your Wallet to Trade
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               Connect your wallet to start trading this opinion and submit new answers.
             </p>
             <ConnectButton />
@@ -213,7 +213,7 @@ function OpinionDetailPageComponent() {
       </div>
 
       {/* Sticky Action Panel (Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-4 md:hidden z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:hidden z-10">
         <div className="flex gap-3">
           <Button
             onClick={handleTrade}
@@ -233,14 +233,14 @@ function OpinionDetailPageComponent() {
             <Button
               disabled
               variant="outline"
-              className="flex-1 h-12 border-gray-600 text-gray-500 cursor-not-allowed font-semibold text-base"
+              className="flex-1 h-12 border-border text-muted-foreground cursor-not-allowed font-semibold text-base"
             >
               Pool
             </Button>
           )}
         </div>
         {opinion && opinion.nextPrice < 100_000_000 && (
-          <p className="text-xs text-gray-400 mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center">
             Pool requires NextPrice ≥ 100 USDC
           </p>
         )}
