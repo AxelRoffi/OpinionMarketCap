@@ -58,7 +58,7 @@ export default function Providers({
   // Do NOT render children - they might try to use wagmi hooks before provider is ready
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { NotificationCenter } from '@/components/notifications';
 import { useOnboardingContext } from '@/components/onboarding';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function GlobalNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,7 +42,7 @@ export function GlobalNavbar() {
           </nav>
 
           {/* Right Side */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Tutorial Button */}
             <Button
               variant="ghost"
@@ -53,6 +54,9 @@ export function GlobalNavbar() {
               <GraduationCap className="w-4 h-4" />
               <span className="text-sm">Tutorial</span>
             </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Notifications */}
             <NotificationCenter />

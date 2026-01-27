@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
-/* Dark theme only - simplified */
+/* Light theme (default) */
 :root {
   /* Backgrounds */
-  --background: #111827;
-  --foreground: #ffffff;
-  --muted: #1f2937;
-  --muted-foreground: #9ca3af;
-  --card: #1f2937;
-  --card-foreground: #ffffff;
-  --popover: #1f2937;
-  --popover-foreground: #ffffff;
-  
+  --background: #ffffff;
+  --foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+
   /* UI Elements */
-  --border: #374151;
-  --input: #374151;
-  --primary: #ffffff;
-  --primary-foreground: #000000;
-  --secondary: #374151;
-  --secondary-foreground: #ffffff;
-  --accent: #374151;
-  --accent-foreground: #ffffff;
-  
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --primary: #111827;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+
   /* Status colors */
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
@@ -29,7 +29,7 @@
   --success-foreground: #ffffff;
   --warning: #d97706;
   --warning-foreground: #ffffff;
-  
+
   /* App specific colors */
   --emerald: #10b981;
   --emerald-foreground: #ffffff;
@@ -39,6 +39,71 @@
   --yellow-foreground: #000000;
   --purple: #8b5cf6;
   --purple-foreground: #ffffff;
+
+  /* Light mode specific - softer tones for colored backgrounds */
+  --emerald-soft: #d1fae5;
+  --emerald-soft-foreground: #065f46;
+  --purple-soft: #ede9fe;
+  --purple-soft-foreground: #5b21b6;
+  --blue-soft: #dbeafe;
+  --blue-soft-foreground: #1e40af;
+  --red-soft: #fee2e2;
+  --red-soft-foreground: #991b1b;
+  --yellow-soft: #fef3c7;
+  --yellow-soft-foreground: #92400e;
+}
+
+/* Dark theme */
+.dark {
+  /* Backgrounds */
+  --background: #111827;
+  --foreground: #ffffff;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --card: #1f2937;
+  --card-foreground: #ffffff;
+  --popover: #1f2937;
+  --popover-foreground: #ffffff;
+
+  /* UI Elements */
+  --border: #374151;
+  --input: #374151;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #374151;
+  --secondary-foreground: #ffffff;
+  --accent: #374151;
+  --accent-foreground: #ffffff;
+
+  /* Status colors */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+
+  /* App specific colors */
+  --emerald: #10b981;
+  --emerald-foreground: #ffffff;
+  --blue: #3b82f6;
+  --blue-foreground: #ffffff;
+  --yellow: #eab308;
+  --yellow-foreground: #000000;
+  --purple: #8b5cf6;
+  --purple-foreground: #ffffff;
+
+  /* Dark mode specific - darker tones for colored backgrounds */
+  --emerald-soft: rgba(16, 185, 129, 0.2);
+  --emerald-soft-foreground: #6ee7b7;
+  --purple-soft: rgba(139, 92, 246, 0.2);
+  --purple-soft-foreground: #c4b5fd;
+  --blue-soft: rgba(59, 130, 246, 0.2);
+  --blue-soft-foreground: #93c5fd;
+  --red-soft: rgba(220, 38, 38, 0.2);
+  --red-soft-foreground: #fca5a5;
+  --yellow-soft: rgba(234, 179, 8, 0.2);
+  --yellow-soft-foreground: #fde047;
 }
 
 @theme inline {
@@ -72,6 +137,16 @@
   --color-yellow-foreground: var(--yellow-foreground);
   --color-purple: var(--purple);
   --color-purple-foreground: var(--purple-foreground);
+  --color-emerald-soft: var(--emerald-soft);
+  --color-emerald-soft-foreground: var(--emerald-soft-foreground);
+  --color-purple-soft: var(--purple-soft);
+  --color-purple-soft-foreground: var(--purple-soft-foreground);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-soft-foreground: var(--blue-soft-foreground);
+  --color-red-soft: var(--red-soft);
+  --color-red-soft-foreground: var(--red-soft-foreground);
+  --color-yellow-soft: var(--yellow-soft);
+  --color-yellow-soft-foreground: var(--yellow-soft-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -80,24 +155,50 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Glassmorphism styles for createOpinion feature - Dark theme only */
+/* Glassmorphism styles for createOpinion feature */
 .glass-card {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-card {
   background: rgba(30, 41, 59, 0.4);
   border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+:root .glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .glass-input {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.dark .glass-input {
   background: rgba(30, 41, 59, 0.3);
   border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
+:root .glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .border-gradient {
   border-image: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(59, 130, 246, 0.3)) 1;
+}
+
+/* Ensure text readability in light mode */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
 }

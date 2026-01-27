@@ -435,45 +435,45 @@ export default function EnhancedSubmitModal({
       
       {/* Modal */}
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl border border-gray-600 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-card rounded-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           
           {step === 'form' && (
             <div className="p-8">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                     <Zap className="w-6 h-6 text-emerald-500" />
                     Submit Your Answer
                   </h1>
                   {retryCount > 0 && (
-                    <p className="text-sm text-gray-400 mt-1">Attempt #{retryCount + 1}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Attempt #{retryCount + 1}</p>
                   )}
                 </div>
                 <button
                   onClick={handleClose}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               {/* Question */}
-              <div className="bg-gray-800 rounded-lg p-4 mb-6">
-                <div className="text-sm text-emerald-400 mb-2">Question #{opinionId}</div>
-                <div className="text-white font-semibold mb-2">{question}</div>
-                <div className="text-sm text-gray-400">
-                  Current: <span className="text-gray-300">{currentAnswer}</span>
+              <div className="bg-muted rounded-lg p-4 mb-6">
+                <div className="text-sm text-emerald-500 mb-2">Question #{opinionId}</div>
+                <div className="text-foreground font-semibold mb-2">{question}</div>
+                <div className="text-sm text-muted-foreground">
+                  Current: <span className="text-foreground">{currentAnswer}</span>
                 </div>
               </div>
 
               {/* Price & Status */}
-              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-6">
+              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-emerald-400 font-semibold">Price:</span>
                   <span className="text-emerald-400 font-bold text-xl">{formatUSDC(nextPrice)}</span>
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">USDC Balance:</span>
@@ -490,36 +490,61 @@ export default function EnhancedSubmitModal({
                 </div>
               </div>
 
+              {/* Payment Distribution */}
+              <div className="bg-gray-800/50 rounded-lg p-4 mb-6 border border-gray-700">
+                <div className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">Payment Distribution</div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between p-2 bg-emerald-900/20 rounded border border-emerald-500/10">
+                    <div>
+                      <span className="text-emerald-400">Previous Owner</span>
+                      <span className="text-emerald-300/60 text-xs ml-2">(instant)</span>
+                    </div>
+                    <span className="text-emerald-400 font-medium">{formatUSDC(nextPrice * BigInt(95) / BigInt(100))} (95%)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-purple-900/20 rounded border border-purple-500/10">
+                    <div>
+                      <span className="text-purple-400">Creator Royalty</span>
+                      <span className="text-purple-300/60 text-xs ml-2">(claimable)</span>
+                    </div>
+                    <span className="text-purple-400 font-medium">{formatUSDC(nextPrice * BigInt(3) / BigInt(100))} (3%)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-gray-700/30 rounded border border-gray-600/10">
+                    <span className="text-gray-400">Platform Fee</span>
+                    <span className="text-gray-400 font-medium">{formatUSDC(nextPrice * BigInt(2) / BigInt(100))} (2%)</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Form */}
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-white font-semibold mb-2">
+                  <label className="block text-foreground font-semibold mb-2">
                     Your Answer * ({answer.length}/52)
                   </label>
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="Enter your answer..."
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:border-emerald-500 resize-none"
+                    className="w-full bg-muted border border-border rounded-lg px-3 py-3 text-foreground placeholder-muted-foreground focus:border-emerald-500 resize-none"
                     rows={3}
                     maxLength={52}
                   />
                   {answer.length > 45 && (
-                    <p className="text-yellow-400 text-xs mt-1">
+                    <p className="text-yellow-500 text-xs mt-1">
                       {52 - answer.length} characters remaining
                     </p>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-white font-semibold mb-2">
+                  <label className="block text-foreground font-semibold mb-2">
                     Description (optional) ({description.length}/120)
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add context..."
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:border-emerald-500 resize-none"
+                    className="w-full bg-muted border border-border rounded-lg px-3 py-3 text-foreground placeholder-muted-foreground focus:border-emerald-500 resize-none"
                     rows={2}
                     maxLength={120}
                   />
@@ -545,7 +570,7 @@ export default function EnhancedSubmitModal({
               <div className="flex space-x-4">
                 <button
                   onClick={handleClose}
-                  className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex-1 px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
                 >
                   Cancel
                 </button>
@@ -558,7 +583,7 @@ export default function EnhancedSubmitModal({
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 mt-4 text-center">
+              <p className="text-xs text-muted-foreground mt-4 text-center">
                 Tip: Press Ctrl+Enter to submit quickly
               </p>
             </div>
@@ -573,21 +598,21 @@ export default function EnhancedSubmitModal({
                   <Loader2 className="w-8 h-8 text-white animate-spin" />
                 )}
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">
+              <h2 className="text-xl font-bold text-foreground mb-2">
                 {step === 'validate' && 'Validating Transaction...'}
                 {step === 'approve' && 'Approve USDC'}
                 {step === 'approving' && 'Approving USDC...'}
                 {step === 'submit' && 'Submit Answer'}
                 {step === 'submitting' && 'Submitting Answer...'}
               </h2>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 {step === 'validate' && 'Checking transaction requirements...'}
                 {['approve', 'submit'].includes(step) && 'Please confirm the transaction in your wallet'}
                 {['approving', 'submitting'].includes(step) && 'Waiting for transaction confirmation...'}
               </p>
-              
+
               {['approving', 'submitting'].includes(step) && (
-                <div className="mt-4 text-xs text-gray-500">
+                <div className="mt-4 text-xs text-muted-foreground">
                   <Clock className="w-4 h-4 inline mr-1" />
                   This may take 10-30 seconds
                 </div>
@@ -600,8 +625,8 @@ export default function EnhancedSubmitModal({
               <div className="w-16 h-16 mx-auto mb-4 bg-emerald-600 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Success!</h2>
-              <p className="text-gray-400 mb-6">
+              <h2 className="text-xl font-bold text-foreground mb-2">Success!</h2>
+              <p className="text-muted-foreground mb-6">
                 Your answer has been submitted successfully!
               </p>
               <button
@@ -619,18 +644,18 @@ export default function EnhancedSubmitModal({
                 <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
                   <AlertCircle className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">{error.name}</h2>
+                <h2 className="text-xl font-bold text-foreground mb-2">{error.name}</h2>
               </div>
 
-              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
-                <div className="text-red-400 mb-2">{error.message}</div>
-                <div className="text-red-300 text-sm">{error.solution}</div>
+              <div className="bg-red-soft border border-red-500/30 rounded-lg p-4 mb-6">
+                <div className="text-red-soft-foreground mb-2">{error.message}</div>
+                <div className="text-red-soft-foreground/80 text-sm">{error.solution}</div>
               </div>
 
               <div className="flex space-x-4">
                 <button
                   onClick={handleClose}
-                  className="flex-1 border border-gray-600 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex-1 border border-border text-muted-foreground px-4 py-2 rounded-lg hover:bg-muted transition-colors"
                 >
                   Cancel
                 </button>

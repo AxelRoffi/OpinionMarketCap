@@ -168,67 +168,92 @@ export default function SimpleSubmitModal({
       
       {/* Modal */}
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl border border-gray-600 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-card rounded-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           
           {step === 'form' && (
             <div className="p-8">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-white">Submit Your Answer</h1>
+                <h1 className="text-2xl font-bold text-foreground">Submit Your Answer</h1>
                 <button
                   onClick={handleClose}
-                  className="text-gray-400 hover:text-white"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               {/* Question */}
-              <div className="bg-gray-800 rounded-lg p-4 mb-6">
-                <div className="text-sm text-emerald-400 mb-2">Question #{opinionId}</div>
-                <div className="text-white font-semibold mb-2">{formatQuestion(question)}</div>
-                <div className="text-sm text-gray-400">
-                  Current: <span className="text-gray-300">{currentAnswer}</span>
+              <div className="bg-muted rounded-lg p-4 mb-6">
+                <div className="text-sm text-emerald-500 mb-2">Question #{opinionId}</div>
+                <div className="text-foreground font-semibold mb-2">{formatQuestion(question)}</div>
+                <div className="text-sm text-muted-foreground">
+                  Current: <span className="text-foreground">{currentAnswer}</span>
                 </div>
               </div>
 
               {/* Price */}
-              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-6">
+              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-emerald-400 font-semibold">Price:</span>
                   <span className="text-emerald-400 font-bold text-xl">{formatUSDC(nextPrice)}</span>
                 </div>
                 {!hasBalance && (
                   <div className="text-red-400 text-sm mt-2">
-                    ⚠️ Insufficient USDC balance
+                    Insufficient USDC balance
                   </div>
                 )}
+              </div>
+
+              {/* Payment Distribution */}
+              <div className="bg-gray-800/50 rounded-lg p-4 mb-6 border border-gray-700">
+                <div className="text-xs font-semibold text-gray-400 mb-3">Where your payment goes:</div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-emerald-400">Previous Owner</span>
+                      <span className="text-gray-500 text-xs ml-1">(instant)</span>
+                    </div>
+                    <span className="text-emerald-400">{formatUSDC(nextPrice * BigInt(95) / BigInt(100))} (95%)</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-purple-400">Creator Royalty</span>
+                      <span className="text-gray-500 text-xs ml-1">(claimable)</span>
+                    </div>
+                    <span className="text-purple-400">{formatUSDC(nextPrice * BigInt(3) / BigInt(100))} (3%)</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Platform Fee</span>
+                    <span className="text-gray-400">{formatUSDC(nextPrice * BigInt(2) / BigInt(100))} (2%)</span>
+                  </div>
+                </div>
               </div>
 
               {/* Form */}
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-white font-semibold mb-2">
+                  <label className="block text-foreground font-semibold mb-2">
                     Your Answer *
                   </label>
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="Enter your answer..."
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:border-emerald-500 resize-none"
+                    className="w-full bg-muted border border-border rounded-lg px-3 py-3 text-foreground placeholder-muted-foreground focus:border-emerald-500 resize-none"
                     rows={3}
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-white font-semibold mb-2">
+                  <label className="block text-foreground font-semibold mb-2">
                     Description (optional)
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add context..."
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white placeholder-gray-400 focus:border-emerald-500 resize-none"
+                    className="w-full bg-muted border border-border rounded-lg px-3 py-3 text-foreground placeholder-muted-foreground focus:border-emerald-500 resize-none"
                     rows={2}
                   />
                 </div>
@@ -245,7 +270,7 @@ export default function SimpleSubmitModal({
               <div className="flex space-x-4">
                 <button
                   onClick={handleClose}
-                  className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700"
+                  className="flex-1 px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-muted"
                 >
                   Cancel
                 </button>
@@ -265,10 +290,10 @@ export default function SimpleSubmitModal({
               <div className="w-16 h-16 mx-auto mb-4 bg-emerald-600 rounded-full flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">
+              <h2 className="text-xl font-bold text-foreground mb-2">
                 {step === 'approve' ? 'Approving USDC...' : 'Submitting Answer...'}
               </h2>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 Please confirm the transaction in your wallet
               </p>
             </div>
@@ -279,8 +304,8 @@ export default function SimpleSubmitModal({
               <div className="w-16 h-16 mx-auto mb-4 bg-emerald-600 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Success!</h2>
-              <p className="text-gray-400 mb-6">Your answer has been submitted!</p>
+              <h2 className="text-xl font-bold text-foreground mb-2">Success!</h2>
+              <p className="text-muted-foreground mb-6">Your answer has been submitted!</p>
               <button
                 onClick={handleClose}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-semibold"
@@ -295,12 +320,12 @@ export default function SimpleSubmitModal({
               <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
                 <AlertCircle className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Error</h2>
-              <p className="text-gray-400 mb-6">{errorMessage}</p>
+              <h2 className="text-xl font-bold text-foreground mb-2">Error</h2>
+              <p className="text-muted-foreground mb-6">{errorMessage}</p>
               <div className="flex space-x-4">
                 <button
                   onClick={handleClose}
-                  className="flex-1 border border-gray-600 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-700"
+                  className="flex-1 border border-border text-muted-foreground px-4 py-2 rounded-lg hover:bg-muted"
                 >
                   Cancel
                 </button>

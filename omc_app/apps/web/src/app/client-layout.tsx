@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 // Dynamic imports to prevent SSR issues with wallet providers
 const Providers = dynamic(() => import('./providers'), { ssr: false });
@@ -31,32 +32,34 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   // Do NOT render children - they might try to use wagmi hooks before providers are ready
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   return (
-    <ExtensionErrorBoundary>
-      <Providers>
-        <AnalyticsProvider>
-          <OnboardingProvider>
-            <ExtensionErrorSuppressor />
-            <div className="min-h-screen bg-background text-foreground flex flex-col">
-              <GlobalNavbar />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-              <ModeratedAnswersNotification />
-              <AdminModerationPanel isAdmin={false} />
-            </div>
-            <Toaster position="top-right" />
-            <OnboardingWizard />
-          </OnboardingProvider>
-        </AnalyticsProvider>
-      </Providers>
-    </ExtensionErrorBoundary>
+    <ThemeProvider>
+      <ExtensionErrorBoundary>
+        <Providers>
+          <AnalyticsProvider>
+            <OnboardingProvider>
+              <ExtensionErrorSuppressor />
+              <div className="min-h-screen bg-background text-foreground flex flex-col">
+                <GlobalNavbar />
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <Footer />
+                <ModeratedAnswersNotification />
+                <AdminModerationPanel isAdmin={false} />
+              </div>
+              <Toaster position="top-right" />
+              <OnboardingWizard />
+            </OnboardingProvider>
+          </AnalyticsProvider>
+        </Providers>
+      </ExtensionErrorBoundary>
+    </ThemeProvider>
   );
 }

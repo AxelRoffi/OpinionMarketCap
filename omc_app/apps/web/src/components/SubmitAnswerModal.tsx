@@ -176,8 +176,8 @@ export default function SubmitAnswerModal({
       />
       
       {/* Modal */}
-      <div 
-        className="relative bg-gray-900 rounded-2xl border border-gray-600 w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+      <div
+        className="relative bg-card rounded-2xl border border-border w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-8">
@@ -193,31 +193,31 @@ export default function SubmitAnswerModal({
           <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full flex items-center justify-center">
             <div className="text-3xl">💭</div>
           </div>
-          
-          <h1 className="text-3xl font-bold text-white mb-3">Change the Narrative</h1>
-          <p className="text-lg text-gray-300 mb-2">Submit your answer and become the opinion owner</p>
-          <p className="text-sm text-gray-400">Your answer will replace the current one if your transaction succeeds</p>
+
+          <h1 className="text-3xl font-bold text-foreground mb-3">Change the Narrative</h1>
+          <p className="text-lg text-muted-foreground mb-2">Submit your answer and become the opinion owner</p>
+          <p className="text-sm text-muted-foreground">Your answer will replace the current one if your transaction succeeds</p>
         </div>
 
         {step === 'form' && (
           <>
             {/* Question Info */}
-            <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-gray-700">
+            <div className="bg-muted/50 rounded-xl p-6 mb-8 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-emerald-400 uppercase tracking-wide">Question #{opinionId}</span>
-                <span className="text-xs text-gray-500">Active Opinion</span>
+                <span className="text-sm font-medium text-emerald-500 uppercase tracking-wide">Question #{opinionId}</span>
+                <span className="text-xs text-muted-foreground">Active Opinion</span>
               </div>
-              
-              <h3 className="text-xl font-semibold text-white mb-4 leading-relaxed">{question}</h3>
-              
-              <div className="bg-gray-700/30 rounded-lg p-4 border-l-4 border-orange-400">
-                <div className="text-sm text-gray-400 mb-1">Current Answer</div>
-                <div className="text-gray-200 font-medium">{currentAnswer}</div>
+
+              <h3 className="text-xl font-semibold text-foreground mb-4 leading-relaxed">{question}</h3>
+
+              <div className="bg-muted rounded-lg p-4 border-l-4 border-orange-400">
+                <div className="text-sm text-muted-foreground mb-1">Current Answer</div>
+                <div className="text-foreground font-medium">{currentAnswer}</div>
               </div>
             </div>
 
             {/* Price Info */}
-            <div className="bg-gradient-to-r from-emerald-900/20 to-emerald-800/20 rounded-xl p-6 mb-8 border border-emerald-500/30">
+            <div className="bg-gradient-to-r from-emerald-900/20 to-emerald-800/20 rounded-xl p-6 mb-6 border border-emerald-500/30">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-emerald-400 font-semibold text-lg">Investment Required</div>
@@ -238,36 +238,67 @@ export default function SubmitAnswerModal({
               )}
             </div>
 
+            {/* Payment Distribution */}
+            <div className="bg-gray-800/50 rounded-xl p-5 mb-8 border border-gray-700">
+              <div className="text-sm font-semibold text-gray-300 mb-4">Where your payment goes:</div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-emerald-900/30 rounded-lg border border-emerald-500/20">
+                  <div>
+                    <div className="text-emerald-400 font-medium">Previous Owner</div>
+                    <div className="text-xs text-emerald-300/70">Sent directly to their wallet</div>
+                  </div>
+                  <div className="text-emerald-400 font-semibold">{formatUSDC(nextPrice * BigInt(95) / BigInt(100))} (95%)</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-900/30 rounded-lg border border-purple-500/20">
+                  <div>
+                    <div className="text-purple-400 font-medium">Creator Royalty</div>
+                    <div className="text-xs text-purple-300/70">Accumulated, claimable by creator</div>
+                  </div>
+                  <div className="text-purple-400 font-semibold">{formatUSDC(nextPrice * BigInt(3) / BigInt(100))} (3%)</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-600/20">
+                  <div>
+                    <div className="text-gray-400 font-medium">Platform Fee</div>
+                    <div className="text-xs text-gray-500">OMC treasury</div>
+                  </div>
+                  <div className="text-gray-400 font-semibold">{formatUSDC(nextPrice * BigInt(2) / BigInt(100))} (2%)</div>
+                </div>
+              </div>
+            </div>
+
             {/* Form */}
             <div className="space-y-6 mb-8">
               <div>
-                <label className="block text-lg font-semibold text-white mb-3">
+                <label className="block text-lg font-semibold text-foreground mb-3">
                   Your Answer *
                 </label>
                 <textarea
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder="Enter your answer to this question..."
-                  className="w-full bg-gray-800 border-2 border-gray-600 rounded-xl px-4 py-4 text-white placeholder-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200 resize-none text-lg"
+                  className="w-full bg-muted border-2 border-border rounded-xl px-4 py-4 text-foreground placeholder-muted-foreground focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200 resize-none text-lg"
                   rows={4}
                 />
               </div>
-              
+
               <div>
-                <label className="block text-lg font-semibold text-white mb-3">
+                <label className="block text-lg font-semibold text-foreground mb-3">
                   Description (optional)
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Add context or explanation for your answer..."
-                  className="w-full bg-gray-800 border-2 border-gray-600 rounded-xl px-4 py-4 text-white placeholder-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200 resize-none"
+                  className="w-full bg-muted border-2 border-border rounded-xl px-4 py-4 text-foreground placeholder-muted-foreground focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200 resize-none"
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-lg font-semibold text-white mb-3">
+                <label className="block text-lg font-semibold text-foreground mb-3">
                   Supporting Link (optional)
                 </label>
                 <input
@@ -275,10 +306,10 @@ export default function SubmitAnswerModal({
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="https://example.com/source"
-                  className="w-full bg-gray-800 border-2 border-gray-600 rounded-xl px-4 py-4 text-white placeholder-gray-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200"
+                  className="w-full bg-muted border-2 border-border rounded-xl px-4 py-4 text-foreground placeholder-muted-foreground focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200"
                 />
-                <p className="text-sm text-gray-400 mt-2 ml-1">
-                  📎 Optional link to support your answer with evidence or sources
+                <p className="text-sm text-muted-foreground mt-2 ml-1">
+                  Optional link to support your answer with evidence or sources
                 </p>
               </div>
             </div>
@@ -300,12 +331,12 @@ export default function SubmitAnswerModal({
                 disabled={!answer.trim() || !hasBalance}
                 className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-emerald-500/25"
               >
-                {needsApproval ? '🔐 Approve & Submit Answer' : '🚀 Submit Answer'}
+                {needsApproval ? 'Approve & Submit Answer' : 'Submit Answer'}
               </button>
-              
+
               <button
                 onClick={handleClose}
-                className="w-full px-8 py-3 border-2 border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 hover:border-gray-500 transition-all duration-200 font-medium"
+                className="w-full px-8 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-muted transition-all duration-200 font-medium"
               >
                 Cancel
               </button>
@@ -318,17 +349,17 @@ export default function SubmitAnswerModal({
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full flex items-center justify-center">
               <Loader2 className="w-12 h-12 text-white animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">
-              {step === 'approve' ? '🔐 Approving USDC...' : '🚀 Submitting Answer...'}
+            <h2 className="text-2xl font-bold text-foreground mb-4">
+              {step === 'approve' ? 'Approving USDC...' : 'Submitting Answer...'}
             </h2>
-            <p className="text-lg text-gray-300 mb-2">
-              {step === 'approve' 
+            <p className="text-lg text-muted-foreground mb-2">
+              {step === 'approve'
                 ? 'Please confirm the USDC approval in your wallet'
                 : 'Please confirm the transaction in your wallet'
               }
             </p>
-            <p className="text-sm text-gray-400">
-              {step === 'approve' 
+            <p className="text-sm text-muted-foreground">
+              {step === 'approve'
                 ? 'This allows the contract to use your USDC for the transaction'
                 : 'Your answer will become the new opinion once confirmed'
               }
@@ -341,18 +372,18 @@ export default function SubmitAnswerModal({
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full flex items-center justify-center">
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">🎉 Success!</h2>
-            <p className="text-lg text-gray-300 mb-2">
+            <h2 className="text-3xl font-bold text-foreground mb-4">Success!</h2>
+            <p className="text-lg text-muted-foreground mb-2">
               Your answer has been submitted successfully!
             </p>
-            <p className="text-gray-400 mb-8">
+            <p className="text-muted-foreground mb-8">
               You are now the current answer owner for this opinion
             </p>
             <button
               onClick={handleClose}
               className="bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-[1.02]"
             >
-              🚀 Back to Opinions
+              Back to Opinions
             </button>
           </div>
         )}
@@ -362,18 +393,18 @@ export default function SubmitAnswerModal({
             <div className="w-24 h-24 mx-auto mb-6 bg-red-600 rounded-full flex items-center justify-center">
               <AlertCircle className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">❌ Transaction Failed</h2>
-            <p className="text-gray-300 text-lg mb-8">{errorMessage}</p>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Transaction Failed</h2>
+            <p className="text-muted-foreground text-lg mb-8">{errorMessage}</p>
             <div className="flex flex-col space-y-4">
               <button
                 onClick={() => setStep('form')}
                 className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-[1.02]"
               >
-                🔄 Try Again
+                Try Again
               </button>
               <button
                 onClick={handleClose}
-                className="w-full px-8 py-3 border-2 border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 hover:border-gray-500 transition-all duration-200 font-medium"
+                className="w-full px-8 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-muted transition-all duration-200 font-medium"
               >
                 Cancel
               </button>

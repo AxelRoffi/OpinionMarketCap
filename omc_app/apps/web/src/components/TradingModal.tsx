@@ -376,23 +376,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
               exit={{ opacity: 0, scale: 0.95 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             >
-              <div className="w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-gray-900 rounded-lg sm:rounded-2xl border border-gray-700/50 shadow-2xl">
+              <div className="w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-card rounded-lg sm:rounded-2xl border border-border shadow-2xl">
                 
                 {/* Header - UPDATED: Removed "Created by" */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
                       <Zap className="w-5 h-5 text-emerald-500" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Submit Your Answer</h2>
+                      <h2 className="text-xl font-bold text-foreground">Submit Your Answer</h2>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={onClose}
-                    className="text-gray-400 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
                   </Button>
@@ -403,10 +403,10 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                   <div className="space-y-4">
                     {/* Question Section */}
                     <div>
-                      <p className="text-sm text-gray-400 mb-1">question</p>
+                      <p className="text-sm text-muted-foreground mb-1">question</p>
                       <div className="mb-3">
-                        <span className="text-base sm:text-lg font-bold text-white break-words">{opinionData.question}</span>
-                        <span className="text-gray-400 text-sm sm:text-lg block sm:inline"> created by {formatAddress(opinionData.creator)}</span>
+                        <span className="text-base sm:text-lg font-bold text-foreground break-words">{opinionData.question}</span>
+                        <span className="text-muted-foreground text-sm sm:text-lg block sm:inline"> created by {formatAddress(opinionData.creator)}</span>
                       </div>
                       <div className="flex items-center gap-2 mb-4">
                         {opinionData.categories.map((category, index) => (
@@ -416,36 +416,36 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Answer Section */}
                     <div>
-                      <p className="text-sm text-gray-400 mb-1">answer</p>
+                      <p className="text-sm text-muted-foreground mb-1">answer</p>
                       <div className="mb-4">
-                        <span className="text-base sm:text-lg font-bold text-white break-words">{opinionData.currentAnswer}</span>
-                        <span className="text-gray-400 text-sm sm:text-lg block sm:inline"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
+                        <span className="text-base sm:text-lg font-bold text-foreground break-words">{opinionData.currentAnswer}</span>
+                        <span className="text-muted-foreground text-sm sm:text-lg block sm:inline"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Info Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                    <Card className="bg-gray-800/50 border-gray-700/50">
+                    <Card className="bg-muted/50 border-border">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
+                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                           <DollarSign className="w-3 h-3" />
                           Price
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-lg font-bold text-foreground">
                           {formatUSDC(opinionData.nextPrice)}
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gray-800/50 border-gray-700/50">
+                    <Card className="bg-muted/50 border-border">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
+                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                           {change.isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                           24h Change
                         </CardTitle>
@@ -457,29 +457,29 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gray-800/50 border-gray-700/50">
+                    <Card className="bg-muted/50 border-border">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
+                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           Total Volume
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-lg font-bold text-foreground">
                           {formatUSDC(opinionData.totalVolume)}
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gray-800/50 border-gray-700/50">
+                    <Card className="bg-muted/50 border-border">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-1">
+                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           Trades
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-white">
+                        <div className="text-lg font-bold text-foreground">
                           {opinionData.tradesCount || 0}
                         </div>
                       </CardContent>
@@ -501,7 +501,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     <form onSubmit={handleSubmit} className="space-y-6">
                       {/* Answer Input */}
                       <div className="space-y-2">
-                        <Label htmlFor="answer" className="text-white font-medium">
+                        <Label htmlFor="answer" className="text-foreground font-medium">
                           Your Answer *
                         </Label>
                         <Textarea
@@ -509,13 +509,13 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           value={answer}
                           onChange={(e) => updateFormField('answer', e.target.value)}
                           placeholder="Enter your answer..."
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500 resize-none"
+                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500 resize-none"
                           rows={3}
                           maxLength={ANSWER_LIMIT}
                         />
                         <div className="flex justify-between text-sm">
                           <span className="text-red-400">{errors.answer}</span>
-                          <span className={`${answer.length > ANSWER_LIMIT * 0.8 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                          <span className={`${answer.length > ANSWER_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
                             {answer.length}/{ANSWER_LIMIT}
                           </span>
                         </div>
@@ -523,7 +523,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
 
                       {/* Description Input */}
                       <div className="space-y-2">
-                        <Label htmlFor="description" className="text-white font-medium">
+                        <Label htmlFor="description" className="text-foreground font-medium">
                           Description (optional)
                         </Label>
                         <Textarea
@@ -531,13 +531,13 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           value={description}
                           onChange={(e) => updateFormField('description', e.target.value)}
                           placeholder="Add context or explanation..."
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500 resize-none"
+                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500 resize-none"
                           rows={2}
                           maxLength={DESCRIPTION_LIMIT}
                         />
                         <div className="flex justify-between text-sm">
                           <span className="text-red-400">{errors.description}</span>
-                          <span className={`${description.length > DESCRIPTION_LIMIT * 0.8 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                          <span className={`${description.length > DESCRIPTION_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
                             {description.length}/{DESCRIPTION_LIMIT}
                           </span>
                         </div>
@@ -545,7 +545,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
 
                       {/* Link Input */}
                       <div className="space-y-2">
-                        <Label htmlFor="link" className="text-white font-medium">
+                        <Label htmlFor="link" className="text-foreground font-medium">
                           External Link (optional)
                         </Label>
                         <Input
@@ -554,40 +554,40 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           value={link}
                           onChange={(e) => updateFormField('externalLink', e.target.value)}
                           placeholder="https://example.com"
-                          className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:border-emerald-500"
+                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
                         />
                         <span className="text-red-400 text-sm">{errors.link}</span>
                       </div>
 
                       {/* USDC Approval Info */}
                       {needsApproval && (
-                        <Card className="bg-yellow-900/20 border-yellow-500/50">
+                        <Card className="bg-yellow-soft border-yellow-500/50">
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium text-yellow-400 flex items-center gap-2">
+                            <CardTitle className="text-sm font-medium text-yellow-soft-foreground flex items-center gap-2">
                               <Info className="w-4 h-4" />
                               USDC Approval Required
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-3 text-sm text-gray-300">
+                          <CardContent className="space-y-3 text-sm text-muted-foreground">
                             <p>This is your first time trading. You need to approve USDC spending.</p>
                             <div className="flex items-center space-x-2">
                               <Checkbox
                                 id="infinite-approval"
                                 checked={useInfiniteApproval}
                                 onCheckedChange={(checked) => setUseInfiniteApproval(checked as boolean)}
-                                className="border-gray-700 data-[state=checked]:bg-yellow-500"
+                                className="border-border data-[state=checked]:bg-yellow-500"
                               />
-                              <Label htmlFor="infinite-approval" className="text-sm text-gray-300">
+                              <Label htmlFor="infinite-approval" className="text-sm text-muted-foreground">
                                 Large approval for future trades (1M USDC)
                               </Label>
                             </div>
                             {useInfiniteApproval ? (
-                              <p className="text-xs text-yellow-400">
-                                ✅ Recommended: Approve 1 million USDC for all future trades
+                              <p className="text-xs text-yellow-soft-foreground">
+                                Recommended: Approve 1 million USDC for all future trades
                               </p>
                             ) : (
-                              <p className="text-xs text-yellow-500">
-                                ⚠️ You&apos;ll need to approve each trade individually
+                              <p className="text-xs text-yellow-soft-foreground">
+                                You&apos;ll need to approve each trade individually
                               </p>
                             )}
                           </CardContent>
@@ -595,20 +595,39 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                       )}
 
                       {/* Trading Info - Fee Breakdown */}
-                      <Card className="bg-blue-900/20 border-blue-500/50">
+                      <Card className="bg-blue-soft border-blue-500/50">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-medium text-blue-400 flex items-center gap-2">
+                          <CardTitle className="text-sm font-medium text-blue-soft-foreground flex items-center gap-2">
                             <Info className="w-4 h-4" />
-                            How Trading Works
+                            Payment Distribution
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 text-sm text-gray-300">
-                          <p>• Submit your answer to become the new owner</p>
-                          <p>• You pay {formatUSDC(opinionData.nextPrice)} to take ownership</p>
-                          <p className="text-gray-400 pl-4">→ Previous owner receives {formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))} (95%)</p>
-                          <p className="text-gray-400 pl-4">→ Opinion creator receives {formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))} (3%)</p>
-                          <p className="text-gray-400 pl-4">→ OMC platform fee {formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))} (2%)</p>
-                          <p>• Price changes with each trade</p>
+                        <CardContent className="space-y-3 text-sm text-muted-foreground">
+                          <p>You pay <span className="text-foreground font-semibold">{formatUSDC(opinionData.nextPrice)}</span> to submit your answer:</p>
+
+                          <div className="bg-emerald-soft rounded-lg p-3 border border-emerald-500/20">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-emerald-soft-foreground font-medium">Previous Owner</span>
+                              <span className="text-emerald-soft-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))} (95%)</span>
+                            </div>
+                            <p className="text-xs text-emerald-soft-foreground/70">Sent directly to their wallet instantly</p>
+                          </div>
+
+                          <div className="bg-purple-soft rounded-lg p-3 border border-purple-500/20">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-purple-soft-foreground font-medium">Creator Royalty</span>
+                              <span className="text-purple-soft-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))} (3%)</span>
+                            </div>
+                            <p className="text-xs text-purple-soft-foreground/70">Accumulated in contract, creator can claim anytime</p>
+                          </div>
+
+                          <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-muted-foreground font-medium">Platform Fee</span>
+                              <span className="text-muted-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))} (2%)</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground/70">Goes to OMC treasury</p>
+                          </div>
                         </CardContent>
                       </Card>
 
@@ -618,11 +637,11 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           id="terms"
                           checked={acceptedTerms}
                           onCheckedChange={(checked) => updateFormField('acceptedTerms', checked as boolean)}
-                          className="border-gray-700 data-[state=checked]:bg-emerald-500"
+                          className="border-border data-[state=checked]:bg-emerald-500"
                         />
-                        <Label htmlFor="terms" className="text-sm text-gray-400">
+                        <Label htmlFor="terms" className="text-sm text-muted-foreground">
                           I accept the{' '}
-                          <a href="#" className="text-emerald-400 hover:text-emerald-300">
+                          <a href="#" className="text-emerald-500 hover:text-emerald-400">
                             terms and conditions
                           </a>
                         </Label>
@@ -635,7 +654,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           type="button"
                           variant="outline"
                           onClick={onClose}
-                          className="w-full sm:flex-1 h-12 sm:h-10 border-gray-700 text-gray-300 hover:bg-gray-800 text-base"
+                          className="w-full sm:flex-1 h-12 sm:h-10 border-border text-muted-foreground hover:bg-muted text-base"
                         >
                           Cancel
                         </Button>
@@ -644,7 +663,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           disabled={!hasBalance || isSubmitting}
                           className="w-full sm:flex-1 h-12 sm:h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium disabled:opacity-50 text-base"
                         >
-                          {needsApproval 
+                          {needsApproval
                             ? (useInfiniteApproval ? 'Approve Once & Submit' : 'Approve & Submit')
                             : 'Submit & Trade'
                           }
@@ -660,17 +679,17 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-2">
+                        <h3 className="text-lg font-bold text-foreground mb-2">
                           {currentStep === 'approve' ? 'Approve USDC' : 'Submitting Answer'}
                         </h3>
-                        <p className="text-gray-400">
-                          {currentStep === 'approve' 
-                            ? 'Please confirm the approval in your wallet' 
+                        <p className="text-muted-foreground">
+                          {currentStep === 'approve'
+                            ? 'Please confirm the approval in your wallet'
                             : 'Please confirm the transaction in your wallet'
                           }
                         </p>
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4" />
                         This may take 10-30 seconds
                       </div>
@@ -684,8 +703,8 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <CheckCircle className="w-8 h-8 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-2">Success!</h3>
-                        <p className="text-gray-400 mb-4">
+                        <h3 className="text-lg font-bold text-foreground mb-2">Success!</h3>
+                        <p className="text-muted-foreground mb-4">
                           Your answer has been submitted successfully!
                         </p>
                         <Button
@@ -705,24 +724,24 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <AlertCircle className="w-8 h-8 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white mb-2">
+                        <h3 className="text-lg font-bold text-foreground mb-2">
                           {errorState?.message || 'Transaction Failed'}
                         </h3>
-                        <p className="text-gray-400 mb-2">
+                        <p className="text-muted-foreground mb-2">
                           {errorState?.details || 'An unexpected error occurred.'}
                         </p>
                         {errorState?.type === 'network' && (
-                          <Alert className="bg-yellow-900/20 border-yellow-500/50 mb-4">
-                            <AlertCircle className="w-4 h-4 text-yellow-400" />
-                            <AlertDescription className="text-yellow-400">
+                          <Alert className="bg-yellow-soft border-yellow-500/50 mb-4">
+                            <AlertCircle className="w-4 h-4 text-yellow-soft-foreground" />
+                            <AlertDescription className="text-yellow-soft-foreground">
                               Network congestion detected. Your transaction may take longer than usual.
                             </AlertDescription>
                           </Alert>
                         )}
                         {errorState?.type === 'wallet' && !errorState.retryable && (
-                          <Alert className="bg-red-900/20 border-red-500/50 mb-4">
-                            <AlertCircle className="w-4 h-4 text-red-400" />
-                            <AlertDescription className="text-red-400">
+                          <Alert className="bg-red-soft border-red-500/50 mb-4">
+                            <AlertCircle className="w-4 h-4 text-red-soft-foreground" />
+                            <AlertDescription className="text-red-soft-foreground">
                               Please check your wallet balance and try again.
                             </AlertDescription>
                           </Alert>
@@ -731,7 +750,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           <Button
                             variant="outline"
                             onClick={onClose}
-                            className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                            className="flex-1 border-border text-muted-foreground hover:bg-muted"
                           >
                             Cancel
                           </Button>
@@ -748,8 +767,8 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                             </Button>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          📝 Your form data has been preserved
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Your form data has been preserved
                         </p>
                       </div>
                     </div>
