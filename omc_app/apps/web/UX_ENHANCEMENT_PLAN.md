@@ -477,10 +477,19 @@ src/
 | One-click share to Twitter/Farcaster | ✅ | SocialShareModal with 8 platforms |
 | "I'm bullish on [X] at $[price]" templates | ✅ | Pre-filled share messages with Q/A/price |
 | Profit/loss sharing after position closes | ❌ | Bragging rights mechanic |
-| **Referral Program** | 🔄 | `ReferralDashboard.tsx` exists |
-| Tiered rewards (5% → 10% → 15%) | ❌ | Escalating referral bonuses |
-| Referral codes in opinion URLs | ❌ | Embedded tracking |
+| **Referral Program** | 🔄 | Frontend exists, **needs smart contract** |
+| Tiered rewards (5% → 10% → 15%) | ❌ | Requires contract deployment |
+| Referral codes in opinion URLs | ❌ | Embed `?ref=` in share links |
 | Weekly referral leaderboard | ❌ | With bonus USDC prizes |
+| Auto-append ref to shared links | ❌ | Modify `SocialShareModal` |
+| Off-chain referral tracking | ❌ | Database alternative to on-chain |
+
+**Referral System Status:**
+- ✅ `ReferralDashboard.tsx` - UI ready (shows "Coming Soon")
+- ✅ `ReferralSystem.tsx` - UI ready
+- ❌ `REFERRAL_MANAGER` contract - Not deployed (address is 0x0)
+- ❌ `OpinionCore` referral logic - Not implemented
+- **Decision:** Skip for now, revisit when contract upgrade planned
 
 ---
 
