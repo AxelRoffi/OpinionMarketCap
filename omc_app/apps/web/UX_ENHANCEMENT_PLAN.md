@@ -709,7 +709,7 @@ apps/web/src/
 | **Open Graph Tags** | ✅ | For social sharing previews |
 | og:title per page | ✅ | Dynamic titles |
 | og:description per page | ✅ | Dynamic descriptions |
-| og:image per opinion | 🔄 | Need to create og-image.png |
+| og:image per opinion | ❌ | **TODO:** Create `public/og-image.png` (1200x630px) with nice branding |
 | og:type (website/article) | ✅ | Proper content typing |
 | **Twitter Card Meta** | ✅ | For Twitter/X previews |
 | twitter:card (summary_large_image) | ✅ | Large preview cards |
