@@ -703,27 +703,27 @@ apps/web/src/
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Basic Metadata** | 🔄 | Only title/description in layout.tsx |
-| Title tag | ✅ | "OpinionMarketCap" |
-| Meta description | ✅ | Basic description exists |
-| **Open Graph Tags** | ❌ | For social sharing previews |
-| og:title per page | ❌ | Dynamic titles |
-| og:description per page | ❌ | Dynamic descriptions |
-| og:image per opinion | ❌ | Auto-generated preview cards |
-| og:type (website/article) | ❌ | Proper content typing |
-| **Twitter Card Meta** | ❌ | For Twitter/X previews |
-| twitter:card (summary_large_image) | ❌ | Large preview cards |
-| twitter:site (@opinionmarketcap) | ❌ | Brand handle |
-| twitter:creator per opinion | ❌ | Creator attribution |
-| **Dynamic Metadata** | ❌ | Per-page generateMetadata() |
-| Opinion pages `/opinion/[id]` | ❌ | Question as title, stats in description |
+| **Basic Metadata** | ✅ | Full metadata in layout.tsx |
+| Title tag | ✅ | Dynamic with template |
+| Meta description | ✅ | Keyword-optimized |
+| **Open Graph Tags** | ✅ | For social sharing previews |
+| og:title per page | ✅ | Dynamic titles |
+| og:description per page | ✅ | Dynamic descriptions |
+| og:image per opinion | 🔄 | Need to create og-image.png |
+| og:type (website/article) | ✅ | Proper content typing |
+| **Twitter Card Meta** | ✅ | For Twitter/X previews |
+| twitter:card (summary_large_image) | ✅ | Large preview cards |
+| twitter:site (@opinionmarketcap) | ✅ | Brand handle |
+| twitter:creator per opinion | ✅ | Creator attribution |
+| **Dynamic Metadata** | ✅ | Per-page generateMetadata() |
+| Opinion pages `/opinion/[id]` | ✅ | Question as title, stats in description |
 | Category pages `/category/[slug]` | ❌ | Category-specific metadata |
 | Profile pages `/profile/[address]` | ❌ | User stats in metadata |
 | Leaderboard `/leaderboard` | ❌ | "Top traders" metadata |
-| **Technical SEO** | ❌ | Infrastructure |
-| sitemap.xml generation | ❌ | Dynamic sitemap with all opinions |
-| robots.txt | ❌ | Crawl directives |
-| Canonical URLs | ❌ | Prevent duplicate content |
+| **Technical SEO** | ✅ | Infrastructure |
+| sitemap.xml generation | ✅ | Dynamic sitemap with all opinions |
+| robots.txt | ✅ | Crawl directives |
+| Canonical URLs | ✅ | Prevent duplicate content
 | Structured Data (JSON-LD) | ❌ | Rich snippets in search |
 | Schema.org Product markup | ❌ | For opinion listings |
 | BreadcrumbList schema | ❌ | Navigation in SERPs |
@@ -815,10 +815,10 @@ apps/web/src/app/
 | "My Opinions" tab showing user's opinions | 2 days | Medium |
 | Copy trading link with referral embedded | 1 day | High |
 | Sticky search bar on scroll | 1 day | Low |
-| **SEO: Add Open Graph meta to layout.tsx** | 1 day | **High** |
-| **SEO: Create robots.txt** | 0.5 day | **High** |
-| **SEO: Create basic sitemap.ts** | 1 day | **High** |
-| **SEO: Add generateMetadata to opinion pages** | 2 days | **High** |
+| ~~**SEO: Add Open Graph meta to layout.tsx**~~ | ✅ DONE | **High** |
+| ~~**SEO: Create robots.txt**~~ | ✅ DONE | **High** |
+| ~~**SEO: Create basic sitemap.ts**~~ | ✅ DONE | **High** |
+| ~~**SEO: Add generateMetadata to opinion pages**~~ | ✅ DONE | **High** |
 | **SEO: Google Search Console setup** | 0.5 day | **High** |
 | ~~**TX Errors: Create error parsing lib**~~ | ✅ DONE | **Critical** |
 | ~~**TX Errors: Add balance/allowance checks**~~ | ✅ DONE | **Critical** |
@@ -840,6 +840,6 @@ apps/web/src/app/
 | Pools | 9 | 6 | 0 | 3 |
 | Leaderboard | 6 | 4 | 0 | 2 |
 | Trust/Security | 16 | 12 | 1 | 3 |
-| **SEO & Discoverability** | **32** | **3** | **4** | **25** |
+| **SEO & Discoverability** | **32** | **17** | **2** | **13** |
 | Moonshot | 16 | 0 | 0 | 16 |
-| **TOTAL** | **161** | **47 (29%)** | **11 (7%)** | **103 (64%)** |
+| **TOTAL** | **161** | **61 (38%)** | **10 (6%)** | **90 (56%)** |
