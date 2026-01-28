@@ -473,9 +473,9 @@ src/
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Opinion Cards for Social Sharing** | ❌ | Auto-generated OG images with opinion stats |
-| One-click share to Twitter/Farcaster | ❌ | With tracking |
-| "I'm bullish on [X] at $[price]" templates | ❌ | Pre-filled share messages |
+| **Opinion Cards for Social Sharing** | 🔄 | OG images need `og-image.png` |
+| One-click share to Twitter/Farcaster | ✅ | SocialShareModal with 8 platforms |
+| "I'm bullish on [X] at $[price]" templates | ✅ | Pre-filled share messages with Q/A/price |
 | Profit/loss sharing after position closes | ❌ | Bragging rights mechanic |
 | **Referral Program** | 🔄 | `ReferralDashboard.tsx` exists |
 | Tiered rewards (5% → 10% → 15%) | ❌ | Escalating referral bonuses |
@@ -809,7 +809,7 @@ apps/web/src/app/
 
 | Feature | Effort | Impact |
 |---------|--------|--------|
-| Social share buttons with pre-filled text | 2 days | High |
+| ~~Social share buttons with pre-filled text~~ | ✅ DONE | High |
 | "Trending" badge on high-volume opinions | 1 day | Medium |
 | Email capture for price notifications | 3 days | High |
 | "My Opinions" tab showing user's opinions | 2 days | Medium |
