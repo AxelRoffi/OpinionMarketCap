@@ -444,6 +444,12 @@ export default function MarketplacePage() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-xs">#{question.id}</Badge>
+                                {/* Trending badge for high-volume questions ($100+) */}
+                                {Number(question.totalVolume) >= 100_000_000 && (
+                                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 text-xs font-medium">
+                                    📈 Trending
+                                  </Badge>
+                                )}
                                 <span className="text-xs text-muted-foreground">{formatAddress(question.questionOwner)}</span>
                               </div>
                               <p className="text-foreground font-medium">{truncateText(question.question, 60)}</p>

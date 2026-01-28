@@ -200,12 +200,20 @@ export function OpinionHeader({ opinion, onBack, onTrade, onCreatePool, onListFo
                 </Badge>
               ))}
             </div>
-            <Badge
-              variant={opinion.isActive ? 'default' : 'secondary'}
-              className={opinion.isActive ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}
-            >
-              {opinion.isActive ? 'Active' : 'Inactive'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {/* Trending badge for high-volume opinions ($100+) */}
+              {Number(opinion.totalVolume) >= 100_000_000 && (
+                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 text-xs font-medium">
+                  📈 Trending
+                </Badge>
+              )}
+              <Badge
+                variant={opinion.isActive ? 'default' : 'secondary'}
+                className={opinion.isActive ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}
+              >
+                {opinion.isActive ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
           </div>
 
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2 leading-tight">

@@ -607,6 +607,9 @@ function HomePageInner() {
     return 'Just now';
   };
 
+  // Trending threshold: $100 USDC volume
+  const TRENDING_VOLUME_THRESHOLD = 100_000_000; // 100 USDC in 6 decimals
+
   // Get market status badge
   const getMarketStatusBadge = (status: string) => {
     switch (status) {
@@ -619,6 +622,14 @@ function HomePageInner() {
       default:
         return null;
     }
+  };
+
+  // Get trending badge for high-volume opinions
+  const getTrendingBadge = (totalVolume: bigint) => {
+    if (Number(totalVolume) >= TRENDING_VOLUME_THRESHOLD) {
+      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 text-xs font-medium">📈 Trending</Badge>;
+    }
+    return null;
   };
 
   const calculateChange = (current: bigint, last: bigint) => {
@@ -1159,8 +1170,11 @@ function HomePageInner() {
                         >
                           {truncateAddress(opinion.creator)}
                         </ClickableAddress>
+                        {getTrendingBadge(opinion.totalVolume) && (
+                          <span className="ml-2">{getTrendingBadge(opinion.totalVolume)}</span>
+                        )}
                         {getMarketStatusBadge(opinion.marketStatus) && (
-                          <span className="ml-2">{getMarketStatusBadge(opinion.marketStatus)}</span>
+                          <span className="ml-1">{getMarketStatusBadge(opinion.marketStatus)}</span>
                         )}
                       </div>
                       {/* Category Badges integrated in Question */}
@@ -1291,6 +1305,7 @@ function HomePageInner() {
                               {truncateAddress(opinion.creator)}
                             </ClickableAddress>
                           </span>
+                          {getTrendingBadge(opinion.totalVolume)}
                           {getMarketStatusBadge(opinion.marketStatus)}
                         </div>
                         {/* Category Badges integrated under author */}
