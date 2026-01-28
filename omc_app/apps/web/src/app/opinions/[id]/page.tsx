@@ -1,332 +1,106 @@
-'use client';
+import type { Metadata } from 'next';
+import { getOpinionForMeta } from '@/lib/opinion-server';
+import { generateOpinionMeta, BASE_URL, DEFAULT_META, createSlug } from '@/lib/seo';
+import OpinionPageClient from './OpinionPageClient';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { createOpinionUrl } from '@/lib/url-utils';
-import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-import { useOpinionDetail } from '../hooks/use-opinion-detail';
-import { OpinionHeader } from '../components/opinion-header';
-import { OpinionChart } from '../components/opinion-chart';
-import { OpinionActivity } from '../components/opinion-activity';
-import { OpinionStatsComponent, DetailedStats } from '../components/opinion-stats';
-import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
-import { TradingModal } from '@/components/TradingModal';
-import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
-import ListForSaleModal from '@/components/modals/ListForSaleModal';
-import CancelListingModal from '@/components/modals/CancelListingModal';
-
-// Main component for the opinion detail page (internal for slug route reuse)
-function OpinionDetailPageComponent() {
-  const params = useParams();
-  const router = useRouter();
-  const { address } = useAccount();
-  const [showTradingModal, setShowTradingModal] = useState(false);
-  const [showPoolCreationModal, setShowPoolCreationModal] = useState(false);
-  const [showListForSaleModal, setShowListForSaleModal] = useState(false);
-  const [showCancelListingModal, setShowCancelListingModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('chart');
-
-  const opinionId = parseInt(params.id as string);
-  
-  // Use original working hook
-  const { opinion, stats, activity, loading, error } = useOpinionDetail(opinionId);
-
-  // Redirect to new descriptive URL format when opinion data is loaded
-  useEffect(() => {
-    if (opinion && !loading && opinion.question) {
-      // Create the new descriptive URL
-      const newUrl = createOpinionUrl(opinionId, opinion.question);
-      const currentPath = window.location.pathname;
-      
-      // Check if we're currently on the old format (just /opinions/[id])
-      // and not already on the new format
-      if (currentPath === `/opinions/${opinionId}` && currentPath !== newUrl) {
-        // Replace the current URL with the new descriptive one
-        router.replace(newUrl);
-      }
-    }
-  }, [opinion, loading, opinionId, router]);
+/**
+ * Generate dynamic metadata for SEO
+ * This runs on the server before the page renders
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const opinionId = parseInt(id);
 
   // Validate opinion ID
   if (isNaN(opinionId) || opinionId <= 0) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Alert className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Invalid opinion ID. Please check the URL and try again.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return {
+      title: 'Opinion Not Found',
+      description: 'The requested opinion could not be found.',
+    };
   }
 
-  // Handle back navigation
-  const handleBack = () => {
-    router.back();
-  };
+  // Fetch opinion data server-side
+  const opinion = await getOpinionForMeta(opinionId);
 
-  // Handle trade action
-  const handleTrade = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowTradingModal(true);
-  };
-
-  // Handle pool creation action
-  const handleCreatePool = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowPoolCreationModal(true);
-  };
-
-  // Handle list for sale action
-  const handleListForSale = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowListForSaleModal(true);
-  };
-
-  // Handle cancel listing action
-  const handleCancelListing = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowCancelListingModal(true);
-  };
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
-          <h1 className="text-2xl font-bold text-foreground">Error Loading Opinion</h1>
-          <p className="text-muted-foreground max-w-md">{error}</p>
-          <div className="flex space-x-4 justify-center">
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Try Again
-            </Button>
-            <Button onClick={handleBack}>
-              Go Back
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+  if (!opinion) {
+    return {
+      title: 'Opinion Not Found',
+      description: 'The requested opinion could not be found.',
+    };
   }
 
-  // Loading state with skeleton
-  if (loading || !opinion) {
-    return <OpinionDetailSkeleton />;
-  }
+  // Generate SEO metadata
+  const meta = generateOpinionMeta({
+    id: opinion.id,
+    question: opinion.question,
+    currentAnswer: opinion.currentAnswer,
+    nextPrice: opinion.nextPrice,
+    totalVolume: opinion.totalVolume,
+    categories: opinion.categories,
+  });
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-4 space-y-4 pb-20 md:pb-4">
-        {/* Hero Section */}
-        <OpinionHeader
-          opinion={opinion}
-          onBack={handleBack}
-          onTrade={handleTrade}
-          onCreatePool={handleCreatePool}
-          onListForSale={handleListForSale}
-          onCancelListing={handleCancelListing}
-        />
+  const slug = createSlug(opinion.question);
+  const canonicalUrl = `${BASE_URL}/opinions/${opinionId}/${slug}`;
 
-        {/* Key Stats Row */}
-        {stats && (
-          <OpinionStatsComponent
-            stats={stats}
-            currentPrice={Number(opinion.nextPrice) / 1_000_000}
-            totalVolume={Number(opinion.totalVolume) / 1_000_000}
-            loading={loading}
-          />
-        )}
+  return {
+    title: opinion.question,
+    description: meta.description,
+    keywords: meta.keywords,
 
-        {/* Main Content Tabs */}
-        <div className="bg-card rounded-lg border border-border">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-t-lg">
-              <TabsTrigger value="chart" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Chart
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Activity
-              </TabsTrigger>
-              <TabsTrigger value="details" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Details
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chart" className="p-6 m-0">
-              <OpinionChart
-                data={stats?.volumeHistory || []}
-                currentPrice={Number(opinion.nextPrice) / 1_000_000}
-              />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="p-6 m-0">
-              <OpinionActivity
-                activity={activity}
-                loading={loading}
-              />
-            </TabsContent>
-            
-            <TabsContent value="details" className="p-6 m-0">
-              {stats && (
-                <DetailedStats
-                  stats={stats}
-                  currentPrice={Number(opinion.nextPrice) / 1_000_000}
-                  totalVolume={Number(opinion.totalVolume) / 1_000_000}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+    // Canonical URL
+    alternates: {
+      canonical: canonicalUrl,
+    },
 
-        {/* Connect Wallet Prompt */}
-        {!address && (
-          <div className="bg-card rounded-lg p-6 border border-border text-center">
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Connect Your Wallet to Trade
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Connect your wallet to start trading this opinion and submit new answers.
-            </p>
-            <ConnectButton />
-          </div>
-        )}
-      </div>
+    // Open Graph
+    openGraph: {
+      type: 'article',
+      title: meta.title,
+      description: meta.description,
+      url: canonicalUrl,
+      siteName: DEFAULT_META.siteName,
+      images: [
+        {
+          url: `${BASE_URL}/api/og/opinion/${opinionId}`,
+          width: 1200,
+          height: 630,
+          alt: opinion.question,
+        },
+      ],
+      publishedTime: new Date(Number(opinion.createdAt) * 1000).toISOString(),
+      modifiedTime: new Date(Number(opinion.lastActivityAt) * 1000).toISOString(),
+      authors: [opinion.creator],
+      tags: opinion.categories,
+    },
 
-      {/* Sticky Action Panel (Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:hidden z-10">
-        <div className="flex gap-3">
-          <Button
-            onClick={handleTrade}
-            className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-base"
-          >
-            Trade
-          </Button>
-          {opinion && opinion.nextPrice >= 100_000_000 ? (
-            <Button
-              onClick={handleCreatePool}
-              variant="outline"
-              className="flex-1 h-12 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-base"
-            >
-              Pool
-            </Button>
-          ) : (
-            <Button
-              disabled
-              variant="outline"
-              className="flex-1 h-12 border-border text-muted-foreground cursor-not-allowed font-semibold text-base"
-            >
-              Pool
-            </Button>
-          )}
-        </div>
-        {opinion && opinion.nextPrice < 100_000_000 && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Pool requires NextPrice ≥ 100 USDC
-          </p>
-        )}
-      </div>
+    // Twitter Card
+    twitter: {
+      card: 'summary_large_image',
+      site: DEFAULT_META.twitterHandle,
+      title: meta.title,
+      description: meta.description,
+      images: [`${BASE_URL}/api/og/opinion/${opinionId}`],
+    },
 
-      {/* Trading Modal */}
-      {showTradingModal && opinion && (
-        <TradingModal
-          isOpen={showTradingModal}
-          opinionId={opinion.id}
-          opinionData={{
-            id: opinion.id,
-            question: opinion.question,
-            currentAnswer: opinion.currentAnswer,
-            nextPrice: opinion.nextPrice,
-            lastPrice: opinion.lastPrice,
-            totalVolume: opinion.totalVolume,
-            creator: opinion.creator,
-            currentAnswerOwner: opinion.currentAnswerOwner,
-            categories: opinion.categories,
-            isActive: opinion.isActive,
-          }}
-          onClose={() => setShowTradingModal(false)}
-        />
-      )}
-
-      {/* Pool Creation Modal */}
-      {showPoolCreationModal && opinion && (
-        <CreatePoolModal
-          isOpen={showPoolCreationModal}
-          opinionId={opinion.id}
-          opinionData={{
-            id: opinion.id,
-            question: opinion.question,
-            currentAnswer: opinion.currentAnswer,
-            nextPrice: opinion.nextPrice,
-            category: opinion.categories[0] || 'General'
-          }}
-          onClose={() => setShowPoolCreationModal(false)}
-        />
-      )}
-
-      {/* List For Sale Modal */}
-      {showListForSaleModal && opinion && (
-        <ListForSaleModal
-          isOpen={showListForSaleModal}
-          opinionData={{
-            id: opinion.id,
-            question: opinion.question,
-            currentAnswer: opinion.currentAnswer,
-            nextPrice: opinion.nextPrice,
-            lastPrice: opinion.lastPrice,
-            totalVolume: opinion.totalVolume,
-            questionOwner: opinion.questionOwner,
-            salePrice: opinion.salePrice,
-            isActive: opinion.isActive,
-            creator: opinion.creator,
-          }}
-          onClose={() => setShowListForSaleModal(false)}
-          onSuccess={() => {
-            // Refresh the page to show updated sale status
-            window.location.reload();
-          }}
-        />
-      )}
-
-      {/* Cancel Listing Modal */}
-      {showCancelListingModal && opinion && (
-        <CancelListingModal
-          isOpen={showCancelListingModal}
-          opinionData={{
-            id: opinion.id,
-            question: opinion.question,
-            salePrice: opinion.salePrice,
-            questionOwner: opinion.questionOwner,
-          }}
-          onClose={() => setShowCancelListingModal(false)}
-          onSuccess={() => {
-            // Refresh the page to show updated sale status
-            window.location.reload();
-          }}
-        />
-      )}
-    </div>
-  );
+    // Robots
+    robots: {
+      index: opinion.isActive,
+      follow: true,
+    },
+  };
 }
 
-// Default export for Next.js page routing
-export default OpinionDetailPageComponent;
+/**
+ * Opinion detail page - server component wrapper
+ * Renders the client component after generating metadata
+ */
+export default function OpinionPage() {
+  return <OpinionPageClient />;
+}
+
+// Revalidate metadata every 5 minutes
+export const revalidate = 300;
