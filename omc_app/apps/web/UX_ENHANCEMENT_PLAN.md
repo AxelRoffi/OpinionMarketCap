@@ -819,7 +819,7 @@ apps/web/src/app/
 | Feature | Effort | Impact |
 |---------|--------|--------|
 | ~~Social share buttons with pre-filled text~~ | ✅ DONE | High |
-| "Trending" badge on high-volume opinions | 1 day | Medium |
+| ~~"Trending" badge on high-volume opinions~~ | ✅ DONE | Medium |
 | Email capture for price notifications | 3 days | High |
 | "My Opinions" tab showing user's opinions | 2 days | Medium |
 | Copy trading link with referral embedded | 1 day | High |
