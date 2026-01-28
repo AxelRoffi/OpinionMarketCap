@@ -651,16 +651,16 @@ src/
 | Personal profit/loss summary | ❌ | Prominent in profile |
 | Transaction success rate | ❌ | Display reliability |
 | Network health indicator | ❌ | System status |
-| **Transaction Error Handling** | ❌ | **HIGH PRIORITY** - Known issue |
-| Parse revert reasons from contracts | ❌ | Decode on-chain error messages |
-| User-friendly error mapping | ❌ | Map technical errors to plain English |
-| Pre-submission validation | 🔄 | Some validation exists, needs expansion |
-| Insufficient balance detection | ❌ | "You need X more USDC" |
-| Insufficient allowance detection | ❌ | "Approve USDC first" prompt |
-| Slippage/price change errors | ❌ | "Price changed, retry?" |
-| Gas estimation failure handling | ❌ | Explain why tx would fail |
-| Network congestion warnings | ❌ | "Base is busy, tx may be slow" |
-| Transaction retry with guidance | ❌ | One-click retry with fix applied |
+| **Transaction Error Handling** | ✅ | **COMPLETED** Jan 28, 2025 |
+| Parse revert reasons from contracts | ✅ | `lib/errors.ts` - 40+ error mappings |
+| User-friendly error mapping | ✅ | Plain English messages for all errors |
+| Pre-submission validation | ✅ | Balance, allowance, content validation |
+| Insufficient balance detection | ✅ | Shows required vs available USDC |
+| Insufficient allowance detection | ✅ | AllowanceInfo component with guidance |
+| Slippage/price change errors | ✅ | Mapped in error library |
+| Gas estimation failure handling | ✅ | Explains simulation failures |
+| Network congestion warnings | ✅ | Network error detection |
+| Transaction retry with guidance | ✅ | Retryable errors with Try Again button |
 
 **Common Error Messages to Handle:**
 ```
@@ -820,9 +820,9 @@ apps/web/src/app/
 | **SEO: Create basic sitemap.ts** | 1 day | **High** |
 | **SEO: Add generateMetadata to opinion pages** | 2 days | **High** |
 | **SEO: Google Search Console setup** | 0.5 day | **High** |
-| **TX Errors: Create error parsing lib** | 2 days | **Critical** |
-| **TX Errors: Add balance/allowance checks** | 1 day | **Critical** |
-| **TX Errors: User-friendly error modal** | 2 days | **High** |
+| ~~**TX Errors: Create error parsing lib**~~ | ✅ DONE | **Critical** |
+| ~~**TX Errors: Add balance/allowance checks**~~ | ✅ DONE | **Critical** |
+| ~~**TX Errors: User-friendly error modal**~~ | ✅ DONE | **High** |
 
 ---
 
@@ -839,7 +839,7 @@ apps/web/src/app/
 | Creator Tools | 9 | 3 | 1 | 5 |
 | Pools | 9 | 6 | 0 | 3 |
 | Leaderboard | 6 | 4 | 0 | 2 |
-| Trust/Security | 16 | 2 | 1 | 13 |
+| Trust/Security | 16 | 12 | 1 | 3 |
 | **SEO & Discoverability** | **32** | **3** | **4** | **25** |
 | Moonshot | 16 | 0 | 0 | 16 |
-| **TOTAL** | **161** | **37 (23%)** | **12 (7%)** | **112 (70%)** |
+| **TOTAL** | **161** | **47 (29%)** | **11 (7%)** | **103 (64%)** |
