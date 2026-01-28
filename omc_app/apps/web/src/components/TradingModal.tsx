@@ -27,6 +27,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts'
+import { parseTransactionError, validateAnswerInputs, type ParsedError } from '@/lib/errors'
+import { validateAnswerForTrading } from '@/lib/contentFiltering'
+import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
 
 interface OpinionData {
   id: number
@@ -50,13 +53,8 @@ interface TradingModalProps {
   opinionData: OpinionData
 }
 
-// Enhanced error handling types
-interface ErrorState {
-  type: 'network' | 'contract' | 'wallet' | 'validation' | 'unknown'
-  message: string
-  retryable: boolean
-  details?: string
-}
+// Use ParsedError from lib/errors instead of local ErrorState
+// (ParsedError has more detailed error types and parsing)
 
 // Form data persistence
 interface FormData {
@@ -78,8 +76,9 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [contentWarning, setContentWarning] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<'form' | 'approve' | 'submit' | 'success' | 'error'>('form')
-  const [errorState, setErrorState] = useState<ErrorState | null>(null)
+  const [errorState, setErrorState] = useState<ParsedError | null>(null)
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true) // Default to infinite approval
   
   // Convenience accessors for form data
@@ -150,26 +149,39 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     return { percentage: Math.abs(percentage), isPositive: diff >= 0 }
   }
 
-  // Enhanced form validation with specific error messages
+  // Enhanced form validation using lib/errors validation + spam detection
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
-    if (!answer.trim()) {
-      newErrors.answer = 'Answer is required'
-    } else if (answer.length > ANSWER_LIMIT) {
-      newErrors.answer = `Answer must be ${ANSWER_LIMIT} characters or less`
-    } else if (answer.trim().length < 3) {
-      newErrors.answer = 'Answer must be at least 3 characters'
+    // Use centralized validation for length/format
+    const validation = validateAnswerInputs({
+      answer,
+      description,
+      link,
+    })
+
+    // Map validation errors to form errors
+    if (!validation.valid) {
+      for (const error of validation.errors) {
+        if (error.title.toLowerCase().includes('answer')) {
+          newErrors.answer = error.message
+        } else if (error.title.toLowerCase().includes('description')) {
+          newErrors.description = error.message
+        } else if (error.title.toLowerCase().includes('link') || error.title.toLowerCase().includes('url')) {
+          newErrors.link = error.message
+        }
+      }
     }
 
-    if (description.length > DESCRIPTION_LIMIT) {
-      newErrors.description = `Description must be ${DESCRIPTION_LIMIT} characters or less`
+    // Spam/gibberish detection - block nonsense answers
+    if (!newErrors.answer) {
+      const spamValidation = validateAnswerForTrading(answer, description)
+      if (!spamValidation.valid && spamValidation.error) {
+        newErrors.answer = spamValidation.error
+      }
     }
 
-    if (link && !isValidUrl(link)) {
-      newErrors.link = 'Please enter a valid URL (e.g., https://example.com)'
-    }
-
+    // Terms validation (not in centralized validation)
     if (!acceptedTerms) {
       newErrors.terms = 'You must accept the terms and conditions'
     }
@@ -179,53 +191,17 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     return Object.keys(newErrors).length === 0
   }
 
-  // Enhanced error handling
+  // Enhanced error handling using parseTransactionError from lib/errors
   const handleError = useCallback((error: unknown, context: string) => {
     console.error(`${context}:`, error)
-    
-    let errorState: ErrorState
-    
-    if ((error as Error)?.name === 'UserRejectedRequestError') {
-      errorState = {
-        type: 'wallet',
-        message: 'Transaction rejected by wallet',
-        retryable: true,
-        details: 'Please approve the transaction in your wallet to continue.'
-      }
-    } else if ((error as Error)?.message?.includes('insufficient funds')) {
-      errorState = {
-        type: 'wallet',
-        message: 'Insufficient funds for transaction',
-        retryable: false,
-        details: `You need ${formatUSDC(opinionData.nextPrice)} USDC plus gas fees.`
-      }
-    } else if ((error as Error)?.message?.includes('network')) {
-      errorState = {
-        type: 'network',
-        message: 'Network congestion detected',
-        retryable: true,
-        details: 'Please try again in a few moments.'
-      }
-    } else if ((error as Error)?.message?.includes('contract')) {
-      errorState = {
-        type: 'contract',
-        message: 'Smart contract error',
-        retryable: true,
-        details: (error as Error).message || 'The transaction could not be processed.'
-      }
-    } else {
-      errorState = {
-        type: 'unknown',
-        message: 'Transaction failed',
-        retryable: true,
-        details: 'An unexpected error occurred. Please try again.'
-      }
-    }
-    
-    setErrorState(errorState)
+
+    // Use the centralized error parser
+    const parsed = parseTransactionError(error)
+
+    setErrorState(parsed)
     setCurrentStep('error')
     setIsSubmitting(false)
-  }, [formatUSDC, opinionData.nextPrice])
+  }, [])
 
   const isValidUrl = (string: string) => {
     try {
@@ -243,10 +219,10 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     if (!validateForm()) return
     if (!address) {
       setErrorState({
-        type: 'wallet',
-        message: 'Wallet not connected',
+        type: 'validation_error',
+        title: 'Wallet Not Connected',
+        message: 'Please connect your wallet to continue.',
         retryable: false,
-        details: 'Please connect your wallet to continue.'
       })
       return
     }
@@ -297,6 +273,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
+
+  // Real-time content quality check (show warnings as user types)
+  useEffect(() => {
+    if (answer.length >= 2) {
+      const validation = validateAnswerForTrading(answer, description)
+      if (validation.warning) {
+        setContentWarning(validation.warning)
+      } else if (!validation.valid && validation.error) {
+        // Show error as warning while typing (will block on submit)
+        setContentWarning(validation.error)
+      } else {
+        setContentWarning(null)
+      }
+    } else {
+      setContentWarning(null)
+    }
+  }, [answer, description])
 
   // Handle approval success
   useEffect(() => {
@@ -486,15 +479,11 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     </Card>
                   </div>
 
-                  {/* Balance Warning */}
-                  {!hasBalance && (
-                    <Alert className="bg-red-900/20 border-red-500/50">
-                      <AlertCircle className="w-4 h-4 text-red-400" />
-                      <AlertDescription className="text-red-400">
-                        Insufficient USDC balance. You need {formatUSDC(opinionData.nextPrice)} to submit an answer.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                  {/* Balance Warning - Using new component */}
+                  <BalanceWarning
+                    requiredAmount={opinionData.nextPrice}
+                    currentBalance={balance}
+                  />
 
                   {/* Form or Transaction States */}
                   {currentStep === 'form' && (
@@ -559,40 +548,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <span className="text-red-400 text-sm">{errors.link}</span>
                       </div>
 
-                      {/* USDC Approval Info */}
-                      {needsApproval && (
-                        <Card className="bg-yellow-soft border-yellow-500/50">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium text-yellow-soft-foreground flex items-center gap-2">
-                              <Info className="w-4 h-4" />
-                              USDC Approval Required
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3 text-sm text-muted-foreground">
-                            <p>This is your first time trading. You need to approve USDC spending.</p>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="infinite-approval"
-                                checked={useInfiniteApproval}
-                                onCheckedChange={(checked) => setUseInfiniteApproval(checked as boolean)}
-                                className="border-border data-[state=checked]:bg-yellow-500"
-                              />
-                              <Label htmlFor="infinite-approval" className="text-sm text-muted-foreground">
-                                Large approval for future trades (1M USDC)
-                              </Label>
-                            </div>
-                            {useInfiniteApproval ? (
-                              <p className="text-xs text-yellow-soft-foreground">
-                                Recommended: Approve 1 million USDC for all future trades
-                              </p>
-                            ) : (
-                              <p className="text-xs text-yellow-soft-foreground">
-                                You&apos;ll need to approve each trade individually
-                              </p>
-                            )}
-                          </CardContent>
-                        </Card>
+                      {/* Content Quality Warning */}
+                      {contentWarning && (
+                        <Alert className="bg-yellow-900/20 border-yellow-500/50">
+                          <AlertCircle className="w-4 h-4 text-yellow-400" />
+                          <AlertDescription className="text-yellow-400">
+                            {contentWarning}
+                          </AlertDescription>
+                        </Alert>
                       )}
+
+                      {/* USDC Approval Info - Using new component */}
+                      <AllowanceInfo
+                        requiredAmount={opinionData.nextPrice}
+                        currentAllowance={allowance}
+                        useInfiniteApproval={useInfiniteApproval}
+                        onApprovalTypeChange={setUseInfiniteApproval}
+                      />
 
                       {/* Trading Info - Fee Breakdown */}
                       <Card className="bg-blue-soft border-blue-500/50">
@@ -717,61 +689,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     </div>
                   )}
 
-                  {/* Enhanced Error State */}
-                  {currentStep === 'error' && (
-                    <div className="text-center space-y-4">
-                      <div className="w-16 h-16 mx-auto bg-red-500 rounded-full flex items-center justify-center">
-                        <AlertCircle className="w-8 h-8 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-foreground mb-2">
-                          {errorState?.message || 'Transaction Failed'}
-                        </h3>
-                        <p className="text-muted-foreground mb-2">
-                          {errorState?.details || 'An unexpected error occurred.'}
-                        </p>
-                        {errorState?.type === 'network' && (
-                          <Alert className="bg-yellow-soft border-yellow-500/50 mb-4">
-                            <AlertCircle className="w-4 h-4 text-yellow-soft-foreground" />
-                            <AlertDescription className="text-yellow-soft-foreground">
-                              Network congestion detected. Your transaction may take longer than usual.
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                        {errorState?.type === 'wallet' && !errorState.retryable && (
-                          <Alert className="bg-red-soft border-red-500/50 mb-4">
-                            <AlertCircle className="w-4 h-4 text-red-soft-foreground" />
-                            <AlertDescription className="text-red-soft-foreground">
-                              Please check your wallet balance and try again.
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                        <div className="flex gap-4">
-                          <Button
-                            variant="outline"
-                            onClick={onClose}
-                            className="flex-1 border-border text-muted-foreground hover:bg-muted"
-                          >
-                            Cancel
-                          </Button>
-                          {errorState?.retryable && (
-                            <Button
-                              onClick={() => {
-                                setCurrentStep('form')
-                                setErrorState(null)
-                                setIsSubmitting(false)
-                              }}
-                              className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
-                            >
-                              Try Again
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Your form data has been preserved
-                        </p>
-                      </div>
-                    </div>
+                  {/* Enhanced Error State - Using new ErrorState component */}
+                  {currentStep === 'error' && errorState && (
+                    <ErrorState
+                      error={errorState}
+                      onRetry={() => {
+                        setCurrentStep('form')
+                        setErrorState(null)
+                        setIsSubmitting(false)
+                      }}
+                      onBack={() => {
+                        setCurrentStep('form')
+                        setErrorState(null)
+                        setIsSubmitting(false)
+                      }}
+                      onClose={onClose}
+                      showTechnicalDetails={true}
+                    />
                   )}
                 </div>
               </div>

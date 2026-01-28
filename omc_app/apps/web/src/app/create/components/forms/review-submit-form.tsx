@@ -24,6 +24,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts'
+import { parseTransactionError, type ParsedError } from '@/lib/errors'
+import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
 
 interface ReviewSubmitFormProps {
   formData: {
@@ -40,18 +42,13 @@ interface ReviewSubmitFormProps {
   onSuccess: (opinionId?: number) => void
 }
 
-interface ErrorState {
-  type: 'network' | 'contract' | 'wallet' | 'validation' | 'unknown'
-  message: string
-  retryable: boolean
-  details?: string
-}
+// Use ParsedError from lib/errors for consistent error handling
 
 export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubmitFormProps) {
   const { address } = useAccount()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState<'review' | 'approve' | 'submit' | 'success' | 'error'>('review')
-  const [errorState, setErrorState] = useState<ErrorState | null>(null)
+  const [errorState, setErrorState] = useState<ParsedError | null>(null)
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
 
@@ -103,7 +100,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
     return `$${usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  // Error handling
+  // Error handling using centralized parseTransactionError
   const handleError = useCallback((error: unknown, context: string) => {
     console.error(`❌ ${context}:`, error)
     console.error('Error details:', {
@@ -114,86 +111,33 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
       code: (error as Record<string, unknown>)?.code,
       data: (error as Record<string, unknown>)?.data
     })
-    
-    let errorState: ErrorState
-    const errorMessage = (error as Error)?.message || 'Unknown error'
-    
-    if ((error as Error)?.name === 'UserRejectedRequestError') {
-      errorState = {
-        type: 'wallet',
-        message: 'Transaction rejected by wallet',
-        retryable: true,
-        details: 'Please approve the transaction in your wallet to continue.'
-      }
-    } else if (errorMessage.includes('insufficient funds') || errorMessage.includes('exceeds balance')) {
-      errorState = {
-        type: 'wallet',
-        message: 'Insufficient USDC balance',
-        retryable: false,
-        details: `You need ${formatUSDC(creationFeeWei)} USDC. You have ${balance ? formatUSDC(balance) : '$0.00'}.`
-      }
-    } else if (errorMessage.includes('execution reverted')) {
-      // Extract revert reason if available
-      const revertReason = errorMessage.match(/execution reverted: (.+)/)?.[1] || 'Unknown contract error'
-      errorState = {
-        type: 'contract',
-        message: 'Smart contract error',
-        retryable: true,
-        details: `Contract error: ${revertReason}`
-      }
-    } else if (errorMessage.includes('network') || errorMessage.includes('timeout')) {
-      errorState = {
-        type: 'network',
-        message: 'Network congestion detected',
-        retryable: true,
-        details: 'Please try again in a few moments.'
-      }
-    } else if (errorMessage.includes('UnauthorizedCreator')) {
-      errorState = {
-        type: 'validation',
-        message: 'Not authorized to create opinions',
-        retryable: false,
-        details: 'Public opinion creation may be disabled.'
-      }
-    } else if (errorMessage.includes('InvalidInitialPrice')) {
-      errorState = {
-        type: 'validation',
-        message: 'Invalid initial price',
-        retryable: false,
-        details: 'Initial price must be between 1 and 100 USDC.'
-      }
-    } else {
-      errorState = {
-        type: 'unknown',
-        message: 'Transaction failed',
-        retryable: true,
-        details: `Error: ${errorMessage}`
-      }
-    }
-    
-    setErrorState(errorState)
+
+    // Use centralized error parser
+    const parsed = parseTransactionError(error)
+
+    setErrorState(parsed)
     setCurrentStep('error')
     setIsSubmitting(false)
-  }, [creationFeeWei, balance, formatUSDC])
+  }, [])
 
   // Handle form submission
   const handleSubmit = async () => {
     if (!acceptedTerms) {
       setErrorState({
-        type: 'validation',
-        message: 'Please accept the terms',
+        type: 'validation_error',
+        title: 'Terms Required',
+        message: 'You must accept the terms and conditions to continue.',
         retryable: false,
-        details: 'You must accept the terms and conditions to continue.'
       })
       return
     }
 
     if (!address) {
       setErrorState({
-        type: 'wallet',
-        message: 'Wallet not connected',
+        type: 'validation_error',
+        title: 'Wallet Not Connected',
+        message: 'Please connect your wallet to continue.',
         retryable: false,
-        details: 'Please connect your wallet to continue.'
       })
       return
     }
@@ -469,42 +413,18 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
     )
   }
 
-  if (currentStep === 'error') {
+  if (currentStep === 'error' && errorState) {
     return (
-      <div className="text-center space-y-6">
-        <div className="w-16 h-16 mx-auto bg-red-500 rounded-full flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-white" />
-        </div>
-        <div>
-          <h3 className="text-2xl font-bold text-white mb-2">
-            {errorState?.message || 'Transaction Failed'}
-          </h3>
-          <p className="text-gray-400 mb-4">
-            {errorState?.details || 'An unexpected error occurred.'}
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCurrentStep('review')
-                setErrorState(null)
-                setIsSubmitting(false)
-              }}
-              className="border-gray-700 text-gray-300 hover:bg-gray-800"
-            >
-              Back to Review
-            </Button>
-            {errorState?.retryable && (
-              <Button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
-              >
-                Try Again
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      <ErrorState
+        error={errorState}
+        onRetry={handleSubmit}
+        onBack={() => {
+          setCurrentStep('review')
+          setErrorState(null)
+          setIsSubmitting(false)
+        }}
+        showTechnicalDetails={true}
+      />
     )
   }
 
@@ -624,49 +544,20 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         )}
       </div>
 
-      {/* Balance Warning */}
-      {!hasBalance && (
-        <Alert className="bg-red-900/20 border-red-500/50">
-          <AlertCircle className="w-4 h-4 text-red-400" />
-          <AlertDescription className="text-red-400">
-            Insufficient USDC balance. You need ${creationFee.toFixed(2)} USDC to create this opinion. You have ${balance ? (Number(balance) / 1_000_000).toFixed(6) : '0'} USDC.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Balance Warning - Using new component */}
+      <BalanceWarning
+        requiredAmount={creationFeeWei}
+        currentBalance={balance}
+      />
 
-      {/* USDC Approval Info */}
-      {needsApproval && hasBalance && (
-        <Card className="bg-yellow-900/20 border-yellow-500/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-yellow-400 flex items-center gap-2">
-              <Info className="w-4 h-4" />
-              USDC Approval Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-gray-300">
-            <p>You need to approve USDC spending for opinion creation.</p>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="infinite-approval"
-                checked={useInfiniteApproval}
-                onCheckedChange={(checked) => setUseInfiniteApproval(checked as boolean)}
-                className="border-gray-700 data-[state=checked]:bg-yellow-500"
-              />
-              <Label htmlFor="infinite-approval" className="text-sm text-gray-300">
-                Large approval for future transactions (1M USDC)
-              </Label>
-            </div>
-            {useInfiniteApproval ? (
-              <p className="text-xs text-yellow-400">
-                ✅ Recommended: Approve 1 million USDC for all future opinions and trades
-              </p>
-            ) : (
-              <p className="text-xs text-yellow-500">
-                ⚠️ You&apos;ll need to approve each transaction individually
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      {/* USDC Approval Info - Using new component */}
+      {hasBalance && (
+        <AllowanceInfo
+          requiredAmount={creationFeeWei}
+          currentAllowance={allowance}
+          useInfiniteApproval={useInfiniteApproval}
+          onApprovalTypeChange={setUseInfiniteApproval}
+        />
       )}
 
       {/* Terms & Conditions */}

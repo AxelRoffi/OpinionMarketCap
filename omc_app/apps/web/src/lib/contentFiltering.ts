@@ -90,6 +90,78 @@ function hasSpamCharacteristics(question: string, answer: string): boolean {
 }
 
 /**
+ * Validate answer only (for trading modal when submitting a new answer)
+ * This should be used BEFORE allowing a trade transaction to proceed
+ */
+export function validateAnswerForTrading(
+  answer: string,
+  description?: string
+): { valid: boolean; error?: string; warning?: string } {
+  // Check for empty/too short
+  if (!answer || answer.trim().length < 2) {
+    return { valid: false, error: 'Answer is too short (minimum 2 characters)' };
+  }
+
+  // Check for gibberish
+  if (isLikelyGibberish(answer)) {
+    return { valid: false, error: 'Answer appears to be gibberish or random characters. Please enter a meaningful answer.' };
+  }
+
+  // Check for all-caps shouting
+  const answerUpperRatio = (answer.match(/[A-Z]/g) || []).length / answer.length;
+  if (answerUpperRatio > 0.7 && answer.length > 10) {
+    return { valid: false, error: 'Please don\'t use ALL CAPS for your answer.' };
+  }
+
+  // Check for excessive repetition
+  if (/(.)\1{5,}/.test(answer)) {
+    return { valid: false, error: 'Answer contains excessive character repetition.' };
+  }
+
+  // Check for number-only content
+  if (/^\d+$/.test(answer.trim())) {
+    return { valid: false, error: 'Answer cannot be numbers only.' };
+  }
+
+  // Check for test/spam patterns
+  const spamPatterns = [
+    /^test$/i,
+    /^testing$/i,
+    /^asdf/i,
+    /^qwer/i,
+    /^zxcv/i,
+    /^aaa+$/i,
+    /^bbb+$/i,
+    /^xxx+$/i,
+    /lorem ipsum/i,
+  ];
+  if (spamPatterns.some(pattern => pattern.test(answer.trim()))) {
+    return { valid: false, error: 'Answer appears to be test content. Please enter a genuine answer.' };
+  }
+
+  // Check description if provided
+  if (description && description.trim().length > 0) {
+    if (isLikelyGibberish(description)) {
+      return { valid: false, error: 'Description appears to be gibberish. Please enter meaningful content or leave it empty.' };
+    }
+    const descUpperRatio = (description.match(/[A-Z]/g) || []).length / description.length;
+    if (descUpperRatio > 0.7 && description.length > 15) {
+      return { valid: false, error: 'Please don\'t use ALL CAPS for your description.' };
+    }
+  }
+
+  // Soft warning for very short answers
+  if (answer.trim().length <= 3) {
+    return {
+      valid: true,
+      warning: 'Very short answers may be less compelling to other users.'
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Validate content before submission - returns rejection reason or null if valid
  * This should be used BEFORE allowing a transaction to proceed
  */
