@@ -123,64 +123,83 @@ function getRankedAnswers(history: AnswerHistoryEntry[]): RankedAnswer[] {
 }
 
 /**
- * Get price tier for color coding (1-5 scale)
- * Based on price relative to common thresholds
+ * Distinct color palette for answer buttons
+ * Each answer gets a unique, visually distinct color
  */
-export function getPriceTier(price: bigint): number {
-  const usdc = Number(price) / 1_000_000
-  if (usdc >= 50) return 5  // Hot (highest)
-  if (usdc >= 25) return 4  // Warm
-  if (usdc >= 10) return 3  // Medium
-  if (usdc >= 5) return 2   // Cool
-  return 1                   // Cold (lowest)
-}
+const ANSWER_COLORS = [
+  { // Blue
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-500/60',
+    text: 'text-blue-300',
+    badge: 'bg-blue-500/30 text-blue-200',
+  },
+  { // Orange
+    bg: 'bg-orange-500/20',
+    border: 'border-orange-500/60',
+    text: 'text-orange-300',
+    badge: 'bg-orange-500/30 text-orange-200',
+  },
+  { // Emerald
+    bg: 'bg-emerald-500/20',
+    border: 'border-emerald-500/60',
+    text: 'text-emerald-300',
+    badge: 'bg-emerald-500/30 text-emerald-200',
+  },
+  { // Pink
+    bg: 'bg-pink-500/20',
+    border: 'border-pink-500/60',
+    text: 'text-pink-300',
+    badge: 'bg-pink-500/30 text-pink-200',
+  },
+  { // Yellow
+    bg: 'bg-yellow-500/20',
+    border: 'border-yellow-500/60',
+    text: 'text-yellow-300',
+    badge: 'bg-yellow-500/30 text-yellow-200',
+  },
+  { // Cyan
+    bg: 'bg-cyan-500/20',
+    border: 'border-cyan-500/60',
+    text: 'text-cyan-300',
+    badge: 'bg-cyan-500/30 text-cyan-200',
+  },
+  { // Purple
+    bg: 'bg-purple-500/20',
+    border: 'border-purple-500/60',
+    text: 'text-purple-300',
+    badge: 'bg-purple-500/30 text-purple-200',
+  },
+  { // Red
+    bg: 'bg-red-500/20',
+    border: 'border-red-500/60',
+    text: 'text-red-300',
+    badge: 'bg-red-500/30 text-red-200',
+  },
+  { // Indigo
+    bg: 'bg-indigo-500/20',
+    border: 'border-indigo-500/60',
+    text: 'text-indigo-300',
+    badge: 'bg-indigo-500/30 text-indigo-200',
+  },
+  { // Amber
+    bg: 'bg-amber-500/20',
+    border: 'border-amber-500/60',
+    text: 'text-amber-300',
+    badge: 'bg-amber-500/30 text-amber-200',
+  },
+]
 
 /**
- * Get color classes based on price tier
+ * Get color for answer button by index
+ * Cycles through distinct colors
  */
-export function getPriceTierColors(tier: number): {
+export function getAnswerColor(index: number): {
   bg: string
   border: string
   text: string
   badge: string
 } {
-  switch (tier) {
-    case 5: // Hot - Orange/Red
-      return {
-        bg: 'bg-gradient-to-r from-orange-500/20 to-red-500/20',
-        border: 'border-orange-500/60',
-        text: 'text-orange-300',
-        badge: 'bg-orange-500/30 text-orange-200',
-      }
-    case 4: // Warm - Yellow/Orange
-      return {
-        bg: 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20',
-        border: 'border-yellow-500/60',
-        text: 'text-yellow-300',
-        badge: 'bg-yellow-500/30 text-yellow-200',
-      }
-    case 3: // Medium - Green/Yellow
-      return {
-        bg: 'bg-gradient-to-r from-emerald-500/20 to-yellow-500/20',
-        border: 'border-emerald-500/60',
-        text: 'text-emerald-300',
-        badge: 'bg-emerald-500/30 text-emerald-200',
-      }
-    case 2: // Cool - Blue/Green
-      return {
-        bg: 'bg-gradient-to-r from-blue-500/20 to-emerald-500/20',
-        border: 'border-blue-500/60',
-        text: 'text-blue-300',
-        badge: 'bg-blue-500/30 text-blue-200',
-      }
-    default: // Cold - Purple/Blue
-      return {
-        bg: 'bg-gradient-to-r from-purple-500/20 to-blue-500/20',
-        border: 'border-purple-500/60',
-        text: 'text-purple-300',
-        badge: 'bg-purple-500/30 text-purple-200',
-      }
-  }
+  return ANSWER_COLORS[index % ANSWER_COLORS.length]
 }
 
 /**

@@ -36,9 +36,7 @@ import { validateAnswerForTrading } from '@/lib/contentFiltering'
 import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
 import {
   useAnswerHistory,
-  formatHistoryPrice,
-  getPriceTier,
-  getPriceTierColors,
+  getAnswerColor,
   type RankedAnswer
 } from '@/hooks/useAnswerHistory'
 
@@ -573,8 +571,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           {/* Revival Buttons Grid */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {revivalOptions.map((entry, index) => {
-                              const tier = getPriceTier(entry.peakPrice)
-                              const colors = getPriceTierColors(tier)
+                              const colors = getAnswerColor(index)
                               const isSelected = isReviving && answer === entry.answer
 
                               return (
@@ -599,25 +596,17 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                                   )}
 
                                   {/* Answer text */}
-                                  <div className={`font-semibold text-sm mb-1.5 truncate ${isSelected ? 'text-emerald-300' : colors.text}`}>
+                                  <div className={`font-semibold text-sm truncate ${isSelected ? 'text-emerald-300' : colors.text}`}>
                                     {entry.answer}
                                   </div>
 
-                                  {/* Stats row */}
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    {/* Peak price badge */}
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isSelected ? 'bg-emerald-500/30 text-emerald-200' : colors.badge}`}>
-                                      {formatHistoryPrice(entry.peakPrice)}
-                                    </span>
-
-                                    {/* Submission count - show fire for popular */}
-                                    {entry.submissionCount > 1 && (
-                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                        {entry.submissionCount >= 3 && <span>🔥</span>}
-                                        {entry.submissionCount}x submitted
-                                      </span>
-                                    )}
-                                  </div>
+                                  {/* Submission count - show fire for popular */}
+                                  {entry.submissionCount > 1 && (
+                                    <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                      {entry.submissionCount >= 3 && <span>🔥</span>}
+                                      <span>{entry.submissionCount}x submitted</span>
+                                    </div>
+                                  )}
                                 </button>
                               )
                             })}
