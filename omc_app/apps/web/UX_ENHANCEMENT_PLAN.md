@@ -780,7 +780,59 @@ apps/web/src/app/
 
 ---
 
-### 13. Moonshot Features (Future Vision)
+### 13. UX Innovation: One-Click Answer Revival
+
+**Problem**: Typing text answers feels less "blockchain native" - users typically click buttons to buy tokens/NFTs.
+
+**Solution**: Hybrid approach that surfaces previous answers as clickable buttons while preserving text input for new opinions.
+
+**Concept: Answer History Revival UI**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Question: "Who is the GOAT of soccer?"                      │
+│ Current Answer: "Messi" (owned by 0x123...)                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ 📜 Previous Answers (one-click revival):                    │
+│                                                             │
+│  [Ronaldo - $8.00]  [Pelé - $6.50]  [Zidane - $5.00]       │
+│  [Maradona - $4.50] [Cruyff - $3.00]                       │
+│                                                             │
+│ ─────────────────── OR ───────────────────                  │
+│                                                             │
+│  [✍️ Submit New Answer]  → Opens text input                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits**:
+- More "clicky" blockchain-native UX
+- Leverages on-chain answer history (data already exists)
+- Reduces friction for popular/common answers
+- Creates interesting "revival" dynamics and competition
+- Still preserves creativity with "New Answer" option
+- Could show answer statistics (times submitted, last price, etc.)
+
+**Implementation Notes**:
+- Answer history already stored on-chain in `AnswerSubmitted` events
+- Could fetch via subgraph or RPC event logs
+- Display as buttons with last known price
+- One-click triggers same `submitAnswer()` with pre-filled text
+- "New Answer" opens current text input flow
+
+**Potential Enhancements**:
+- Show "🔥 Popular" badge on frequently-revived answers
+- Display "Last held by 0x..." for social proof
+- Price history chart per answer
+- "Trending answers" across similar questions in category
+
+| Status | Priority | Effort |
+|--------|----------|--------|
+| ❌ Not Started | Medium | 1-2 weeks |
+
+---
+
+### 14. Moonshot Features (Future Vision)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -850,5 +902,6 @@ apps/web/src/app/
 | Leaderboard | 6 | 4 | 0 | 2 |
 | Trust/Security | 16 | 12 | 1 | 3 |
 | **SEO & Discoverability** | **32** | **17** | **2** | **13** |
+| UX Innovation | 1 | 0 | 0 | 1 |
 | Moonshot | 16 | 0 | 0 | 16 |
-| **TOTAL** | **161** | **61 (38%)** | **10 (6%)** | **90 (56%)** |
+| **TOTAL** | **162** | **61 (38%)** | **10 (6%)** | **91 (56%)** |
