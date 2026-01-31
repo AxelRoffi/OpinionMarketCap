@@ -82,6 +82,18 @@ const SOCIAL_PLATFORMS = [
   }
 ];
 
+// Format deadline to readable date
+function formatDeadline(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Truncate text for Twitter (keep it under limit)
+function truncateForTwitter(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + '...';
+}
+
 export function PoolShareModal({ isOpen, onClose, poolDetails }: PoolShareModalProps) {
   const [copiedUrl, setCopiedUrl] = useState(false);
 
@@ -89,11 +101,30 @@ export function PoolShareModal({ isOpen, onClose, poolDetails }: PoolShareModalP
     ? `${window.location.origin}/pools/${poolDetails.id}`
     : `/pools/${poolDetails.id}`;
 
-  // Custom pool sharing message as requested
-  const shareText = `Hey! I created a pool on OpinionMarketCap for the question: "${poolDetails.opinionQuestion}"\n\nMy proposed answer: "${poolDetails.proposedAnswer}"\n\nJoin the pool and let's make money together! Only $${poolDetails.remainingAmount} USDC left to reach target.`;
+  const deadlineFormatted = formatDeadline(poolDetails.deadline);
+  const remainingFormatted = parseFloat(poolDetails.remainingAmount).toFixed(2);
 
-  // Shorter version for Twitter
-  const shortShareText = `Hey! I created a pool on @OpinionMktCap for: "${poolDetails.opinionQuestion}"\n\nJoin & let's make money together! Only $${poolDetails.remainingAmount} left.`;
+  // Full share message with all details
+  const shareText = `Hey! I created a pool on OpinionMarketCap!
+
+Question: "${poolDetails.opinionQuestion}"
+My answer: "${poolDetails.proposedAnswer}"
+
+We need $${remainingFormatted} more to reach the target before ${deadlineFormatted}.
+
+Join the pool and let's make money together!`;
+
+  // Shorter version for Twitter (280 char limit minus URL ~23 chars = ~250 chars for text)
+  const truncatedQuestion = truncateForTwitter(poolDetails.opinionQuestion, 50);
+  const truncatedAnswer = truncateForTwitter(poolDetails.proposedAnswer, 30);
+  const shortShareText = `Hey! Join my pool on @OpinionMktCap!
+
+Q: "${truncatedQuestion}"
+A: "${truncatedAnswer}"
+
+$${remainingFormatted} left • Ends ${deadlineFormatted}
+
+Let's profit together!`;
 
   const handleCopyUrl = async () => {
     try {
@@ -161,29 +192,20 @@ export function PoolShareModal({ isOpen, onClose, poolDetails }: PoolShareModalP
                 </Button>
               </div>
 
-              {/* Pool Preview */}
+              {/* Message Preview */}
               <div className="bg-slate-900 rounded-lg p-4 mb-6">
-                <div className="text-emerald-400 text-xs font-medium mb-2">Pool #{poolDetails.id}</div>
-                <h4 className="font-semibold text-white mb-2 line-clamp-2">
-                  {poolDetails.opinionQuestion}
-                </h4>
-                <p className="text-gray-300 text-sm mb-2 italic line-clamp-1">
-                  Target: "{poolDetails.proposedAnswer}"
-                </p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Progress:</span>
-                  <span className="text-emerald-400 font-medium">
-                    {poolDetails.progressPercentage.toFixed(1)}% (${poolDetails.currentAmount} / ${poolDetails.targetAmount})
-                  </span>
+                <div className="text-emerald-400 text-xs font-medium mb-3">Message Preview:</div>
+                <div className="text-gray-300 text-sm whitespace-pre-line leading-relaxed">
+                  <span className="text-white">Hey! I created a pool on OpinionMarketCap!</span>
+                  {'\n\n'}
+                  <span className="text-gray-400">Question:</span> <span className="text-white">"{poolDetails.opinionQuestion}"</span>
+                  {'\n'}
+                  <span className="text-gray-400">My answer:</span> <span className="text-emerald-400">"{poolDetails.proposedAnswer}"</span>
+                  {'\n\n'}
+                  <span className="text-yellow-400">We need ${remainingFormatted} more before {deadlineFormatted}.</span>
+                  {'\n\n'}
+                  <span className="text-white font-medium">Join the pool and let's make money together!</span>
                 </div>
-              </div>
-
-              {/* Invite Message Preview */}
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 mb-6">
-                <div className="text-xs text-emerald-400 font-medium mb-2">Preview Message:</div>
-                <p className="text-gray-300 text-sm italic">
-                  "Hey! I created a pool on OpinionMarketCap... Join & let's make money together!"
-                </p>
               </div>
 
               {/* Social Media Platforms */}
