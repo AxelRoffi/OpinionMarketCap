@@ -3,17 +3,21 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
-import { 
-  X, 
-  Zap, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
+import {
+  X,
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
   Loader2,
   AlertCircle,
   CheckCircle,
   Clock,
-  Info
+  Info,
+  ChevronDown,
+  ChevronUp,
+  History,
+  Sparkles
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -30,6 +34,7 @@ import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contr
 import { parseTransactionError, validateAnswerInputs, type ParsedError } from '@/lib/errors'
 import { validateAnswerForTrading } from '@/lib/contentFiltering'
 import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
+import { useAnswerHistory, formatHistoryPrice, formatHistoryTime, type AnswerHistoryEntry } from '@/hooks/useAnswerHistory'
 
 interface OpinionData {
   id: number
@@ -80,6 +85,16 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   const [currentStep, setCurrentStep] = useState<'form' | 'approve' | 'submit' | 'success' | 'error'>('form')
   const [errorState, setErrorState] = useState<ParsedError | null>(null)
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true) // Default to infinite approval
+  const [showContextFields, setShowContextFields] = useState(false) // Collapsed by default
+  const [isReviving, setIsReviving] = useState(false) // Track if user is reviving an answer
+
+  // Fetch answer history for this opinion
+  const { uniqueAnswers, isLoading: isLoadingHistory } = useAnswerHistory(opinionId)
+
+  // Filter out the current answer from revival options
+  const revivalOptions = uniqueAnswers.filter(
+    (entry) => entry.answer.toLowerCase().trim() !== opinionData.currentAnswer.toLowerCase().trim()
+  ).slice(0, 5) // Limit to 5 most recent unique answers
   
   // Convenience accessors for form data
   const { answer, description, externalLink: link, acceptedTerms } = formData
@@ -272,6 +287,34 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
+    // If user manually edits answer, they're no longer reviving
+    if (field === 'answer') {
+      setIsReviving(false)
+    }
+  }
+
+  // Handle revival selection - pre-fill answer and description
+  const handleRevivalSelect = (entry: AnswerHistoryEntry) => {
+    setFormData(prev => ({
+      ...prev,
+      answer: entry.answer,
+      description: entry.description || '',
+    }))
+    setIsReviving(true)
+    setShowContextFields(!!entry.description) // Show context if there was a description
+    setErrors({}) // Clear any errors
+  }
+
+  // Clear revival and start fresh
+  const handleNewAnswer = () => {
+    setFormData(prev => ({
+      ...prev,
+      answer: '',
+      description: '',
+      externalLink: '',
+    }))
+    setIsReviving(false)
+    setShowContextFields(false)
   }
 
   // Real-time content quality check (show warnings as user types)
@@ -330,6 +373,8 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     })
     setErrors({})
     setErrorState(null)
+    setShowContextFields(false)
+    setIsReviving(false)
   }
 
   useEffect(() => {
@@ -488,18 +533,73 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                   {/* Form or Transaction States */}
                   {currentStep === 'form' && (
                     <form onSubmit={handleSubmit} className="space-y-6">
+                      {/* Answer Revival Section */}
+                      {revivalOptions.length > 0 && !isLoadingHistory && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <History className="w-4 h-4 text-blue-400" />
+                            <Label className="text-foreground font-medium">Previous Answers</Label>
+                            <span className="text-xs text-muted-foreground">(one-click revival)</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {revivalOptions.map((entry, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => handleRevivalSelect(entry)}
+                                className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                                  isReviving && answer === entry.answer
+                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                    : 'bg-muted/50 border-border text-foreground hover:bg-muted hover:border-blue-500/50'
+                                }`}
+                              >
+                                <span className="max-w-[120px] truncate">{entry.answer}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatHistoryPrice(entry.price)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                          {isReviving && (
+                            <div className="flex items-center gap-2 text-sm text-emerald-400">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Reviving previous answer{description ? ' with context' : ''}</span>
+                              <button
+                                type="button"
+                                onClick={handleNewAnswer}
+                                className="text-muted-foreground hover:text-foreground underline ml-2"
+                              >
+                                Clear
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Divider if we have revival options */}
+                      {revivalOptions.length > 0 && !isLoadingHistory && (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 border-t border-border" />
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider">or submit new</span>
+                          <div className="flex-1 border-t border-border" />
+                        </div>
+                      )}
+
                       {/* Answer Input */}
                       <div className="space-y-2">
-                        <Label htmlFor="answer" className="text-foreground font-medium">
-                          Your Answer *
-                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-emerald-400" />
+                          <Label htmlFor="answer" className="text-foreground font-medium">
+                            Your Answer *
+                          </Label>
+                        </div>
                         <Textarea
                           id="answer"
                           value={answer}
                           onChange={(e) => updateFormField('answer', e.target.value)}
                           placeholder="Enter your answer..."
                           className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500 resize-none"
-                          rows={3}
+                          rows={2}
                           maxLength={ANSWER_LIMIT}
                         />
                         <div className="flex justify-between text-sm">
@@ -510,42 +610,73 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         </div>
                       </div>
 
-                      {/* Description Input */}
-                      <div className="space-y-2">
-                        <Label htmlFor="description" className="text-foreground font-medium">
-                          Description (optional)
-                        </Label>
-                        <Textarea
-                          id="description"
-                          value={description}
-                          onChange={(e) => updateFormField('description', e.target.value)}
-                          placeholder="Add context or explanation..."
-                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500 resize-none"
-                          rows={2}
-                          maxLength={DESCRIPTION_LIMIT}
-                        />
-                        <div className="flex justify-between text-sm">
-                          <span className="text-red-400">{errors.description}</span>
-                          <span className={`${description.length > DESCRIPTION_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
-                            {description.length}/{DESCRIPTION_LIMIT}
-                          </span>
-                        </div>
-                      </div>
+                      {/* Collapsible Context Fields */}
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowContextFields(!showContextFields)}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showContextFields ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                          <span>Add context (optional)</span>
+                          {(description || link) && !showContextFields && (
+                            <span className="text-xs text-emerald-400">• Has content</span>
+                          )}
+                        </button>
 
-                      {/* Link Input */}
-                      <div className="space-y-2">
-                        <Label htmlFor="link" className="text-foreground font-medium">
-                          External Link (optional)
-                        </Label>
-                        <Input
-                          id="link"
-                          type="url"
-                          value={link}
-                          onChange={(e) => updateFormField('externalLink', e.target.value)}
-                          placeholder="https://example.com"
-                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
-                        />
-                        <span className="text-red-400 text-sm">{errors.link}</span>
+                        <AnimatePresence>
+                          {showContextFields && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden space-y-4"
+                            >
+                              {/* Description Input */}
+                              <div className="space-y-2">
+                                <Label htmlFor="description" className="text-foreground font-medium">
+                                  Description
+                                </Label>
+                                <Textarea
+                                  id="description"
+                                  value={description}
+                                  onChange={(e) => updateFormField('description', e.target.value)}
+                                  placeholder="Add context or explanation..."
+                                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500 resize-none"
+                                  rows={2}
+                                  maxLength={DESCRIPTION_LIMIT}
+                                />
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-red-400">{errors.description}</span>
+                                  <span className={`${description.length > DESCRIPTION_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
+                                    {description.length}/{DESCRIPTION_LIMIT}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Link Input */}
+                              <div className="space-y-2">
+                                <Label htmlFor="link" className="text-foreground font-medium">
+                                  External Link
+                                </Label>
+                                <Input
+                                  id="link"
+                                  type="url"
+                                  value={link}
+                                  onChange={(e) => updateFormField('externalLink', e.target.value)}
+                                  placeholder="https://example.com"
+                                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
+                                />
+                                <span className="text-red-400 text-sm">{errors.link}</span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Content Quality Warning */}
