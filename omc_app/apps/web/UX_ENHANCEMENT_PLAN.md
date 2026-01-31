@@ -911,6 +911,108 @@ New answer:              Revival:
 
 ---
 
+### 13.2 UX Innovation: One-Click Pool Actions
+
+**Problem**: Pool creation requires multiple manual inputs (target price, duration, contribution). Joining requires amount decisions.
+
+**Current Pool Creation Flow**:
+```
+├── Select Opinion      ← Already chosen
+├── Target Price        ← Manual input (friction)
+├── Duration            ← Manual input (friction)
+└── Initial Contribution ← Manual input (friction)
+```
+
+**Solution A: Pool Creation Presets**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Create Pool for "Who is the GOAT of soccer?"                │
+│ Current Price: $12.50                                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ 🎯 Quick Pool Presets:                                      │
+│                                                             │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │
+│ │ 🐢 Safe     │ │ ⚖️ Balanced │ │ 🚀 Moon     │            │
+│ │ 2x ($25)    │ │ 3x ($37.50) │ │ 5x ($62.50) │            │
+│ │ 30 days     │ │ 21 days     │ │ 14 days     │            │
+│ │ [$10 min]   │ │ [$10 min]   │ │ [$25 min]   │            │
+│ └─────────────┘ └─────────────┘ └─────────────┘            │
+│                                                             │
+│ ─────────────────── OR ───────────────────                  │
+│                                                             │
+│ ▸ Custom pool settings                                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- One-click pool creation for most users
+- Presets auto-calculated from current price (2x, 3x, 5x)
+- Sensible duration defaults per risk level
+- Custom settings still available for power users
+
+**Solution B: Quick Join Amounts + Fill Remaining**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Join Pool: Target $50 (currently $32/$50)                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ Quick amounts:                                              │
+│ [$5] [$10] [$25] [$50] [Fill remaining ($18)]              │
+│                                                             │
+│ ─────────────────── OR ───────────────────                  │
+│                                                             │
+│ Custom: [$________] (1-100% slider)                         │
+│                                                             │
+│        [Join Pool - $10]                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- Dollar amounts more intuitive than percentages
+- "Fill remaining" helps pools succeed faster
+- Keeps existing slider for custom amounts
+
+**Solution C: Pool History Revival (Advanced)**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Create Pool for "Who is the GOAT of soccer?"                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ 📊 Previous pools on this opinion:                          │
+│                                                             │
+│ ┌──────────────────────────────────────────┐               │
+│ │ ✅ Hit $50 target (was $18 → $52)        │               │
+│ │    21 days | 8 contributors              │               │
+│ │    [Create Similar Pool]                 │               │
+│ └──────────────────────────────────────────┘               │
+│                                                             │
+│ ▸ Create new custom pool                                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- Social proof from past pools
+- Learn from what worked vs what failed
+- One-click to replicate successful configurations
+
+**Implementation Priority:**
+
+| Feature | Effort | Impact | Priority |
+|---------|--------|--------|----------|
+| Pool creation presets (2x/3x/5x) | 2 days | High | 1 |
+| "Fill remaining" button | 0.5 day | High | 2 |
+| Quick join amounts ($5/$10/$25/$50) | 1 day | Medium | 3 |
+| Pool history revival | 3 days | Medium | 4 |
+
+| Status | Priority | Effort |
+|--------|----------|--------|
+| ❌ Not Started | High | 3.5 days (core) + 3 days (history) |
+
+---
+
 ### 14. Moonshot Features (Future Vision)
 
 | Feature | Status | Notes |
@@ -956,6 +1058,9 @@ New answer:              Revival:
 | Copy trading link with referral embedded | 1 day | High |
 | Sticky search bar on scroll | 1 day | Low |
 | **Collapse description/link fields by default** | 1 day | **High** |
+| **Pool "Fill remaining" button** | 0.5 day | **High** |
+| **Pool creation presets (2x/3x/5x)** | 2 days | **High** |
+| Quick join amounts ($5/$10/$25/$50) | 1 day | Medium |
 | ~~**SEO: Add Open Graph meta to layout.tsx**~~ | ✅ DONE | **High** |
 | ~~**SEO: Create robots.txt**~~ | ✅ DONE | **High** |
 | ~~**SEO: Create basic sitemap.ts**~~ | ✅ DONE | **High** |
@@ -982,6 +1087,6 @@ New answer:              Revival:
 | Leaderboard | 6 | 4 | 0 | 2 |
 | Trust/Security | 16 | 12 | 1 | 3 |
 | **SEO & Discoverability** | **32** | **17** | **2** | **13** |
-| UX Innovation | 2 | 0 | 0 | 2 |
+| UX Innovation | 6 | 0 | 0 | 6 |
 | Moonshot | 16 | 0 | 0 | 16 |
-| **TOTAL** | **163** | **61 (37%)** | **10 (6%)** | **92 (57%)** |
+| **TOTAL** | **167** | **61 (37%)** | **10 (6%)** | **96 (57%)** |
