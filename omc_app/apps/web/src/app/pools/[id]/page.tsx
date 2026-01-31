@@ -3,13 +3,14 @@
 import React, { Suspense, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import { ArrowLeft, Users, Clock, Target, TrendingUp, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Target, TrendingUp, ExternalLink, Share2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePoolDetails, formatTimeRemaining, getStatusColor, getStatusText } from '@/hooks/usePoolDetails';
 import { PoolHeader } from './components/PoolHeader';
 import { PoolProgressBar } from './components/PoolProgressBar';
 import { JoinPoolModal } from './components/JoinPoolModal';
+import { PoolShareModal } from './components/PoolShareModal';
 import { FinancialDashboard } from './components/FinancialDashboard';
 import { CountdownTimer } from './components/CountdownTimer';
 
@@ -55,6 +56,20 @@ function PoolPageContent() {
   
   // Modal states
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [joinModalInitialAmount, setJoinModalInitialAmount] = useState<string | undefined>(undefined);
+
+  // Handler for "Fill Remaining" button
+  const handleFillRemaining = () => {
+    setJoinModalInitialAmount(poolDetails?.remainingAmount);
+    setIsJoinModalOpen(true);
+  };
+
+  // Handler for regular "Join Pool" button
+  const handleJoinPool = () => {
+    setJoinModalInitialAmount(undefined);
+    setIsJoinModalOpen(true);
+  };
 
   // Use the pool details hook
   const { poolDetails, isLoading, error, refresh } = usePoolDetails(poolId, address);
@@ -202,32 +217,43 @@ function PoolPageContent() {
 
               {poolDetails.canJoin ? (
                 <>
-                  <Button 
-                    size="lg" 
-                    onClick={() => setIsJoinModalOpen(true)}
+                  <Button
+                    size="lg"
+                    onClick={handleJoinPool}
                     className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium mb-3 transform hover:scale-105 transition-all duration-200"
                   >
                     Join Pool
                   </Button>
-                  
+
+                  {/* Fill Remaining Button */}
+                  <Button
+                    size="lg"
+                    onClick={handleFillRemaining}
+                    variant="outline"
+                    className="w-full border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-white font-medium mb-3 transform hover:scale-105 transition-all duration-200"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Fill Remaining (${parseFloat(poolDetails.remainingAmount).toFixed(2)})
+                  </Button>
+
                   <div className="text-center text-xs text-gray-400">
-                    Remaining: ${parseFloat(poolDetails.remainingAmount).toFixed(2)} USDC
+                    Only ${parseFloat(poolDetails.remainingAmount).toFixed(2)} USDC left to reach target!
                   </div>
                 </>
               ) : (
                 <>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="w-full bg-gray-600 text-gray-300 cursor-not-allowed"
                     disabled
                   >
-                    {poolDetails.status === 'executed' ? 'Pool Executed' : 
+                    {poolDetails.status === 'executed' ? 'Pool Executed' :
                      poolDetails.status === 'expired' ? 'Pool Expired' : 'Pool Full'}
                   </Button>
-                  
+
                   {poolDetails.canWithdraw && (
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="w-full mt-3 border-red-600 text-red-400 hover:bg-red-600/20"
                     >
@@ -236,6 +262,17 @@ function PoolPageContent() {
                   )}
                 </>
               )}
+
+              {/* Share Pool Button */}
+              <Button
+                size="sm"
+                onClick={() => setIsShareModalOpen(true)}
+                variant="outline"
+                className="w-full mt-4 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors duration-200"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share Pool
+              </Button>
             </div>
 
             {/* Countdown Timer */}
@@ -296,6 +333,14 @@ function PoolPageContent() {
           onClose={() => setIsJoinModalOpen(false)}
           poolDetails={poolDetails}
           onSuccess={refresh}
+          initialAmount={joinModalInitialAmount}
+        />
+
+        {/* Pool Share Modal */}
+        <PoolShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          poolDetails={poolDetails}
         />
       </div>
     </div>

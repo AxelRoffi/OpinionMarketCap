@@ -14,23 +14,24 @@ interface JoinPoolModalProps {
   onClose: () => void;
   poolDetails: DetailedPoolInfo;
   onSuccess?: () => void;
+  initialAmount?: string; // Pre-fill the contribution amount (e.g., for "Fill Remaining")
 }
 
-export function JoinPoolModal({ isOpen, onClose, poolDetails, onSuccess }: JoinPoolModalProps) {
+export function JoinPoolModal({ isOpen, onClose, poolDetails, onSuccess, initialAmount }: JoinPoolModalProps) {
   const [contributionAmount, setContributionAmount] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [step, setStep] = useState<'amount' | 'confirm' | 'processing' | 'success'>('amount');
-  
+
   const { contributeToPool, isContributing, error } = useContributeToPool();
 
-  // Reset modal state when opening/closing
+  // Reset modal state when opening/closing, pre-fill with initialAmount if provided
   useEffect(() => {
     if (isOpen) {
-      setContributionAmount('');
+      setContributionAmount(initialAmount || '');
       setAgreedToTerms(false);
       setStep('amount');
     }
-  }, [isOpen]);
+  }, [isOpen, initialAmount]);
 
   const contributionAmountFloat = parseFloat(contributionAmount) || 0;
   const remainingAmount = parseFloat(poolDetails.remainingAmount);
