@@ -34,7 +34,13 @@ import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contr
 import { parseTransactionError, validateAnswerInputs, type ParsedError } from '@/lib/errors'
 import { validateAnswerForTrading } from '@/lib/contentFiltering'
 import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
-import { useAnswerHistory, formatHistoryPrice, formatHistoryTime, type AnswerHistoryEntry } from '@/hooks/useAnswerHistory'
+import {
+  useAnswerHistory,
+  formatHistoryPrice,
+  getPriceTier,
+  getPriceTierColors,
+  type RankedAnswer
+} from '@/hooks/useAnswerHistory'
 
 interface OpinionData {
   id: number
@@ -87,14 +93,23 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true) // Default to infinite approval
   const [showContextFields, setShowContextFields] = useState(false) // Collapsed by default
   const [isReviving, setIsReviving] = useState(false) // Track if user is reviving an answer
+  const [showAllAnswers, setShowAllAnswers] = useState(false) // For "Show more" expansion
 
   // Fetch answer history for this opinion
-  const { uniqueAnswers, isLoading: isLoadingHistory } = useAnswerHistory(opinionId)
+  const { rankedAnswers, totalUniqueAnswers, isLoading: isLoadingHistory } = useAnswerHistory(opinionId)
 
   // Filter out the current answer from revival options
-  const revivalOptions = uniqueAnswers.filter(
+  const allRevivalOptions = rankedAnswers.filter(
     (entry) => entry.answer.toLowerCase().trim() !== opinionData.currentAnswer.toLowerCase().trim()
-  ).slice(0, 5) // Limit to 5 most recent unique answers
+  )
+
+  // Show 5 by default, all if expanded
+  const DEFAULT_VISIBLE = 5
+  const revivalOptions = showAllAnswers
+    ? allRevivalOptions.slice(0, 15) // Cap at 15 even when expanded
+    : allRevivalOptions.slice(0, DEFAULT_VISIBLE)
+
+  const hasMoreAnswers = allRevivalOptions.length > DEFAULT_VISIBLE
   
   // Convenience accessors for form data
   const { answer, description, externalLink: link, acceptedTerms } = formData
@@ -294,7 +309,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   }
 
   // Handle revival selection - pre-fill answer and description
-  const handleRevivalSelect = (entry: AnswerHistoryEntry) => {
+  const handleRevivalSelect = (entry: RankedAnswer) => {
     setFormData(prev => ({
       ...prev,
       answer: entry.answer,
@@ -375,6 +390,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
     setErrorState(null)
     setShowContextFields(false)
     setIsReviving(false)
+    setShowAllAnswers(false)
   }
 
   useEffect(() => {
@@ -535,39 +551,110 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                     <form onSubmit={handleSubmit} className="space-y-6">
                       {/* Answer Revival Section */}
                       {revivalOptions.length > 0 && !isLoadingHistory && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <History className="w-4 h-4 text-blue-400" />
-                            <Label className="text-foreground font-medium">Previous Answers</Label>
-                            <span className="text-xs text-muted-foreground">(one-click revival)</span>
+                        <div className="space-y-4">
+                          {/* Section Header */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 bg-blue-500/20 rounded-md">
+                                <History className="w-4 h-4 text-blue-400" />
+                              </div>
+                              <div>
+                                <Label className="text-foreground font-semibold">Quick Revival</Label>
+                                <p className="text-xs text-muted-foreground">One-click to bring back a previous answer</p>
+                              </div>
+                            </div>
+                            {totalUniqueAnswers > 1 && (
+                              <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
+                                {totalUniqueAnswers - 1} past {totalUniqueAnswers === 2 ? 'answer' : 'answers'}
+                              </span>
+                            )}
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            {revivalOptions.map((entry, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => handleRevivalSelect(entry)}
-                                className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                                  isReviving && answer === entry.answer
-                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                                    : 'bg-muted/50 border-border text-foreground hover:bg-muted hover:border-blue-500/50'
-                                }`}
-                              >
-                                <span className="max-w-[120px] truncate">{entry.answer}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatHistoryPrice(entry.price)}
-                                </span>
-                              </button>
-                            ))}
+
+                          {/* Revival Buttons Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {revivalOptions.map((entry, index) => {
+                              const tier = getPriceTier(entry.peakPrice)
+                              const colors = getPriceTierColors(tier)
+                              const isSelected = isReviving && answer === entry.answer
+
+                              return (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleRevivalSelect(entry)}
+                                  className={`
+                                    relative p-3 rounded-xl border-2 text-left transition-all duration-200
+                                    hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]
+                                    ${isSelected
+                                      ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30'
+                                      : `${colors.bg} ${colors.border} hover:border-opacity-100`
+                                    }
+                                  `}
+                                >
+                                  {/* Selected indicator */}
+                                  {isSelected && (
+                                    <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1">
+                                      <CheckCircle className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+
+                                  {/* Answer text */}
+                                  <div className={`font-semibold text-sm mb-1.5 truncate ${isSelected ? 'text-emerald-300' : colors.text}`}>
+                                    {entry.answer}
+                                  </div>
+
+                                  {/* Stats row */}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Peak price badge */}
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isSelected ? 'bg-emerald-500/30 text-emerald-200' : colors.badge}`}>
+                                      {formatHistoryPrice(entry.peakPrice)}
+                                    </span>
+
+                                    {/* Submission count - show fire for popular */}
+                                    {entry.submissionCount > 1 && (
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        {entry.submissionCount >= 3 && <span>🔥</span>}
+                                        {entry.submissionCount}x submitted
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              )
+                            })}
                           </div>
+
+                          {/* Show More / Show Less */}
+                          {hasMoreAnswers && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllAnswers(!showAllAnswers)}
+                              className="w-full py-2 text-sm text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1 transition-colors"
+                            >
+                              {showAllAnswers ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Show fewer answers
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-4 h-4" />
+                                  Show {Math.min(allRevivalOptions.length - DEFAULT_VISIBLE, 10)} more answers
+                                </>
+                              )}
+                            </button>
+                          )}
+
+                          {/* Revival confirmation */}
                           {isReviving && (
-                            <div className="flex items-center gap-2 text-sm text-emerald-400">
-                              <CheckCircle className="w-4 h-4" />
-                              <span>Reviving previous answer{description ? ' with context' : ''}</span>
+                            <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                              <div className="flex items-center gap-2 text-sm text-emerald-400">
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Reviving: <strong>{answer}</strong>{description ? ' (with context)' : ''}</span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={handleNewAnswer}
-                                className="text-muted-foreground hover:text-foreground underline ml-2"
+                                className="text-xs text-muted-foreground hover:text-red-400 transition-colors"
                               >
                                 Clear
                               </button>
