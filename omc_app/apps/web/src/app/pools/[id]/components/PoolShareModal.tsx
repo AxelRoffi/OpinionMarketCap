@@ -102,15 +102,15 @@ export function PoolShareModal({ isOpen, onClose, poolDetails }: PoolShareModalP
     : `/pools/${poolDetails.id}`;
 
   const deadlineFormatted = formatDeadline(poolDetails.deadline);
-  const remainingFormatted = parseFloat(poolDetails.remainingAmount).toFixed(2);
+  const progressFormatted = poolDetails.progressPercentage.toFixed(0);
 
-  // Full share message with all details
+  // Full share message with all details (no specific $ amount - it changes over time)
   const shareText = `Hey! I created a pool on OpinionMarketCap!
 
 Question: "${poolDetails.opinionQuestion}"
 My answer: "${poolDetails.proposedAnswer}"
 
-We need $${remainingFormatted} more to reach the target before ${deadlineFormatted}.
+We're ${progressFormatted}% funded - help us reach the goal before ${deadlineFormatted}!
 
 Join the pool and let's make money together!`;
 
@@ -122,7 +122,7 @@ Join the pool and let's make money together!`;
 Q: "${truncatedQuestion}"
 A: "${truncatedAnswer}"
 
-$${remainingFormatted} left • Ends ${deadlineFormatted}
+${progressFormatted}% funded • Ends ${deadlineFormatted}
 
 Let's profit together!`;
 
@@ -202,7 +202,7 @@ Let's profit together!`;
                   {'\n'}
                   <span className="text-gray-400">My answer:</span> <span className="text-emerald-400">"{poolDetails.proposedAnswer}"</span>
                   {'\n\n'}
-                  <span className="text-yellow-400">We need ${remainingFormatted} more before {deadlineFormatted}.</span>
+                  <span className="text-yellow-400">We're {progressFormatted}% funded - help us reach the goal before {deadlineFormatted}!</span>
                   {'\n\n'}
                   <span className="text-white font-medium">Join the pool and let's make money together!</span>
                 </div>
