@@ -6,7 +6,9 @@ import { Pool, UsePoolsReturn, PlatformStats } from '../types/pool-types';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
 
 // Contract addresses and ABI
-const POOL_MANAGER_ADDRESS = '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`;
+import { CONTRACTS } from '@/lib/contracts';
+
+const POOL_MANAGER_ADDRESS = CONTRACTS.POOL_MANAGER;
 
 // PoolManager ABI - key functions for reading pools
 // Correct struct order based on PoolStructs.sol:

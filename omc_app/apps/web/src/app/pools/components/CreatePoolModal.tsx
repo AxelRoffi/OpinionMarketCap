@@ -46,7 +46,9 @@ interface ErrorState {
 }
 
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`;
-const POOL_MANAGER_ADDRESS = '0x3B4584e690109484059D95d7904dD9fEbA246612' as `0x${string}`;
+import { CONTRACTS } from '@/lib/contracts';
+
+const POOL_MANAGER_ADDRESS = CONTRACTS.POOL_MANAGER;
 
 // Simplified ABI for USDC approve
 const USDC_ABI = [
