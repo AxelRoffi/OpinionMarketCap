@@ -832,6 +832,85 @@ apps/web/src/app/
 
 ---
 
+### 13.1 UX Innovation: Streamlined Context Fields
+
+**Problem**: Optional fields (description, link) add friction to trading. Every field = potential drop-off.
+
+**Current State**:
+```
+Submit Answer Form:
+├── Answer (required)      ← Essential
+├── Description (optional) ← Friction point
+└── Link (optional)        ← Friction point
+```
+
+**Solution**: Collapsed by default + Smart pre-fill for revivals
+
+**Concept A: Collapsed Context (New Answers)**
+```
+┌─────────────────────────────────────────┐
+│ Your Answer: [Messi________________]    │
+│                                         │
+│ ▸ Add context (optional)                │  ← Collapsed by default
+│                                         │
+│        [Submit Answer - $12.50]         │
+└─────────────────────────────────────────┘
+
+When user clicks to expand:
+┌─────────────────────────────────────────┐
+│ Your Answer: [Messi________________]    │
+│                                         │
+│ ▾ Add context (optional)                │
+│   Description: [____________________]   │
+│   Link: [https://___________________]   │
+│                                         │
+│        [Submit Answer - $12.50]         │
+└─────────────────────────────────────────┘
+```
+
+**Concept B: Smart Pre-fill (Answer Revivals)**
+```
+┌─────────────────────────────────────────┐
+│ Reviving: "Ronaldo"                     │
+│                                         │
+│ Previous context (auto-filled):         │
+│ "5x Ballon d'Or, 800+ career goals"     │
+│ Link: wikipedia.org/Ronaldo             │
+│                                         │
+│ [✓ Keep context] [✎ Edit] [✕ Clear]    │
+│                                         │
+│        [Submit Answer - $8.00]          │
+└─────────────────────────────────────────┘
+```
+
+**Combined Flow**:
+```
+New answer:              Revival:
+┌──────────────────┐    ┌──────────────────────────────┐
+│ Answer: [____]   │    │ Reviving: "Ronaldo"          │
+│ ▸ Add context    │    │ ☑ Include previous context   │
+│ [Submit $12.50]  │    │ [Submit $8.00]               │
+└──────────────────┘    └──────────────────────────────┘
+```
+
+**Benefits**:
+- Fast traders: 1 field + 1 click (no scrolling past empty fields)
+- Context lovers: Can still expand and add details
+- Revivals: Zero typing, quality context preserved automatically
+- Maintains data richness without forcing it
+
+**Implementation Notes**:
+- Wrap description/link in collapsible `<details>` or accordion
+- For revivals: fetch last description/link from `AnswerSubmitted` event
+- Checkbox "Include previous context" checked by default
+- Store user preference for "always show context fields"
+
+| Status | Priority | Effort |
+|--------|----------|--------|
+| ❌ Not Started | High | 1 day (collapse) + 2 days (pre-fill) |
+
+---
+
 ### 14. Moonshot Features (Future Vision)
 
 | Feature | Status | Notes |
@@ -876,6 +955,7 @@ apps/web/src/app/
 | "My Opinions" tab showing user's opinions | 2 days | Medium |
 | Copy trading link with referral embedded | 1 day | High |
 | Sticky search bar on scroll | 1 day | Low |
+| **Collapse description/link fields by default** | 1 day | **High** |
 | ~~**SEO: Add Open Graph meta to layout.tsx**~~ | ✅ DONE | **High** |
 | ~~**SEO: Create robots.txt**~~ | ✅ DONE | **High** |
 | ~~**SEO: Create basic sitemap.ts**~~ | ✅ DONE | **High** |
@@ -902,6 +982,6 @@ apps/web/src/app/
 | Leaderboard | 6 | 4 | 0 | 2 |
 | Trust/Security | 16 | 12 | 1 | 3 |
 | **SEO & Discoverability** | **32** | **17** | **2** | **13** |
-| UX Innovation | 1 | 0 | 0 | 1 |
+| UX Innovation | 2 | 0 | 0 | 2 |
 | Moonshot | 16 | 0 | 0 | 16 |
-| **TOTAL** | **162** | **61 (38%)** | **10 (6%)** | **91 (56%)** |
+| **TOTAL** | **163** | **61 (37%)** | **10 (6%)** | **92 (57%)** |
