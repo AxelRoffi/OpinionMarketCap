@@ -10,7 +10,7 @@ interface ProfileFeeBannerProps {
   isClaimingFees: boolean;
   claimSuccess: boolean;
   claimError: Error | null;
-  transactionHash: string | null;
+  transactionHash: string | null | undefined;
   isOwnProfile: boolean;
   targetAddress: string;
 }
