@@ -73,15 +73,6 @@ const getSmartContractCategories = () => {
   return ['All Categories', ...VISIBLE_CATEGORIES];
 };
 
-// Sort options
-const SORT_OPTIONS = [
-  { value: "id", label: "ID" },
-  { value: "marketCap", label: "Market Cap" },
-  { value: "volume", label: "Volume" },
-  { value: "change", label: "24h Change" },
-  { value: "price", label: "Price" },
-  { value: "trades", label: "Trades" }
-];
 
 export interface OpinionData {
   id: number;
@@ -756,8 +747,8 @@ function HomePageInner() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
-        
+      <div className="container mx-auto px-4 py-3">
+
         {/* Indexing Debug Info - Only show in development */}
         {process.env.NODE_ENV === 'development' && (
           <IndexingDebug stats={indexingStats} isVisible={true} />
@@ -779,113 +770,61 @@ function HomePageInner() {
           </div>
         )}
 
-        {/* Hero Banner */}
+        {/* Compact Header: Tagline + Stats + CTA in one strip */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card py-8 px-6 mb-8 rounded-2xl border-gradient"
+          className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <h1 className="text-3xl md:text-4xl font-black text-gradient">
-                  The Opinion Stock Market
-                </h1>
-                <span className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
-                  Live on Base
-                </span>
-              </div>
-              <p className="text-muted-foreground text-lg max-w-2xl">
-                Every question is a market. Submit your answer, set its price, and earn when others trade.
-              </p>
-              <span className="md:hidden inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20 mt-3">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
-                Live on Base
-              </span>
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-xl md:text-2xl font-black text-gradient whitespace-nowrap">
+              Opinion Markets
+            </h1>
+            <span className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
+              Live on Base
+            </span>
+          </div>
+
+          {/* Inline stats */}
+          <div className="flex items-center gap-3 md:gap-5 text-sm flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-emerald-500 font-bold text-xs">$</span>
+              <span className="text-muted-foreground text-xs">Cap</span>
+              <span className="text-foreground font-semibold">{formatLargeUSDC(marketStats.totalMarketCap)}</span>
             </div>
-            <div className="flex-shrink-0">
-              <Button
-                onClick={() => router.push('/mint')}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-emerald-500/25 transition-all duration-200"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create an Opinion
-              </Button>
+            <div className="flex items-center gap-1.5">
+              <BarChart3 className="w-3 h-3 text-blue-500" />
+              <span className="text-muted-foreground text-xs">Vol</span>
+              <span className="text-foreground font-semibold">{formatLargeUSDC(marketStats.totalVolume)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="w-3 h-3 text-orange-500" />
+              <span className="text-foreground font-semibold">{marketStats.activeTraders.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <MessageSquare className="w-3 h-3 text-purple-500" />
+              <span className="text-foreground font-semibold">{marketStats.totalOpinions}</span>
             </div>
           </div>
+
+          <Button
+            onClick={() => router.push('/mint')}
+            size="sm"
+            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold px-4 py-2 rounded-lg shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 flex-shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Create
+          </Button>
         </motion.div>
-
-        {/* Market Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <span className="text-emerald-500 font-bold text-sm">$</span>
-              </div>
-              <span className="text-muted-foreground text-sm font-medium">Market Cap</span>
-            </div>
-            <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalMarketCap)}</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <BarChart3 className="w-4 h-4 text-blue-500" />
-              </div>
-              <span className="text-muted-foreground text-sm font-medium">Volume</span>
-            </div>
-            <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalVolume)}</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Users className="w-4 h-4 text-orange-500" />
-              </div>
-              <span className="text-muted-foreground text-sm font-medium">Traders</span>
-            </div>
-            <div className="text-foreground text-2xl font-bold">{marketStats.activeTraders.toLocaleString()}</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <MessageSquare className="w-4 h-4 text-purple-500" />
-              </div>
-              <span className="text-muted-foreground text-sm font-medium">Markets</span>
-            </div>
-            <div className="text-foreground text-2xl font-bold">{marketStats.totalOpinions}</div>
-          </motion.div>
-        </div>
 
 
         {/* Search & Filter System */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass-card p-3 rounded-xl mb-6"
+          transition={{ delay: 0.1 }}
+          className="glass-card p-2.5 rounded-xl mb-4"
         >
           <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
