@@ -257,7 +257,7 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
                 outerRadius={120}
                 paddingAngle={5}
                 dataKey="value"
-                label={({ name, percentage }) => `${name}: ${percentage.toFixed(0)}%`}
+                label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 labelLine={{ stroke: 'var(--muted-foreground)' }}
               >
                 {chartData.categoryData.map((entry, index) => (
