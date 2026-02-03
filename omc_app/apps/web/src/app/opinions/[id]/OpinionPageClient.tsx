@@ -4,50 +4,42 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createOpinionUrl } from '@/lib/url-utils';
 import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Zap, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useOpinionDetail } from '../hooks/use-opinion-detail';
-import { OpinionHeader } from '../components/opinion-header';
+import { QuestionHero } from '../components/question-hero';
+import { PriceBar } from '../components/price-bar';
+import { AnswerHistoryPanel } from '../components/answer-history';
 import { OpinionChart } from '../components/opinion-chart';
 import { OpinionActivity } from '../components/opinion-activity';
-import { OpinionStatsComponent, DetailedStats } from '../components/opinion-stats';
+import { DetailedStats } from '../components/opinion-stats';
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
-import { TradingModal } from '@/components/TradingModal';
+import { InlineTradingPanel } from '../components/inline-trading-panel';
+import { MobileTradingSheet } from '../components/mobile-trading-sheet';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';
 
-// Main client component for the opinion detail page
 export default function OpinionPageClient() {
   const params = useParams();
   const router = useRouter();
   const { address } = useAccount();
-  const [showTradingModal, setShowTradingModal] = useState(false);
+  const [showMobileTrading, setShowMobileTrading] = useState(false);
   const [showPoolCreationModal, setShowPoolCreationModal] = useState(false);
   const [showListForSaleModal, setShowListForSaleModal] = useState(false);
   const [showCancelListingModal, setShowCancelListingModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('chart');
 
   const opinionId = parseInt(params.id as string);
-  
-  // Use original working hook
   const { opinion, stats, activity, loading, error } = useOpinionDetail(opinionId);
 
-  // Redirect to new descriptive URL format when opinion data is loaded
+  // Redirect to descriptive URL
   useEffect(() => {
     if (opinion && !loading && opinion.question) {
-      // Create the new descriptive URL
       const newUrl = createOpinionUrl(opinionId, opinion.question);
       const currentPath = window.location.pathname;
-      
-      // Check if we're currently on the old format (just /opinions/[id])
-      // and not already on the new format
       if (currentPath === `/opinions/${opinionId}` && currentPath !== newUrl) {
-        // Replace the current URL with the new descriptive one
         router.replace(newUrl);
       }
     }
@@ -59,56 +51,12 @@ export default function OpinionPageClient() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Alert className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Invalid opinion ID. Please check the URL and try again.
-          </AlertDescription>
+          <AlertDescription>Invalid opinion ID. Please check the URL and try again.</AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  // Handle back navigation
-  const handleBack = () => {
-    router.back();
-  };
-
-  // Handle trade action
-  const handleTrade = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowTradingModal(true);
-  };
-
-  // Handle pool creation action
-  const handleCreatePool = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowPoolCreationModal(true);
-  };
-
-  // Handle list for sale action
-  const handleListForSale = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowListForSaleModal(true);
-  };
-
-  // Handle cancel listing action
-  const handleCancelListing = () => {
-    if (!address) {
-      // Show connect wallet prompt
-      return;
-    }
-    setShowCancelListingModal(true);
-  };
-
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -117,158 +65,154 @@ export default function OpinionPageClient() {
           <h1 className="text-2xl font-bold text-foreground">Error Loading Opinion</h1>
           <p className="text-muted-foreground max-w-md">{error}</p>
           <div className="flex space-x-4 justify-center">
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Try Again
-            </Button>
-            <Button onClick={handleBack}>
-              Go Back
-            </Button>
+            <Button onClick={() => window.location.reload()} variant="outline">Try Again</Button>
+            <Button onClick={() => router.back()}>Go Back</Button>
           </div>
         </div>
       </div>
     );
   }
 
-  // Loading state with skeleton
   if (loading || !opinion) {
     return <OpinionDetailSkeleton />;
   }
 
+  // Derived state
+  const canListForSale = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() &&
+    (opinion.salePrice === 0n || opinion.salePrice === undefined);
+  const isForSale = opinion.salePrice > 0n;
+  const canCancelListing = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && isForSale;
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-4 space-y-4 pb-20 md:pb-4">
-        {/* Hero Section */}
-        <OpinionHeader
-          opinion={opinion}
-          onBack={handleBack}
-          onTrade={handleTrade}
-          onCreatePool={handleCreatePool}
-          onListForSale={handleListForSale}
-          onCancelListing={handleCancelListing}
-        />
+      <div className="max-w-7xl mx-auto p-4 pb-24 lg:pb-4">
+        {/* Question Hero */}
+        <QuestionHero opinion={opinion} />
 
-        {/* Key Stats Row */}
-        {stats && (
-          <OpinionStatsComponent
-            stats={stats}
-            currentPrice={Number(opinion.nextPrice) / 1_000_000}
-            totalVolume={Number(opinion.totalVolume) / 1_000_000}
-            loading={loading}
-          />
-        )}
+        {/* 2-Column Layout */}
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* Left Column: Content (60%) */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Price Bar */}
+            <PriceBar opinion={opinion} totalTrades={stats?.totalTrades ?? 0} />
 
-        {/* Main Content Tabs */}
-        <div className="bg-card rounded-lg border border-border">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-t-lg">
-              <TabsTrigger value="chart" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Chart
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Activity
-              </TabsTrigger>
-              <TabsTrigger value="details" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Details
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chart" className="p-6 m-0">
+            {/* Chart */}
+            <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
               <OpinionChart
                 data={stats?.volumeHistory || []}
                 currentPrice={Number(opinion.nextPrice) / 1_000_000}
               />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="p-6 m-0">
-              <OpinionActivity
-                activity={activity}
-                loading={loading}
-              />
-            </TabsContent>
-            
-            <TabsContent value="details" className="p-6 m-0">
-              {stats && (
+            </div>
+
+            {/* Answer History */}
+            <AnswerHistoryPanel
+              opinionId={opinion.id}
+              currentAnswer={opinion.currentAnswer}
+            />
+
+            {/* Activity Feed */}
+            <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
+              <OpinionActivity activity={activity} loading={loading} />
+            </div>
+
+            {/* Detailed Stats */}
+            {stats && (
+              <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
                 <DetailedStats
                   stats={stats}
                   currentPrice={Number(opinion.nextPrice) / 1_000_000}
                   totalVolume={Number(opinion.totalVolume) / 1_000_000}
                 />
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Connect Wallet Prompt */}
-        {!address && (
-          <div className="bg-card rounded-lg p-6 border border-border text-center">
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Connect Your Wallet to Trade
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Connect your wallet to start trading this opinion and submit new answers.
-            </p>
-            <ConnectButton />
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right Column: Trading Panel (40%) - Desktop only */}
+          <div className="hidden lg:block lg:col-span-2">
+            <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              <InlineTradingPanel
+                opinionId={opinion.id}
+                opinionData={{
+                  id: opinion.id,
+                  question: opinion.question,
+                  currentAnswer: opinion.currentAnswer,
+                  nextPrice: opinion.nextPrice,
+                  lastPrice: opinion.lastPrice,
+                  totalVolume: opinion.totalVolume,
+                  creator: opinion.creator,
+                  currentAnswerOwner: opinion.currentAnswerOwner,
+                  categories: opinion.categories,
+                  isActive: opinion.isActive,
+                }}
+                onCreatePool={() => setShowPoolCreationModal(true)}
+                onListForSale={() => setShowListForSaleModal(true)}
+                onCancelListing={() => setShowCancelListingModal(true)}
+                canListForSale={canListForSale}
+                canCancelListing={canCancelListing}
+                isForSale={isForSale}
+                salePrice={opinion.salePrice}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Sticky Action Panel (Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:hidden z-10">
-        <div className="flex gap-3">
+      {/* Mobile Sticky Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 lg:hidden z-10">
+        <div className="flex gap-2.5">
           <Button
-            onClick={handleTrade}
-            className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-base"
+            onClick={() => setShowMobileTrading(true)}
+            className="flex-1 h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm"
           >
+            <Zap className="w-4 h-4 mr-1.5" />
             Trade
           </Button>
-          {opinion && opinion.nextPrice >= 100_000_000 ? (
+          {opinion.nextPrice >= 100_000_000n ? (
             <Button
-              onClick={handleCreatePool}
+              onClick={() => setShowPoolCreationModal(true)}
               variant="outline"
-              className="flex-1 h-12 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-base"
+              className="flex-1 h-11 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-sm"
             >
+              <Target className="w-4 h-4 mr-1.5" />
               Pool
             </Button>
           ) : (
             <Button
               disabled
               variant="outline"
-              className="flex-1 h-12 border-border text-muted-foreground cursor-not-allowed font-semibold text-base"
+              className="flex-1 h-11 border-border text-muted-foreground cursor-not-allowed font-semibold text-sm"
             >
+              <Target className="w-4 h-4 mr-1.5" />
               Pool
             </Button>
           )}
         </div>
-        {opinion && opinion.nextPrice < 100_000_000 && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Pool requires NextPrice ≥ 100 USDC
-          </p>
+        {opinion.nextPrice < 100_000_000n && (
+          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">Pool requires price ≥ 100 USDC</p>
         )}
       </div>
 
-      {/* Trading Modal */}
-      {showTradingModal && opinion && (
-        <TradingModal
-          isOpen={showTradingModal}
-          opinionId={opinion.id}
-          opinionData={{
-            id: opinion.id,
-            question: opinion.question,
-            currentAnswer: opinion.currentAnswer,
-            nextPrice: opinion.nextPrice,
-            lastPrice: opinion.lastPrice,
-            totalVolume: opinion.totalVolume,
-            creator: opinion.creator,
-            currentAnswerOwner: opinion.currentAnswerOwner,
-            categories: opinion.categories,
-            isActive: opinion.isActive,
-          }}
-          onClose={() => setShowTradingModal(false)}
-        />
-      )}
+      {/* Mobile Trading Sheet */}
+      <MobileTradingSheet
+        isOpen={showMobileTrading}
+        onClose={() => setShowMobileTrading(false)}
+        opinionId={opinion.id}
+        opinionData={{
+          id: opinion.id,
+          question: opinion.question,
+          currentAnswer: opinion.currentAnswer,
+          nextPrice: opinion.nextPrice,
+          lastPrice: opinion.lastPrice,
+          totalVolume: opinion.totalVolume,
+          creator: opinion.creator,
+          currentAnswerOwner: opinion.currentAnswerOwner,
+          categories: opinion.categories,
+          isActive: opinion.isActive,
+        }}
+      />
 
       {/* Pool Creation Modal */}
-      {showPoolCreationModal && opinion && (
+      {showPoolCreationModal && (
         <CreatePoolModal
           isOpen={showPoolCreationModal}
           opinionId={opinion.id}
@@ -277,14 +221,14 @@ export default function OpinionPageClient() {
             question: opinion.question,
             currentAnswer: opinion.currentAnswer,
             nextPrice: opinion.nextPrice,
-            category: opinion.categories[0] || 'General'
+            category: opinion.categories[0] || 'General',
           }}
           onClose={() => setShowPoolCreationModal(false)}
         />
       )}
 
       {/* List For Sale Modal */}
-      {showListForSaleModal && opinion && (
+      {showListForSaleModal && (
         <ListForSaleModal
           isOpen={showListForSaleModal}
           opinionData={{
@@ -300,15 +244,12 @@ export default function OpinionPageClient() {
             creator: opinion.creator,
           }}
           onClose={() => setShowListForSaleModal(false)}
-          onSuccess={() => {
-            // Refresh the page to show updated sale status
-            window.location.reload();
-          }}
+          onSuccess={() => window.location.reload()}
         />
       )}
 
       {/* Cancel Listing Modal */}
-      {showCancelListingModal && opinion && (
+      {showCancelListingModal && (
         <CancelListingModal
           isOpen={showCancelListingModal}
           opinionData={{
@@ -318,10 +259,7 @@ export default function OpinionPageClient() {
             questionOwner: opinion.questionOwner,
           }}
           onClose={() => setShowCancelListingModal(false)}
-          onSuccess={() => {
-            // Refresh the page to show updated sale status
-            window.location.reload();
-          }}
+          onSuccess={() => window.location.reload()}
         />
       )}
     </div>

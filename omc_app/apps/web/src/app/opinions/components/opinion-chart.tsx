@@ -127,7 +127,7 @@ export function OpinionChart({ data, currentPrice }: OpinionChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="h-80">
+      <div className="h-64 lg:h-80">
         {!mounted || !RechartsComponents ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
