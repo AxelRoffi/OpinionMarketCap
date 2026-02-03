@@ -3,15 +3,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  TrendingUp, 
-  Search, 
-  ChevronUp, 
+import {
+  TrendingUp,
+  Search,
+  ChevronUp,
   ChevronDown,
-  ChevronsUpDown,
   BarChart3,
   Flame,
-  Star,
   Users,
   MessageSquare,
   Zap,
@@ -19,7 +17,9 @@ import {
   Filter,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
+  Sparkles,
+  Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -27,8 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { PriceHistoryChart } from '@/components/PriceHistoryChart';
+// Charts removed from main page - available on opinion detail page
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
 import { useContentFiltering } from '@/hooks/useContentFiltering';
@@ -506,20 +505,27 @@ function HomePageInner() {
       
       let matchesTab = true;
       if (activeTab === 'trending') {
-        // Enhanced trending logic - hot markets or high recent activity
+        // Hot markets - high volume or hot status
         matchesTab = opinion.marketStatus === 'hot' || Number(opinion.totalVolume) > 5_000_000;
+      } else if (activeTab === 'newest') {
+        // Newest tab shows all opinions, sorted by ID descending (handled in sort below)
+        matchesTab = true;
       } else if (activeTab === 'featured') {
-        // For now, consider all as featured - would need featured flag from contract
         matchesTab = true;
       }
       
       return matchesSearch && matchesCategory && matchesTab;
     });
 
-    // Sort opinions
+    // Sort opinions - "newest" tab forces ID descending
+    if (activeTab === 'newest') {
+      filtered.sort((a, b) => b.id - a.id);
+      return filtered;
+    }
+
     filtered.sort((a, b) => {
       let aValue, bValue;
-      
+
       switch (sortBy) {
         case 'marketCap':
           aValue = Number(a.totalVolume);
@@ -769,26 +775,60 @@ function HomePageInner() {
         
         {eventsError && (
           <div className="mb-4 p-4 bg-yellow-900/50 border border-yellow-700 rounded-lg">
-            <span className="text-yellow-300">🔄 Using hybrid data - Real contract state + intelligent estimates (RPC issues)</span>
+            <span className="text-yellow-300">Using hybrid data - Real contract state + intelligent estimates</span>
           </div>
         )}
-        
-        {/* Market Statistics Cards - EXACT ICONS & COLORS */}
+
+        {/* Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card py-8 px-6 mb-8 rounded-2xl border-gradient"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <h1 className="text-3xl md:text-4xl font-black text-gradient">
+                  The Opinion Stock Market
+                </h1>
+                <span className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
+                  Live on Base
+                </span>
+              </div>
+              <p className="text-muted-foreground text-lg max-w-2xl">
+                Every question is a market. Submit your answer, set its price, and earn when others trade.
+              </p>
+              <span className="md:hidden inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20 mt-3">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
+                Live on Base
+              </span>
+            </div>
+            <div className="flex-shrink-0">
+              <Button
+                onClick={() => router.push('/mint')}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-emerald-500/25 transition-all duration-200"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create an Opinion
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Market Statistics Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card border border-border rounded-lg p-6"
+            className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-500 font-bold text-lg">$</span>
-                <span className="text-muted-foreground text-sm font-medium">Total Market Cap</span>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <span className="text-emerald-500 font-bold text-sm">$</span>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                (24h: soon)
-              </div>
+              <span className="text-muted-foreground text-sm font-medium">Market Cap</span>
             </div>
             <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalMarketCap)}</div>
           </motion.div>
@@ -797,16 +837,13 @@ function HomePageInner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-card border border-border rounded-lg p-6"
+            className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
                 <BarChart3 className="w-4 h-4 text-blue-500" />
-                <span className="text-muted-foreground text-sm font-medium">Total Volume</span>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                (24h: soon)
-              </div>
+              <span className="text-muted-foreground text-sm font-medium">Volume</span>
             </div>
             <div className="text-foreground text-2xl font-bold">{formatLargeUSDC(marketStats.totalVolume)}</div>
           </motion.div>
@@ -815,16 +852,13 @@ function HomePageInner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-lg p-6"
+            className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
                 <Users className="w-4 h-4 text-orange-500" />
-                <span className="text-muted-foreground text-sm font-medium">Total Participants</span>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                (24h: soon)
-              </div>
+              <span className="text-muted-foreground text-sm font-medium">Traders</span>
             </div>
             <div className="text-foreground text-2xl font-bold">{marketStats.activeTraders.toLocaleString()}</div>
           </motion.div>
@@ -833,34 +867,32 @@ function HomePageInner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-card border border-border rounded-lg p-6"
+            className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
                 <MessageSquare className="w-4 h-4 text-purple-500" />
-                <span className="text-muted-foreground text-sm font-medium">Total Opinions</span>
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                (today: soon)
-              </div>
+              <span className="text-muted-foreground text-sm font-medium">Markets</span>
             </div>
             <div className="text-foreground text-2xl font-bold">{marketStats.totalOpinions}</div>
           </motion.div>
         </div>
 
 
-        {/* Search & Filter System - VISIBILITY FIXED */}
+        {/* Search & Filter System */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-col md:flex-row gap-4 mb-6"
+          className="glass-card p-3 rounded-xl mb-6"
         >
+          <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               type="text"
-              placeholder="Search opinions..."
+              placeholder="Search topics, answers, categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
@@ -895,6 +927,7 @@ function HomePageInner() {
               </Badge>
             )}
           </Button>
+          </div>
         </motion.div>
 
         {/* Quality Filter Controls */}
@@ -990,7 +1023,7 @@ function HomePageInner() {
           </motion.div>
         )}
 
-        {/* Tab Navigation System - EXACT MATCH */}
+        {/* Tab Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -998,461 +1031,209 @@ function HomePageInner() {
           className="mb-6"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-muted/50 border border-border p-1 rounded-lg">
-              <TabsTrigger value="all" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-accent">
+            <TabsList className="bg-muted/50 border border-border p-1 rounded-xl">
+              <TabsTrigger value="all" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
                 <BarChart3 className="w-4 h-4" />
-                All Opinions
+                All Markets
               </TabsTrigger>
-              <TabsTrigger value="trending" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-accent">
+              <TabsTrigger value="trending" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
                 <Flame className="w-4 h-4" />
-                Trending
+                Hot
+              </TabsTrigger>
+              <TabsTrigger value="newest" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
+                <Sparkles className="w-4 h-4" />
+                Newest
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </motion.div>
 
-        {/* Main Opinions Table - EXACT STRUCTURE */}
+        {/* Live Markets Card-List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-card border border-border rounded-lg overflow-hidden"
+          className="rounded-xl overflow-hidden"
         >
-          <div className="p-4 border-b border-border">
-            <h2 className="text-foreground text-xl font-semibold mb-2 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Opinion Market ({totalFiltered})
-            </h2>
-          </div>
-
-          {/* Table Header - ENHANCED: ADDED NEW COLUMNS */}
-          <div className="hidden lg:grid gap-2 px-4 py-3 bg-muted/50 border-b border-border" style={{
-            gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
-          }}>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('id')}
-            >
-              <span className="text-sm">#</span>
-              {sortState.column === 'id' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
+          {/* Title + Sort Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-foreground text-2xl font-black flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-emerald-500" />
+                Live Markets
+                <Badge variant="secondary" className="text-xs font-medium">{totalFiltered}</Badge>
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">Every question is a market. Every answer is a trade.</p>
             </div>
-            <div className="text-foreground text-base font-bold">question</div>
-            <div className="text-foreground text-base font-bold">answer</div>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('lastPrice')}
-            >
-              <span className="text-sm whitespace-nowrap">last price</span>
-              {sortState.column === 'lastPrice' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
+            {/* Sort Pills */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground">Sort:</span>
+              {[
+                { key: 'id', label: 'ID' },
+                { key: 'price', label: 'Price' },
+                { key: 'volume', label: 'Volume' },
+                { key: 'change', label: 'Change' },
+                { key: 'trades', label: 'Trades' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => handleSort(opt.key)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors duration-150 ${
+                    sortState.column === opt.key
+                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      : 'text-muted-foreground border-border hover:border-emerald-500/30 hover:text-foreground'
+                  }`}
+                >
+                  {opt.label}
+                  {sortState.column === opt.key && (
+                    sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3 inline ml-0.5" /> : <ChevronUp className="w-3 h-3 inline ml-0.5" />
+                  )}
+                </button>
+              ))}
             </div>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('price')}
-            >
-              <span className="text-sm whitespace-nowrap">next price</span>
-              {sortState.column === 'price' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('change')}
-            >
-              <span className="text-sm">var %</span>
-              {sortState.column === 'change' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('trades')}
-            >
-              <span className="text-sm">trades</span>
-              {sortState.column === 'trades' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div
-              className="text-foreground text-base font-bold cursor-pointer hover:text-emerald-500 transition-colors flex items-center justify-center gap-1"
-              onClick={() => handleSort('volume')}
-            >
-              <span className="text-sm">vol</span>
-              {sortState.column === 'volume' ? (
-                sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronsUpDown className="w-3 h-3" />
-              )}
-            </div>
-            <div className="text-foreground text-base font-bold text-center hidden lg:block">chart</div>
-            <div className="text-foreground text-base font-bold text-center">actions</div>
           </div>
 
           {/* Pagination Info */}
-          <div className="px-4 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Showing <span className="text-foreground font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-foreground font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-foreground font-medium">{totalFiltered}</span> opinions
+          <div className="px-1 py-2 mb-3 flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              Showing <span className="text-foreground font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-foreground font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-foreground font-medium">{totalFiltered}</span>
             </div>
             <div className="text-sm text-muted-foreground">
               Page <span className="text-foreground font-medium">{currentPage}</span> of <span className="text-foreground font-medium">{totalPages}</span>
             </div>
           </div>
 
-          {/* Table Body - REAL CONTRACT DATA */}
-          <div className="divide-y divide-border/20">
+          {/* Opinion Card List */}
+          <div className="space-y-3">
             {paginatedOpinions.map((opinion, index) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
               const displayCategories = opinion.categories && opinion.categories.length > 0
                 ? opinion.categories
                 : ['Other'];
-              
+
               // Get real data flags for this opinion
-              const realCreationTime = getCreationTimestamp(opinion.id);
-              const realTradesCount = getTradeCount(opinion.id);
               const accurateTradesCount = getAccurateTradeCount(opinion.id);
-              const realLastActivity = getLastActivity(opinion.id);
-              
-              // DEBUG: Log trade count data for opinion #1 to understand the discrepancy
-              if (opinion.id === 1) {
-                console.log('🔍 DEBUG OPINION #1 TRADE COUNTS:', {
-                  opinionId: opinion.id,
-                  enhancedTradesCount: opinion.tradesCount, // From useMemo calculation
-                  accurateTradesCount, // From useAccurateTradeCounts
-                  realTradesCount, // From useOpinionEvents
-                  volumeUSDC: Number(opinion.totalVolume) / 1_000_000,
-                  nextPriceUSDC: Number(opinion.nextPrice) / 1_000_000
-                });
-              }
 
               return (
                 <motion.div
                   key={opinion.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="grid grid-cols-1 lg:grid-cols-10 md:gap-2 px-4 py-4 bg-card/30 hover:bg-muted/50 transition-colors duration-200 cursor-pointer items-center"
-                  style={{
-                    gridTemplateColumns: "40px 1fr 200px 80px 80px 70px 80px 80px 120px 120px"
-                  }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.05, 0.5) }}
+                  className="flex items-stretch gap-3 md:gap-4 p-4 rounded-xl border border-border/50 hover:border-emerald-500/30 hover:bg-muted/20 transition-all duration-200 cursor-pointer"
                   onClick={() => router.push(createOpinionUrl(opinion.id, opinion.question))}
                 >
-                  {/* Mobile Layout - ENHANCED: Better Trading UX */}
-                  <div className="lg:hidden col-span-1 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground font-medium">#{opinion.id}</span>
-                        {activeTab === 'trending' && <Flame className="w-4 h-4 text-orange-400" />}
-                        {activeTab === 'featured' && <Star className="w-4 h-4 text-purple-400" />}
-                      </div>
-                    </div>
+                  {/* Left: Rank */}
+                  <div className="hidden md:flex items-center justify-center w-10 flex-shrink-0">
+                    <span className="text-muted-foreground font-mono text-sm">#{opinion.id}</span>
+                  </div>
 
-                    <div className="w-full">
-                      <div className="text-foreground font-bold text-base mb-1 leading-tight">
+                  {/* Center: Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Question */}
+                    <div className="flex items-start gap-2 mb-1">
+                      <span className="md:hidden text-muted-foreground font-mono text-xs">#{opinion.id}</span>
+                      <h3 className="text-foreground font-bold text-base leading-tight">
                         {formatQuestion(opinion.question)}
-                      </div>
-                      <div className="text-xs mb-2">
+                      </h3>
+                    </div>
+                    {/* Meta: author + categories + badges */}
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="text-xs text-muted-foreground">
                         by <ClickableAddress
                           address={opinion.creator}
                           className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
                         >
                           {truncateAddress(opinion.creator)}
                         </ClickableAddress>
-                        {getTrendingBadge(opinion.totalVolume) && (
-                          <span className="ml-2">{getTrendingBadge(opinion.totalVolume)}</span>
-                        )}
-                        {getMarketStatusBadge(opinion.marketStatus) && (
-                          <span className="ml-1">{getMarketStatusBadge(opinion.marketStatus)}</span>
-                        )}
-                      </div>
-                      {/* Category Badges integrated in Question */}
-                      <div className="mt-1 mb-2 flex flex-wrap gap-1">
-                        {displayCategories.map((category, catIndex) => (
-                          <Badge
-                            key={catIndex}
-                            className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-2 py-1 rounded-full text-xs font-medium`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (category === 'Adult (NSFW)' && !adultContentEnabled) {
-                                setShowAdultModal(true);
-                              } else {
-                                setSelectedCategory(category);
-                                setActiveTab('all');
-                                router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
-                              }
-                            }}
-                          >
-                            {category}
-                            {category === 'Adult (NSFW)' && ' 🔞'}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="text-foreground font-bold text-sm mb-2 flex items-center gap-2">
-                        <button
-                          className="hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none focus:text-emerald-400"
+                      </span>
+                      {displayCategories.map((category, catIndex) => (
+                        <Badge
+                          key={catIndex}
+                          className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-1.5 py-0.5 rounded text-[10px] font-medium`}
                           onClick={(e) => {
-                            e.preventDefault();
                             e.stopPropagation();
-                            console.log('🔗 Answer clicked - Opinion:', opinion.id, 'Link:', opinion.link);
-                            if (opinion.link && opinion.link.trim()) {
-                              console.log('✅ Opening link:', opinion.link);
-                              window.open(opinion.link, '_blank');
+                            if (category === 'Adult (NSFW)' && !adultContentEnabled) {
+                              setShowAdultModal(true);
                             } else {
-                              console.log('❌ No valid link found for opinion', opinion.id);
-                              console.log('Link value:', JSON.stringify(opinion.link));
-                              // Fallback: show alert or create a basic link
-                              alert(`No link available for "${opinion.currentAnswer}"`);
+                              setSelectedCategory(category);
+                              setActiveTab('all');
+                              router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
                             }
                           }}
-                          type="button"
                         >
-                          <ExternalLink className="w-3 h-3" />
-                          {opinion.currentAnswer}
-                        </button>
-                      </div>
-                      <div className="text-xs">
-                        by <ClickableAddress
-                          address={opinion.currentAnswerOwner}
-                          className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
-                        >
-                          {truncateAddress(opinion.currentAnswerOwner)}
-                        </ClickableAddress>
-                      </div>
+                          {category}
+                          {category === 'Adult (NSFW)' && ' 🔞'}
+                        </Badge>
+                      ))}
+                      {getTrendingBadge(opinion.totalVolume)}
+                      {getMarketStatusBadge(opinion.marketStatus)}
                     </div>
-
-                    {/* Mobile Price and Trade Section - ENHANCED */}
-                    <div className="bg-muted/30 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-4">
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Current Price</div>
-                            <div className="font-bold text-lg text-emerald-500">
-                              {formatUSDC(opinion.nextPrice)}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">24h Change</div>
-                            <div className={`flex items-center justify-center space-x-1 ${
-                              change.isPositive ? 'text-emerald-500' : 'text-red-500'
-                            }`}>
-                              {change.isPositive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                              <span className="text-sm font-semibold">{change.percentage.toFixed(1)}%</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-muted-foreground mb-1">Volume</div>
-                          <div className="text-foreground font-medium">
-                            {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>{opinion.tradesCount} trades</span>
-                          <span>•</span>
-                          <span>Last: {formatUSDC(opinion.lastPrice)}</span>
-                        </div>
-                        <Button
-                          size="lg"
-                          className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold transition-all duration-200 min-h-[44px] px-6 shadow-lg active:scale-95"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedOpinion(opinion);
-                          }}
-                        >
-                          <Zap className="w-5 h-5 mr-2" />
-                          Trade Now
-                        </Button>
-                      </div>
+                    {/* Answer */}
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
+                      <span className="text-muted-foreground text-xs">Answer:</span>
+                      <button
+                        className="text-foreground/80 font-medium hover:text-emerald-400 transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (opinion.link && opinion.link.trim()) {
+                            window.open(opinion.link, '_blank');
+                          }
+                        }}
+                        type="button"
+                      >
+                        {opinion.link && opinion.link.trim() && <ExternalLink className="w-3 h-3 flex-shrink-0" />}
+                        <span>{opinion.currentAnswer}</span>
+                      </button>
+                      <span className="text-muted-foreground text-xs">
+                        {(() => {
+                          if (poolDataLoading && opinion.currentAnswerOwner.toLowerCase() === '0x3b4584e690109484059d95d7904dd9feba246612') {
+                            return <span className="animate-pulse">loading...</span>;
+                          }
+                          const ownerDisplay = getOwnerDisplay(opinion.currentAnswerOwner, opinion.id, opinion.currentAnswer);
+                          return ownerDisplay.isPoolOwned ? (
+                            <span className="text-emerald-500 font-medium">by {ownerDisplay.displayName}</span>
+                          ) : (
+                            <span>
+                              by <ClickableAddress
+                                address={opinion.currentAnswerOwner}
+                                className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
+                              >
+                                {ownerDisplay.displayName}
+                              </ClickableAddress>
+                            </span>
+                          );
+                        })()}
+                      </span>
+                      <span className="text-muted-foreground text-xs hidden sm:inline">
+                        · {accurateTradesCount || opinion.tradesCount || 0} trades
+                      </span>
                     </div>
                   </div>
 
-                  {/* Desktop Layout */}
-                  <div className="hidden lg:contents">
-                    {/* Rank - COMPACT */}
-                    <div className="flex items-center justify-center">
-                      <span className="text-muted-foreground font-medium text-sm">{opinion.id}</span>
-                      {activeTab === 'trending' && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
-                      {activeTab === 'featured' && <Star className="w-3 h-3 text-purple-400 ml-1" />}
+                  {/* Right: Price + Action */}
+                  <div className="flex flex-col items-end justify-center gap-2 min-w-[100px] md:min-w-[120px] flex-shrink-0">
+                    <div className="text-foreground font-bold text-lg">{formatUSDC(opinion.nextPrice)}</div>
+                    <div className={`${
+                      change.isPositive
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-red-500/15 text-red-400'
+                    } px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-0.5`}>
+                      {change.isPositive ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {change.percentage.toFixed(1)}%
                     </div>
-
-                    {/* Question Column - MODIFIED: WITH INTEGRATED BADGE */}
-                    <div className="flex items-center min-h-[60px] pr-2">
-                      <div className="w-full">
-                        <div className="text-foreground font-bold text-base leading-tight mb-1">
-                          {formatQuestion(opinion.question)}
-                        </div>
-                        <div className="text-xs mb-1 flex items-center gap-2">
-                          <span>
-                            by <ClickableAddress
-                              address={opinion.creator}
-                              className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
-                            >
-                              {truncateAddress(opinion.creator)}
-                            </ClickableAddress>
-                          </span>
-                          {getTrendingBadge(opinion.totalVolume)}
-                          {getMarketStatusBadge(opinion.marketStatus)}
-                        </div>
-                        {/* Category Badges integrated under author */}
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {displayCategories.map((category, catIndex) => (
-                            <Badge
-                              key={catIndex}
-                              className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-2 py-0.5 rounded text-xs font-medium`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (category === 'Adult (NSFW)' && !adultContentEnabled) {
-                                  setShowAdultModal(true);
-                                } else {
-                                  setSelectedCategory(category);
-                                  setActiveTab('all');
-                                  router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
-                                }
-                              }}
-                            >
-                              {category}
-                              {category === 'Adult (NSFW)' && ' 🔞'}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Answer Column - MODIFIED: CLICKABLE WITH LINK ICON */}
-                    <div className="flex items-center min-h-[60px] pr-2">
-                      <div className="w-full">
-                        <button
-                          className="text-foreground font-bold text-sm leading-tight mb-1 hover:text-emerald-500 cursor-pointer transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left w-full focus:outline-none focus:text-emerald-400"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('🔗 Answer clicked - Opinion:', opinion.id, 'Link:', opinion.link);
-                            if (opinion.link && opinion.link.trim()) {
-                              console.log('✅ Opening link:', opinion.link);
-                              window.open(opinion.link, '_blank');
-                            } else {
-                              console.log('❌ No valid link found for opinion', opinion.id);
-                              console.log('Link value:', JSON.stringify(opinion.link));
-                              // Fallback: show alert or create a basic link
-                              alert(`No link available for "${opinion.currentAnswer}"`);
-                            }
-                          }}
-                          type="button"
-                        >
-                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                          <span>{opinion.currentAnswer}</span>
-                        </button>
-                        <div className="text-xs">
-                          {(() => {
-                            // Show loading state while pool data is fetching
-                            if (poolDataLoading && opinion.currentAnswerOwner.toLowerCase() === '0x3b4584e690109484059d95d7904dd9feba246612') {
-                              return (
-                                <span className="text-muted-foreground animate-pulse">
-                                  by Loading...
-                                </span>
-                              );
-                            }
-
-                            const ownerDisplay = getOwnerDisplay(
-                              opinion.currentAnswerOwner,
-                              opinion.id,
-                              opinion.currentAnswer
-                            );
-
-                            return ownerDisplay.isPoolOwned ? (
-                              <span className="text-emerald-500 font-medium">
-                                by {ownerDisplay.displayName}
-                              </span>
-                            ) : (
-                              <span>
-                                by <ClickableAddress
-                                  address={opinion.currentAnswerOwner}
-                                  className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
-                                >
-                                  {ownerDisplay.displayName}
-                                </ClickableAddress>
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Last Price - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="font-medium text-foreground text-sm">
-                        {formatUSDC(opinion.lastPrice)}
-                      </span>
-                    </div>
-
-                    {/* Next Price - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="font-medium text-foreground text-sm">
-                        {formatUSDC(opinion.nextPrice)}
-                      </span>
-                    </div>
-
-                    {/* 24h Change - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <div className={`flex items-center space-x-1 ${ 
-                        change.isPositive ? 'text-emerald-500' : 'text-red-500'
-                      }`}>
-                        {change.isPositive ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        <span className="font-medium text-xs">{change.percentage.toFixed(1)}%</span>
-                      </div>
-                    </div>
-
-                    {/* Trades - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="text-foreground font-medium text-sm">
-                        {opinion.tradesCount}
-                      </span>
-                    </div>
-
-                    {/* Volume - COMPACT */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <span className="text-foreground font-medium text-sm">
-                        {formatLargeUSDC(Number(opinion.totalVolume) / 1_000_000)}
-                      </span>
-                    </div>
-
-                    {/* Price Chart - RESPONSIVE */}
-                    <div className="hidden lg:flex items-center justify-center min-h-[60px]">
-                      <PriceHistoryChart 
-                        opinion={opinion} 
-                        change={change}
-                      />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-center min-h-[60px]">
-                      <Button
-                        size="sm"
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOpinion(opinion);
-                        }}
-                      >
-                        <Zap className="w-4 h-4 mr-1" />
-                        Trade
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm px-4 py-1.5 rounded-lg hover:shadow-[0_0_16px_rgba(16,185,129,0.3)] transition-all duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOpinion(opinion);
+                      }}
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1" />
+                      Trade
+                    </Button>
                   </div>
                 </motion.div>
               );
@@ -1460,18 +1241,18 @@ function HomePageInner() {
           </div>
         </motion.div>
 
-        {/* Pagination Controls - CoinMarketCap Style */}
+        {/* Pagination Controls */}
         {totalPages > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="bg-card border border-border rounded-lg overflow-hidden mt-4"
+            className="border border-border/50 rounded-xl overflow-hidden mt-4"
           >
             <div className="px-4 py-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages} • {totalFiltered} total opinions
+                  Page {currentPage} of {totalPages}
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1518,7 +1299,7 @@ function HomePageInner() {
                             size="sm"
                             onClick={() => setCurrentPage(i)}
                             className={i === currentPage
-                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
                               : "bg-muted border-border text-foreground hover:bg-accent"
                             }
                           >

@@ -198,6 +198,28 @@ body {
   border-image: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(59, 130, 246, 0.3)) 1;
 }
 
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #10b981, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Emerald glow for interactive elements */
+.glow-emerald {
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+/* Pulse dot for "Live" indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
 /* Ensure text readability in light mode */
 :root {
   color-scheme: light;

@@ -5,10 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
 import {
   X,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -16,15 +12,12 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
-  History,
-  Sparkles
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -36,7 +29,6 @@ import { validateAnswerForTrading } from '@/lib/contentFiltering'
 import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction'
 import {
   useAnswerHistory,
-  getAnswerColor,
   type RankedAnswer
 } from '@/hooks/useAnswerHistory'
 
@@ -407,6 +399,9 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
   const hasBalance = balance ? balance >= opinionData.nextPrice : false
   const needsApproval = !allowance || allowance < opinionData.nextPrice
 
+  // Fee breakdown toggle
+  const [showFees, setShowFees] = useState(false)
+
   return (
     <TooltipProvider>
       <AnimatePresence>
@@ -428,117 +423,57 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
               exit={{ opacity: 0, scale: 0.95 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             >
-              <div className="w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-card rounded-lg sm:rounded-2xl border border-border shadow-2xl">
-                
-                {/* Header - UPDATED: Removed "Created by" */}
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-emerald-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Submit Your Answer</h2>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
+              <div className="w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto bg-card rounded-2xl border border-border shadow-2xl">
 
-                {/* Question Section - NEW HIERARCHY */}
-                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                  <div className="space-y-4">
-                    {/* Question Section */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">question</p>
-                      <div className="mb-3">
-                        <span className="text-base sm:text-lg font-bold text-foreground break-words">{opinionData.question}</span>
-                        <span className="text-muted-foreground text-sm sm:text-lg block sm:inline"> created by {formatAddress(opinionData.creator)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-4">
+                {/* Header: Question as title + close */}
+                <div className="p-5 pb-0">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold text-foreground leading-tight break-words">
+                        {opinionData.question}
+                      </h2>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {opinionData.categories.map((category, index) => (
-                          <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-400">
+                          <Badge key={index} variant="secondary" className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5">
                             {category}
                           </Badge>
                         ))}
+                        <span className="text-xs text-muted-foreground">by {formatAddress(opinionData.creator)}</span>
                       </div>
                     </div>
-
-                    {/* Answer Section */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">answer</p>
-                      <div className="mb-4">
-                        <span className="text-base sm:text-lg font-bold text-foreground break-words">{opinionData.currentAnswer}</span>
-                        <span className="text-muted-foreground text-sm sm:text-lg block sm:inline"> owned by {formatAddress(opinionData.currentAnswerOwner)}</span>
-                      </div>
-                    </div>
+                    <button
+                      onClick={onClose}
+                      className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
 
-                  {/* Info Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                    <Card className="bg-muted/50 border-border">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          Price
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-foreground">
-                          {formatUSDC(opinionData.nextPrice)}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/50 border-border">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                          {change.isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                          24h Change
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className={`text-lg font-bold ${change.isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/50 border-border">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          Total Volume
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-foreground">
-                          {formatUSDC(opinionData.totalVolume)}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/50 border-border">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          Trades
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="text-lg font-bold text-foreground">
-                          {opinionData.tradesCount || 0}
-                        </div>
-                      </CardContent>
-                    </Card>
+                  {/* Current answer - compact */}
+                  <div className="flex items-center gap-2 py-2.5 px-3 bg-muted/50 rounded-lg mb-4">
+                    <span className="text-xs text-muted-foreground">Current answer:</span>
+                    <span className="text-sm font-semibold text-foreground truncate">{opinionData.currentAnswer}</span>
+                    <span className="text-xs text-muted-foreground ml-auto flex-shrink-0">by {formatAddress(opinionData.currentAnswerOwner)}</span>
                   </div>
 
-                  {/* Balance Warning - Using new component */}
+                  {/* Price block */}
+                  <div className="flex items-center justify-center gap-3 py-4 mb-4 border border-border/50 rounded-xl bg-muted/20">
+                    <span className="text-3xl font-black text-foreground">{formatUSDC(opinionData.nextPrice)}</span>
+                    <span className="text-xs text-muted-foreground">USDC</span>
+                    <span className={`${
+                      change.isPositive
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-red-500/15 text-red-400'
+                    } px-2.5 py-1 rounded-full text-xs font-semibold`}>
+                      {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content area */}
+                <div className="px-5 pb-5 space-y-4">
+
+                  {/* Balance Warning */}
                   <BalanceWarning
                     requiredAmount={opinionData.nextPrice}
                     currentBalance={balance}
@@ -546,129 +481,79 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
 
                   {/* Form or Transaction States */}
                   {currentStep === 'form' && (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      {/* Answer Revival Section */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+
+                      {/* Answer Revival - compact horizontal scroll */}
                       {revivalOptions.length > 0 && !isLoadingHistory && (
-                        <div className="space-y-4">
-                          {/* Section Header */}
+                        <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 bg-blue-500/20 rounded-md">
-                                <History className="w-4 h-4 text-blue-400" />
-                              </div>
-                              <div>
-                                <Label className="text-foreground font-semibold">Quick Revival</Label>
-                                <p className="text-xs text-muted-foreground">One-click to bring back a previous answer</p>
-                              </div>
-                            </div>
+                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Revival</span>
                             {totalUniqueAnswers > 1 && (
-                              <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
+                              <span className="text-xs text-muted-foreground">
                                 {totalUniqueAnswers - 1} past {totalUniqueAnswers === 2 ? 'answer' : 'answers'}
                               </span>
                             )}
                           </div>
-
-                          {/* Revival Buttons Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="flex gap-2 overflow-x-auto pb-1">
                             {revivalOptions.map((entry, index) => {
-                              const colors = getAnswerColor(index)
                               const isSelected = isReviving && answer === entry.answer
-
                               return (
                                 <button
                                   key={index}
                                   type="button"
                                   onClick={() => handleRevivalSelect(entry)}
-                                  className={`
-                                    relative p-3 rounded-xl border-2 text-left transition-all duration-200
-                                    hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]
+                                  className={`flex-shrink-0 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-150
                                     ${isSelected
-                                      ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30'
-                                      : `${colors.bg} ${colors.border} hover:border-opacity-100`
+                                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                      : 'bg-muted/50 border-border text-foreground hover:border-emerald-500/30'
                                     }
                                   `}
                                 >
-                                  {/* Selected indicator */}
-                                  {isSelected && (
-                                    <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1">
-                                      <CheckCircle className="w-3 h-3 text-white" />
-                                    </div>
-                                  )}
-
-                                  {/* Answer text */}
-                                  <div className={`font-semibold text-sm truncate ${isSelected ? 'text-emerald-300' : colors.text}`}>
-                                    {entry.answer}
-                                  </div>
-
-                                  {/* Submission count - show fire for popular */}
+                                  {entry.answer}
                                   {entry.submissionCount > 1 && (
-                                    <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                                      {entry.submissionCount >= 3 && <span>🔥</span>}
-                                      <span>{entry.submissionCount}x submitted</span>
-                                    </div>
+                                    <span className="text-xs text-muted-foreground ml-1">({entry.submissionCount}x)</span>
                                   )}
                                 </button>
                               )
                             })}
                           </div>
 
-                          {/* Show More / Show Less */}
+                          {/* Show More */}
                           {hasMoreAnswers && (
                             <button
                               type="button"
                               onClick={() => setShowAllAnswers(!showAllAnswers)}
-                              className="w-full py-2 text-sm text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1 transition-colors"
+                              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
                             >
-                              {showAllAnswers ? (
-                                <>
-                                  <ChevronUp className="w-4 h-4" />
-                                  Show fewer answers
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="w-4 h-4" />
-                                  Show {Math.min(allRevivalOptions.length - DEFAULT_VISIBLE, 10)} more answers
-                                </>
-                              )}
+                              {showAllAnswers ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                              {showAllAnswers ? 'Show less' : `+${Math.min(allRevivalOptions.length - DEFAULT_VISIBLE, 10)} more`}
                             </button>
                           )}
 
                           {/* Revival confirmation */}
                           {isReviving && (
-                            <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-                              <div className="flex items-center gap-2 text-sm text-emerald-400">
-                                <CheckCircle className="w-4 h-4" />
-                                <span>Reviving: <strong>{answer}</strong>{description ? ' (with context)' : ''}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={handleNewAnswer}
-                                className="text-xs text-muted-foreground hover:text-red-400 transition-colors"
-                              >
-                                Clear
-                              </button>
+                            <div className="flex items-center justify-between py-2 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm">
+                              <span className="text-emerald-400 flex items-center gap-1.5">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Reviving: <strong>{answer}</strong>
+                              </span>
+                              <button type="button" onClick={handleNewAnswer} className="text-xs text-muted-foreground hover:text-red-400">Clear</button>
                             </div>
                           )}
-                        </div>
-                      )}
 
-                      {/* Divider if we have revival options */}
-                      {revivalOptions.length > 0 && !isLoadingHistory && (
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 border-t border-border" />
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider">or submit new</span>
-                          <div className="flex-1 border-t border-border" />
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 border-t border-border" />
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">or submit new</span>
+                            <div className="flex-1 border-t border-border" />
+                          </div>
                         </div>
                       )}
 
                       {/* Answer Input */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-emerald-400" />
-                          <Label htmlFor="answer" className="text-foreground font-medium">
-                            Your Answer *
-                          </Label>
-                        </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="answer" className="text-foreground font-medium text-sm">
+                          Your Answer
+                        </Label>
                         <Textarea
                           id="answer"
                           value={answer}
@@ -678,7 +563,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                           rows={2}
                           maxLength={ANSWER_LIMIT}
                         />
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs">
                           <span className="text-red-400">{errors.answer}</span>
                           <span className={`${answer.length > ANSWER_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
                             {answer.length}/{ANSWER_LIMIT}
@@ -687,20 +572,16 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                       </div>
 
                       {/* Collapsible Context Fields */}
-                      <div className="space-y-3">
+                      <div>
                         <button
                           type="button"
                           onClick={() => setShowContextFields(!showContextFields)}
-                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          {showContextFields ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
+                          {showContextFields ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           <span>Add context (optional)</span>
                           {(description || link) && !showContextFields && (
-                            <span className="text-xs text-emerald-400">• Has content</span>
+                            <span className="text-emerald-400">•</span>
                           )}
                         </button>
 
@@ -711,13 +592,10 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="overflow-hidden space-y-4"
+                              className="overflow-hidden space-y-3 mt-3"
                             >
-                              {/* Description Input */}
-                              <div className="space-y-2">
-                                <Label htmlFor="description" className="text-foreground font-medium">
-                                  Description
-                                </Label>
+                              <div className="space-y-1.5">
+                                <Label htmlFor="description" className="text-foreground font-medium text-sm">Description</Label>
                                 <Textarea
                                   id="description"
                                   value={description}
@@ -727,19 +605,15 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                                   rows={2}
                                   maxLength={DESCRIPTION_LIMIT}
                                 />
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs">
                                   <span className="text-red-400">{errors.description}</span>
                                   <span className={`${description.length > DESCRIPTION_LIMIT * 0.8 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
                                     {description.length}/{DESCRIPTION_LIMIT}
                                   </span>
                                 </div>
                               </div>
-
-                              {/* Link Input */}
-                              <div className="space-y-2">
-                                <Label htmlFor="link" className="text-foreground font-medium">
-                                  External Link
-                                </Label>
+                              <div className="space-y-1.5">
+                                <Label htmlFor="link" className="text-foreground font-medium text-sm">External Link</Label>
                                 <Input
                                   id="link"
                                   type="url"
@@ -748,7 +622,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                                   placeholder="https://example.com"
                                   className="bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
                                 />
-                                <span className="text-red-400 text-sm">{errors.link}</span>
+                                <span className="text-red-400 text-xs">{errors.link}</span>
                               </div>
                             </motion.div>
                           )}
@@ -759,13 +633,11 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                       {contentWarning && (
                         <Alert className="bg-yellow-900/20 border-yellow-500/50">
                           <AlertCircle className="w-4 h-4 text-yellow-400" />
-                          <AlertDescription className="text-yellow-400">
-                            {contentWarning}
-                          </AlertDescription>
+                          <AlertDescription className="text-yellow-400 text-sm">{contentWarning}</AlertDescription>
                         </Alert>
                       )}
 
-                      {/* USDC Approval Info - Using new component */}
+                      {/* USDC Approval Info */}
                       <AllowanceInfo
                         requiredAmount={opinionData.nextPrice}
                         currentAllowance={allowance}
@@ -773,87 +645,77 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         onApprovalTypeChange={setUseInfiniteApproval}
                       />
 
-                      {/* Trading Info - Fee Breakdown */}
-                      <Card className="bg-blue-soft border-blue-500/50">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm font-medium text-blue-soft-foreground flex items-center gap-2">
-                            <Info className="w-4 h-4" />
-                            Payment Distribution
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm text-muted-foreground">
-                          <p>You pay <span className="text-foreground font-semibold">{formatUSDC(opinionData.nextPrice)}</span> to submit your answer:</p>
+                      {/* Fee breakdown - collapsed */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowFees(!showFees)}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Fees: 5% total (3% creator + 2% platform)</span>
+                          {showFees ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+                        </button>
+                        <AnimatePresence>
+                          {showFees && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.15 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-2 space-y-1.5 text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+                                <div className="flex justify-between">
+                                  <span>Previous owner (95%)</span>
+                                  <span className="text-foreground font-medium">{formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Creator royalty (3%)</span>
+                                  <span className="text-foreground font-medium">{formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Platform fee (2%)</span>
+                                  <span className="text-foreground font-medium">{formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))}</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
-                          <div className="bg-emerald-soft rounded-lg p-3 border border-emerald-500/20">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-emerald-soft-foreground font-medium">Previous Owner</span>
-                              <span className="text-emerald-soft-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(95) / BigInt(100))} (95%)</span>
-                            </div>
-                            <p className="text-xs text-emerald-soft-foreground/70">Sent directly to their wallet instantly</p>
-                          </div>
+                      {/* Trade button - full width */}
+                      <Button
+                        type="submit"
+                        disabled={!hasBalance || isSubmitting || !acceptedTerms}
+                        className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-base disabled:opacity-50 rounded-xl hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-200"
+                      >
+                        {needsApproval
+                          ? (useInfiniteApproval ? 'Approve & Trade' : 'Approve & Trade')
+                          : 'Trade'
+                        }
+                      </Button>
 
-                          <div className="bg-purple-soft rounded-lg p-3 border border-purple-500/20">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-purple-soft-foreground font-medium">Creator Royalty</span>
-                              <span className="text-purple-soft-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(3) / BigInt(100))} (3%)</span>
-                            </div>
-                            <p className="text-xs text-purple-soft-foreground/70">Accumulated in contract, creator can claim anytime</p>
-                          </div>
-
-                          <div className="bg-muted/50 rounded-lg p-3 border border-border">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-muted-foreground font-medium">Platform Fee</span>
-                              <span className="text-muted-foreground font-semibold">{formatUSDC(opinionData.nextPrice * BigInt(2) / BigInt(100))} (2%)</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground/70">Goes to OMC treasury</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Terms Checkbox */}
-                      <div className="flex items-center space-x-2">
+                      {/* Terms - inline link */}
+                      <div className="flex items-center justify-center gap-2">
                         <Checkbox
                           id="terms"
                           checked={acceptedTerms}
                           onCheckedChange={(checked) => updateFormField('acceptedTerms', checked as boolean)}
-                          className="border-border data-[state=checked]:bg-emerald-500"
+                          className="border-border data-[state=checked]:bg-emerald-500 w-3.5 h-3.5"
                         />
-                        <Label htmlFor="terms" className="text-sm text-muted-foreground">
-                          I accept the{' '}
-                          <a href="#" className="text-emerald-500 hover:text-emerald-400">
-                            terms and conditions
-                          </a>
-                        </Label>
+                        <label htmlFor="terms" className="text-xs text-muted-foreground cursor-pointer">
+                          I agree to the{' '}
+                          <a href="#" className="text-emerald-500 hover:text-emerald-400 underline">Terms of Use</a>
+                        </label>
                       </div>
-                      {errors.terms && <span className="text-red-400 text-sm">{errors.terms}</span>}
-
-                      {/* Submit Button - Mobile-Optimized */}
-                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={onClose}
-                          className="w-full sm:flex-1 h-12 sm:h-10 border-border text-muted-foreground hover:bg-muted text-base"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={!hasBalance || isSubmitting}
-                          className="w-full sm:flex-1 h-12 sm:h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium disabled:opacity-50 text-base"
-                        >
-                          {needsApproval
-                            ? (useInfiniteApproval ? 'Approve Once & Submit' : 'Approve & Submit')
-                            : 'Submit & Trade'
-                          }
-                        </Button>
-                      </div>
+                      {errors.terms && <span className="text-red-400 text-xs text-center block">{errors.terms}</span>}
                     </form>
                   )}
 
                   {/* Transaction States */}
                   {['approve', 'submit'].includes(currentStep) && (
-                    <div className="text-center space-y-4">
+                    <div className="text-center space-y-4 py-8">
                       <div className="w-16 h-16 mx-auto bg-emerald-500/20 rounded-full flex items-center justify-center">
                         <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                       </div>
@@ -861,7 +723,7 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
                         <h3 className="text-lg font-bold text-foreground mb-2">
                           {currentStep === 'approve' ? 'Approve USDC' : 'Submitting Answer'}
                         </h3>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {currentStep === 'approve'
                             ? 'Please confirm the approval in your wallet'
                             : 'Please confirm the transaction in your wallet'
@@ -877,26 +739,24 @@ export function TradingModal({ isOpen, onClose, opinionId, opinionData }: Tradin
 
                   {/* Success State */}
                   {currentStep === 'success' && (
-                    <div className="text-center space-y-4">
+                    <div className="text-center space-y-4 py-8">
                       <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-8 h-8 text-white" />
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-foreground mb-2">Success!</h3>
-                        <p className="text-muted-foreground mb-4">
-                          Your answer has been submitted successfully!
-                        </p>
+                        <p className="text-muted-foreground mb-4 text-sm">Your answer has been submitted.</p>
                         <Button
                           onClick={onClose}
-                          className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+                          className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl px-8"
                         >
-                          Close
+                          Done
                         </Button>
                       </div>
                     </div>
                   )}
 
-                  {/* Enhanced Error State - Using new ErrorState component */}
+                  {/* Error State */}
                   {currentStep === 'error' && errorState && (
                     <ErrorState
                       error={errorState}
