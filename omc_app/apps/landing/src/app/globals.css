@@ -464,6 +464,103 @@
   z-index: 1;
 }
 
+/* Gradient orb float */
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* Green pulse for prices */
+@keyframes green-pulse {
+  0%, 100% { text-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+  50% { text-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.3); }
+}
+
+.price-pulse {
+  animation: green-pulse 2s ease-in-out infinite;
+}
+
+/* Bouncing chevron */
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(10px); opacity: 1; }
+}
+
+.bounce-down {
+  animation: bounce-down 2s ease-in-out infinite;
+}
+
+/* Rotating glow ring */
+@keyframes rotate-glow-ring {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.glow-ring {
+  animation: rotate-glow-ring 12s linear infinite;
+}
+
+/* Underline sweep */
+@keyframes underline-sweep {
+  0% { transform: scaleX(0); transform-origin: left; }
+  50% { transform: scaleX(1); transform-origin: left; }
+  50.01% { transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+.underline-sweep {
+  animation: underline-sweep 3s ease-in-out infinite;
+}
+
+/* CTA shimmer sweep */
+@keyframes cta-shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.cta-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: cta-shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Gradient mesh background pulse */
+@keyframes mesh-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  75% {
+    background-position: 0% 0%;
+  }
+}
+
+.hero-mesh-bg {
+  background: radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 60%, rgba(96, 165, 250, 0.05) 0%, transparent 40%);
+  background-size: 200% 200%;
+  animation: mesh-shift 15s ease-in-out infinite;
+}
+
 /* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
   width: 8px;

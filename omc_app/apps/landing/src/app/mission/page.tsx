@@ -1,638 +1,711 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowRight, TrendingUp, Users, DollarSign, Target, Zap, Globe, Search, BarChart3, Infinity, Crown, CheckCircle } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Crown,
+  Search,
+  BarChart3,
+  DollarSign,
+  TrendingUp,
+  Zap,
+  Users,
+  Palette,
+  MessageCircle,
+  Flame,
+  ChevronDown,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { LandingNavigation } from "@/components/LandingNavigation"
 import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
 
-export default function Mission() {
-  const [mounted, setMounted] = useState(false)
-  const [animatedStats, setAnimatedStats] = useState({
-    keywords: 0,
-    markets: 0,
-    community: 0
-  })
+// --- Reusable components (same patterns as landing page) ---
 
+const GradientOrb = ({ color, size, position, delay = 0 }: { color: string, size: number, position: Record<string, string>, delay?: number }) => (
+  <motion.div
+    className="absolute rounded-full pointer-events-none z-0"
+    style={{
+      width: size, height: size,
+      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      filter: "blur(80px)",
+      ...position
+    }}
+    animate={{
+      x: [0, 30, -20, 0],
+      y: [0, -20, 15, 0],
+      scale: [1, 1.05, 0.95, 1]
+    }}
+    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
+  />
+);
+
+const AnimatedSeparator = () => (
+  <div className="relative h-px max-w-4xl mx-auto overflow-hidden my-4">
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+      animate={{ x: ["-100%", "100%"] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+    />
+  </div>
+);
+
+const Section = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
+  <section id={id} className={cn("py-24 px-4 relative overflow-hidden", className)}>
+    <div className="max-w-6xl mx-auto relative z-10">{children}</div>
+  </section>
+);
+
+const SectionTitle = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <motion.h2
+    className={cn("text-4xl md:text-5xl font-bold text-center mb-16 animated-gradient-text", className)}
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8, ease: "easeOut" }}
+  >{children}</motion.h2>
+);
+
+// Animation props
+const fadeInView = {
+  initial: { opacity: 0, y: 30 } as const,
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+const scaleUpView = {
+  initial: { opacity: 0, scale: 0.8 } as const,
+  whileInView: { opacity: 1, scale: 1 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.275] as [number, number, number, number] }
+};
+
+const slideLeftView = {
+  initial: { opacity: 0, x: -60 } as const,
+  whileInView: { opacity: 1, x: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+const slideRightView = {
+  initial: { opacity: 0, x: 60 } as const,
+  whileInView: { opacity: 1, x: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+// Animated counter
+const AnimatedCounter = ({ end, duration = 2, prefix = "", suffix = "" }: { end: number, duration?: number, prefix?: string, suffix?: string }) => {
+  const [count, setCount] = useState(0);
   useEffect(() => {
-    setMounted(true)
-    
-    // Animate statistics
-    const timer = setTimeout(() => {
-      setAnimatedStats({
-        keywords: 100,
-        markets: 100,
-        community: 98
-      })
-    }, 1000)
+    let startTime: number;
+    let animationFrame: number;
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
+      if (progress < 1) animationFrame = requestAnimationFrame(animate);
+    };
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [end, duration]);
+  return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
+};
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  const comparisonData = {
-    polymarket: {
-      scope: "~500 event predictions",
-      resolution: "Resolves once",
-      valueFlow: "Platform-centric",
-      participants: "Speculators only",
-      timeframe: "Event-based",
-      examples: "Election outcomes, sports results"
-    },
-    google: {
-      scope: "Billions of web pages",
-      resolution: "Links list Algorithm-ranked",
-      valueFlow: "Ad-revenue based",
-      participants: "Advertisers & users",
-      timeframe: "Real-time indexing",
-      examples: "SEO content, paid ads"
-    },
-    omc: {
-      scope: "Millions of decentralized opinion markets",
-      resolution: "Never resolves - perpetual markets",
-      valueFlow: "98% to community via smart contracts", 
-      participants: "Everyone profits from knowledge on-chain",
-      timeframe: "Continuous evolution with blockchain immutability",
-      examples: "Best CRM, luxury brands, local businesses - all tokenized"
-    }
-  }
-
-  const economicRoles = [
-    {
-      role: "Question Creator",
-      description: "Mints a market/opinion, pays creation fee",
-      earnings: "3% royalty on every future answer trade forever, can sell its question on our marketplace",
-      example: "Created \"Best CRM for startups?\" → earns 3% of $50K volume = $1,500"
-    },
-    {
-      role: "Current Answer Owner", 
-      description: "Owns the current answer to any question",
-      earnings: "95% when someone pays to change their answer",
-      example: "Owns \"Salesforce\" at $500 → someone pays $650 → receives $617.50"
-    },
-    {
-      role: "Enterprise Advertisers",
-      description: "Compete for status positioning and market research",
-      earnings: "Brand positioning and verified market consensus, fastest way to advertise on the web/blockchain",
-      example: "Luxury brands battle for \"Most prestigious watch brand?\""
-    },
-    {
-      role: "Communities & Speculators",
-      description: "Pool resources and trade on market knowledge",
-      earnings: "95% value capture from each trade",
-      example: "Early adopters buying low-priced answers before appreciation"
-    }
-  ]
-
-  if (!mounted) {
-    return <div className="min-h-screen bg-black" />
-  }
+// ============================================================
+// SECTION 1: HERO — "Why We Built This"
+// ============================================================
+const HeroSection = () => {
+  const particles = Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    x: ((i * 7 + 3) % 100),
+    yStart: ((i * 11 + 5) % 100),
+    yEnd: ((i * 19 + 7) % 100),
+    duration: 6 + (i % 8),
+    delay: (i * 0.3) % 5,
+    size: 1 + (i % 3),
+    color: ['#3b82f6', '#8b5cf6', '#10b981', '#60a5fa', '#a855f7'][i % 5],
+  }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
-      {/* Navigation */}
-      <LandingNavigation />
-      
-      {/* Background Animation */}
+    <section className="relative pt-32 pb-20 px-4 text-center overflow-hidden hero-mesh-bg min-h-[90vh] flex flex-col justify-center">
+      <GradientOrb color="rgba(59, 130, 246, 0.4)" size={600} position={{ top: '-10%', right: '-5%' }} delay={0} />
+      <GradientOrb color="rgba(139, 92, 246, 0.3)" size={500} position={{ bottom: '0%', left: '-10%' }} delay={2} />
+
       <div className="absolute inset-0 z-0">
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={`particle-${i}`}
-            className={cn(
-              "absolute w-1 h-1 rounded-full animate-pulse",
-              i % 4 === 0 && "bg-blue-400/30",
-              i % 4 === 1 && "bg-purple-400/30", 
-              i % 4 === 2 && "bg-emerald-400/30",
-              i % 4 === 3 && "bg-yellow-400/30"
-            )}
-            style={{
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDelay: Math.random() * 3 + 's',
-              animationDuration: (2 + Math.random() * 3) + 's'
-            }}
+        {particles.map((p) => (
+          <motion.div
+            key={`p-${p.id}`}
+            className="absolute rounded-full"
+            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+            initial={{ x: `${p.x}vw`, y: `${p.yStart}vh`, opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0], y: [`${p.yStart}vh`, `${p.yEnd}vh`] }}
+            transition={{ duration: p.duration, repeat: Infinity, repeatType: "loop", ease: "linear", delay: p.delay }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 pt-20 pb-12">
-        {/* Hero Section */}
-        <motion.div
-          className="text-center mb-20"
-          initial={{ opacity: 0, y: -50 }}
+      <div className="relative z-10 max-w-4xl mx-auto">
+        <motion.h1
+          className="text-4xl md:text-7xl font-black mb-8 leading-tight"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
         >
-          <motion.h1 
-            className="text-4xl md:text-7xl font-black mb-6"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-          >
-            <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 bg-clip-text text-transparent">
-              OMC THE INFINITE
-            </span>
-            <br />
-            <span className="text-white">MARKETPLACE</span>
-          </motion.h1>
-          
-          <motion.p
-            className="text-xl md:text-3xl text-gray-300 max-w-5xl mx-auto leading-relaxed mb-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-          >
-            <span className="text-yellow-400 font-semibold">Revolutionary Concept:</span> Where every monetizable search query becomes a tradeable opinion market
-          </motion.p>
-
-          {/* Animated Statistics */}
-          <motion.div
-            className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+          <span className="text-white">The internet is full of opinions.</span>
+          <br />
+          <motion.span
+            className="animated-gradient-text"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="bg-blue-600/20 border border-blue-400/30 rounded-lg p-6">
-              <div className="text-4xl font-bold text-blue-400">{animatedStats.keywords}M+</div>
-              <div className="text-gray-300">Ad Keywords</div>
-              <div className="text-sm text-gray-400">Potential OMC Markets</div>
-            </div>
-            <div className="bg-purple-600/20 border border-purple-400/30 rounded-lg p-6">
-              <div className="text-4xl font-bold text-purple-400">{animatedStats.markets}M+</div>
-              <div className="text-gray-300">Opinion Markets</div>
-              <div className="text-sm text-gray-400">vs ~500 Traditional</div>
-            </div>
-            <div className="bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-6">
-              <div className="text-4xl font-bold text-emerald-400">{animatedStats.community}%</div>
-              <div className="text-gray-300">To Community</div>
-              <div className="text-sm text-gray-400">Value Distribution</div>
-            </div>
-          </motion.div>
-        </motion.div>
+            None of them cost anything.
+          </motion.span>
+        </motion.h1>
 
-        {/* Main Content with Tabs */}
-        <motion.div
-          className="max-w-7xl mx-auto"
-          initial={{ opacity: 0, y: 50 }}
+        <motion.p
+          className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-4"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <Tabs defaultValue="concept" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 border border-gray-700">
-              <TabsTrigger value="concept" className="text-white data-[state=active]:bg-blue-600">The Concept</TabsTrigger>
-              <TabsTrigger value="opportunity" className="text-white data-[state=active]:bg-purple-600">Market Size</TabsTrigger>
-              <TabsTrigger value="comparison" className="text-white data-[state=active]:bg-emerald-600">Comparisons</TabsTrigger>
-              <TabsTrigger value="economics" className="text-white data-[state=active]:bg-yellow-600">Economics</TabsTrigger>
-              <TabsTrigger value="vision" className="text-white data-[state=active]:bg-red-600">Vision</TabsTrigger>
-            </TabsList>
+          Anyone can post &ldquo;Salesforce is the best CRM&rdquo; on Reddit. Zero consequences if they&apos;re wrong. Zero reward if they&apos;re right.
+        </motion.p>
 
-            {/* The Concept Tab */}
-            <TabsContent value="concept" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-3xl text-center text-white mb-6">How It All Works</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center mb-12">
-                    <p className="text-xl text-gray-200 leading-relaxed max-w-4xl mx-auto">
-                      It all starts with a question and everyone has an opinion about it. OMC organizes those opinions in a revolutionary way - by creating tradeable markets around every valuable query by owning and trading on Base Blockchain.
-                    </p>
-                  </div>
-                  
-                  {/* Visual Flow */}
-                  <div className="grid md:grid-cols-4 gap-6 mb-12">
-                    {[
-                      { icon: <Search className="w-12 h-12" />, title: "Question Minted", desc: "\"Best CRM for startups?\"", color: "from-blue-500 to-cyan-500" },
-                      { icon: <Target className="w-12 h-12" />, title: "Opinions Form", desc: "Multiple answers compete financially", color: "from-purple-500 to-pink-500" },
-                      { icon: <BarChart3 className="w-12 h-12" />, title: "Market Creates", desc: "Economic value emerges", color: "from-green-500 to-emerald-500" },
-                      { icon: <DollarSign className="w-12 h-12" />, title: "Everyone Profits", desc: "98% goes to community", color: "from-yellow-500 to-orange-500" }
-                    ].map((step, index) => (
-                      <motion.div
-                        key={step.title}
-                        className="text-center"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 * index, duration: 0.6 }}
-                      >
-                        <div className={cn(
-                          "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4",
-                          `bg-gradient-to-r ${step.color}`
-                        )}>
-                          {step.icon}
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
-                        <p className="text-gray-300">{step.desc}</p>
-                        {index < 3 && <ArrowRight className="w-6 h-6 mx-auto mt-4 text-gray-400" />}
-                      </motion.div>
-                    ))}
-                  </div>
+        <motion.p
+          className="text-xl md:text-2xl text-white font-bold max-w-3xl mx-auto mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
+          We built OMC to change that. Back it with money &mdash; or don&apos;t bother.
+        </motion.p>
 
-                  <div className="bg-gray-700/50 rounded-lg p-8">
-                    <h3 className="text-2xl font-bold text-white mb-4">Real-World Examples</h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-blue-600/20 rounded-lg p-6">
-                        <h4 className="text-lg font-semibold text-blue-300 mb-2">Local Business</h4>
-                        <p className="text-gray-200">"Best pizza under $50 in Brooklyn?"</p>
-                        <p className="text-sm text-gray-400 mt-2">Local restaurants compete for ownership and customer acquisition</p>
-                      </div>
-                      <div className="bg-purple-600/20 rounded-lg p-6">
-                        <h4 className="text-lg font-semibold text-purple-300 mb-2">Luxury Market</h4>
-                        <p className="text-gray-200">"Most iconic female fragrance?"</p>
-                        <p className="text-sm text-gray-400 mt-2">Luxury brands pay premium for market positioning</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Market Opportunity Tab */}
-            <TabsContent value="opportunity" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-3xl text-center text-white">The Infinite Market Opportunity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center mb-8">
-                    <p className="text-xl text-purple-300 font-semibold">
-                      Every valuable search query becomes an economic battleground
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {[
-                      { query: "Best pizza under $50 in Brooklyn?", market: "Local restaurants compete for ownership", size: "Local Market" },
-                      { query: "Most iconic female fragrance?", market: "Luxury brands like Chanel pay premium for status", size: "Global Luxury" },
-                      { query: "Top CRM software for startups?", market: "Enterprise companies trade for market positioning", size: "B2B Software" },
-                      { query: "Most effective skincare routine?", market: "Beauty brands and influencers monetize expertise", size: "Beauty & Wellness" }
-                    ].map((example, index) => (
-                      <motion.div
-                        key={index}
-                        className="bg-gray-700/50 rounded-lg p-6"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 * index, duration: 0.6 }}
-                      >
-                        <div className="flex items-start space-x-4">
-                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-bold">{index + 1}</span>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-yellow-300 mb-2">"{example.query}"</h4>
-                            <p className="text-gray-200 mb-2">{example.market}</p>
-                            <span className="inline-block bg-purple-600/30 text-purple-200 px-3 py-1 rounded-full text-sm">
-                              {example.size}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className="text-center mt-12 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg p-8 border border-purple-400/30">
-                    <h3 className="text-2xl font-bold text-white mb-4">Market Size</h3>
-                    <p className="text-3xl font-bold text-purple-300 mb-2">100+ Million Ad Keywords</p>
-                    <p className="text-xl text-gray-300">=</p>
-                    <p className="text-3xl font-bold text-blue-300">100+ Million Potential OMC Markets</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Comparison Tab */}
-            <TabsContent value="comparison" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-3xl text-center text-white">How OMC Compares</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-gray-600">
-                          <th className="pb-4 text-gray-400">Aspect</th>
-                          <th className="pb-4 text-center">
-                            <div className="flex items-center justify-center space-x-2">
-                              <BarChart3 className="w-5 h-5 text-red-400" />
-                              <span className="text-red-300">Polymarket</span>
-                            </div>
-                          </th>
-                          <th className="pb-4 text-center">
-                            <div className="flex items-center justify-center space-x-2">
-                              <Search className="w-5 h-5 text-blue-400" />
-                              <span className="text-blue-300">Google Search</span>
-                            </div>
-                          </th>
-                          <th className="pb-4 text-center">
-                            <div className="flex items-center justify-center space-x-2">
-                              <Crown className="w-5 h-5 text-yellow-400" />
-                              <span className="text-yellow-300">OMC</span>
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="space-y-4">
-                        {[
-                          { aspect: "Market Scope", poly: comparisonData.polymarket.scope, google: comparisonData.google.scope, omc: comparisonData.omc.scope },
-                          { aspect: "Resolution", poly: comparisonData.polymarket.resolution, google: comparisonData.google.resolution, omc: comparisonData.omc.resolution },
-                          { aspect: "Value Flow", poly: comparisonData.polymarket.valueFlow, google: comparisonData.google.valueFlow, omc: comparisonData.omc.valueFlow },
-                          { aspect: "Participants", poly: comparisonData.polymarket.participants, google: comparisonData.google.participants, omc: comparisonData.omc.participants },
-                          { aspect: "Examples", poly: comparisonData.polymarket.examples, google: comparisonData.google.examples, omc: comparisonData.omc.examples }
-                        ].map((row, index) => (
-                          <motion.tr
-                            key={row.aspect}
-                            className="border-b border-gray-700/50"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * index, duration: 0.5 }}
-                          >
-                            <td className="py-4 font-semibold text-gray-300">{row.aspect}</td>
-                            <td className="py-4 text-center text-gray-400 text-sm">{row.poly}</td>
-                            <td className="py-4 text-center text-gray-400 text-sm">{row.google}</td>
-                            <td className="py-4 text-center text-yellow-200 text-sm font-semibold">{row.omc}</td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <div className="mt-8 bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-6">
-                    <h3 className="text-xl font-bold text-emerald-300 mb-4">The OMC Web3 Advantage</h3>
-                    <div className="grid md:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <Infinity className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                        <p className="text-emerald-200 font-semibold">Infinite Markets</p>
-                        <p className="text-sm text-gray-400">No resolution limits, perpetual value</p>
-                      </div>
-                      <div className="text-center">
-                        <Users className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                        <p className="text-emerald-200 font-semibold">Decentralized Ownership</p>
-                        <p className="text-sm text-gray-400">98% value via smart contracts</p>
-                      </div>
-                      <div className="text-center">
-                        <Target className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                        <p className="text-emerald-200 font-semibold">Market Validation</p>
-                        <p className="text-sm text-gray-400">Financial skin in game on-chain</p>
-                      </div>
-                      <div className="text-center">
-                        <Globe className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                        <p className="text-emerald-200 font-semibold">Multi-Chain Access</p>
-                        <p className="text-sm text-gray-400">Built on Base, accessible everywhere</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Economics Tab */}
-            <TabsContent value="economics" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-3xl text-center text-white">How Everyone Makes Money</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-8">
-                    {economicRoles.map((role, index) => (
-                      <motion.div
-                        key={role.role}
-                        className="bg-gray-700/50 rounded-lg p-6"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 * index, duration: 0.6 }}
-                      >
-                        <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <DollarSign className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-xl font-bold text-yellow-300 mb-2">{role.role}</h3>
-                            <p className="text-gray-200 mb-2">{role.description}</p>
-                            <p className="text-emerald-300 font-semibold mb-3">{role.earnings}</p>
-                            <div className="bg-blue-600/20 rounded-lg p-4">
-                              <p className="text-blue-200 text-sm">{role.example}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className="mt-12 bg-gradient-to-r from-green-600/20 to-emerald-600/20 rounded-lg p-8 border border-emerald-400/30">
-                    <h3 className="text-2xl font-bold text-white mb-6 text-center">Money Flow Example</h3>
-                    <div className="bg-gray-700/50 rounded-lg p-6">
-                      <p className="text-yellow-300 font-semibold mb-2">Question: "Best project management tool?"</p>
-                      <p className="text-blue-300 mb-4">Trade: User pays $200 to change answer to "Notion"</p>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-200">Current Answer Owner (95%):</span>
-                          <span className="text-green-400 font-bold">$190</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-200">Question Creator (3%):</span>
-                          <span className="text-blue-400 font-bold">$6</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-200">Platform (2%):</span>
-                          <span className="text-purple-400 font-bold">$4</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Vision Tab */}
-            <TabsContent value="vision" className="mt-8">
-              <Card className="bg-gray-800/50 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-3xl text-center text-white">3-5 Year Vision</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-8">
-                    {/* Evolution Table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="border-b border-gray-600">
-                            <th className="pb-4 text-gray-400">Generation</th>
-                            <th className="pb-4 text-gray-400">Paradigm</th>
-                            <th className="pb-4 text-gray-400">Examples</th>
-                            <th className="pb-4 text-gray-400">Value Capture</th>
-                            <th className="pb-4 text-gray-400">User Experience</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b border-gray-700/50">
-                            <td className="py-4 text-blue-300">Web 1.0</td>
-                            <td className="py-4 text-gray-300">Manual Curation</td>
-                            <td className="py-4 text-gray-400">Yahoo Directory</td>
-                            <td className="py-4 text-gray-400">Platform owners</td>
-                            <td className="py-4 text-gray-400">Static, limited results</td>
-                          </tr>
-                          <tr className="border-b border-gray-700/50">
-                            <td className="py-4 text-purple-300">Web 2.0</td>
-                            <td className="py-4 text-gray-300">Algorithmic Ranking</td>
-                            <td className="py-4 text-gray-400">Google Search</td>
-                            <td className="py-4 text-gray-400">Advertisers</td>
-                            <td className="py-4 text-gray-400">Dynamic but ad-driven</td>
-                          </tr>
-                          <tr className="border-b border-gray-700/50">
-                            <td className="py-4 text-purple-300">AI/LLM</td>
-                            <td className="py-4 text-gray-300">Token Generation</td>
-                            <td className="py-4 text-gray-400">ChatGPT: proprietary models</td>
-                            <td className="py-4 text-gray-400">AI Giants: OpenAI, Claude...</td>
-                            <td className="py-4 text-gray-400">Dynamic but model-driven</td>
-                          </tr>
-                          <tr>
-                            <td className="py-4 text-yellow-300 font-bold">Web 3.0</td>
-                            <td className="py-4 text-yellow-300 font-bold">Market Validation</td>
-                            <td className="py-4 text-yellow-300 font-bold">OpinionMarketCap</td>
-                            <td className="py-4 text-yellow-300 font-bold">Content creators</td>
-                            <td className="py-4 text-yellow-300 font-bold">Value-based results</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Long-term Vision Points */}
-                    <div className="grid md:grid-cols-2 gap-8">
-                      <div className="space-y-6">
-                        <h3 className="text-2xl font-bold text-purple-300">Revolutionary Changes</h3>
-                        {[
-                          "Replacing traditional search engines with market-driven information discovery",
-                          "Creating a creator economy where 97% of volume flows to the OMC community", 
-                          "Establishing a new paradigm for information valuation and exchange",
-                          "Developing a global marketplace for human knowledge"
-                        ].map((point, index) => (
-                          <motion.div
-                            key={index}
-                            className="flex items-start space-x-3"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 * index, duration: 0.5 }}
-                          >
-                            <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-gray-200">{point}</p>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      <div className="space-y-6">
-                        <h3 className="text-2xl font-bold text-emerald-300">E-Commerce Revolution</h3>
-                        <div className="bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-6">
-                          <p className="text-gray-200 leading-relaxed">
-                            Within 3-5 years, OMC aims to revolutionize e-commerce by enabling enterprises 
-                            to conduct commerce with reduced friction, eliminating intermediaries that extract 10-15% 
-                            commission on every transaction.
-                          </p>
-                        </div>
-                        <div className="bg-blue-600/20 border border-blue-400/30 rounded-lg p-6">
-                          <p className="text-gray-200 leading-relaxed">
-                            Smart contract technology enables value to flow directly between merchants and consumers, 
-                            creating a more efficient and equitable commercial ecosystem.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Future Search Example */}
-                    <div className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-lg p-8 border border-purple-400/30">
-                      <h3 className="text-2xl font-bold text-white mb-6">The Future of Search</h3>
-                      <p className="text-gray-200 mb-4">
-                        When searching for "best AI tools for content creation" on traditional platforms, users receive SEO-optimized listicles. 
-                        On OMC, the same query shows multiple questions with financially-backed answers:
-                      </p>
-                      
-                      <div className="overflow-x-auto">
-                        <table className="w-full mt-6">
-                          <thead>
-                            <tr className="border-b border-gray-600">
-                              <th className="pb-2 text-left text-gray-400">Question</th>
-                              <th className="pb-2 text-left text-gray-400">Current Answer</th>
-                              <th className="pb-2 text-left text-gray-400">Owner</th>
-                              <th className="pb-2 text-right text-gray-400">Price</th>
-                              <th className="pb-2 text-right text-gray-400">Trades</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-b border-gray-700/50">
-                              <td className="py-3 text-yellow-300">Best AI suite for content creators?</td>
-                              <td className="py-3 text-gray-200 text-sm">Jasper AI for text, Midjourney for visuals...</td>
-                              <td className="py-3 text-blue-300 text-sm">content_pro.base.eth</td>
-                              <td className="py-3 text-right text-emerald-400 font-bold">450 USDC</td>
-                              <td className="py-3 text-right text-gray-400">85</td>
-                            </tr>
-                            <tr className="border-b border-gray-700/50">
-                              <td className="py-3 text-yellow-300">Most cost-effective AI tools?</td>
-                              <td className="py-3 text-gray-200 text-sm">ChatGPT for drafting, Canva AI for images...</td>
-                              <td className="py-3 text-blue-300 text-sm">budget_creator.base.eth</td>
-                              <td className="py-3 text-right text-emerald-400 font-bold">325 USDC</td>
-                              <td className="py-3 text-right text-gray-400">62</td>
-                            </tr>
-                            <tr>
-                              <td className="py-3 text-yellow-300">Enterprise-grade AI solution?</td>
-                              <td className="py-3 text-gray-200 text-sm">Microsoft Copilot suite with Azure...</td>
-                              <td className="py-3 text-blue-300 text-sm">enterprise_advisor.base.eth</td>
-                              <td className="py-3 text-right text-emerald-400 font-bold">580 USDC</td>
-                              <td className="py-3 text-right text-gray-400">93</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* Conclusion */}
-                    <div className="text-center bg-gradient-to-r from-yellow-600/20 to-orange-600/20 rounded-lg p-8 border border-yellow-400/30">
-                      <h3 className="text-2xl font-bold text-white mb-4">The Future We're Building</h3>
-                      <p className="text-gray-200 leading-relaxed max-w-4xl mx-auto">
-                        By putting information to the test of market forces, OMC is creating a future where 
-                        the best answers rise to the top not through algorithmic manipulation or advertising dollars, 
-                        but through financial backing of knowledgeable participants.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.0 }}
+        >
+          <Button asChild size="lg" className="cta-shimmer button-pulse bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
+              Launch App
+              <ArrowUpRight className="w-5 h-5 ml-2" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="#the-insight">How It Works</a>
+          </Button>
         </motion.div>
 
-        {/* CTA Section */}
         <motion.div
-          className="text-center mt-20"
+          className="mt-16 bounce-down"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 1 }}
+          transition={{ delay: 1.4 }}
         >
-          <h3 className="text-4xl font-bold text-white mb-6">Join The Revolution</h3>
-          <p className="text-gray-300 mb-8 text-lg max-w-2xl mx-auto">
-            Be part of the infinite marketplace where knowledge meets profit and every opinion has value.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 group button-pulse button-hover-float"
-            >
-              Start Trading
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 button-hover-float"
-            >
-              Read Whitepaper
-            </Button>
-          </div>
+          <ChevronDown className="w-8 h-8 text-blue-400/60 mx-auto" />
         </motion.div>
       </div>
+    </section>
+  );
+};
+
+// ============================================================
+// SECTION 2: THE INSIGHT — "Google Guesses. We Prove."
+// ============================================================
+const InsightSection = () => {
+  const platforms = [
+    {
+      name: "Google",
+      icon: <Search className="w-8 h-8" />,
+      verdict: "10 blue links ranked by an algorithm nobody understands.",
+      flaw: "Best SEO wins. Not the best answer.",
+      color: "text-gray-400",
+      borderColor: "border-gray-700",
+      bgColor: "bg-gray-800/30",
+    },
+    {
+      name: "Polymarket",
+      icon: <BarChart3 className="w-8 h-8" />,
+      verdict: "Yes/no bets that expire when the event ends.",
+      flaw: "~500 markets. Binary outcomes only.",
+      color: "text-gray-400",
+      borderColor: "border-gray-700",
+      bgColor: "bg-gray-800/30",
+    },
+    {
+      name: "OMC",
+      icon: <Crown className="w-8 h-8 text-yellow-400" />,
+      verdict: "Answers backed by real money. They never expire. They keep growing.",
+      flaw: "The answer with the most money behind it wins.",
+      color: "text-blue-400",
+      borderColor: "border-blue-500/50",
+      bgColor: "bg-blue-900/20",
+      glow: true,
+    },
+  ];
+
+  return (
+    <Section id="the-insight">
+      <GradientOrb color="rgba(59, 130, 246, 0.2)" size={400} position={{ top: '10%', right: '0%' }} delay={1} />
+      <SectionTitle>Google Guesses. We Prove.</SectionTitle>
+
+      <div className="grid md:grid-cols-3 gap-6 mb-12">
+        {platforms.map((p, i) => (
+          <motion.div
+            key={p.name}
+            className={cn(
+              "rounded-xl border p-8 relative",
+              p.borderColor, p.bgColor,
+              p.glow && "shadow-[0_0_30px_rgba(59,130,246,0.15)]"
+            )}
+            {...scaleUpView}
+            transition={{ ...scaleUpView.transition, delay: i * 0.15 }}
+          >
+            {p.glow && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                WINNER
+              </div>
+            )}
+            <div className={cn("mb-4", p.color)}>{p.icon}</div>
+            <h3 className={cn("text-2xl font-bold mb-3", p.glow ? "text-white" : "text-gray-300")}>{p.name}</h3>
+            <p className={cn("text-lg mb-4", p.glow ? "text-gray-200" : "text-gray-400")}>{p.verdict}</p>
+            <p className={cn("text-sm font-semibold", p.glow ? "text-blue-300" : "text-gray-500")}>{p.flaw}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.p
+        className="text-center text-xl text-gray-300 max-w-3xl mx-auto"
+        {...fadeInView}
+      >
+        Not the one with the best SEO. Not the one an algorithm picked. The one people put <span className="text-green-400 font-bold">real money</span> behind.
+      </motion.p>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 3: HOW THE MONEY FLOWS — "Everyone Eats"
+// ============================================================
+const MoneyFlowSection = () => {
+  const roles = [
+    {
+      title: "Question Creator",
+      icon: <Zap className="w-6 h-6" />,
+      copy: "Mint a question. Every time someone trades an answer, you get 3% royalty. Forever. Not a month. Not a year. Forever.",
+      accent: "from-green-500 to-emerald-500",
+      borderColor: "border-l-green-500",
+    },
+    {
+      title: "Answer Owner",
+      icon: <DollarSign className="w-6 h-6" />,
+      copy: "You own the current answer. Someone disagrees? They pay you to take it. You keep 95%.",
+      accent: "from-blue-500 to-cyan-500",
+      borderColor: "border-l-blue-500",
+    },
+    {
+      title: "The Trader",
+      icon: <TrendingUp className="w-6 h-6" />,
+      copy: "Buy answers cheap before they blow up. Sell when someone wants it more. Same game, new arena.",
+      accent: "from-purple-500 to-pink-500",
+      borderColor: "border-l-purple-500",
+    },
+  ];
+
+  const moneyBars = [
+    { label: "Previous Answer Owner", amount: 190, percent: 95, color: "bg-green-500" },
+    { label: "Question Creator", amount: 6, percent: 3, color: "bg-blue-500" },
+    { label: "Platform", amount: 4, percent: 2, color: "bg-purple-500" },
+  ];
+
+  return (
+    <Section>
+      <GradientOrb color="rgba(16, 185, 129, 0.2)" size={400} position={{ bottom: '0%', left: '-5%' }} delay={1} />
+      <SectionTitle>Everyone Eats</SectionTitle>
+
+      <div className="grid md:grid-cols-3 gap-6 mb-16">
+        {roles.map((role, i) => (
+          <motion.div
+            key={role.title}
+            className={cn("bg-gray-800/50 border-l-4 rounded-xl p-8", role.borderColor)}
+            {...fadeInView}
+            transition={{ ...fadeInView.transition, delay: i * 0.15 }}
+            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
+          >
+            <div className={cn("w-12 h-12 rounded-full bg-gradient-to-r flex items-center justify-center text-white mb-4", role.accent)}>
+              {role.icon}
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">{role.title}</h3>
+            <p className="text-gray-300 leading-relaxed">{role.copy}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Money flow example */}
+      <motion.div
+        className="bg-gray-800/50 border border-gray-700 rounded-xl p-8 max-w-2xl mx-auto"
+        {...fadeInView}
+      >
+        <p className="text-gray-400 text-sm mb-2">Example trade</p>
+        <p className="text-white font-bold text-lg mb-1">&ldquo;Best project management tool?&rdquo;</p>
+        <p className="text-gray-300 mb-6">Someone pays <span className="text-green-400 font-bold">$200</span> to change the answer to &ldquo;Notion&rdquo;</p>
+
+        <div className="space-y-4">
+          {moneyBars.map((bar, i) => (
+            <motion.div
+              key={bar.label}
+              className="space-y-1"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 + i * 0.15, duration: 0.6 }}
+            >
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-300">{bar.label} ({bar.percent}%)</span>
+                <span className="text-white font-bold">${bar.amount}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  className={cn("h-full rounded-full", bar.color)}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${bar.percent}%` }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 + i * 0.2, duration: 1, ease: "easeOut" }}
+                />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 4: THE SCALE — "100 Million Markets. Day One."
+// ============================================================
+const ScaleSection = () => {
+  const tickerItems = [
+    { q: "Best CRM for startups?", price: "$342" },
+    { q: "Top running shoes 2025?", price: "$178" },
+    { q: "Most iconic watch brand?", price: "$1,240" },
+    { q: "Best pizza in Brooklyn?", price: "$89" },
+    { q: "Most effective skincare?", price: "$456" },
+    { q: "Best L2 blockchain?", price: "$2,100" },
+    { q: "Top AI coding tool?", price: "$670" },
+    { q: "Best noise-canceling headphones?", price: "$234" },
+    { q: "Most undervalued NFT project?", price: "$890" },
+    { q: "Best coffee shop in Manhattan?", price: "$67" },
+  ];
+
+  return (
+    <Section className="bg-gradient-to-b from-transparent via-blue-900/20 to-transparent">
+      <GradientOrb color="rgba(139, 92, 246, 0.25)" size={500} position={{ top: '-10%', left: '30%' }} delay={0} />
+
+      <SectionTitle>100 Million Markets. Day One.</SectionTitle>
+
+      <div className="text-center mb-12">
+        <motion.div
+          className="text-6xl md:text-8xl font-black text-white mb-4"
+          {...fadeInView}
+        >
+          <AnimatedCounter end={100000000} duration={3} suffix="+" />
+        </motion.div>
+        <motion.p className="text-gray-400 text-lg" {...fadeInView}>
+          potential markets from Google Ads keywords alone
+        </motion.p>
+      </div>
+
+      <motion.div
+        className="text-center max-w-3xl mx-auto mb-12 space-y-4"
+        {...fadeInView}
+      >
+        <p className="text-lg text-gray-300">
+          Google Ads has <span className="text-blue-400 font-bold">100+ million</span> keywords businesses pay to rank for.
+          Every. Single. One. is an OMC market waiting to happen.
+        </p>
+        <p className="text-gray-400">
+          &ldquo;Best CRM?&rdquo; &ldquo;Top running shoes?&rdquo; &ldquo;Most iconic watch brand?&rdquo;
+        </p>
+        <p className="text-xl text-white font-bold">
+          Polymarket has ~500 markets. We have a hundred million.
+        </p>
+      </motion.div>
+
+      {/* Auto-scrolling ticker */}
+      <div className="relative overflow-hidden py-4">
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-gray-900 to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-gray-900 to-transparent z-10" />
+        <motion.div
+          className="flex gap-4 whitespace-nowrap"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        >
+          {[...tickerItems, ...tickerItems].map((item, i) => (
+            <div
+              key={i}
+              className="inline-flex items-center gap-3 bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2 flex-shrink-0"
+            >
+              <span className="text-gray-300 text-sm">{item.q}</span>
+              <span className="text-green-400 font-bold text-sm">{item.price}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 5: THE VISION — "Search is Broken"
+// ============================================================
+const VisionSection = () => {
+  const eras = [
+    {
+      era: "Web 1.0",
+      desc: "Yahoo tells you what to read. Editors decide what matters.",
+      color: "text-gray-500",
+      dotColor: "bg-gray-500",
+      highlight: false,
+    },
+    {
+      era: "Web 2.0",
+      desc: "Google's algorithm decides what's \"true.\" Whoever pays the most ad money is #1.",
+      color: "text-gray-400",
+      dotColor: "bg-gray-400",
+      highlight: false,
+    },
+    {
+      era: "AI Era",
+      desc: "ChatGPT makes it up. Sounds confident. Often wrong. Can't verify anything.",
+      color: "text-gray-400",
+      dotColor: "bg-purple-400",
+      highlight: false,
+    },
+    {
+      era: "OMC",
+      desc: "The answer with the most money behind it wins. On-chain. Transparent. Verifiable.",
+      color: "text-blue-400",
+      dotColor: "bg-blue-500",
+      highlight: true,
+    },
+  ];
+
+  return (
+    <Section>
+      <GradientOrb color="rgba(59, 130, 246, 0.15)" size={400} position={{ top: '20%', right: '-5%' }} delay={2} />
+      <SectionTitle>Search is Broken. We&apos;re Fixing It.</SectionTitle>
+
+      <div className="max-w-2xl mx-auto relative">
+        {/* Vertical line */}
+        <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-gray-700 via-blue-500/50 to-blue-500" />
+
+        <div className="space-y-12">
+          {eras.map((e, i) => (
+            <motion.div
+              key={e.era}
+              className="flex items-start gap-6 relative"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.2, duration: 0.6 }}
+            >
+              {/* Dot */}
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 relative z-10",
+                e.highlight ? "bg-blue-600 shadow-[0_0_20px_rgba(59,130,246,0.5)]" : "bg-gray-800 border border-gray-600"
+              )}>
+                <div className={cn("w-3 h-3 rounded-full", e.dotColor)} />
+              </div>
+
+              {/* Content */}
+              <div className={cn(
+                "flex-1 rounded-xl p-6",
+                e.highlight
+                  ? "bg-blue-900/20 border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                  : "bg-gray-800/30 border border-gray-700/50"
+              )}>
+                <h3 className={cn(
+                  "text-xl font-bold mb-2",
+                  e.highlight ? "text-blue-400" : e.color
+                )}>
+                  {e.era}
+                  {e.highlight && (
+                    <motion.span
+                      className="ml-2 text-yellow-400 text-sm"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      NOW
+                    </motion.span>
+                  )}
+                </h3>
+                <p className={cn(
+                  "leading-relaxed",
+                  e.highlight ? "text-gray-200 font-medium" : "text-gray-400"
+                )}>{e.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 6: WHO'S PLAYING — "Real Use Cases"
+// ============================================================
+const UseCasesSection = () => {
+  const cases = [
+    {
+      emoji: <Palette className="w-8 h-8" />,
+      title: "Brands",
+      copy: "Luxury houses fighting for 'Most prestigious watch?' This is advertising with skin in the game.",
+      gradient: "from-pink-500/20 to-purple-500/20",
+      hoverGlow: "hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]",
+    },
+    {
+      emoji: <Users className="w-8 h-8" />,
+      title: "Communities",
+      copy: "Crypto Twitter pooling money on 'Best L2?' Put your bags where your mouth is.",
+      gradient: "from-blue-500/20 to-cyan-500/20",
+      hoverGlow: "hover:shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+    },
+    {
+      emoji: <MessageCircle className="w-8 h-8" />,
+      title: "Creators",
+      copy: "Mint questions. Earn royalties every time someone trades an answer. Forever. The first question marketplace.",
+      gradient: "from-green-500/20 to-emerald-500/20",
+      hoverGlow: "hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]",
+    },
+    {
+      emoji: <Flame className="w-8 h-8" />,
+      title: "Degens",
+      copy: "Buy answers cheap. Wait for someone to disagree. Collect. You know the drill.",
+      gradient: "from-orange-500/20 to-red-500/20",
+      hoverGlow: "hover:shadow-[0_0_30px_rgba(249,115,22,0.2)]",
+    },
+  ];
+
+  return (
+    <Section>
+      <GradientOrb color="rgba(139, 92, 246, 0.15)" size={400} position={{ bottom: '10%', left: '0%' }} delay={1} />
+      <SectionTitle>Who&apos;s Already Playing?</SectionTitle>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {cases.map((c, i) => (
+          <motion.div
+            key={c.title}
+            className={cn(
+              "bg-gradient-to-br border border-gray-700 rounded-xl p-8 transition-all duration-300 cursor-default",
+              c.gradient, c.hoverGlow
+            )}
+            {...scaleUpView}
+            transition={{ ...scaleUpView.transition, delay: i * 0.12 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+          >
+            <div className="text-white mb-4">{c.emoji}</div>
+            <h3 className="text-xl font-bold text-white mb-3">{c.title}</h3>
+            <p className="text-gray-300 leading-relaxed">{c.copy}</p>
+          </motion.div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 7: FINAL CTA — "Stop Talking. Start Trading."
+// ============================================================
+const FinalCTASection = () => {
+  const particles = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: ((i * 13 + 5) % 100),
+    yStart: 100 + (i % 3) * 10,
+    yEnd: -10 - (i % 4) * 5,
+    duration: 6 + (i % 5),
+    delay: (i * 0.5) % 4,
+    size: 1 + (i % 2),
+    color: ['#3b82f6', '#8b5cf6', '#60a5fa'][i % 3],
+  }));
+
+  return (
+    <section className="relative py-32 px-4 overflow-hidden bg-gradient-to-b from-transparent via-blue-900/30 to-transparent">
+      <GradientOrb color="rgba(59, 130, 246, 0.3)" size={500} position={{ top: '20%', left: '30%' }} delay={0} />
+
+      {/* Particles */}
+      <div className="absolute inset-0 z-0">
+        {particles.map((p) => (
+          <motion.div
+            key={`cta-p-${p.id}`}
+            className="absolute rounded-full"
+            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+            initial={{ x: `${p.x}vw`, y: `${p.yStart}vh`, opacity: 0 }}
+            animate={{ opacity: [0, 0.4, 0], y: [`${p.yStart}%`, `${p.yEnd}%`] }}
+            transition={{ duration: p.duration, repeat: Infinity, ease: "linear", delay: p.delay }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center relative z-10 max-w-3xl mx-auto">
+        <motion.h2
+          className="text-4xl md:text-5xl font-bold text-white mb-6 text-glow"
+          {...fadeInView}
+        >
+          Stop Talking. Start Trading.
+        </motion.h2>
+        <motion.p
+          className="text-xl text-gray-300 mb-10"
+          {...fadeInView}
+        >
+          Your opinion is worthless until there&apos;s money on it.
+        </motion.p>
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+          {...fadeInView}
+        >
+          <Button asChild size="lg" className="cta-shimmer button-pulse bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
+              Put Your Money Where Your Mouth Is
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="/whitepaper">Read the Whitepaper</a>
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================
+// MAIN PAGE
+// ============================================================
+export default function Mission() {
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <LandingNavigation />
+      <HeroSection />
+      <AnimatedSeparator />
+      <InsightSection />
+      <AnimatedSeparator />
+      <MoneyFlowSection />
+      <AnimatedSeparator />
+      <ScaleSection />
+      <AnimatedSeparator />
+      <VisionSection />
+      <AnimatedSeparator />
+      <UseCasesSection />
+      <AnimatedSeparator />
+      <FinalCTASection />
     </div>
-  )
+  );
 }

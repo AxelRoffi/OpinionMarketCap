@@ -3,8 +3,8 @@ import ProfessionalLandingDark from './ProfessionalLandingDark';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'OpinionMarketCap | The Infinite Marketplace',
-  description: 'Own The Narrative, Earn The Profits. Where opinions become tradable assets - mint questions, earn royalties forever.',
+  title: 'OpinionMarketCap | Opinions Are Free. Yours Isn\'t.',
+  description: 'Put your money where your mouth is. Back your opinion with real money on Base. Get paid when someone disagrees.',
 }
 
 export default function Landing() {

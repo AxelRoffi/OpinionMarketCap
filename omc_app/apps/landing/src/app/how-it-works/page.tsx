@@ -1,561 +1,582 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { 
-  ArrowRight, ArrowDown, TrendingUp, Users, DollarSign, Target, Zap, Globe, Award, 
-  Search, BarChart3, Coins, Crown, Brain, Layers, Lock, Shield, ChevronRight,
-  Play, Pause, RotateCcw, Plus, Minus, CheckCircle, Info
+import { motion } from "framer-motion"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  Zap,
+  DollarSign,
+  TrendingUp,
+  Target,
+  Crown,
+  Users,
+  Shield,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { LandingNavigation } from "@/components/LandingNavigation"
 import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
 
-export default function HowItWorks() {
-  const [mounted, setMounted] = useState(false)
-  const [activeDemo, setActiveDemo] = useState(0)
-  const [bondingPrice, setBondingPrice] = useState(10.5)
-  const [tradingStep, setTradingStep] = useState(0)
-  const [simulationRunning, setSimulationRunning] = useState(false)
+// --- Reusable components (same as landing + mission pages) ---
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+const GradientOrb = ({ color, size, position, delay = 0 }: { color: string, size: number, position: Record<string, string>, delay?: number }) => (
+  <motion.div
+    className="absolute rounded-full pointer-events-none z-0"
+    style={{
+      width: size, height: size,
+      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      filter: "blur(80px)",
+      ...position
+    }}
+    animate={{ x: [0, 30, -20, 0], y: [0, -20, 15, 0], scale: [1, 1.05, 0.95, 1] }}
+    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
+  />
+);
 
-  // Simulate trading demo
-  const startSimulation = () => {
-    setSimulationRunning(true)
-    setTradingStep(0)
-    
-    const steps = [0, 1, 2, 3, 4]
-    let currentStep = 0
-    
-    const interval = setInterval(() => {
-      currentStep++
-      if (currentStep >= steps.length) {
-        setSimulationRunning(false)
-        clearInterval(interval)
-        return
-      }
-      setTradingStep(currentStep)
-    }, 2000)
-  }
+const AnimatedSeparator = () => (
+  <div className="relative h-px max-w-4xl mx-auto overflow-hidden my-4">
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+      animate={{ x: ["-100%", "100%"] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+    />
+  </div>
+);
 
-  const paradigmComparison = [
-    {
-      title: "Traditional Web Search",
-      subtitle: "Algorithm-Driven Results",
-      steps: [
-        { icon: <Search className="w-8 h-8" />, text: "Search Query", desc: "User asks question" },
-        { icon: <Brain className="w-8 h-8" />, text: "Algorithm", desc: "Black box processing" },
-        { icon: <Layers className="w-8 h-8" />, text: "Ranked Results", desc: "SEO-optimized content" },
-        { icon: <DollarSign className="w-8 h-8" />, text: "Ad Revenue", desc: "Platform profits" }
-      ],
-      color: "from-gray-500 to-gray-700",
-      problems: ["No financial incentive for quality", "Algorithm manipulation", "Platform keeps all value"]
-    },
-    {
-      title: "AI/LLM Responses",
-      subtitle: "Model-Generated Answers",
-      steps: [
-        { icon: <Search className="w-8 h-8" />, text: "Prompt Input", desc: "User asks question" },
-        { icon: <Brain className="w-8 h-8" />, text: "AI Processing", desc: "Neural network inference" },
-        { icon: <Layers className="w-8 h-8" />, text: "Generated Response", desc: "Next token prediction" },
-        { icon: <DollarSign className="w-8 h-8" />, text: "Subscription Revenue", desc: "Platform profits" }
-      ],
-      color: "from-green-500 to-teal-600",
-      problems: ["Hallucinations & Fake News", "Massive energy consumption", "No financial incentive for correctness"]
-    },
-    {
-      title: "OpinionMarketCap (OMC)",
-      subtitle: "Market-Driven Consensus",
-      steps: [
-        { icon: <Target className="w-8 h-8" />, text: "Question Minted", desc: "Blockchain asset created" },
-        { icon: <Coins className="w-8 h-8" />, text: "Market Forms", desc: "Financial competition" },
-        { icon: <TrendingUp className="w-8 h-8" />, text: "Price Discovery", desc: "Best answers rise" },
-        { icon: <Users className="w-8 h-8" />, text: "Community Profits", desc: "98% value shared" }
-      ],
-      color: "from-blue-500 to-purple-600",
-      benefits: ["Financial skin in the game", "Transparent market forces", "Community-first economics"]
-    }
-  ]
+const Section = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
+  <section id={id} className={cn("py-24 px-4 relative overflow-hidden", className)}>
+    <div className="max-w-6xl mx-auto relative z-10">{children}</div>
+  </section>
+);
 
-  const coreSteps = [
-    {
-      title: "Question Minting on OMC",
-      description: "Transform your insight into a tradeable blockchain asset",
-      visual: "🎯",
-      details: "Mint question, set initial answer, initial price, description and link, creation fee = 20% initial price. Your question becomes an NFT-like asset with ongoing royalty potential.",
-      example: "\"Best CRM for startups?\" → Initial answer: \"HubSpot\" → Starting price: 12 USDC"
-    },
-    {
-      title: "Market Creation & Price Discovery",
-      description: "OpinionMarketCap's bonding curve creates instant liquidity",
-      visual: "📈",
-      details: "As more people buy the right to change the answer, the price increases exponentially, replicating market forces. Early believers get better prices, rewarding conviction.",
-      example: "HubSpot answer: 12 → 15 → 22 → 35 USDC as demand increases"
-    },
-    {
-      title: "Trading & Ownership Transfer",
-      description: "Buy, sell, and own the best answers on OMC",
-      visual: "🔄",
-      details: "Anyone can challenge the current answer by paying the higher price. 95% goes to the previous owner.",
-      example: "Someone pays 35 USDC to change answer for \"Salesforce\" → Previous owner receives 33.25 USDC profit"
-    },
-    {
-      title: "Continuous Value Generation",
-      description: "Every trade generates fees for the OpinionMarketCap ecosystem",
-      visual: "💰",
-      details: "Question creators earn 3% royalty forever. Current owners earn 95% on each sale. Platform takes only 2%.",
-      example: "35 USDC trade → Owner: 33.25, Creator: 1.05, OMC Platform: 0.70"
-    }
-  ]
+const SectionTitle = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <motion.h2
+    className={cn("text-4xl md:text-5xl font-bold text-center mb-16 animated-gradient-text", className)}
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8, ease: "easeOut" }}
+  >{children}</motion.h2>
+);
 
-  const economicRoles = [
-    {
-      role: "Question Creator",
-      icon: <Crown className="w-6 h-6" />,
-      description: "Mints valuable questions on OpinionMarketCap",
-      earnings: "3% royalty on every future trade forever",
-      example: "Created \"Best AI tool?\" → 500 USDC total volume → Earned 15 USDC in royalties",
-      color: "from-yellow-500 to-orange-500"
-    },
-    {
-      role: "Answer Owner", 
-      icon: <Award className="w-6 h-6" />,
-      description: "Owns the current best answer in OMC markets",
-      earnings: "95% of sale price when someone buys their answer",
-      example: "Owns \"ChatGPT\" answer at 80 USDC → Sells for 120 USDC → Earns 114 USDC",
-      color: "from-blue-500 to-cyan-500"
-    },
-    {
-      role: "Trader/Speculator",
-      icon: <TrendingUp className="w-6 h-6" />,
-      description: "Buys undervalued answers on OpinionMarketCap",
-      earnings: "95% profit when reselling at higher prices",
-      example: "Bought \"Notion\" at 25 USDC → Market recognizes value → Sold at 60 USDC",
-      color: "from-green-500 to-emerald-500"
-    },
-    {
-      role: "Pool Participant",
-      icon: <Users className="w-6 h-6" />,
-      description: "Collaborates in OMC prediction pools",
-      earnings: "Share of pool rewards when targets are reached",
-      example: "Joined 10-person pool → Target reached → Shared 500 USDC reward according to pool share",
-      color: "from-purple-500 to-pink-500"
-    }
-  ]
+const fadeInView = {
+  initial: { opacity: 0, y: 30 } as const,
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-black" />
-  }
+const scaleUpView = {
+  initial: { opacity: 0, scale: 0.8 } as const,
+  whileInView: { opacity: 1, scale: 1 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.275] as [number, number, number, number] }
+};
+
+// ============================================================
+// SECTION 1: HERO
+// ============================================================
+const HeroSection = () => {
+  const particles = Array.from({ length: 35 }, (_, i) => ({
+    id: i,
+    x: ((i * 7 + 3) % 100),
+    yStart: ((i * 11 + 5) % 100),
+    yEnd: ((i * 19 + 7) % 100),
+    duration: 6 + (i % 8),
+    delay: (i * 0.3) % 5,
+    size: 1 + (i % 3),
+    color: ['#3b82f6', '#8b5cf6', '#10b981', '#60a5fa', '#a855f7'][i % 5],
+  }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
-      {/* Navigation */}
-      <LandingNavigation />
-      
-      {/* Background Animation */}
+    <section className="relative pt-32 pb-20 px-4 text-center overflow-hidden hero-mesh-bg min-h-[80vh] flex flex-col justify-center">
+      <GradientOrb color="rgba(59, 130, 246, 0.4)" size={600} position={{ top: '-10%', right: '-5%' }} delay={0} />
+      <GradientOrb color="rgba(139, 92, 246, 0.3)" size={500} position={{ bottom: '0%', left: '-10%' }} delay={2} />
+
       <div className="absolute inset-0 z-0">
-        {[...Array(60)].map((_, i) => (
-          <div
-            key={`particle-${i}`}
-            className={cn(
-              "absolute w-1 h-1 rounded-full animate-pulse",
-              i % 5 === 0 && "bg-blue-400/30",
-              i % 5 === 1 && "bg-purple-400/30", 
-              i % 5 === 2 && "bg-emerald-400/30",
-              i % 5 === 3 && "bg-yellow-400/30",
-              i % 5 === 4 && "bg-cyan-400/30"
-            )}
-            style={{
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDelay: Math.random() * 3 + 's',
-              animationDuration: (2 + Math.random() * 3) + 's'
-            }}
+        {particles.map((p) => (
+          <motion.div
+            key={`p-${p.id}`}
+            className="absolute rounded-full"
+            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+            initial={{ x: `${p.x}vw`, y: `${p.yStart}vh`, opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0], y: [`${p.yStart}vh`, `${p.yEnd}vh`] }}
+            transition={{ duration: p.duration, repeat: Infinity, repeatType: "loop", ease: "linear", delay: p.delay }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 pt-20 pb-12">
-        {/* Hero Section */}
-        <motion.div
-          className="text-center mb-20"
-          initial={{ opacity: 0, y: -50 }}
+      <div className="relative z-10 max-w-4xl mx-auto">
+        <motion.h1
+          className="text-4xl md:text-7xl font-black mb-8 leading-tight"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
         >
-          <motion.h1 
-            className="text-4xl md:text-7xl font-black mb-6"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-          >
-            <span className="text-white">How</span>{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 bg-clip-text text-transparent">
-              Opinion Market Cap
-            </span>
-            <br />
-            <span className="text-white">Works</span>
-          </motion.h1>
-          
-          <motion.p
-            className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-          >
-            Understanding the <span className="text-blue-400 font-semibold">new paradigm</span> where opinions become tradeable assets
-            and every valuable question creates an <span className="text-purple-400 font-semibold">infinite marketplace</span>
-          </motion.p>
-
-          <motion.div
-            className="flex justify-center space-x-4"
+          <span className="text-white">Three steps.</span>
+          <br />
+          <motion.span
+            className="animated-gradient-text"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Button
-              onClick={startSimulation}
-              disabled={simulationRunning}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-full font-semibold"
-            >
-              {simulationRunning ? (
-                <>
-                  <Pause className="w-5 h-5 mr-2" />
-                  Simulation Running
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Interactive Demo
-                </>
-              )}
-            </Button>
-          </motion.div>
-        </motion.div>
+            That&apos;s it.
+          </motion.span>
+        </motion.h1>
 
-        {/* Paradigm Comparison */}
-        <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 50 }}
+        <motion.p
+          className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed mb-10"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <h2 className="text-3xl font-bold text-center mb-12">
-            <span className="text-white">The Paradigm Shift:</span>{" "}
-            <span className="bg-gradient-to-r from-red-400 to-yellow-500 bg-clip-text text-transparent">Old Web</span>{" "}
-            vs{" "}
-            <span className="bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">AI/LLM</span>{" "}
-            vs{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OMC</span>
-          </h2>
-          
-          <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {paradigmComparison.map((paradigm, paradigmIndex) => (
-              <motion.div
-                key={paradigm.title}
-                initial={{ opacity: 0, x: paradigmIndex === 0 ? -50 : paradigmIndex === 2 ? 50 : 0 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.2 + paradigmIndex * 0.3, duration: 0.8 }}
-              >
-                <Card className={cn(
-                  "bg-gray-800/50 border-2 backdrop-blur-sm h-full",
-                  paradigmIndex === 0 ? "border-gray-600" : 
-                  paradigmIndex === 1 ? "border-green-500" : "border-purple-500"
-                )}>
-                  <CardHeader>
-                    <CardTitle className={cn(
-                      "text-2xl text-center",
-                      paradigmIndex === 0 ? "text-gray-300" : 
-                      paradigmIndex === 1 ? "text-green-300" : "text-purple-300"
-                    )}>
-                      {paradigm.title}
-                    </CardTitle>
-                    <p className="text-gray-400 text-center">{paradigm.subtitle}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {paradigm.steps.map((step, stepIndex) => (
-                        <motion.div
-                          key={stepIndex}
-                          className="flex items-center space-x-4"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 1.5 + paradigmIndex * 0.3 + stepIndex * 0.2, duration: 0.5 }}
-                        >
-                          <div className={cn(
-                            "w-12 h-12 rounded-full flex items-center justify-center",
-                            `bg-gradient-to-r ${paradigm.color}`
-                          )}>
-                            {step.icon}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-white">{step.text}</h4>
-                            <p className="text-sm text-gray-400">{step.desc}</p>
-                          </div>
-                          {stepIndex < paradigm.steps.length - 1 && (
-                            <ArrowDown className="w-5 h-5 text-gray-500 absolute left-6 mt-16" />
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
+          Create a question. Own an answer. Get paid when someone disagrees. No PhD in crypto required.
+        </motion.p>
 
-                    <div className="mt-8 p-4 rounded-lg bg-gray-700/50">
-                      <h4 className={cn(
-                        "font-semibold mb-3",
-                        paradigmIndex === 2 ? "text-green-300" : "text-red-300"
-                      )}>
-                        {paradigmIndex === 2 ? "OMC Benefits:" : "Problems:"}
-                      </h4>
-                      <ul className="space-y-2">
-                        {(paradigm.problems || paradigm.benefits)?.map((item, index) => (
-                          <li key={index} className="text-sm text-gray-300 flex items-center space-x-2">
-                            {paradigmIndex === 2 ? (
-                              <CheckCircle className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                            )}
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Core Concepts */}
         <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 1 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
-          <h2 className="text-3xl font-bold text-center mb-12">
-            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              OMC Core Concepts
-            </span>
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {coreSteps.map((step, index) => (
-              <motion.div
-                key={index}
-                className="group cursor-pointer"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2.2 + index * 0.2, duration: 0.6 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setActiveDemo(index)}
-              >
-                <Card className={cn(
-                  "bg-gray-800/50 border-gray-700 backdrop-blur-sm transition-all duration-300 h-full",
-                  activeDemo === index && "border-blue-500 shadow-blue-500/20 shadow-2xl",
-                  "hover:border-purple-400/50"
-                )}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="text-6xl">{step.visual}</div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                        <p className="text-gray-300 mb-4">{step.description}</p>
-                        
-                        <AnimatePresence mode="wait">
-                          {activeDemo === index && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="mt-4"
-                            >
-                              <div className="bg-blue-600/20 rounded-lg p-4 border border-blue-400/30">
-                                <p className="text-blue-200 text-sm leading-relaxed mb-3">
-                                  {step.details}
-                                </p>
-                                <div className="bg-gray-700/50 rounded p-3">
-                                  <p className="text-yellow-300 text-sm font-mono">
-                                    Example: {step.example}
-                                  </p>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="#step-1">Show Me</a>
+          </Button>
         </motion.div>
 
-        {/* Interactive Trading Simulation */}
         <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2.5, duration: 1 }}
-        >
-          <Card className="bg-gray-800/50 border-purple-500 backdrop-blur-sm max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-3xl text-center text-white">
-                Live Trading Simulation on <span className="text-purple-400">OpinionMarketCap</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-8">
-                {/* Trading Steps */}
-                <div className="grid md:grid-cols-5 gap-4">
-                  {[
-                    { title: "Question", desc: "\"Best CRM?\"", icon: <Target className="w-6 h-6" /> },
-                    { title: "Current Answer", desc: "HubSpot (12 USDC)", icon: <Award className="w-6 h-6" /> },
-                    { title: "New Bid", desc: "Salesforce (18 USDC)", icon: <TrendingUp className="w-6 h-6" /> },
-                    { title: "Trade Executed", desc: "Ownership transfers", icon: <Zap className="w-6 h-6" /> },
-                    { title: "Profits Distributed", desc: "98% to community", icon: <DollarSign className="w-6 h-6" /> }
-                  ].map((step, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        "text-center p-4 rounded-lg border transition-all duration-500",
-                        tradingStep >= index && simulationRunning || !simulationRunning ? 
-                          "border-green-500 bg-green-500/20" : 
-                          "border-gray-600 bg-gray-700/30"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center",
-                        tradingStep >= index && simulationRunning || !simulationRunning ?
-                          "bg-green-500" : "bg-gray-600"
-                      )}>
-                        {step.icon}
-                      </div>
-                      <h4 className="font-semibold text-white text-sm">{step.title}</h4>
-                      <p className="text-xs text-gray-300 mt-1">{step.desc}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Money Flow Breakdown */}
-                {(tradingStep >= 4 || !simulationRunning) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-emerald-600/20 border border-emerald-400/30 rounded-lg p-6"
-                  >
-                    <h3 className="text-xl font-bold text-emerald-300 mb-4 text-center">
-                      OpinionMarketCap Trade Settlement: 18 USDC
-                    </h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-400">17.10 USDC</div>
-                        <div className="text-sm text-green-300">Previous Owner (95%)</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-400">0.54 USDC</div>
-                        <div className="text-sm text-blue-300">Question Creator (3%)</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-400">0.36 USDC</div>
-                        <div className="text-sm text-purple-300">OMC Platform (2%)</div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Economic Roles */}
-        <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3, duration: 1 }}
-        >
-          <h2 className="text-3xl font-bold text-center mb-12">
-            <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              Economic Roles in OpinionMarketCap
-            </span>
-          </h2>
-
-          <Accordion type="single" collapsible className="max-w-4xl mx-auto">
-            {economicRoles.map((role, index) => (
-              <AccordionItem key={index} value={`role-${index}`}>
-                <AccordionTrigger className="text-left">
-                  <div className="flex items-center space-x-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-full flex items-center justify-center",
-                      `bg-gradient-to-r ${role.color}`
-                    )}>
-                      {role.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">{role.role}</h3>
-                      <p className="text-gray-400">{role.description}</p>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="ml-16 space-y-4">
-                    <div className="bg-gray-700/50 rounded-lg p-4">
-                      <h4 className="font-semibold text-emerald-300 mb-2">How They Earn on OMC:</h4>
-                      <p className="text-gray-200">{role.earnings}</p>
-                    </div>
-                    <div className="bg-blue-600/20 border border-blue-400/30 rounded-lg p-4">
-                      <h4 className="font-semibold text-blue-300 mb-2">Real Example:</h4>
-                      <p className="text-blue-200 font-mono text-sm">{role.example}</p>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </motion.div>
-
-        {/* CTA Section */}
-        <motion.div
-          className="text-center"
+          className="mt-16 bounce-down"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 3.5, duration: 1 }}
+          transition={{ delay: 1.2 }}
         >
-          <h3 className="text-4xl font-bold text-white mb-6">
-            Ready to Experience <span className="text-purple-400">OpinionMarketCap</span>?
-          </h3>
-          <p className="text-gray-300 mb-8 text-lg max-w-2xl mx-auto">
-            Join the infinite marketplace where your knowledge becomes tradeable assets and every opinion has measurable value.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-2xl transform transition-all duration-300 hover:scale-105 group button-pulse button-hover-float"
-            >
-              Start Trading on OMC
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 button-hover-float"
-            >
-              Take Interactive Tutorial
-            </Button>
-          </div>
+          <ChevronDown className="w-8 h-8 text-blue-400/60 mx-auto" />
         </motion.div>
       </div>
+    </section>
+  );
+};
+
+// ============================================================
+// SECTION 2: THE THREE STEPS
+// ============================================================
+const StepsSection = () => {
+  const steps = [
+    {
+      number: "01",
+      title: "Ask a Question",
+      subtitle: "Mint it. Own it. Earn from it.",
+      copy: "Think of a question people argue about. \"Best CRM for startups?\" \"Most overrated sneaker brand?\" \"Best pizza in New York?\" Mint it on OMC. You just created a market.",
+      detail: "Set your first answer and an initial price (1-100 USDC). The creation fee is 20% of that price. Now you own the question — and you'll earn 3% royalty on every single trade. Forever.",
+      example: { label: "You mint:", question: "\"Best CRM for startups?\"", answer: "Your answer: \"HubSpot\"", price: "Starting price: $10 USDC" },
+      icon: <Target className="w-8 h-8" />,
+      color: "from-blue-500 to-cyan-500",
+      borderColor: "border-l-blue-500",
+    },
+    {
+      number: "02",
+      title: "Someone Disagrees",
+      subtitle: "They pay you to prove it.",
+      copy: "Someone thinks \"Salesforce\" is better? They can't just tweet about it. They have to pay more than the current price to take ownership. The price goes up with every trade.",
+      detail: "When someone submits a new answer, 95% of what they pay goes to the previous answer owner. That's you. The other 5% splits between the question creator (3%) and the platform (2%).",
+      example: { label: "A trader pays:", question: "New answer: \"Salesforce\"", answer: "They pay: $15 USDC", price: "You receive: $14.25 (95%)" },
+      icon: <RefreshCw className="w-8 h-8" />,
+      color: "from-green-500 to-emerald-500",
+      borderColor: "border-l-green-500",
+    },
+    {
+      number: "03",
+      title: "Everyone Gets Paid",
+      subtitle: "95% stays in the community.",
+      copy: "Every trade distributes money instantly. No waiting. No middleman. Smart contracts handle everything on Base blockchain. The question creator earns royalties on every future trade. Forever.",
+      detail: "Prices go up as more people trade. Early buyers get better prices. Late buyers pay more — but they also earn more when the next person disagrees. It's a market.",
+      example: { label: "After 20 trades:", question: "Question creator earned: $18 in royalties", answer: "Current answer price: $120 USDC", price: "Total volume: $600 USDC" },
+      icon: <DollarSign className="w-8 h-8" />,
+      color: "from-purple-500 to-pink-500",
+      borderColor: "border-l-purple-500",
+    },
+  ];
+
+  return (
+    <Section id="step-1">
+      <GradientOrb color="rgba(59, 130, 246, 0.2)" size={400} position={{ top: '5%', right: '-5%' }} delay={1} />
+      <GradientOrb color="rgba(16, 185, 129, 0.15)" size={350} position={{ bottom: '10%', left: '-5%' }} delay={3} />
+
+      <SectionTitle>How It Actually Works</SectionTitle>
+
+      <div className="space-y-20">
+        {steps.map((step, i) => (
+          <motion.div
+            key={step.number}
+            className="grid md:grid-cols-2 gap-8 items-center"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+          >
+            {/* Left: copy */}
+            <div className={cn(i % 2 === 1 && "md:order-2")}>
+              <motion.div
+                className="text-7xl font-black text-gray-800 mb-4"
+                initial={{ opacity: 0, scale: 0.5 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
+              >
+                {step.number}
+              </motion.div>
+              <h3 className="text-3xl font-bold text-white mb-2">{step.title}</h3>
+              <p className="text-blue-400 font-semibold mb-4">{step.subtitle}</p>
+              <p className="text-gray-300 leading-relaxed mb-4">{step.copy}</p>
+              <p className="text-gray-400 text-sm leading-relaxed">{step.detail}</p>
+            </div>
+
+            {/* Right: example card */}
+            <div className={cn(i % 2 === 1 && "md:order-1")}>
+              <motion.div
+                className={cn("bg-gray-800/50 border-l-4 rounded-xl p-8", step.borderColor)}
+                {...scaleUpView}
+                whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
+              >
+                <div className={cn("w-14 h-14 rounded-full bg-gradient-to-r flex items-center justify-center text-white mb-6", step.color)}>
+                  {step.icon}
+                </div>
+                <p className="text-gray-400 text-sm mb-3">{step.example.label}</p>
+                <p className="text-white font-bold text-lg mb-1">{step.example.question}</p>
+                <p className="text-gray-300 mb-1">{step.example.answer}</p>
+                <p className="text-green-400 font-bold">{step.example.price}</p>
+              </motion.div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 3: LIVE TRADE WALKTHROUGH
+// ============================================================
+const TradeWalkthrough = () => {
+  const [step, setStep] = useState(0);
+
+  const stages = [
+    { label: "Question minted", question: "\"Best project management tool?\"", answer: "Notion", price: 10, owner: "alice.base.eth", action: "Alice creates the question" },
+    { label: "First trade", question: "\"Best project management tool?\"", answer: "Monday.com", price: 18, owner: "bob.base.eth", action: "Bob disagrees — pays $18" },
+    { label: "Price climbs", question: "\"Best project management tool?\"", answer: "Asana", price: 29, owner: "carol.base.eth", action: "Carol jumps in — pays $29" },
+    { label: "Big move", question: "\"Best project management tool?\"", answer: "Linear", price: 52, owner: "dave.base.eth", action: "Dave bets on Linear — pays $52" },
+  ];
+
+  const current = stages[step];
+
+  const moneyFlow = step > 0 ? {
+    owner: Math.round(current.price * 0.95 * 100) / 100,
+    creator: Math.round(current.price * 0.03 * 100) / 100,
+    platform: Math.round(current.price * 0.02 * 100) / 100,
+  } : null;
+
+  return (
+    <Section className="bg-gradient-to-b from-transparent via-blue-900/20 to-transparent">
+      <GradientOrb color="rgba(139, 92, 246, 0.2)" size={400} position={{ top: '0%', left: '20%' }} delay={0} />
+
+      <SectionTitle>Watch a Trade Happen</SectionTitle>
+
+      <div className="max-w-3xl mx-auto">
+        <motion.div
+          className="bg-gray-800/60 border border-gray-700 rounded-xl p-8 mb-8"
+          {...fadeInView}
+        >
+          {/* Current state */}
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-sm text-gray-400">Step {step + 1} of {stages.length}</span>
+            <span className="text-sm text-blue-400 font-medium">{current.label}</span>
+          </div>
+
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-gray-400 text-sm mb-1">{current.action}</p>
+            <h3 className="text-xl font-bold text-white mb-4">{current.question}</h3>
+
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <p className="text-gray-400 text-xs mb-1">Current Answer</p>
+                <p className="text-white font-bold">{current.answer}</p>
+              </div>
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <p className="text-gray-400 text-xs mb-1">Price</p>
+                <p className="text-green-400 font-bold">${current.price} USDC</p>
+              </div>
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <p className="text-gray-400 text-xs mb-1">Owner</p>
+                <p className="text-blue-400 font-bold text-sm">{current.owner}</p>
+              </div>
+            </div>
+
+            {/* Money flow for trades */}
+            {moneyFlow && (
+              <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4">
+                <p className="text-green-400 text-sm font-semibold mb-2">Money distributed instantly:</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-300">Previous owner: <span className="text-green-400 font-bold">${moneyFlow.owner}</span></span>
+                  <span className="text-gray-300">Creator: <span className="text-blue-400 font-bold">${moneyFlow.creator}</span></span>
+                  <span className="text-gray-300">Platform: <span className="text-purple-400 font-bold">${moneyFlow.platform}</span></span>
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Price bar */}
+          <div className="mt-6">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>$10</span>
+              <span>$52</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
+                animate={{ width: `${((current.price - 10) / 42) * 100}%` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Navigation */}
+        <div className="flex justify-center gap-3">
+          {stages.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setStep(i)}
+              className={cn(
+                "w-12 h-12 rounded-full font-bold text-sm transition-all duration-300",
+                step === i
+                  ? "bg-blue-600 text-white scale-110 shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 4: THE ROLES — Who Makes Money?
+// ============================================================
+const RolesSection = () => {
+  const roles = [
+    {
+      icon: <Crown className="w-7 h-7" />,
+      title: "Question Creators",
+      tagline: "Mint once. Earn forever.",
+      copy: "You spot a question people will argue about. You mint it. Every single time someone trades an answer — this week, next year, a decade from now — you get 3%. That's passive income on human disagreement.",
+      stat: "3% royalty on every trade",
+      color: "from-yellow-500 to-orange-500",
+      borderColor: "border-l-yellow-500",
+    },
+    {
+      icon: <Shield className="w-7 h-7" />,
+      title: "Answer Owners",
+      tagline: "Get paid to be right.",
+      copy: "You own the current answer. You believe it's correct. If nobody disagrees, you hold. When someone does disagree, they pay you 95% of the new price to take ownership. You profit either way.",
+      stat: "95% of every incoming trade",
+      color: "from-blue-500 to-cyan-500",
+      borderColor: "border-l-blue-500",
+    },
+    {
+      icon: <TrendingUp className="w-7 h-7" />,
+      title: "Traders",
+      tagline: "Buy the dip. Sell the conviction.",
+      copy: "You see an answer priced at $15 that should be at $100. You buy it. You wait. Someone with deeper conviction comes along and pays you to take it. Classic buy low, sell high.",
+      stat: "95% profit on every flip",
+      color: "from-green-500 to-emerald-500",
+      borderColor: "border-l-green-500",
+    },
+    {
+      icon: <Users className="w-7 h-7" />,
+      title: "Pool Members",
+      tagline: "Team up. Split the wins.",
+      copy: "Can't afford a $200 answer alone? Pool with others. Contribute what you can. If the pool hits its target, rewards get distributed based on your share. Collective conviction, individual profit.",
+      stat: "Proportional pool rewards",
+      color: "from-purple-500 to-pink-500",
+      borderColor: "border-l-purple-500",
+    },
+  ];
+
+  return (
+    <Section>
+      <GradientOrb color="rgba(234, 179, 8, 0.15)" size={400} position={{ top: '10%', right: '-5%' }} delay={2} />
+
+      <SectionTitle>Who Makes Money?</SectionTitle>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        {roles.map((role, i) => (
+          <motion.div
+            key={role.title}
+            className={cn("bg-gray-800/50 border-l-4 rounded-xl p-8", role.borderColor)}
+            {...scaleUpView}
+            transition={{ ...scaleUpView.transition, delay: i * 0.1 }}
+            whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
+          >
+            <div className={cn("w-14 h-14 rounded-full bg-gradient-to-r flex items-center justify-center text-white mb-4", role.color)}>
+              {role.icon}
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1">{role.title}</h3>
+            <p className="text-blue-400 font-semibold text-sm mb-3">{role.tagline}</p>
+            <p className="text-gray-300 leading-relaxed mb-4">{role.copy}</p>
+            <div className="bg-gray-700/50 rounded-lg px-4 py-2 inline-block">
+              <span className="text-green-400 font-bold text-sm">{role.stat}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 5: WHY IT WORKS
+// ============================================================
+const WhyItWorks = () => {
+  const reasons = [
+    {
+      title: "Skin in the game",
+      copy: "Anybody can post an opinion on Reddit for free. On OMC, your opinion costs money. That filter alone makes answers 10x more valuable.",
+    },
+    {
+      title: "Prices don't lie",
+      copy: "The most-backed answer isn't the loudest — it's the one with the most money behind it. Markets are the best truth machines ever invented.",
+    },
+    {
+      title: "Everyone profits",
+      copy: "98% of every dollar stays in the community. Question creators, answer owners, traders — everyone eats. The platform takes just 2%.",
+    },
+    {
+      title: "No expiration",
+      copy: "Unlike prediction markets, OMC questions never resolve. \"Best CRM\" will be debated forever. Your royalties compound forever.",
+    },
+  ];
+
+  return (
+    <Section>
+      <GradientOrb color="rgba(59, 130, 246, 0.15)" size={350} position={{ bottom: '10%', left: '5%' }} delay={1} />
+
+      <SectionTitle>Why This Works</SectionTitle>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {reasons.map((r, i) => (
+          <motion.div
+            key={r.title}
+            className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1, duration: 0.6 }}
+            whileHover={{ borderColor: "rgba(59, 130, 246, 0.3)" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Zap className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-bold text-white">{r.title}</h3>
+            </div>
+            <p className="text-gray-300 leading-relaxed">{r.copy}</p>
+          </motion.div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 6: FINAL CTA
+// ============================================================
+const FinalCTASection = () => {
+  const particles = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: ((i * 13 + 5) % 100),
+    yStart: 100 + (i % 3) * 10,
+    yEnd: -10 - (i % 4) * 5,
+    duration: 6 + (i % 5),
+    delay: (i * 0.5) % 4,
+    size: 1 + (i % 2),
+    color: ['#3b82f6', '#8b5cf6', '#60a5fa'][i % 3],
+  }));
+
+  return (
+    <section className="relative py-32 px-4 overflow-hidden bg-gradient-to-b from-transparent via-blue-900/30 to-transparent">
+      <GradientOrb color="rgba(59, 130, 246, 0.3)" size={500} position={{ top: '20%', left: '30%' }} delay={0} />
+
+      <div className="absolute inset-0 z-0">
+        {particles.map((p) => (
+          <motion.div
+            key={`cta-p-${p.id}`}
+            className="absolute rounded-full"
+            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+            initial={{ x: `${p.x}vw`, y: `${p.yStart}vh`, opacity: 0 }}
+            animate={{ opacity: [0, 0.4, 0], y: [`${p.yStart}%`, `${p.yEnd}%`] }}
+            transition={{ duration: p.duration, repeat: Infinity, ease: "linear", delay: p.delay }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center relative z-10 max-w-3xl mx-auto">
+        <motion.h2
+          className="text-4xl md:text-5xl font-bold text-white mb-6 text-glow"
+          {...fadeInView}
+        >
+          Simple enough?
+        </motion.h2>
+        <motion.p
+          className="text-xl text-gray-300 mb-10"
+          {...fadeInView}
+        >
+          Create a question. Trade an answer. Get paid when someone disagrees. That&apos;s the whole game.
+        </motion.p>
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+          {...fadeInView}
+        >
+          <Button asChild size="lg" className="cta-shimmer button-pulse bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
+              Put Your Money Where Your Mouth Is
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="/tutorial">Take the Tutorial</a>
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================
+// MAIN PAGE
+// ============================================================
+export default function HowItWorks() {
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <LandingNavigation />
+      <HeroSection />
+      <AnimatedSeparator />
+      <StepsSection />
+      <AnimatedSeparator />
+      <TradeWalkthrough />
+      <AnimatedSeparator />
+      <RolesSection />
+      <AnimatedSeparator />
+      <WhyItWorks />
+      <AnimatedSeparator />
+      <FinalCTASection />
     </div>
-  )
+  );
 }

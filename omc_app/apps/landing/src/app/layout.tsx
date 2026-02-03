@@ -2,8 +2,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'OpinionMarketCap (OMC) | The Marketplace of Ideas',
-  description: 'The first decentralized marketplace where opinions have real value.',
+  title: 'OpinionMarketCap (OMC) | Opinions Are Free. Yours Isn\'t.',
+  description: 'Put your money where your mouth is. Back your opinion with real money on Base. Get paid when someone disagrees.',
 };
 
 export default function RootLayout({

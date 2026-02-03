@@ -5,30 +5,29 @@ import { LandingNavigation } from "@/components/LandingNavigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Users,
-  Coins,
   DollarSign,
-  Zap,
   Target,
   CheckCircle,
   TrendingUp,
   Shield,
-  Clock,
   Globe,
-  Play,
   Share2,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Flame,
   Activity,
   BarChart3,
   Twitter,
   MessageCircle,
   Copy,
-  ArrowUpRight
+  ArrowUpRight,
+  ArrowRight,
+  XCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 
 // Share functionality
 const shareOnTwitter = (text: string, url: string) => {
@@ -50,7 +49,8 @@ const AnimatedCounter = ({ end, duration = 2, prefix = "", suffix = "" }: { end:
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-      setCount(Math.floor(progress * end));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate);
@@ -64,55 +64,113 @@ const AnimatedCounter = ({ end, duration = 2, prefix = "", suffix = "" }: { end:
   return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
 };
 
-// --- Animation Variants ---
-const fadeIn = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.8, ease: "easeOut" }
+// --- Gradient Orb Component ---
+const GradientOrb = ({ color, size, position, delay = 0 }: {
+  color: string, size: number, position: React.CSSProperties, delay?: number
+}) => (
+  <motion.div
+    className="absolute rounded-full pointer-events-none"
+    style={{
+      width: size, height: size,
+      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      filter: "blur(80px)",
+      opacity: 0.15,
+      ...position
+    }}
+    animate={{
+      x: [0, 30, -20, 0],
+      y: [0, -20, 15, 0],
+      scale: [1, 1.05, 0.95, 1]
+    }}
+    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
+  />
+);
+
+// --- Animated Separator ---
+const AnimatedSeparator = () => (
+  <div className="relative h-px max-w-4xl mx-auto overflow-hidden my-2">
+    <motion.div
+      className="absolute inset-0 h-px"
+      style={{ background: "linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #3b82f6, transparent)" }}
+      animate={{ x: ["-100%", "100%"] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+    />
+    <div className="absolute inset-0 h-px bg-gray-800/60" />
+  </div>
+);
+
+// --- Animation Props (spread onto motion elements) ---
+const fadeInView = {
+  initial: { opacity: 0, y: 30 } as const,
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+const slideLeftView = {
+  initial: { opacity: 0, x: -60 } as const,
+  whileInView: { opacity: 1, x: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+const slideRightView = {
+  initial: { opacity: 0, x: 60 } as const,
+  whileInView: { opacity: 1, x: 0 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.8, ease: "easeOut" as const }
+};
+
+const scaleUpView = {
+  initial: { opacity: 0, scale: 0.8 } as const,
+  whileInView: { opacity: 1, scale: 1 } as const,
+  viewport: { once: true } as const,
+  transition: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.275] as [number, number, number, number] }
+};
+
+// Variant-based stagger for lists (parent must be motion element with initial/whileInView)
+const staggerChildren = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.12 } }
+};
+const fadeInChild = {
+  initial: { opacity: 0, x: -30 },
+  animate: { opacity: 1, x: 0 }
+};
+const fadeInChildRight = {
+  initial: { opacity: 0, x: 30 },
+  animate: { opacity: 1, x: 0 }
 };
 
 // --- Reusable Components ---
-const Section = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <motion.section 
-    className={cn("py-24 px-4", className)}
-    initial="initial"
-    whileInView="animate"
-    viewport={{ once: true, amount: 0.2 }}
-    transition={{ staggerChildren: 0.2 }}
+const Section = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
+  <section
+    id={id}
+    className={cn("py-24 px-4 relative overflow-hidden", className)}
   >
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto relative z-10">
       {children}
     </div>
-  </motion.section>
+  </section>
 );
 
 const SectionTitle = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <motion.h2 
-    className={cn("text-4xl md:text-5xl font-bold text-center text-white mb-20", className)}
-    variants={fadeIn}
-    whileHover={{ 
-      scale: 1.05, 
+  <motion.h2
+    className={cn("text-4xl md:text-5xl font-bold text-center mb-20 animated-gradient-text", className)}
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    whileHover={{
+      scale: 1.05,
       textShadow: "0 0 20px rgba(59, 130, 246, 0.5)"
     }}
-    animate={{
-      backgroundImage: [
-        "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(59,130,246,0.8) 50%, rgba(255,255,255,1) 100%)",
-        "linear-gradient(45deg, rgba(59,130,246,0.8) 0%, rgba(255,255,255,1) 50%, rgba(59,130,246,0.8) 100%)",
-        "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(59,130,246,0.8) 50%, rgba(255,255,255,1) 100%)"
-      ]
-    }}
-    transition={{ duration: 0.3, ease: "easeOut", backgroundImage: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-    style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
+    transition={{ duration: 0.8, ease: "easeOut" }}
   >
     {children}
   </motion.h2>
 );
 
-const Separator = () => <div className="border-t border-gray-800/60 max-w-4xl mx-auto" />;
-
-// --- Enhanced Sections ---
-
-// Live Stats Data (simulated - would be fetched from blockchain in production)
+// --- Live Stats ---
 const useLiveStats = () => {
   const [stats, setStats] = useState({
     activeOpinions: 47,
@@ -122,7 +180,6 @@ const useLiveStats = () => {
   });
 
   useEffect(() => {
-    // Simulate live updates
     const interval = setInterval(() => {
       setStats(prev => ({
         ...prev,
@@ -146,242 +203,684 @@ const LiveStatsBar = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: 0.5 }}
     >
-      <motion.div
-        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
-        whileHover={{ scale: 1.05, borderColor: "rgba(59, 130, 246, 0.5)" }}
-      >
-        <Activity className="w-4 h-4 text-green-400" />
-        <span className="text-gray-400 text-sm">Active Opinions:</span>
-        <span className="text-white font-bold">
-          <AnimatedCounter end={stats.activeOpinions} />
-        </span>
-        <motion.span
-          className="w-2 h-2 bg-green-400 rounded-full"
-          animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      </motion.div>
-
-      <motion.div
-        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
-        whileHover={{ scale: 1.05, borderColor: "rgba(34, 197, 94, 0.5)" }}
-      >
-        <DollarSign className="w-4 h-4 text-green-400" />
-        <span className="text-gray-400 text-sm">Total Volume:</span>
-        <span className="text-green-400 font-bold">
-          $<AnimatedCounter end={stats.totalVolume} suffix=" USDC" />
-        </span>
-      </motion.div>
-
-      <motion.div
-        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
-        whileHover={{ scale: 1.05, borderColor: "rgba(147, 51, 234, 0.5)" }}
-      >
-        <Flame className="w-4 h-4 text-orange-400" />
-        <span className="text-gray-400 text-sm">Trades Today:</span>
-        <span className="text-orange-400 font-bold">
-          <AnimatedCounter end={stats.tradesToday} />
-        </span>
-      </motion.div>
-
-      <motion.div
-        className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
-        whileHover={{ scale: 1.05, borderColor: "rgba(59, 130, 246, 0.5)" }}
-      >
-        <Users className="w-4 h-4 text-blue-400" />
-        <span className="text-gray-400 text-sm">Active Traders:</span>
-        <span className="text-blue-400 font-bold">
-          <AnimatedCounter end={stats.activeTraders} />
-        </span>
-      </motion.div>
+      {[
+        { icon: <Activity className="w-4 h-4 text-green-400" />, label: "Active Opinions:", value: <AnimatedCounter end={stats.activeOpinions} />, color: "text-white", borderHover: "rgba(59, 130, 246, 0.5)", dot: true },
+        { icon: <DollarSign className="w-4 h-4 text-green-400" />, label: "Total Volume:", value: <><span>$</span><AnimatedCounter end={stats.totalVolume} suffix=" USDC" /></>, color: "text-green-400", borderHover: "rgba(34, 197, 94, 0.5)" },
+        { icon: <Flame className="w-4 h-4 text-orange-400" />, label: "Trades Today:", value: <AnimatedCounter end={stats.tradesToday} />, color: "text-orange-400", borderHover: "rgba(147, 51, 234, 0.5)" },
+        { icon: <Users className="w-4 h-4 text-blue-400" />, label: "Active Traders:", value: <AnimatedCounter end={stats.activeTraders} />, color: "text-blue-400", borderHover: "rgba(59, 130, 246, 0.5)" }
+      ].map((stat, i) => (
+        <motion.div
+          key={i}
+          className="flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2"
+          whileHover={{ scale: 1.05, borderColor: stat.borderHover }}
+        >
+          {stat.icon}
+          <span className="text-gray-400 text-sm">{stat.label}</span>
+          <span className={cn("font-bold", stat.color)}>{stat.value}</span>
+          {stat.dot && (
+            <motion.span
+              className="w-2 h-2 bg-green-400 rounded-full"
+              animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          )}
+        </motion.div>
+      ))}
     </motion.div>
   );
 };
 
+// ============================================================
+// SECTION 1: HERO - Upgraded with bigger particles, gradient orbs, pulsing CTA
+// ============================================================
 const HeroSection = () => {
-  // Create predictable particle data to avoid hydration mismatch
-  const particles = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    x: ((i * 7) % 100),
-    y: ((i * 13) % 100),
-    duration: 10 + (i % 10),
-    delay: (i * 0.5) % 5,
-    yStart: ((i * 11) % 100),
-    yEnd: ((i * 19) % 100)
-  }));
+  // Upgraded particles: 60 total, mix of small + larger "star" particles, some drift horizontally
+  const particles = Array.from({ length: 60 }, (_, i) => {
+    const isStar = i < 8; // First 8 are larger "star" particles
+    const driftsHorizontal = i >= 8 && i < 20; // Next 12 drift horizontally
+    return {
+      id: i,
+      x: ((i * 7 + 3) % 100),
+      yStart: ((i * 11 + 5) % 100),
+      yEnd: ((i * 19 + 7) % 100),
+      xEnd: driftsHorizontal ? ((i * 23) % 80) + 10 : ((i * 7 + 3) % 100),
+      duration: isStar ? 5 + (i % 4) : 8 + (i % 8),
+      delay: (i * 0.3) % 6,
+      size: isStar ? 4 + (i % 5) : 1 + (i % 3),
+      opacity: isStar ? 0.8 : 0.5,
+      color: ['#3b82f6', '#8b5cf6', '#10b981', '#60a5fa', '#a855f7', '#818cf8', '#34d399'][i % 7],
+      driftsHorizontal,
+    };
+  });
 
   return (
-    <section className="relative pt-32 pb-16 px-4 text-center overflow-hidden">
-      {/* Subtle, professional particle background */}
+    <section className="relative pt-32 pb-16 px-4 text-center overflow-hidden hero-mesh-bg">
+      {/* Gradient orbs */}
+      <GradientOrb color="rgba(59, 130, 246, 0.4)" size={600} position={{ top: '-10%', right: '-5%' }} delay={0} />
+      <GradientOrb color="rgba(139, 92, 246, 0.3)" size={500} position={{ bottom: '0%', left: '-10%' }} delay={2} />
+      <GradientOrb color="rgba(16, 185, 129, 0.15)" size={400} position={{ top: '30%', left: '40%' }} delay={4} />
+
+      {/* Rotating glow ring behind title */}
+      <div
+        className="absolute top-1/3 left-1/2 glow-ring pointer-events-none z-0"
+        style={{
+          width: 700,
+          height: 700,
+          borderRadius: '50%',
+          background: 'conic-gradient(from 0deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15), transparent, rgba(59,130,246,0.1), transparent, rgba(139,92,246,0.1), rgba(59,130,246,0.15))',
+          filter: 'blur(40px)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+
+      {/* Upgraded particles */}
       <div className="absolute inset-0 z-0">
-          {particles.map((particle) => (
-            <motion.div
-              key={`particle-${particle.id}`}
-              className="absolute w-0.5 h-0.5 bg-white rounded-full"
-              initial={{ x: `${particle.x}vw`, y: `${particle.yStart}vh`, opacity: 0 }}
-              animate={{ opacity: [0, 0.4, 0], y: [`${particle.yStart}vh`, `${particle.yEnd}vh`] }}
-              transition={{
-                duration: particle.duration,
-                repeat: Infinity,
-                repeatType: "loop",
-                ease: "linear",
-                delay: particle.delay
-              }}
-            />
-          ))}
+        {particles.map((p) => (
+          <motion.div
+            key={`particle-${p.id}`}
+            className="absolute rounded-full"
+            style={{
+              width: p.size,
+              height: p.size,
+              backgroundColor: p.color,
+              boxShadow: p.size >= 4 ? `0 0 ${p.size * 2}px ${p.color}` : 'none'
+            }}
+            initial={{ x: `${p.x}vw`, y: `${p.yStart}vh`, opacity: 0 }}
+            animate={p.driftsHorizontal
+              ? { opacity: [0, p.opacity, 0], x: [`${p.x}vw`, `${p.xEnd}vw`], y: [`${p.yStart}vh`, `${p.yEnd}vh`] }
+              : { opacity: [0, p.opacity, 0], y: [`${p.yStart}vh`, `${p.yEnd}vh`] }
+            }
+            transition={{
+              duration: p.duration,
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "linear",
+              delay: p.delay
+            }}
+          />
+        ))}
       </div>
 
-    <div className="relative z-10">
-      <motion.h1
-        className="text-5xl md:text-7xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-300 to-white"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{
-          scale: 1.05,
-          textShadow: "0 0 30px rgba(59, 130, 246, 0.8)"
-        }}
-        transition={{
-          duration: 0.8,
-          delay: 0.1
-        }}
-        style={{ cursor: "default" }}
-      >
-        <motion.span
-          className="text-white"
-          animate={{
-            opacity: [0.7, 1, 0.7],
-            backgroundImage: [
-              "linear-gradient(45deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.7) 100%)",
-              "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%)",
-              "linear-gradient(45deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.7) 100%)"
-            ]
-          }}
-          transition={{
-            opacity: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-            backgroundImage: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-          }}
-          style={{ backgroundClip: "text", WebkitBackgroundClip: "text" }}
-        >OPINION
-        </motion.span>
-        <motion.span
-          className="text-blue-400"
-          animate={{
-            color: ["#60a5fa", "#3b82f6", "#1d4ed8", "#3b82f6", "#60a5fa"]
-          }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        > MARKET</motion.span>
-        <motion.span
-          className="text-white"
-          animate={{
-            opacity: [1, 0.8, 1],
-            textShadow: [
-              "0 0 0px rgba(255, 255, 255, 0)",
-              "0 0 20px rgba(255, 255, 255, 0.5)",
-              "0 0 0px rgba(255, 255, 255, 0)"
-            ]
-          }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        > CAP</motion.span>
-      </motion.h1>
+      <div className="relative z-10">
+        {/* Dramatic title: each word slides from different direction */}
+        <h1 className="text-5xl md:text-7xl font-black mb-6" style={{ cursor: "default" }}>
+          <motion.span
+            className="inline-block text-white"
+            initial={{ opacity: 0, x: -80, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.175, 0.885, 0.32, 1.275] }}
+          >
+            <motion.span
+              animate={{
+                opacity: [0.7, 1, 0.7],
+                textShadow: [
+                  "0 0 0px rgba(255, 255, 255, 0)",
+                  "0 0 20px rgba(255, 255, 255, 0.4)",
+                  "0 0 0px rgba(255, 255, 255, 0)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >OPINION</motion.span>
+          </motion.span>
+          <motion.span
+            className="inline-block text-blue-400"
+            initial={{ opacity: 0, y: 60, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3, ease: [0.175, 0.885, 0.32, 1.275] }}
+          >
+            <motion.span
+              animate={{
+                color: ["#60a5fa", "#3b82f6", "#1d4ed8", "#3b82f6", "#60a5fa"],
+                textShadow: [
+                  "0 0 0px rgba(59, 130, 246, 0)",
+                  "0 0 30px rgba(59, 130, 246, 0.6)",
+                  "0 0 0px rgba(59, 130, 246, 0)"
+                ]
+              }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            >{" "}MARKET</motion.span>
+          </motion.span>
+          <motion.span
+            className="inline-block text-white"
+            initial={{ opacity: 0, x: 80, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
+          >
+            <motion.span
+              animate={{
+                opacity: [1, 0.8, 1],
+                textShadow: [
+                  "0 0 0px rgba(255, 255, 255, 0)",
+                  "0 0 20px rgba(255, 255, 255, 0.5)",
+                  "0 0 0px rgba(255, 255, 255, 0)"
+                ]
+              }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            >{" "}CAP</motion.span>
+          </motion.span>
+        </h1>
 
-      <motion.p
-        className="text-xl md:text-2xl text-blue-400 font-bold mb-4"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        Pay to Impose Your Truth - Earn Royalties Forever on Base
-      </motion.p>
-      <motion.p
-        className="text-lg md:text-xl text-gray-300 font-medium mb-8 max-w-2xl mx-auto"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
-      >
-        The First Opinion Lab: Own The Narrative, Earn The Profits
-      </motion.p>
-
-      {/* Live Stats Bar */}
-      <LiveStatsBar />
-
-      <motion.div
-        className="flex flex-col sm:flex-row gap-4 justify-center items-center my-8"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}
-      >
-        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
-          <a href="https://app.opinionmarketcap.xyz/create" target="_blank" rel="noopener noreferrer">
-            Connect Wallet & Mint Now
-            <ArrowUpRight className="w-5 h-5 ml-2" />
-          </a>
-        </Button>
-        <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
-          <a href="https://app.opinionmarketcap.xyz/" target="_blank" rel="noopener noreferrer">Browse Questions</a>
-        </Button>
-      </motion.div>
-
-      <motion.div
-        className="inline-flex items-center justify-center py-3"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.7 }}
-      >
+        {/* Tagline with underline sweep on "Yours isn't" */}
         <motion.p
-          className="text-blue-300 font-semibold tracking-widest text-2xl md:text-3xl"
-          animate={{ y: [-3, 3, -3] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="text-2xl md:text-3xl font-black mb-4 tracking-tight"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }}
         >
-          OMC IS BASE BASED
+          <span className="text-white">Opinions are free. </span>
+          <span className="relative inline-block">
+            <span className="animated-gradient-text">Yours isn&apos;t.</span>
+            <span
+              className="absolute bottom-0 left-0 w-full h-[3px] underline-sweep rounded-full"
+              style={{ background: 'linear-gradient(-45deg, #60A5FA, #A855F7, #34D399, #FBBF24)' }}
+            />
+          </span>
         </motion.p>
-      </motion.div>
-
-      {/* Share CTA */}
-      <motion.div
-        className="flex justify-center gap-4 mt-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-      >
-        <button
-          onClick={() => shareOnTwitter("Just discovered @OpinionMarketCap - trade opinions for profit on Base!", "https://opinionmarketcap.xyz")}
-          className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors text-sm"
+        <motion.p
+          className="text-lg md:text-xl text-gray-300 font-medium mb-8 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.85 }}
         >
-          <Twitter className="w-4 h-4" />
-          Share on X
-        </button>
-      </motion.div>
-    </div>
+          Back your opinion with real money. Get paid when someone disagrees.
+        </motion.p>
+
+        <LiveStatsBar />
+
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center my-8"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.0 }}
+        >
+          {/* Pulsing + shimmer CTA button */}
+          <Button asChild size="lg" className="cta-shimmer button-pulse bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
+              Put Your Money Where Your Mouth Is
+              <ArrowUpRight className="w-5 h-5 ml-2" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="#how-it-works">See How It Works</a>
+          </Button>
+        </motion.div>
+
+        <motion.div
+          className="inline-flex items-center justify-center py-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.1 }}
+        >
+          <motion.p
+            className="text-blue-300 font-semibold tracking-widest text-2xl md:text-3xl text-glow"
+            animate={{ y: [-3, 3, -3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            OMC IS BASE BASED
+          </motion.p>
+        </motion.div>
+
+        {/* Share CTA */}
+        <motion.div
+          className="flex justify-center gap-4 mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+        >
+          <button
+            onClick={() => shareOnTwitter("Opinions are free. Mine isn't. Put your money where your mouth is on @OpinionMarketCap", "https://opinionmarketcap.xyz")}
+            className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors text-sm"
+          >
+            <Twitter className="w-4 h-4" />
+            Share on X
+          </button>
+        </motion.div>
+
+        {/* Bouncing down arrow */}
+        <motion.div
+          className="mt-12 bounce-down"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+        >
+          <ChevronDown className="w-8 h-8 text-blue-400/60 mx-auto" />
+        </motion.div>
+      </div>
     </section>
   );
 };
 
-// Testimonials Carousel
+// ============================================================
+// SECTION 2: THE DARE - Red/blue glow, staggered bullets, VS divider
+// ============================================================
+const TheDareSection = () => (
+  <Section className="bg-gray-800/50">
+    {/* Background orbs for contrast */}
+    <GradientOrb color="rgba(239, 68, 68, 0.3)" size={400} position={{ top: '10%', left: '-5%' }} delay={0} />
+    <GradientOrb color="rgba(59, 130, 246, 0.3)" size={400} position={{ top: '10%', right: '-5%' }} delay={1.5} />
+
+    <SectionTitle>Everyone Has Opinions. Few Back Them Up.</SectionTitle>
+    <div className="grid md:grid-cols-2 gap-16 items-start relative">
+      {/* Left column - slides from left */}
+      <motion.div {...slideLeftView}>
+        <motion.h3
+          className="text-2xl font-bold text-red-400 mb-8"
+          animate={{ color: ["#f87171", "#ef4444", "#f87171"] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Talk is Cheap
+        </motion.h3>
+        <motion.ul className="space-y-5 text-lg text-gray-300" variants={staggerChildren} initial="initial" whileInView="animate" viewport={{ once: true }}>
+          {[
+            "Crypto Twitter debates that go nowhere",
+            "Reddit threads with 10,000 comments and zero stakes",
+            "AI-generated hot takes with no skin in the game",
+            "Influencers who shill without consequence"
+          ].map((text, i) => (
+            <motion.li
+              key={i}
+              className="flex items-start"
+              variants={fadeInChild}
+            >
+              <XCircle className="text-red-400 mr-3 mt-1 flex-shrink-0 w-5 h-5" />
+              {text}
+            </motion.li>
+          ))}
+        </motion.ul>
+      </motion.div>
+
+      {/* VS divider for mobile */}
+      <div className="md:hidden flex justify-center -my-8">
+        <motion.div
+          className="w-12 h-12 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center"
+          animate={{
+            boxShadow: [
+              "0 0 10px rgba(59, 130, 246, 0.3)",
+              "0 0 25px rgba(139, 92, 246, 0.5)",
+              "0 0 10px rgba(59, 130, 246, 0.3)"
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <span className="text-white font-bold text-sm">VS</span>
+        </motion.div>
+      </div>
+
+      {/* Right column - slides from right, with animated border */}
+      <motion.div
+        {...slideRightView}
+        className="relative p-[2px] rounded-xl overflow-hidden"
+      >
+        {/* Rotating gradient border */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+          style={{
+            background: "conic-gradient(from 0deg, #3b82f6, #8b5cf6, #3b82f6, #8b5cf6, #3b82f6)",
+            borderRadius: "0.75rem"
+          }}
+        />
+        <div className="relative bg-gray-800 rounded-xl p-8">
+          <motion.h3
+            className="text-2xl font-bold text-blue-400 mb-8"
+            animate={{ color: ["#60a5fa", "#3b82f6", "#60a5fa"] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            OMC is Proof
+          </motion.h3>
+          <motion.ul className="space-y-5 text-lg text-gray-300" variants={staggerChildren} initial="initial" whileInView="animate" viewport={{ once: true }}>
+            {[
+              "Your opinion has a price tag",
+              "Disagree? Pay up.",
+              "95% goes to the person you're replacing",
+              "The market decides who's right"
+            ].map((text, i) => (
+              <motion.li
+                key={i}
+                className="flex items-start"
+                variants={fadeInChildRight}
+              >
+                <CheckCircle className="text-blue-400 mr-3 mt-1 flex-shrink-0 w-5 h-5" />
+                {text}
+              </motion.li>
+            ))}
+          </motion.ul>
+        </div>
+      </motion.div>
+    </div>
+  </Section>
+);
+
+// ============================================================
+// SECTION 3: HOW IT WORKS + MONEY FLOW - Step numbers, connecting arrows, animated bars
+// ============================================================
+const HowItWorksSection = () => {
+  const steps = [
+    {
+      icon: <Target />,
+      num: "01",
+      title: "Mint a Question",
+      description: "Create any question. Set the first answer. Earn 3% royalties on every future trade. Forever.",
+      bgColor: "bg-red-900/30",
+      borderColor: "border-red-400/30",
+      iconColor: "text-red-400",
+      glowColor: "rgba(239, 68, 68, 0.3)"
+    },
+    {
+      icon: <TrendingUp />,
+      num: "02",
+      title: "Trade the Answer",
+      description: "See a wrong answer? Pay to replace it. If someone replaces yours, you get 95% of what they paid.",
+      bgColor: "bg-green-900/30",
+      borderColor: "border-green-400/30",
+      iconColor: "text-green-400",
+      glowColor: "rgba(34, 197, 94, 0.3)"
+    },
+    {
+      icon: <Users />,
+      num: "03",
+      title: "Pool Your Power",
+      description: "Team up with others to collectively take over expensive answers. Split the rewards.",
+      bgColor: "bg-purple-900/30",
+      borderColor: "border-purple-400/30",
+      iconColor: "text-purple-400",
+      glowColor: "rgba(139, 92, 246, 0.3)"
+    }
+  ];
+
+  const moneyFlowItems = [
+    { label: "Previous Answer Owner", amount: 95, color: "green", prefix: "$" },
+    { label: "Question Creator (royalties forever)", amount: 3, color: "blue", prefix: "$" },
+    { label: "Platform", amount: 2, color: "purple", prefix: "$" }
+  ];
+
+  const colorMap: Record<string, { bg: string, text: string, bar: string }> = {
+    green: { bg: "bg-green-900/20", text: "text-green-400", bar: "bg-green-500" },
+    blue: { bg: "bg-blue-900/20", text: "text-blue-400", bar: "bg-blue-500" },
+    purple: { bg: "bg-purple-900/20", text: "text-purple-400", bar: "bg-purple-500" }
+  };
+
+  return (
+    <Section id="how-it-works">
+      <GradientOrb color="rgba(34, 197, 94, 0.2)" size={500} position={{ top: '20%', left: '30%' }} delay={0} />
+
+      <SectionTitle>Three Ways to Profit</SectionTitle>
+
+      <div className="grid md:grid-cols-3 gap-8 mb-16 relative">
+        {/* Connecting arrows (desktop only) */}
+        <div className="hidden md:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-0">
+          <motion.div
+            className="h-0.5 mx-24"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4), transparent)" }}
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, delay: 0.5 }}
+          />
+        </div>
+
+        {steps.map((step, index) => (
+          <motion.div
+            key={index}
+            {...scaleUpView}
+            className="relative text-center p-6 bg-gray-800/50 border border-gray-700 rounded-xl transition-all duration-300 z-10"
+            whileHover={{
+              scale: 1.05,
+              borderColor: step.glowColor,
+              boxShadow: `0 10px 40px ${step.glowColor}`
+            }}
+          >
+            {/* Large step number */}
+            <motion.div
+              className="absolute -top-4 -left-2 text-6xl font-black text-white/5"
+              initial={{ scale: 0, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.2, ease: [0.175, 0.885, 0.32, 1.275] }}
+            >
+              {step.num}
+            </motion.div>
+
+            <motion.div
+              className={`w-16 h-16 ${step.bgColor} ${step.borderColor} rounded-full flex items-center justify-center mx-auto mb-6`}
+              whileHover={{ rotate: 360, scale: 1.1 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              <div className={step.iconColor}>{step.icon}</div>
+            </motion.div>
+            <h3 className="text-xl font-semibold text-white mb-3">{step.title}</h3>
+            <p className="text-gray-300">{step.description}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Inline Money Flow with animated bars */}
+      <motion.div
+        className="bg-gray-800/50 border border-gray-700/30 rounded-xl p-8 max-w-lg mx-auto"
+        {...fadeInView}
+        whileHover={{ scale: 1.02, borderColor: "rgba(59, 130, 246, 0.3)" }}
+      >
+        <motion.h4
+          className="text-xl font-semibold text-white mb-6 text-center"
+          animate={{
+            textShadow: [
+              "0 0 0px rgba(255, 255, 255, 0)",
+              "0 0 10px rgba(255, 255, 255, 0.3)",
+              "0 0 0px rgba(255, 255, 255, 0)"
+            ]
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Per $100 Trade
+        </motion.h4>
+        <div className="space-y-4">
+          {moneyFlowItems.map((item, i) => {
+            const colors = colorMap[item.color];
+            return (
+              <motion.div
+                key={i}
+                className={`p-3 rounded-lg ${colors.bg}`}
+                whileHover={{ x: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className={`${colors.text} font-medium`}>{item.label}</span>
+                  <span className={`font-bold ${colors.text} text-lg`}>
+                    <AnimatedCounter end={item.amount} prefix={item.prefix} duration={1.5} />
+                  </span>
+                </div>
+                {/* Animated bar */}
+                <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full ${colors.bar} rounded-full`}
+                    initial={{ width: "0%" }}
+                    whileInView={{ width: `${item.amount}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.2, delay: i * 0.2, ease: "easeOut" }}
+                  />
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 4: TRENDING NOW - Gradient borders, price pulse, LIVE glow
+// ============================================================
+const trendingOpinions = [
+  { id: 1, question: "Best Layer 2 for DeFi?", currentAnswer: "Arbitrum", price: 45.20, trades: 23, trend: "up", category: "Crypto" },
+  { id: 2, question: "GOAT of Basketball?", currentAnswer: "Michael Jordan", price: 78.50, trades: 67, trend: "up", category: "Sports" },
+  { id: 3, question: "Best Pizza in NYC?", currentAnswer: "Di Fara Pizza", price: 23.10, trades: 18, trend: "down", category: "Food" },
+  { id: 4, question: "Most Overrated Tech Company?", currentAnswer: "Apple", price: 52.80, trades: 41, trend: "up", category: "Tech" },
+  { id: 5, question: "Best Anime of All Time?", currentAnswer: "Attack on Titan", price: 31.40, trades: 34, trend: "up", category: "Entertainment" }
+];
+
+const TrendingOpinionsSection = () => {
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopy = async (id: number) => {
+    await copyToClipboard(`https://app.opinionmarketcap.xyz/opinion/${id}`);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <Section className="bg-gray-800/30">
+      <div className="flex items-center justify-center gap-3 mb-4">
+        <Flame className="w-8 h-8 text-orange-500" />
+        <SectionTitle className="mb-0">Live Opinions. Real Money.</SectionTitle>
+        <motion.span
+          className="px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-400 text-sm font-semibold"
+          animate={{
+            scale: [1, 1.1, 1],
+            boxShadow: [
+              "0 0 5px rgba(249, 115, 22, 0.3)",
+              "0 0 20px rgba(249, 115, 22, 0.6)",
+              "0 0 5px rgba(249, 115, 22, 0.3)"
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          LIVE
+        </motion.span>
+      </div>
+      <p className="text-center text-gray-400 mb-12">These takes are being traded right now</p>
+
+      <div className="space-y-4 max-w-4xl mx-auto">
+        {trendingOpinions.map((opinion, index) => (
+          <motion.div
+            key={opinion.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
+            className="relative bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 md:p-6 transition-all group"
+            whileHover={{
+              y: -8,
+              borderColor: "rgba(59, 130, 246, 0.4)",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(59, 130, 246, 0.1)"
+            }}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
+                    {opinion.category}
+                  </span>
+                  {opinion.trend === "up" ? (
+                    <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                      <TrendingUp className="w-4 h-4 text-green-400" />
+                    </motion.div>
+                  ) : (
+                    <motion.div animate={{ y: [0, 3, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+                      <TrendingUp className="w-4 h-4 text-red-400 rotate-180" />
+                    </motion.div>
+                  )}
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-1">{opinion.question}</h4>
+                <p className="text-gray-400">
+                  Current Answer: <span className="text-blue-400 font-medium">{opinion.currentAnswer}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-green-400 font-bold text-xl price-pulse">${opinion.price.toFixed(2)}</div>
+                  <div className="text-gray-500 text-xs">Next Price</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-white font-semibold">{opinion.trades}</div>
+                  <div className="text-gray-500 text-xs">Trades 24h</div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://app.opinionmarketcap.xyz/opinion/${opinion.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                  >
+                    Challenge This
+                  </a>
+
+                  <button
+                    onClick={() => shareOnTwitter(
+                      `The current answer to "${opinion.question}" is ${opinion.currentAnswer}. Think you know better? Put your money where your mouth is on @OpinionMarketCap`,
+                      `https://app.opinionmarketcap.xyz/opinion/${opinion.id}`
+                    )}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-blue-400"
+                    title="Share on X"
+                  >
+                    <Twitter className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => handleCopy(opinion.id)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    title="Copy link"
+                  >
+                    {copiedId === opinion.id ? (
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.div className="text-center mt-8" whileHover={{ scale: 1.05 }}>
+        <a
+          href="https://app.opinionmarketcap.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold"
+        >
+          View All Opinions
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </motion.div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 5: TESTIMONIALS - Gradient border, profit glow, decorative quotes
+// ============================================================
 const testimonials = [
   {
-    quote: "Minted 'Best Layer 2?' and earned 200 USDC in royalties in the first week!",
+    quote: "Someone paid $47 to disagree with my take on 'Best Layer 2'. I pocketed $44.65. Being wrong never felt so good.",
     author: "0x7d3...8f2a",
     avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234ade80'/%3E%3C/svg%3E",
     profit: "+$200",
     category: "Crypto"
   },
   {
-    quote: "Finally a platform where my hot takes actually make money. Soccer GOAT debates are fire!",
+    quote: "I minted 'GOAT of Soccer?' for $5. It's been flipped 67 times. I've earned $180 in royalties just from people arguing.",
     author: "soccerfan.eth",
     avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2360a5fa'/%3E%3C/svg%3E",
     profit: "+$450",
     category: "Sports"
   },
   {
-    quote: "As a food blogger, I turned my restaurant knowledge into passive income. Game changer!",
+    quote: "Put $23 on 'Best Pizza in NYC'. Someone disagreed 2 hours later. I made $21.85 for having a pizza opinion.",
     author: "foodie_nyc",
     avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f472b6'/%3E%3C/svg%3E",
     profit: "+$180",
     category: "Food"
   },
   {
-    quote: "The pool system is genius - teamed up with others to take over the 'Best DEX' answer!",
+    quote: "Our pool of 8 people took over the 'Best DEX' answer. When someone challenged us, we all split $320.",
     author: "defi_maxi.eth",
     avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23a855f7'/%3E%3C/svg%3E",
     profit: "+$320",
     category: "DeFi"
   },
   {
-    quote: "Local knowledge pays. My 'Best coffee in Austin' question generates $50/week royalties.",
+    quote: "My 'Best coffee in Austin' question generates $50/week in royalties. Turns out people really argue about coffee.",
     author: "austin_local",
     avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fbbf24'/%3E%3C/svg%3E",
     profit: "+$200/mo",
@@ -405,58 +904,82 @@ const TestimonialsCarousel = () => {
 
   return (
     <Section className="bg-gradient-to-b from-gray-900 to-gray-800/50">
-      <SectionTitle>What Traders Are Saying</SectionTitle>
+      <SectionTitle>What Happens When You Back Your Opinion</SectionTitle>
 
       <div className="relative max-w-4xl mx-auto">
-        {/* Main testimonial */}
+        {/* Decorative quote marks */}
+        <div className="absolute -top-8 left-4 text-8xl font-serif text-blue-500/10 pointer-events-none select-none">&ldquo;</div>
+        <div className="absolute -bottom-8 right-4 text-8xl font-serif text-blue-500/10 pointer-events-none select-none">&rdquo;</div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, scale: 0.95, rotateX: -10 }}
+            animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, scale: 0.95, rotateX: 10 }}
             transition={{ duration: 0.5 }}
-            className="bg-gray-800/70 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 md:p-12"
           >
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <img
-                src={testimonials[currentIndex].avatar}
-                alt={testimonials[currentIndex].author}
-                className="w-20 h-20 rounded-full border-2 border-gray-600"
+            {/* Card with gradient border */}
+            <div className="relative p-[2px] rounded-2xl overflow-hidden">
+              <motion.div
+                className="absolute inset-0"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                style={{
+                  background: "conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)",
+                  borderRadius: "1rem"
+                }}
               />
-              <div className="flex-1 text-center md:text-left">
-                <p className="text-xl md:text-2xl text-white mb-4 italic">
-                  &ldquo;{testimonials[currentIndex].quote}&rdquo;
-                </p>
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <span className="text-gray-400">- {testimonials[currentIndex].author}</span>
-                  <span className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">
-                    {testimonials[currentIndex].category}
-                  </span>
-                  <span className="text-green-400 font-bold text-lg">
-                    {testimonials[currentIndex].profit}
-                  </span>
+              <div className="relative bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 md:p-12">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <img
+                    src={testimonials[currentIndex].avatar}
+                    alt={testimonials[currentIndex].author}
+                    className="w-20 h-20 rounded-full border-2 border-gray-600"
+                  />
+                  <div className="flex-1 text-center md:text-left">
+                    <p className="text-xl md:text-2xl text-white mb-4 italic">
+                      &ldquo;{testimonials[currentIndex].quote}&rdquo;
+                    </p>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      <span className="text-gray-400">- {testimonials[currentIndex].author}</span>
+                      <span className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">
+                        {testimonials[currentIndex].category}
+                      </span>
+                      <motion.span
+                        className="text-green-400 font-bold text-lg"
+                        animate={{
+                          textShadow: [
+                            "0 0 5px rgba(34, 197, 94, 0.3)",
+                            "0 0 15px rgba(34, 197, 94, 0.6)",
+                            "0 0 5px rgba(34, 197, 94, 0.3)"
+                          ]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        {testimonials[currentIndex].profit}
+                      </motion.span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => shareOnTwitter(
+                      `"${testimonials[currentIndex].quote}" - ${testimonials[currentIndex].author} on @OpinionMarketCap`,
+                      "https://opinionmarketcap.xyz"
+                    )}
+                    className="flex items-center gap-2 text-gray-500 hover:text-blue-400 transition-colors text-sm"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </button>
                 </div>
               </div>
-            </div>
-
-            {/* Share this testimonial */}
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => shareOnTwitter(
-                  `"${testimonials[currentIndex].quote}" - ${testimonials[currentIndex].author} on @OpinionMarketCap`,
-                  "https://opinionmarketcap.xyz"
-                )}
-                className="flex items-center gap-2 text-gray-500 hover:text-blue-400 transition-colors text-sm"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation */}
         <div className="flex items-center justify-center gap-4 mt-6">
           <button
             onClick={prevSlide}
@@ -490,356 +1013,66 @@ const TestimonialsCarousel = () => {
   );
 };
 
-// Explainer Video Section
-const ExplainerVideoSection = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  return (
-    <Section>
-      <SectionTitle>See How It Works in 90 Seconds</SectionTitle>
-
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          className="relative aspect-video bg-gray-800 rounded-2xl overflow-hidden border border-gray-700"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.3 }}
-        >
-          {!isPlaying ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-900/50 to-purple-900/50">
-              {/* Video thumbnail/placeholder */}
-              <div className="text-center">
-                <motion.button
-                  onClick={() => setIsPlaying(true)}
-                  className="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center mb-6 mx-auto shadow-[0_0_30px_rgba(59,130,246,0.5)]"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Play className="w-10 h-10 text-white ml-1" />
-                </motion.button>
-                <h3 className="text-2xl font-bold text-white mb-2">How Opinion Trading Works</h3>
-                <p className="text-gray-400">Learn the mechanics: Mint, Trade, Pool & Profit</p>
-              </div>
-
-              {/* Decorative elements */}
-              <div className="absolute top-4 left-4 flex gap-2">
-                <span className="px-3 py-1 bg-red-500/80 rounded-full text-xs text-white">LIVE</span>
-                <span className="px-3 py-1 bg-gray-700/80 rounded-full text-xs text-gray-300">1:30</span>
-              </div>
-            </div>
-          ) : (
-            <iframe
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-              title="OMC Explainer Video"
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          )}
-        </motion.div>
-
-        {/* Quick infographic below video */}
-        <motion.div
-          className="grid grid-cols-4 gap-4 mt-8"
-          variants={fadeIn}
-        >
-          {[
-            { step: "1", title: "Mint", desc: "Create a question", color: "text-red-400" },
-            { step: "2", title: "Trade", desc: "Buy/sell answers", color: "text-green-400" },
-            { step: "3", title: "Pool", desc: "Team up for power", color: "text-purple-400" },
-            { step: "4", title: "Profit", desc: "Earn royalties forever", color: "text-yellow-400" }
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              className="text-center p-4 bg-gray-800/50 rounded-xl border border-gray-700/50"
-              whileHover={{ y: -5, borderColor: "rgba(59, 130, 246, 0.3)" }}
-            >
-              <div className={`text-3xl font-black ${item.color} mb-2`}>{item.step}</div>
-              <div className="text-white font-semibold">{item.title}</div>
-              <div className="text-gray-400 text-sm">{item.desc}</div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </Section>
-  );
-};
-
-// Trending Opinions Section
-const trendingOpinions = [
-  {
-    id: 1,
-    question: "Best Layer 2 for DeFi?",
-    currentAnswer: "Arbitrum",
-    price: 45.20,
-    volume24h: 1240,
-    trades: 23,
-    trend: "up",
-    category: "Crypto"
-  },
-  {
-    id: 2,
-    question: "GOAT of Basketball?",
-    currentAnswer: "Michael Jordan",
-    price: 78.50,
-    volume24h: 3420,
-    trades: 67,
-    trend: "up",
-    category: "Sports"
-  },
-  {
-    id: 3,
-    question: "Best Pizza in NYC?",
-    currentAnswer: "Di Fara Pizza",
-    price: 23.10,
-    volume24h: 890,
-    trades: 18,
-    trend: "down",
-    category: "Food"
-  },
-  {
-    id: 4,
-    question: "Most Overrated Tech Company?",
-    currentAnswer: "Apple",
-    price: 52.80,
-    volume24h: 2100,
-    trades: 41,
-    trend: "up",
-    category: "Tech"
-  },
-  {
-    id: 5,
-    question: "Best Anime of All Time?",
-    currentAnswer: "Attack on Titan",
-    price: 31.40,
-    volume24h: 1560,
-    trades: 34,
-    trend: "up",
-    category: "Entertainment"
-  }
-];
-
-const TrendingOpinionsSection = () => {
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-
-  const handleCopy = async (id: number) => {
-    await copyToClipboard(`https://app.opinionmarketcap.xyz/opinion/${id}`);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  return (
-    <Section className="bg-gray-800/30">
-      <div className="flex items-center justify-center gap-3 mb-4">
-        <Flame className="w-8 h-8 text-orange-500" />
-        <SectionTitle className="mb-0">Trending Now</SectionTitle>
-        <motion.span
-          className="px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-400 text-sm font-semibold"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          LIVE
-        </motion.span>
-      </div>
-      <p className="text-center text-gray-400 mb-12">Hot opinions with the most activity right now</p>
-
-      <div className="space-y-4 max-w-4xl mx-auto">
-        {trendingOpinions.map((opinion, index) => (
-          <motion.div
-            key={opinion.id}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 md:p-6 hover:border-blue-500/30 transition-all"
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
-                    {opinion.category}
-                  </span>
-                  {opinion.trend === "up" ? (
-                    <TrendingUp className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <TrendingUp className="w-4 h-4 text-red-400 rotate-180" />
-                  )}
-                </div>
-                <h4 className="text-lg font-semibold text-white mb-1">{opinion.question}</h4>
-                <p className="text-gray-400">
-                  Current Answer: <span className="text-blue-400 font-medium">{opinion.currentAnswer}</span>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <div className="text-green-400 font-bold text-xl">${opinion.price.toFixed(2)}</div>
-                  <div className="text-gray-500 text-xs">Next Price</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="text-white font-semibold">{opinion.trades}</div>
-                  <div className="text-gray-500 text-xs">Trades 24h</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`https://app.opinionmarketcap.xyz/opinion/${opinion.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
-                  >
-                    Trade
-                  </a>
-
-                  <button
-                    onClick={() => shareOnTwitter(
-                      `Check out this trending opinion on @OpinionMarketCap: "${opinion.question}" - Current answer: ${opinion.currentAnswer}`,
-                      `https://app.opinionmarketcap.xyz/opinion/${opinion.id}`
-                    )}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-blue-400"
-                    title="Share on X"
-                  >
-                    <Twitter className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleCopy(opinion.id)}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-white"
-                    title="Copy link"
-                  >
-                    {copiedId === opinion.id ? (
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <motion.div
-        className="text-center mt-8"
-        whileHover={{ scale: 1.05 }}
-      >
-        <a
-          href="https://app.opinionmarketcap.xyz"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold"
-        >
-          View All Opinions
-          <ExternalLink className="w-4 h-4" />
-        </a>
-      </motion.div>
-    </Section>
-  );
-};
-
-const HowItWorksInteractive = () => {
-  const steps = [
-    { icon: <Target/>, title: "Mint an Asset", description: "Forge any question into a unique, tradable digital asset on the blockchain.", color: "red", bgColor: "bg-red-900/30", borderColor: "border-red-400/30", iconColor: "text-red-400" },
-    { icon: <TrendingUp/>, title: "Trade the Answer", description: "Buy and sell the right to the answer on a transparent, liquid market.", color: "green", bgColor: "bg-green-900/30", borderColor: "border-green-400/30", iconColor: "text-green-400" },
-    { icon: <DollarSign/>, title: "Earn the Profit", description: "When someone buys your answer, you get 95% of the price. The question minter earns 3% forever.", color: "yellow", bgColor: "bg-yellow-900/30", borderColor: "border-yellow-400/30", iconColor: "text-yellow-400" },
-    { icon: <Users/>, title: "Pool Your Power", description: "Team up with others to collectively acquire high-value answers and share the rewards.", color: "purple", bgColor: "bg-purple-900/30", borderColor: "border-purple-400/30", iconColor: "text-purple-400" }
-  ];
-
-  return (
-    <Section>
-      <SectionTitle>How It Really Works</SectionTitle>
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {steps.map((step, index) => (
-          <motion.div 
-            key={index} 
-            variants={fadeIn} 
-            className="text-center p-6 bg-gray-800/50 border border-gray-700 rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-blue-500/10 hover:shadow-lg hover:-translate-y-2"
-            whileHover={{ 
-              scale: 1.03, 
-              rotateY: 2,
-              boxShadow: "0 10px 30px rgba(59, 130, 246, 0.2)"
-            }}
-            animate={{
-              y: [0, -5, 0]
-            }}
-            transition={{
-              y: { duration: 3 + index * 0.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.2 }
-            }}
-          >
-            <motion.div 
-              className={`w-16 h-16 ${step.bgColor} ${step.borderColor} rounded-full flex items-center justify-center mx-auto mb-6`}
-              whileHover={{ rotate: 360, scale: 1.1 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-            >
-              <div className={step.iconColor}>{step.icon}</div>
-            </motion.div>
-            <h3 className="text-xl font-semibold text-white mb-3">{step.title}</h3>
-            <p className="text-gray-300">{step.description}</p>
-          </motion.div>
-        ))}
-      </div>
-    </Section>
-  );
-};
-
-const NewParadigmSection = () => (
-  <Section className="bg-gray-800/50">
-    <SectionTitle>A New Paradigm for Information</SectionTitle>
-    <div className="grid md:grid-cols-3 gap-10 items-start">
-      <motion.div variants={fadeIn}>
-        <h3 className="text-2xl font-bold text-red-400 mb-6 text-center">The Old Way: Web2</h3>
-        <ul className="space-y-4 text-lg text-gray-300">
-          <li className="flex items-start"><span className="text-red-400 mr-3 mt-1">×</span>Opaque algorithms decide what you see.</li>
-          <li className="flex items-start"><span className="text-red-400 mr-3 mt-1">×</span>Value is captured by platforms, not creators.</li>
-          <li className="flex items-start"><span className="text-red-400 mr-3 mt-1">×</span>Narratives are easily manipulated by bots and ads.</li>
-        </ul>
-      </motion.div>
-      <motion.div variants={fadeIn}>
-        <h3 className="text-2xl font-bold text-yellow-400 mb-6 text-center">The Half-Step: AI & LLMs</h3>
-        <ul className="space-y-4 text-lg text-gray-300">
-          <li className="flex items-start"><span className="text-yellow-400 mr-3 mt-1">!</span>Prone to hallucinations. Value captured by platforms</li>
-          <li className="flex items-start"><span className="text-yellow-400 mr-3 mt-1">!</span>Centralized, generate content from Web2.</li>
-          <li className="flex items-start"><span className="text-yellow-400 mr-3 mt-1">!</span>Massive energy consumption for every query.</li>
-        </ul>
-      </motion.div>
-      <motion.div variants={fadeIn} className="border-2 border-green-400 p-6 rounded-lg shadow-[0_0_20px_rgba(45,212,191,0.5)]">
-        <h3 className="text-2xl font-bold text-green-400 mb-6 text-center">The OMC Way: An Opinion Lab</h3>
-        <ul className="space-y-4 text-lg text-gray-300">
-          <li className="flex items-start"><CheckCircle className="text-green-400 mr-3 mt-1 flex-shrink-0" />Market-driven consensus determines value.</li>
-          <li className="flex items-start"><CheckCircle className="text-green-400 mr-3 mt-1 flex-shrink-0" />98% of value goes directly to the community.</li>
-          <li className="flex items-start"><CheckCircle className="text-green-400 mr-3 mt-1 flex-shrink-0" />Financial skin-in-the-game ensures authentic conviction.</li>
-        </ul>
-      </motion.div>
-    </div>
-  </Section>
-);
-
+// ============================================================
+// SECTION 6: USE CASES - Emoji bounce, card glow, staggered entrance
+// ============================================================
 const UseCasesSection = () => {
   const categories = [
-    { name: "Food & Culture", icon: "🍕", example: `"Best Pizza in Brooklyn?"`, backText: "Local restaurants, food delivery apps, and culinary influencers compete for visibility in food debates." },
-    { name: "Sports & Entertainment", icon: "⚽", example: `"Who is the GOAT of Soccer?"`, backText: "Sports fans, betting platforms, and athletes' sponsors invest in defending their champions and legends." },
-    { name: "Technology & Web3", icon: "💻", example: `"Best Layer 2 for Gaming?"`, backText: "Blockchain projects, gaming studios, and crypto investors battle for developer mindshare and adoption." },
-    { name: "Local & Community", icon: "🏙️", example: `"Most reliable plumber in Miami?"`, backText: "Service professionals, local directories, and neighborhood communities trade recommendations for real business value." }
+    {
+      name: "Food & Culture",
+      icon: "\u{1F355}",
+      example: `"Best Pizza in Brooklyn?"`,
+      backText: "Restaurants, food bloggers, and locals will fight over this forever. You earn every time.",
+      glowColor: "rgba(249, 115, 22, 0.3)"
+    },
+    {
+      name: "Sports",
+      icon: "\u{26BD}",
+      example: `"Who is the GOAT of Soccer?"`,
+      backText: "Messi vs Ronaldo debates have been free for 20 years. Not anymore.",
+      glowColor: "rgba(34, 197, 94, 0.3)"
+    },
+    {
+      name: "Crypto & Tech",
+      icon: "\u{1F4BB}",
+      example: `"Best Layer 2 for Gaming?"`,
+      backText: "Blockchain projects and their communities will literally pay to be the answer.",
+      glowColor: "rgba(59, 130, 246, 0.3)"
+    },
+    {
+      name: "Local Knowledge",
+      icon: "\u{1F3D9}\u{FE0F}",
+      example: `"Most reliable plumber in Miami?"`,
+      backText: "Real businesses will pay to be the top recommendation. You get royalties.",
+      glowColor: "rgba(139, 92, 246, 0.3)"
+    }
   ];
 
   return (
     <Section>
-      <SectionTitle>An Infinite Universe of Questions</SectionTitle>
+      <SectionTitle>Every Argument Is an Opportunity</SectionTitle>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
         {categories.map((cat, i) => (
-          <motion.div 
-            key={i} 
-            variants={fadeIn}
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: i * 0.15, ease: [0.175, 0.885, 0.32, 1.275] }}
             className="flip-card perspective-1000"
+            whileHover={{ boxShadow: `0 10px 40px ${cat.glowColor}` }}
           >
             <div className="flip-card-inner relative w-full h-64">
-              {/* Front of Card */}
               <div className="flip-card-front flex flex-col items-center justify-center p-6 rounded-xl bg-gray-800/50 border border-gray-700">
-                <div className="text-6xl mb-4">{cat.icon}</div>
+                <motion.div
+                  className="text-6xl mb-4"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+                >
+                  {cat.icon}
+                </motion.div>
                 <h3 className="text-xl font-semibold text-white text-center">{cat.name}</h3>
               </div>
-              {/* Back of Card */}
               <div className="flip-card-back flex flex-col items-center justify-center p-6 rounded-xl bg-blue-900/70 border border-blue-500/30">
                 <p className="text-lg font-semibold text-blue-100 text-center mb-3">{cat.example}</p>
                 <p className="text-sm text-blue-200 text-center">{cat.backText}</p>
@@ -852,247 +1085,417 @@ const UseCasesSection = () => {
   );
 };
 
-const GenesisVisionSection = () => (
-  <Section className="bg-gray-800/50">
-    <SectionTitle>Our Story & Vision</SectionTitle>
-    <div className="max-w-4xl mx-auto text-center">
-      <motion.div variants={fadeIn} className="bg-gray-900/50 p-8 rounded-lg border border-gray-700 mb-16">
-        <p className="text-xl italic leading-relaxed text-gray-100 border-l-4 border-blue-400 pl-6">
-          {`"Once, I was listening to my kids debating overt the Harry Potter series. The elder, whose favorite novel was 'The Prisoner of Azkaban', argued its supremacy with passion. The younger, however, was convinced 'The Goblet of Fire' was the best. They couldn't agree. Finally, the elder said, 'I'll give you $20 if you agree with me that 'Prisoner of Azkaban' is the best and most important.' The younger, after a moment's thought, accepted the deal and pocketed the bill. The next day, when I asked which was the best novel, they both agreed on 'Prisoner of Azkaban'. It struck me then: money had become a mechanism to settle a dispute that facts never could. That was the spark that led to OMC."`}
-        </p>
-        <p className="text-right mt-4 text-gray-400">- Axel, OMC Founder</p>
-      </motion.div>
-      <motion.div variants={fadeIn}>
-        <motion.h3 
-          className="text-3xl font-bold text-white mb-6"
-          whileHover={{ 
-            scale: 1.05,
-            textShadow: "0 0 20px rgba(59, 130, 246, 0.6)"
-          }}
+// ============================================================
+// SECTION 7: THE NUMBERS - Count-up animations, green accent bars, gradient bg
+// ============================================================
+const TheNumbersSection = () => {
+  const examples = [
+    { question: "GOAT of Soccer?", volume: 23400, royalties: 702 },
+    { question: "iPhone vs Android?", volume: 31800, royalties: 954 },
+    { question: "Most Overrated TV Show?", volume: 14200, royalties: 426 },
+    { question: "Best Pizza in Brooklyn?", volume: 18700, royalties: 561 }
+  ];
+
+  const bestCategories = [
+    { name: "Sports GOAT debates", range: "$300-600/mo" },
+    { name: "Food & restaurant reviews", range: "$200-400/mo" },
+    { name: "Tech comparisons", range: "$250-500/mo" },
+    { name: "Local knowledge", range: "$150-350/mo" }
+  ];
+
+  return (
+    <Section className="bg-gradient-to-b from-gray-800/50 via-green-900/10 to-gray-800/50">
+      <GradientOrb color="rgba(34, 197, 94, 0.2)" size={500} position={{ top: '10%', right: '10%' }} delay={0} />
+
+      <SectionTitle>The Math Doesn&apos;t Lie</SectionTitle>
+      <motion.p
+        className="text-center text-xl text-gray-300 -mt-12 mb-16"
+        {...fadeInView}
+      >
+        Mint once. Earn 3% royalties. <motion.span
+          className="text-green-400 font-semibold"
           animate={{
-            backgroundImage: [
-              "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(59,130,246,0.8) 50%, rgba(255,255,255,1) 100%)",
-              "linear-gradient(45deg, rgba(59,130,246,0.8) 0%, rgba(255,255,255,1) 50%, rgba(59,130,246,0.8) 100%)",
-              "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(59,130,246,0.8) 50%, rgba(255,255,255,1) 100%)"
+            textShadow: [
+              "0 0 5px rgba(34, 197, 94, 0.3)",
+              "0 0 20px rgba(34, 197, 94, 0.6)",
+              "0 0 5px rgba(34, 197, 94, 0.3)"
             ]
           }}
-          transition={{ 
-            
-            backgroundImage: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-          }}
-          style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
-        >
-          The Future is Community-Owned
-        </motion.h3>
-        <motion.p 
-          className="text-lg text-gray-300 leading-relaxed max-w-3xl mx-auto"
-          whileHover={{ 
-            scale: 1.02,
-            color: "#e5e7eb"
-          }}
-          animate={{
-            opacity: [0.9, 1, 0.9]
-          }}
-          transition={{ 
-            
-            opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-          }}
-        >
-          OMC is more than a platform; it&apos;s a new economic primitive. We are building a future where the value of information flows directly to the people who create and curate it. By replacing opaque algorithms with transparent markets, we can build a more equitable foundation for knowledge, and eventually, for commerce itself.
-        </motion.p>
+          transition={{ duration: 2, repeat: Infinity }}
+        >Forever.</motion.span>
+      </motion.p>
+
+      <motion.div
+        className="bg-gray-900/50 border border-gray-700 rounded-2xl p-8 mb-12"
+        whileHover={{ scale: 1.01, borderColor: "rgba(34, 197, 94, 0.3)" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <div className="grid md:grid-cols-2 gap-6">
+          {examples.map((item, i) => (
+            <motion.div
+              key={i}
+              className="relative bg-gray-800/50 border border-gray-600 rounded-xl p-6 overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.15 }}
+              whileHover={{
+                scale: 1.03,
+                y: -5,
+                borderColor: "rgba(34, 197, 94, 0.4)",
+                boxShadow: "0 10px 25px rgba(34, 197, 94, 0.15)"
+              }}
+            >
+              {/* Green accent bar on left */}
+              <motion.div
+                className="absolute left-0 top-0 bottom-0 w-1 bg-green-500 rounded-l-xl"
+                initial={{ scaleY: 0 }}
+                whileInView={{ scaleY: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.15 }}
+                style={{ transformOrigin: "top" }}
+              />
+              <h4 className="font-semibold text-white mb-3">&quot;{item.question}&quot;</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Volume:</span>
+                  <span className="font-medium text-white">
+                    $<AnimatedCounter end={item.volume} duration={2} />
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-400">Your 3% Royalties:</span>
+                  <span className="font-bold text-green-400 text-lg price-pulse">
+                    $<AnimatedCounter end={item.royalties} duration={2.5} />
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </motion.div>
+
+      <motion.p
+        className="text-center text-gray-300 text-lg mb-12"
+        {...fadeInView}
+      >
+        Questions don&apos;t expire. Sports, food, tech &mdash; people will argue about these forever. Your royalties compound.
+      </motion.p>
+
+      {/* Best categories */}
+      <motion.div
+        className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-gray-600 rounded-xl p-6 max-w-md mx-auto"
+        {...scaleUpView}
+      >
+        <h5 className="font-semibold text-white mb-4 text-center">Best Performing Categories</h5>
+        <div className="space-y-3 text-sm">
+          {bestCategories.map((cat, i) => (
+            <motion.div
+              key={i}
+              className="flex justify-between"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <span className="text-gray-300">{cat.name}</span>
+              <span className="text-green-400 font-medium">{cat.range}</span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 8: ORIGIN STORY - Quote glow, $20 highlight
+// ============================================================
+const OriginStorySection = () => (
+  <Section>
+    <SectionTitle>How a <span className="text-yellow-400">$20</span> Bet Started Everything</SectionTitle>
+    <div className="max-w-4xl mx-auto">
+      <motion.div
+        className="bg-gray-900/50 p-8 rounded-lg border border-gray-700 mb-10 relative"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        whileHover={{ borderColor: "rgba(59, 130, 246, 0.4)" }}
+        animate={{
+          boxShadow: [
+            "0 0 0px rgba(59, 130, 246, 0)",
+            "0 0 20px rgba(59, 130, 246, 0.15)",
+            "0 0 0px rgba(59, 130, 246, 0)"
+          ]
+        }}
+        transition={{ duration: 0.8, ease: "easeOut", boxShadow: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
+      >
+        <p className="text-xl italic leading-relaxed text-gray-100 border-l-4 border-blue-400 pl-6">
+          {`"Once, I was listening to my kids debating over the Harry Potter series. The elder, whose favorite novel was 'The Prisoner of Azkaban', argued its supremacy with passion. The younger, however, was convinced 'The Goblet of Fire' was the best. They couldn't agree. Finally, the elder said, 'I'll give you `}
+          <motion.span
+            className="text-yellow-400 font-bold"
+            animate={{
+              textShadow: [
+                "0 0 5px rgba(250, 204, 21, 0.3)",
+                "0 0 15px rgba(250, 204, 21, 0.6)",
+                "0 0 5px rgba(250, 204, 21, 0.3)"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >$20</motion.span>
+          {` if you agree with me that 'Prisoner of Azkaban' is the best and most important.' The younger, after a moment's thought, accepted the deal and pocketed the bill. The next day, when I asked which was the best novel, they both agreed on 'Prisoner of Azkaban'."`}
+        </p>
+        <p className="text-right mt-4 text-gray-400">&mdash; Axel, OMC Founder</p>
+      </motion.div>
+      <motion.p
+        className="text-xl text-center text-gray-300 font-medium"
+        {...fadeInView}
+      >
+        That was the spark. Money settles debates that facts never could. <span className="text-blue-400 font-semibold">OMC puts that on-chain.</span>
+      </motion.p>
     </div>
   </Section>
 );
 
-const AnatomyOfATradeSection = () => (
-    <Section>
-        <SectionTitle>Anatomy of a Trade</SectionTitle>
-        <motion.div 
-            className="bg-gray-800/50 border border-gray-700/30 rounded-xl p-8"
-            variants={fadeIn}
-            whileHover={{ scale: 1.02, borderColor: "rgba(59, 130, 246, 0.3)" }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-            <motion.h4 
-                className="text-2xl font-semibold text-white mb-6 text-center"
-                animate={{ 
-                    textShadow: [
-                        "0 0 0px rgba(255, 255, 255, 0)",
-                        "0 0 10px rgba(255, 255, 255, 0.3)",
-                        "0 0 0px rgba(255, 255, 255, 0)"
-                    ]
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+// ============================================================
+// SECTION 9: TRUST - Larger badges, rotating borders, spring pop-in
+// ============================================================
+const TrustSection = () => {
+  const badges = [
+    { icon: <Target className="w-7 h-7" />, title: "Verified on Base", desc: "Smart contracts verified on BaseScan", color: "blue" },
+    { icon: <Shield className="w-7 h-7" />, title: "Anti-MEV", desc: "Protected from front-running", color: "red" },
+    { icon: <Users className="w-7 h-7" />, title: "98% to Community", desc: "Only 2% platform fee", color: "green" },
+    { icon: <Globe className="w-7 h-7" />, title: "Open Source", desc: "Transparent, auditable code", color: "purple" }
+  ];
+
+  const colorMap: Record<string, { bg: string, border: string, text: string, glow: string }> = {
+    blue: { bg: "bg-blue-900/30", border: "border-blue-400/30", text: "text-blue-400", glow: "rgba(59, 130, 246, 0.3)" },
+    red: { bg: "bg-red-900/30", border: "border-red-400/30", text: "text-red-400", glow: "rgba(239, 68, 68, 0.3)" },
+    green: { bg: "bg-green-900/30", border: "border-green-400/30", text: "text-green-400", glow: "rgba(34, 197, 94, 0.3)" },
+    purple: { bg: "bg-purple-900/30", border: "border-purple-400/30", text: "text-purple-400", glow: "rgba(139, 92, 246, 0.3)" }
+  };
+
+  return (
+    <Section className="bg-gray-800/50 py-16">
+      <SectionTitle className="mb-12">Battle-Tested. Community-Owned.</SectionTitle>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {badges.map((badge, i) => {
+          const colors = colorMap[badge.color];
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.5,
+                delay: i * 0.12,
+                ease: [0.175, 0.885, 0.32, 1.275]
+              }}
+              className="relative p-[1px] rounded-xl overflow-hidden"
+              whileHover={{ scale: 1.08, y: -5 }}
             >
-                💰 Money Flow Per Trade
-            </motion.h4>
-            <div className="space-y-4 max-w-md mx-auto">
-                <motion.div 
-                    className="flex justify-between items-center p-3 rounded-lg bg-gray-700/30"
-                    variants={fadeIn}
-                    whileHover={{ x: 5, backgroundColor: "rgba(55, 65, 81, 0.5)" }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <span className="text-gray-300">Trader pays:</span>
-                    <span className="font-semibold text-white">$100 USDC</span>
-                </motion.div>
-                <motion.div 
-                    className="flex justify-between items-center p-3 rounded-lg bg-green-900/20"
-                    variants={fadeIn}
-                    whileHover={{ x: 5, backgroundColor: "rgba(34, 197, 94, 0.2)" }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <span className="text-green-400">Previous Answer Owner (95%):</span>
-                    <span className="font-semibold text-green-400">$95.00</span>
-                </motion.div>
-                <motion.div 
-                    className="flex justify-between items-center p-3 rounded-lg bg-blue-900/20"
-                    variants={fadeIn}
-                    whileHover={{ x: 5, backgroundColor: "rgba(59, 130, 246, 0.2)" }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <span className="text-blue-400">Question Minter (3%):</span>
-                    <span className="font-semibold text-blue-400">$3.00</span>
-                </motion.div>
-                <motion.div 
-                    className="flex justify-between items-center p-3 rounded-lg bg-purple-900/20"
-                    variants={fadeIn}
-                    whileHover={{ x: 5, backgroundColor: "rgba(147, 51, 234, 0.2)" }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <span className="text-purple-400">OMC Platform (2%):</span>
-                    <span className="font-semibold text-purple-400">$2.00</span>
-                </motion.div>
-            </div>
-        </motion.div>
+              {/* Subtle rotating gradient border */}
+              <motion.div
+                className="absolute inset-0"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                style={{
+                  background: `conic-gradient(from 0deg, transparent, ${colors.glow}, transparent, ${colors.glow}, transparent)`,
+                  borderRadius: "0.75rem"
+                }}
+              />
+              <div className="relative text-center p-6 bg-gray-900/90 rounded-xl">
+                <div className={`w-14 h-14 ${colors.bg} ${colors.border} border rounded-full flex items-center justify-center mx-auto mb-3`}>
+                  <div className={colors.text}>{badge.icon}</div>
+                </div>
+                <h4 className="font-semibold text-white text-sm mb-1">{badge.title}</h4>
+                <p className="text-gray-400 text-xs">{badge.desc}</p>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
     </Section>
-);
+  );
+};
 
+// ============================================================
+// SECTION 10: FINAL CTA - Gradient background, pulsing CTA, particles, text glow
+// ============================================================
+const FinalCTASection = () => {
+  const miniParticles = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    x: ((i * 11) % 100),
+    yStart: 100 + (i % 5) * 10,
+    yEnd: -(i % 5) * 10,
+    duration: 6 + (i % 4),
+    delay: (i * 0.6) % 4,
+    size: 1 + (i % 2),
+    color: ['#3b82f6', '#8b5cf6', '#60a5fa'][i % 3]
+  }));
+
+  return (
+    <Section className="py-20 bg-gradient-to-b from-gray-900 via-blue-900/20 to-purple-900/20">
+      <GradientOrb color="rgba(59, 130, 246, 0.3)" size={500} position={{ top: '0%', left: '20%' }} delay={0} />
+      <GradientOrb color="rgba(139, 92, 246, 0.3)" size={400} position={{ bottom: '0%', right: '20%' }} delay={2} />
+
+      {/* Mini particles */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {miniParticles.map((p) => (
+          <motion.div
+            key={`cta-p-${p.id}`}
+            className="absolute rounded-full"
+            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+            initial={{ x: `${p.x}%`, y: `${p.yStart}%`, opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0], y: [`${p.yStart}%`, `${p.yEnd}%`] }}
+            transition={{ duration: p.duration, repeat: Infinity, ease: "linear", delay: p.delay }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center relative z-10">
+        <motion.h2
+          className="text-4xl md:text-5xl font-bold text-white mb-6 text-glow"
+          {...fadeInView}
+          whileHover={{ scale: 1.03 }}
+        >
+          Ready to Put Your Money Where Your Mouth Is?
+        </motion.h2>
+        <motion.p
+          className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto"
+          {...fadeInView}
+        >
+          Create a question. Trade an answer. Get paid when someone disagrees.
+        </motion.p>
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+          {...fadeInView}
+        >
+          <Button asChild size="lg" className="button-pulse bg-blue-600 hover:bg-blue-500 text-white px-10 py-6 text-xl font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)]">
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
+              Launch App
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="border-2 border-gray-600 text-gray-300 bg-transparent hover:bg-gray-800 hover:border-gray-500 px-8 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+            <a href="https://docs.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">Read the Docs</a>
+          </Button>
+        </motion.div>
+      </div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 11: FOOTER
+// ============================================================
 const Footer = () => (
-    <footer className="py-16 bg-gray-900">
-        <div className="max-w-6xl mx-auto px-4">
-          {/* Newsletter signup */}
-          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-gray-700 rounded-2xl p-8 mb-12">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-2">Stay Updated</h3>
-                <p className="text-gray-400">Get notified about new features, trending opinions, and platform updates.</p>
-              </div>
-              <div className="flex gap-2 w-full md:w-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 md:w-64 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                />
-                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors">
-                  Subscribe
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-blue-400" />
-                OpinionMarketCap
-              </h4>
-              <p className="text-gray-300 text-sm mb-4">
-                The infinite marketplace where opinions become tradable assets on Base.
-              </p>
-              {/* Social share buttons */}
-              <div className="flex gap-3">
-                <a
-                  href="https://twitter.com/OpinionMarketCap"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
-                >
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://github.com/opinionmarketcap"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
-                >
-                  <Globe className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-4">Product</h4>
-              <div className="space-y-2 text-sm">
-                <a href="/mission" className="block text-gray-300 hover:text-blue-400">Mission</a>
-                <a href="/how-it-works" className="block text-gray-300 hover:text-blue-400">How it Works</a>
-                <a href="/tutorial" className="block text-gray-300 hover:text-blue-400">Tutorial</a>
-                <a href="/influences" className="block text-gray-300 hover:text-blue-400">Influences</a>
-                <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Whitepaper</a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-4">Community</h4>
-              <div className="space-y-2 text-sm">
-                <a href="https://discord.gg/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Discord</a>
-                <a href="https://twitter.com/OpinionMarketCap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Twitter/X</a>
-                <a href="https://github.com/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">GitHub</a>
-                <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Launch App</a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-4">Resources</h4>
-              <div className="space-y-2 text-sm">
-                <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Documentation</a>
-                <a href="https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Smart Contract</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">API (Coming Soon)</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400">Brand Kit</a>
-              </div>
-            </div>
-          </div>
-
-          {/* Legal Disclaimer */}
-          <div className="border-t border-gray-800 mt-12 pt-8">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-              <h5 className="text-sm font-semibold text-yellow-500 mb-3 flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Risk Disclaimer
-              </h5>
-              <p className="text-gray-400 text-xs leading-relaxed mb-4">
-                <strong className="text-gray-300">Trading opinions involves significant risk.</strong> The value of opinions can fluctuate rapidly and you may lose some or all of your investment. Past performance is not indicative of future results. OpinionMarketCap is a decentralized protocol on the Base blockchain - we do not hold custody of your funds. Always do your own research (DYOR) and never invest more than you can afford to lose.
-              </p>
-              <p className="text-gray-400 text-xs leading-relaxed mb-4">
-                <strong className="text-gray-300">Not financial advice.</strong> Nothing on this website constitutes investment advice, financial advice, trading advice, or any other sort of advice. You should conduct your own research and consult with independent financial advisors before making any investment decisions.
-              </p>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                <strong className="text-gray-300">Regulatory notice.</strong> OpinionMarketCap may not be available in all jurisdictions. It is your responsibility to ensure compliance with your local laws and regulations. This platform is not intended for residents of prohibited jurisdictions.
-              </p>
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-gray-500 text-sm">
-                © 2025 OpinionMarketCap. An Opinion Labs Project. All rights reserved.
-              </p>
-              <div className="flex gap-6 text-sm">
-                <a href="#" className="text-gray-500 hover:text-gray-300">Terms of Service</a>
-                <a href="#" className="text-gray-500 hover:text-gray-300">Privacy Policy</a>
-                <a href="#" className="text-gray-500 hover:text-gray-300">Cookie Policy</a>
-              </div>
-            </div>
+  <footer className="py-16 bg-gray-900">
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="grid md:grid-cols-4 gap-8">
+        <div>
+          <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-400" />
+            OpinionMarketCap
+          </h4>
+          <p className="text-gray-300 text-sm mb-4">
+            Where opinions have price tags.
+          </p>
+          <div className="flex gap-3">
+            <a
+              href="https://twitter.com/OpinionMarketCap"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
+            >
+              <Twitter className="w-5 h-5" />
+            </a>
+            <a
+              href="#"
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </a>
+            <a
+              href="https://github.com/opinionmarketcap"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
+            >
+              <Globe className="w-5 h-5" />
+            </a>
           </div>
         </div>
-      </footer>
+
+        <div>
+          <h4 className="font-semibold text-white mb-4">Product</h4>
+          <div className="space-y-2 text-sm">
+            <a href="/mission" className="block text-gray-300 hover:text-blue-400">Mission</a>
+            <a href="/how-it-works" className="block text-gray-300 hover:text-blue-400">How it Works</a>
+            <a href="/tutorial" className="block text-gray-300 hover:text-blue-400">Tutorial</a>
+            <a href="/influences" className="block text-gray-300 hover:text-blue-400">Influences</a>
+            <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Whitepaper</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-white mb-4">Community</h4>
+          <div className="space-y-2 text-sm">
+            <a href="https://discord.gg/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Discord</a>
+            <a href="https://twitter.com/OpinionMarketCap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Twitter/X</a>
+            <a href="https://github.com/opinionmarketcap" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">GitHub</a>
+            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Launch App</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-white mb-4">Resources</h4>
+          <div className="space-y-2 text-sm">
+            <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Documentation</a>
+            <a href="https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Smart Contract</a>
+            <a href="#" className="block text-gray-300 hover:text-blue-400">API (Coming Soon)</a>
+            <a href="#" className="block text-gray-300 hover:text-blue-400">Brand Kit</a>
+          </div>
+        </div>
+      </div>
+
+      {/* Legal Disclaimer */}
+      <div className="border-t border-gray-800 mt-12 pt-8">
+        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
+          <h5 className="text-sm font-semibold text-yellow-500 mb-3 flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Risk Disclaimer
+          </h5>
+          <p className="text-gray-400 text-xs leading-relaxed mb-4">
+            <strong className="text-gray-300">Trading opinions involves significant risk.</strong> The value of opinions can fluctuate rapidly and you may lose some or all of your investment. Past performance is not indicative of future results. OpinionMarketCap is a decentralized protocol on the Base blockchain - we do not hold custody of your funds. Always do your own research (DYOR) and never invest more than you can afford to lose.
+          </p>
+          <p className="text-gray-400 text-xs leading-relaxed mb-4">
+            <strong className="text-gray-300">Not financial advice.</strong> Nothing on this website constitutes investment advice, financial advice, trading advice, or any other sort of advice. You should conduct your own research and consult with independent financial advisors before making any investment decisions.
+          </p>
+          <p className="text-gray-400 text-xs leading-relaxed">
+            <strong className="text-gray-300">Regulatory notice.</strong> OpinionMarketCap may not be available in all jurisdictions. It is your responsibility to ensure compliance with your local laws and regulations. This platform is not intended for residents of prohibited jurisdictions.
+          </p>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-gray-500 text-sm">
+            &copy; 2025 OpinionMarketCap. Where opinions have price tags.
+          </p>
+          <div className="flex gap-6 text-sm">
+            <a href="#" className="text-gray-500 hover:text-gray-300">Terms of Service</a>
+            <a href="#" className="text-gray-500 hover:text-gray-300">Privacy Policy</a>
+            <a href="#" className="text-gray-500 hover:text-gray-300">Cookie Policy</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
 );
 
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 export default function ProfessionalLandingDark() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -1116,666 +1519,49 @@ export default function ProfessionalLandingDark() {
       }} />
       <LandingNavigation />
 
-      {/* Hero with Live Stats */}
+      {/* 1. Hero */}
       <HeroSection />
 
-      {/* Trending Opinions - Creates FOMO */}
+      {/* 2. The Dare */}
+      <TheDareSection />
+
+      <AnimatedSeparator />
+
+      {/* 3. How It Works + Money Flow */}
+      <HowItWorksSection />
+
+      <AnimatedSeparator />
+
+      {/* 4. Trending Now */}
       <TrendingOpinionsSection />
 
-      <Separator />
+      <AnimatedSeparator />
 
-      {/* Explainer Video */}
-      <ExplainerVideoSection />
-
-      <Separator />
-
-      {/* Problem/Solution */}
-      <Section className="py-20 bg-gray-800/50">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <motion.div variants={fadeIn}>
-              <motion.h2 
-                className="text-3xl font-bold text-white mb-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  textShadow: "0 0 15px rgba(239, 68, 68, 0.5)"
-                }}
-                animate={{
-                  color: ["#ffffff", "#fca5a5", "#ffffff"]
-                }}
-                transition={{ 
-                  
-                  color: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                The Current Problem
-              </motion.h2>
-              <p className="text-lg text-gray-300 leading-relaxed">
-                Traditional prediction markets are limited and centralized. Prediction markets are a form of betting on a future outcome, and they resolve only once. Most people can&apos;t profit from their present knowledge and insights.
-              </p>
-            </motion.div>
-            <motion.div variants={fadeIn}>
-              <motion.h2 
-                className="text-3xl font-bold text-blue-400 mb-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  textShadow: "0 0 15px rgba(59, 130, 246, 0.8)"
-                }}
-                animate={{
-                  color: ["#60a5fa", "#3b82f6", "#60a5fa"]
-                }}
-                transition={{ 
-                  
-                  color: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }
-                }}
-              >
-                Our Solution: An Opinion Lab
-              </motion.h2>
-              <p className="text-lg text-gray-300 leading-relaxed">
-                OpinionMarketCap (OMC) is a new type of dApp, an Opinion Lab. It&apos;s not about betting on the future; it&apos;s about owning the present. OMC creates an infinite marketplace where you can own, trade, and profit from your opinion on anything, forever.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </Section>
-      <NewParadigmSection />
-      <Separator />
-      <Section>
-        <SectionTitle>
-            Everything You Need to Profit from Opinions
-        </SectionTitle>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <motion.div 
-              variants={fadeIn} 
-              className="text-center p-6"
-              whileHover={{ scale: 1.05, y: -10 }}
-              animate={{ rotateY: [0, 2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-blue-900/30 border border-blue-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 180, scale: 1.2 }}
-                animate={{ 
-                  boxShadow: [
-                    "0 0 0 0 rgba(59, 130, 246, 0)",
-                    "0 0 0 10px rgba(59, 130, 246, 0.1)",
-                    "0 0 0 0 rgba(59, 130, 246, 0)"
-                  ]
-                }}
-                transition={{ 
-                  
-                  boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Zap className="w-8 h-8 text-blue-400" />
-              </motion.div>
-              <h3 className="text-xl font-semibold text-white mb-3">Instant Trading</h3>
-              <p className="text-gray-300">Trade opinions instantly with transparent pricing and protected transactions.</p>
-            </motion.div>
-            <motion.div 
-              variants={fadeIn} 
-              className="text-center p-6"
-              whileHover={{ scale: 1.05, y: -10 }}
-              animate={{ rotateY: [0, -2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-green-900/30 border border-green-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: -180, scale: 1.2 }}
-                animate={{ 
-                  boxShadow: [
-                    "0 0 0 0 rgba(34, 197, 94, 0)",
-                    "0 0 0 10px rgba(34, 197, 94, 0.1)",
-                    "0 0 0 0 rgba(34, 197, 94, 0)"
-                  ]
-                }}
-                transition={{ 
-                  
-                  boxShadow: { duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }
-                }}
-              >
-                <Users className="w-8 h-8 text-green-400" />
-              </motion.div>
-              <h3 className="text-xl font-semibold text-white mb-3">Pool Collaboration</h3>
-              <p className="text-gray-300">Create pools with others to amplify market impact and share rewards.</p>
-            </motion.div>
-            <motion.div 
-              variants={fadeIn} 
-              className="text-center p-6"
-              whileHover={{ scale: 1.05, y: -10 }}
-              animate={{ rotateY: [0, 2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-purple-900/30 border border-purple-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 360, scale: 1.2 }}
-                animate={{ 
-                  boxShadow: [
-                    "0 0 0 0 rgba(147, 51, 234, 0)",
-                    "0 0 0 10px rgba(147, 51, 234, 0.1)",
-                    "0 0 0 0 rgba(147, 51, 234, 0)"
-                  ]
-                }}
-                transition={{ 
-                  
-                  boxShadow: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }
-                }}
-              >
-                <Coins className="w-8 h-8 text-purple-400" />
-              </motion.div>
-              <h3 className="text-xl font-semibold text-white mb-3">Question Ownership</h3>
-              <p className="text-gray-300">Mint questions & earn 3% royalties from every transaction, forever. Or sell it</p>
-            </motion.div>
-            <motion.div 
-              variants={fadeIn} 
-              className="text-center p-6"
-              whileHover={{ scale: 1.05, y: -10 }}
-              animate={{ rotateY: [0, -2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-red-900/30 border border-red-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: -360, scale: 1.2 }}
-                animate={{ 
-                  boxShadow: [
-                    "0 0 0 0 rgba(239, 68, 68, 0)",
-                    "0 0 0 10px rgba(239, 68, 68, 0.1)",
-                    "0 0 0 0 rgba(239, 68, 68, 0)"
-                  ]
-                }}
-                transition={{ 
-                  
-                  boxShadow: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.9 }
-                }}
-              >
-                <Shield className="w-8 h-8 text-red-400" />
-              </motion.div>
-              <h3 className="text-xl font-semibold text-white mb-3">Anti-MEV Protection</h3>
-              <p className="text-gray-300">Protected from front-running and sandwich attacks for fair trading.</p>
-            </motion.div>
-        </div>
-      </Section>
-      <HowItWorksInteractive />
-      <Separator />
-      <UseCasesSection />
-      <Separator />
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl font-bold text-center text-white mb-16"
-            whileHover={{ 
-              scale: 1.05,
-              textShadow: "0 0 20px rgba(34, 197, 94, 0.6)"
-            }}
-            animate={{
-              backgroundImage: [
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(34,197,94,0.8) 50%, rgba(255,255,255,1) 100%)",
-                "linear-gradient(45deg, rgba(34,197,94,0.8) 0%, rgba(255,255,255,1) 50%, rgba(34,197,94,0.8) 100%)",
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(34,197,94,0.8) 50%, rgba(255,255,255,1) 100%)"
-              ]
-            }}
-            transition={{ 
-              
-              backgroundImage: { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
-            }}
-            style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
-          >
-            Examples of High-Earning Minted Questions
-          </motion.h2>
-          <motion.div 
-            className="bg-gray-800 border border-gray-700 rounded-2xl p-8"
-            whileHover={{ scale: 1.02, borderColor: "rgba(34, 197, 94, 0.3)" }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div 
-                className="bg-gray-900/50 border border-gray-600 rounded-xl p-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -5,
-                  borderColor: "rgba(34, 197, 94, 0.4)",
-                  boxShadow: "0 10px 25px rgba(34, 197, 94, 0.15)"
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <h4 className="font-semibold text-white mb-2">&quot;Who is the GOAT of Soccer?&quot;</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Volume:</span>
-                    <span className="font-medium text-white">$23.4K</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Traders:</span>
-                    <span className="font-medium text-white">1,247</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-400">Minter earned:</span>
-                    <span className="font-semibold text-green-400">$468</span>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="bg-gray-900/50 border border-gray-600 rounded-xl p-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -5,
-                  borderColor: "rgba(34, 197, 94, 0.4)",
-                  boxShadow: "0 10px 25px rgba(34, 197, 94, 0.15)"
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <h4 className="font-semibold text-white mb-2">&quot;iPhone vs Android - Which is Superior?&quot;</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Volume:</span>
-                    <span className="font-medium text-white">$31.8K</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Traders:</span>
-                    <span className="font-medium text-white">1,593</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-400">Minter earned:</span>
-                    <span className="font-semibold text-green-400">$636</span>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="bg-gray-900/50 border border-gray-600 rounded-xl p-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -5,
-                  borderColor: "rgba(34, 197, 94, 0.4)",
-                  boxShadow: "0 10px 25px rgba(34, 197, 94, 0.15)"
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <h4 className="font-semibold text-white mb-2">&quot;Most Overrated TV Show Ever?&quot;</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Volume:</span>
-                    <span className="font-medium text-white">$14.2K</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Traders:</span>
-                    <span className="font-medium text-white">673</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-400">Minter earned:</span>
-                    <span className="font-semibold text-green-400">$284</span>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="bg-gray-900/50 border border-gray-600 rounded-xl p-6"
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -5,
-                  borderColor: "rgba(34, 197, 94, 0.4)",
-                  boxShadow: "0 10px 25px rgba(34, 197, 94, 0.15)"
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <h4 className="font-semibold text-white mb-2">&quot;Best Pizza in Brooklyn under 50 USDC?&quot;</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Volume:</span>
-                    <span className="font-medium text-white">$18.7K</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Traders:</span>
-                    <span className="font-medium text-white">892</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-400">Minter earned:</span>
-                    <span className="font-semibold text-green-400">$374</span>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-      <AnatomyOfATradeSection />
-      <section className="py-20 bg-gray-800/50">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl font-bold text-center text-white mb-16"
-            whileHover={{ 
-              scale: 1.05,
-              textShadow: "0 0 20px rgba(255, 215, 0, 0.7)"
-            }}
-            animate={{
-              backgroundImage: [
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,215,0,0.8) 50%, rgba(255,255,255,1) 100%)",
-                "linear-gradient(45deg, rgba(255,215,0,0.8) 0%, rgba(255,255,255,1) 50%, rgba(255,215,0,0.8) 100%)",
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(255,215,0,0.8) 50%, rgba(255,255,255,1) 100%)"
-              ]
-            }}
-            transition={{ 
-              
-              backgroundImage: { duration: 5, repeat: Infinity, ease: "easeInOut" }
-            }}
-            style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
-          >
-            Mint Once, Earn Forever
-          </motion.h2>
-          <div className="grid md:grid-cols-2 gap-16 items-center mb-16">
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-6">The Power of Timeless Questions</h3>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">No Expiration Dates</h4>
-                    <p className="text-gray-300">Your questions generate income indefinitely</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">Evergreen Topics</h4>
-                    <p className="text-gray-300">Food, sports, culture never go out of style</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">Global Appeal</h4>
-                    <p className="text-gray-300">Questions that interest people worldwide</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-white text-sm">✓</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">Compound Earnings</h4>
-                    <p className="text-gray-300">More popular questions attract more traders over time</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8">
-              <h4 className="text-xl font-bold text-white mb-6">💡 Pro Tip</h4>
-              <p className="text-gray-300 mb-6">
-                Questions that spark passionate debates generate the most trading volume. 
-                Think about topics people love to argue about!
-              </p>
-              <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-gray-600 rounded-xl p-6">
-                <h5 className="font-semibold text-white mb-3">Best Performing Categories:</h5>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Sports GOAT debates</span>
-                    <span className="text-green-400 font-medium">$300-600/mo</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Food & restaurant reviews</span>
-                    <span className="text-green-400 font-medium">$200-400/mo</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Tech product comparisons</span>
-                    <span className="text-green-400 font-medium">$250-500/mo</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Local city knowledge</span>
-                    <span className="text-green-400 font-medium">$150-350/mo</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.h2 
-            className="text-4xl font-bold text-center text-white mb-16"
-            whileHover={{ 
-              scale: 1.05,
-              textShadow: "0 0 20px rgba(239, 68, 68, 0.6)"
-            }}
-            animate={{
-              backgroundImage: [
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(239,68,68,0.8) 50%, rgba(255,255,255,1) 100%)",
-                "linear-gradient(45deg, rgba(239,68,68,0.8) 0%, rgba(255,255,255,1) 50%, rgba(239,68,68,0.8) 100%)",
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(239,68,68,0.8) 50%, rgba(255,255,255,1) 100%)"
-              ]
-            }}
-            transition={{ 
-              
-              backgroundImage: { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
-            }}
-            style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
-          >
-            Enterprise-Grade Security
-          </motion.h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <motion.div 
-              className="bg-gray-800 border-2 border-red-900/50 rounded-xl p-6 text-center"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                borderColor: "rgba(239, 68, 68, 0.7)",
-                boxShadow: "0 15px 30px rgba(239, 68, 68, 0.2)"
-              }}
-              animate={{ rotateY: [0, 1, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-red-900/30 border border-red-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 360, scale: 1.2 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              >
-                <Shield className="w-8 h-8 text-red-400" />
-              </motion.div>
-              <h3 className="text-lg font-semibold text-white mb-3">Anti-MEV Protection</h3>
-              <p className="text-gray-300 text-sm">No front-running or sandwich attacks</p>
-            </motion.div>
-            <motion.div 
-              className="bg-gray-800 border-2 border-blue-900/50 rounded-xl p-6 text-center"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                borderColor: "rgba(59, 130, 246, 0.7)",
-                boxShadow: "0 15px 30px rgba(59, 130, 246, 0.2)"
-              }}
-              animate={{ rotateY: [0, -1, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-blue-900/30 border border-blue-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 360, scale: 1.2 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              >
-                <Target className="w-8 h-8 text-blue-400" />
-              </motion.div>
-              <h3 className="text-lg font-semibold text-white mb-3">Smart Contract Audited</h3>
-              <p className="text-gray-300 text-sm">Verified and secure on Base</p>
-            </motion.div>
-            <motion.div 
-              className="bg-gray-800 border-2 border-green-900/50 rounded-xl p-6 text-center"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                borderColor: "rgba(34, 197, 94, 0.7)",
-                boxShadow: "0 15px 30px rgba(34, 197, 94, 0.2)"
-              }}
-              animate={{ rotateY: [0, 1, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-green-900/30 border border-green-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 360, scale: 1.2 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              >
-                <DollarSign className="w-8 h-8 text-green-400" />
-              </motion.div>
-              <h3 className="text-lg font-semibold text-white mb-3">Transparent Pricing</h3>
-              <p className="text-gray-300 text-sm">All fees and royalties visible</p>
-            </motion.div>
-            <motion.div 
-              className="bg-gray-800 border-2 border-purple-900/50 rounded-xl p-6 text-center"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                borderColor: "rgba(147, 51, 234, 0.7)",
-                boxShadow: "0 15px 30px rgba(147, 51, 234, 0.2)"
-              }}
-              animate={{ rotateY: [0, -1, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 7.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }
-              }}
-            >
-              <motion.div 
-                className="w-16 h-16 bg-purple-900/30 border border-purple-400/30 rounded-full flex items-center justify-center mx-auto mb-4"
-                whileHover={{ rotate: 360, scale: 1.2 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              >
-                <Globe className="w-8 h-8 text-purple-400" />
-              </motion.div>
-              <h3 className="text-lg font-semibold text-white mb-3">Decentralized</h3>
-              <p className="text-gray-300 text-sm">Community-owned and operated</p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      <section className="py-20 bg-gray-800">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <motion.h2 
-            className="text-4xl font-bold mb-8"
-            whileHover={{ 
-              scale: 1.05,
-              textShadow: "0 0 20px rgba(147, 51, 234, 0.6)"
-            }}
-            animate={{
-              backgroundImage: [
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(147,51,234,0.8) 50%, rgba(255,255,255,1) 100%)",
-                "linear-gradient(45deg, rgba(147,51,234,0.8) 0%, rgba(255,255,255,1) 50%, rgba(147,51,234,0.8) 100%)",
-                "linear-gradient(45deg, rgba(255,255,255,1) 0%, rgba(147,51,234,0.8) 50%, rgba(255,255,255,1) 100%)"
-              ]
-            }}
-            transition={{ 
-              
-              backgroundImage: { duration: 4.8, repeat: Infinity, ease: "easeInOut" }
-            }}
-            style={{ backgroundClip: "text", WebkitBackgroundClip: "text", color: "transparent" }}
-          >
-            Built for the Community
-          </motion.h2>
-          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-            98% of platform fees go back to traders and question minters.
-            Transparent, decentralized, and fair.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <motion.div 
-              className="bg-gray-900/50 border border-gray-700 rounded-xl p-8"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -8,
-                borderColor: "rgba(59, 130, 246, 0.5)",
-                boxShadow: "0 15px 30px rgba(59, 130, 246, 0.15)"
-              }}
-              animate={{ rotateY: [0, 2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 8, repeat: Infinity, ease: "easeInOut" }
-              }}
-            >
-              <motion.div 
-                className="text-3xl font-bold text-blue-400 mb-2"
-                animate={{ color: ["#60a5fa", "#3b82f6", "#60a5fa"] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                $2,847
-              </motion.div>
-              <div className="text-gray-300 mb-2">Monthly Income</div>
-              <div className="text-gray-400 text-sm">Food blogger • 47 restaurant questions</div>
-            </motion.div>
-            <motion.div 
-              className="bg-gray-900/50 border border-gray-700 rounded-xl p-8"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -8,
-                borderColor: "rgba(34, 197, 94, 0.5)",
-                boxShadow: "0 15px 30px rgba(34, 197, 94, 0.15)"
-              }}
-              animate={{ rotateY: [0, -2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 8.5, repeat: Infinity, ease: "easeInOut", delay: 1 }
-              }}
-            >
-              <motion.div 
-                className="text-3xl font-bold text-green-400 mb-2"
-                animate={{ color: ["#4ade80", "#22c55e", "#4ade80"] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              >
-                $1,923
-              </motion.div>
-              <div className="text-gray-300 mb-2">Monthly Income</div>
-              <div className="text-gray-400 text-sm">Sports fan • 23 GOAT debates</div>
-            </motion.div>
-            <motion.div 
-              className="bg-gray-900/50 border border-gray-700 rounded-xl p-8"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -8,
-                borderColor: "rgba(147, 51, 234, 0.5)",
-                boxShadow: "0 15px 30px rgba(147, 51, 234, 0.15)"
-              }}
-              animate={{ rotateY: [0, 2, 0] }}
-              transition={{ 
-                
-                rotateY: { duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }
-              }}
-            >
-              <motion.div 
-                className="text-3xl font-bold text-purple-400 mb-2"
-                animate={{ color: ["#a855f7", "#9333ea", "#a855f7"] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              >
-                $1,456
-              </motion.div>
-              <div className="text-gray-300 mb-2">Monthly Income</div>
-              <div className="text-gray-400 text-sm">Local guide • 34 city questions</div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      <GenesisVisionSection />
-
-      {/* Testimonials Carousel */}
+      {/* 5. Testimonials */}
       <TestimonialsCarousel />
 
+      <AnimatedSeparator />
+
+      {/* 6. Use Cases */}
+      <UseCasesSection />
+
+      <AnimatedSeparator />
+
+      {/* 7. The Numbers */}
+      <TheNumbersSection />
+
+      {/* 8. Origin Story */}
+      <OriginStorySection />
+
+      <AnimatedSeparator />
+
+      {/* 9. Trust */}
+      <TrustSection />
+
+      {/* 10. Final CTA */}
+      <FinalCTASection />
+
+      {/* 11. Footer */}
       <Footer />
     </div>
   )
