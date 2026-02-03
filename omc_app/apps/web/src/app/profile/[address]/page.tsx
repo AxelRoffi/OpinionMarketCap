@@ -67,7 +67,7 @@ export default function ProfilePage({ params }: any) {
         <Button
           variant="ghost"
           onClick={() => router.back()}
-          className="mb-4 text-gray-400 hover:text-white"
+          className="mb-4 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -79,11 +79,11 @@ export default function ProfilePage({ params }: any) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Error Loading Profile</h1>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Error Loading Profile</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button 
             onClick={() => window.location.reload()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-emerald-600 hover:bg-emerald-700 text-foreground"
           >
             Try Again
           </Button>
@@ -98,7 +98,7 @@ export default function ProfilePage({ params }: any) {
       <Button
         variant="ghost"
         onClick={() => router.back()}
-        className="text-gray-400 hover:text-white"
+        className="text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -110,16 +110,16 @@ export default function ProfilePage({ params }: any) {
           <div className="flex items-center space-x-4">
             {/* User Avatar */}
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
+              <User className="w-8 h-8 text-foreground" />
             </div>
             
             {/* Address Display */}
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-foreground">
                 {isOwnProfile ? 'Your Profile' : `${formatAddress(profileAddress)}'s Profile`}
               </h1>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-400 font-mono text-sm">{formatAddress(profileAddress)}</span>
+                <span className="text-muted-foreground font-mono text-sm">{formatAddress(profileAddress)}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -129,7 +129,7 @@ export default function ProfilePage({ params }: any) {
                   {copied ? (
                     <Check className="w-3 h-3 text-emerald-500" />
                   ) : (
-                    <Copy className="w-3 h-3 text-gray-400 hover:text-emerald-400" />
+                    <Copy className="w-3 h-3 text-muted-foreground hover:text-emerald-400" />
                   )}
                 </Button>
               </div>
@@ -169,8 +169,8 @@ export default function ProfilePage({ params }: any) {
                 </span>
               </div>
             </div>
-            <div className="text-xl font-bold text-white">{formatUSDC(stats.totalValue)}</div>
-            <div className="text-sm text-gray-400">Total Value</div>
+            <div className="text-xl font-bold text-foreground">{formatUSDC(stats.totalValue)}</div>
+            <div className="text-sm text-muted-foreground">Total Value</div>
           </CardContent>
         </Card>
 
@@ -180,8 +180,8 @@ export default function ProfilePage({ params }: any) {
             <div className="flex items-center justify-between mb-2">
               <BarChart3 className="w-5 h-5 text-cyan-500" />
             </div>
-            <div className="text-xl font-bold text-white">{stats.opinionsOwned}</div>
-            <div className="text-sm text-gray-400">Opinions Owned</div>
+            <div className="text-xl font-bold text-foreground">{stats.opinionsOwned}</div>
+            <div className="text-sm text-muted-foreground">Opinions Owned</div>
           </CardContent>
         </Card>
 
@@ -191,8 +191,8 @@ export default function ProfilePage({ params }: any) {
             <div className="flex items-center justify-between mb-2">
               <Award className="w-5 h-5 text-orange-500" />
             </div>
-            <div className="text-xl font-bold text-white">{stats.winRate.toFixed(1)}%</div>
-            <div className="text-sm text-gray-400">Win Rate</div>
+            <div className="text-xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</div>
+            <div className="text-sm text-muted-foreground">Win Rate</div>
           </CardContent>
         </Card>
 
@@ -202,26 +202,26 @@ export default function ProfilePage({ params }: any) {
             <div className="flex items-center justify-between mb-2">
               <TrendingUp className="w-5 h-5 text-purple-500" />
             </div>
-            <div className="text-xl font-bold text-white">#{stats.rank}</div>
-            <div className="text-sm text-gray-400">Rank</div>
+            <div className="text-xl font-bold text-foreground">#{stats.rank}</div>
+            <div className="text-sm text-muted-foreground">Rank</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Fee Claiming - Only for own profile */}
       {isOwnProfile && stats.accumulatedFees > 0 && (
-        <Card className="glass-card border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-slate-800/50 to-cyan-500/5">
+        <Card className="glass-card border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-cyan-500/5">
           <CardContent className="p-8 text-center">
             <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <DollarSign className="w-10 h-10 text-white" />
+              <DollarSign className="w-10 h-10 text-foreground" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Fees Available to Claim</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Fees Available to Claim</h2>
             <div className="text-3xl font-bold text-emerald-400 mb-6">
               {formatUSDC(stats.accumulatedFees)}
             </div>
             
             <Button 
-              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-medium px-8 py-3 text-lg"
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-foreground font-medium px-8 py-3 text-lg"
               onClick={handleClaimFees}
               disabled={isClaimingFees}
             >
@@ -252,7 +252,7 @@ export default function ProfilePage({ params }: any) {
             {claimSuccess && transactionHash && (
               <div className="text-emerald-400 text-sm mt-4">
                 <a 
-                  href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+                  href={`https://basescan.org/tx/${transactionHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-emerald-300 flex items-center justify-center space-x-2"
@@ -283,15 +283,15 @@ export default function ProfilePage({ params }: any) {
             {/* Recent Activity */}
             <Card className="glass-card">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
                 <div className="space-y-3">
                   {transactions.slice(0, 5).map((transaction) => (
                     <div key={transaction.id} className="p-3 rounded-lg bg-muted/20 flex items-center space-x-3">
-                      <div className="text-white font-medium">{transaction.type}</div>
-                      <div className="text-sm text-gray-400 flex-1">
+                      <div className="text-foreground font-medium">{transaction.type}</div>
+                      <div className="text-sm text-muted-foreground flex-1">
                         {transaction.opinionTitle.substring(0, 30)}...
                       </div>
-                      <div className="text-white font-medium">
+                      <div className="text-foreground font-medium">
                         {formatUSDC(transaction.price)}
                       </div>
                     </div>
@@ -303,7 +303,7 @@ export default function ProfilePage({ params }: any) {
             {/* Top Opinions */}
             <Card className="glass-card">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Top Performing Opinions</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Top Performing Opinions</h3>
                 <div className="space-y-3">
                   {opinions
                     .filter(opinion => opinion.pnl > 0)
@@ -312,7 +312,7 @@ export default function ProfilePage({ params }: any) {
                     .map((opinion) => (
                       <div key={opinion.id} className="p-3 rounded-lg bg-muted/20">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-white font-medium">
+                          <div className="text-foreground font-medium">
                             {opinion.question.substring(0, 30)}...
                           </div>
                           <div className="text-emerald-500 font-medium">
@@ -337,10 +337,10 @@ export default function ProfilePage({ params }: any) {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-2">{opinion.question}</h3>
+                  <h3 className="text-foreground font-semibold mb-2">{opinion.question}</h3>
                   <div className="flex items-center space-x-2 mb-2">
                     {opinion.categories.map((category) => (
-                      <Badge key={category} className="bg-blue-600 text-white">
+                      <Badge key={category} className="bg-blue-600 text-foreground">
                         {category}
                       </Badge>
                     ))}
@@ -355,12 +355,12 @@ export default function ProfilePage({ params }: any) {
                       </Badge>
                     )}
                   </div>
-                  <div className="text-gray-400 text-sm">
+                  <div className="text-muted-foreground text-sm">
                     Answer: {opinion.currentAnswer}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-white font-bold text-lg">
+                  <div className="text-foreground font-bold text-lg">
                     {formatUSDC(opinion.currentValue)}
                   </div>
                   <div className={`text-sm ${opinion.pnl >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -399,13 +399,13 @@ export default function ProfilePage({ params }: any) {
                           {transaction.type}
                         </Badge>
                       </td>
-                      <td className="py-3 text-white">
+                      <td className="py-3 text-foreground">
                         {transaction.opinionTitle.substring(0, 40)}...
                       </td>
-                      <td className="py-3 text-right text-white">
+                      <td className="py-3 text-right text-foreground">
                         {formatUSDC(transaction.price)}
                       </td>
-                      <td className="py-3 text-right text-gray-400">
+                      <td className="py-3 text-right text-muted-foreground">
                         {formatTimeAgo(transaction.timestamp)}
                       </td>
                     </tr>

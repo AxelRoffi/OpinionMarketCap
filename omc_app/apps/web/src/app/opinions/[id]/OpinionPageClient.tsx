@@ -19,7 +19,7 @@ import { DetailedStats } from '../components/opinion-stats';
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { InlineTradingPanel } from '../components/inline-trading-panel';
 import { MobileTradingSheet } from '../components/mobile-trading-sheet';
-import { AmbientBackground } from '../components/ambient-background';
+import { AmbientBackground } from '@/components/ambient-background';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';

@@ -147,11 +147,11 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
       <Card className="glass-card">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Enhanced Portfolio Analytics</h2>
+            <h2 className="text-xl font-bold text-foreground">Enhanced Portfolio Analytics</h2>
           </div>
           <div className="h-96 flex items-center justify-center">
             <div className="animate-pulse">
-              <div className="w-full h-64 bg-gray-700 rounded"></div>
+              <div className="w-full h-64 bg-muted rounded"></div>
             </div>
           </div>
         </CardContent>
@@ -163,8 +163,8 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg">
-          <p className="text-white font-medium mb-2">{label}</p>
+        <div className="bg-muted border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-foreground font-medium mb-2">{label}</p>
           {chartType === 'portfolio' && (
             <>
               <p className="text-emerald-400 text-sm">
@@ -176,7 +176,7 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
               <p className={`text-sm ${data.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 P&L: {formatUSDC(data.pnl)}
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Returns: {formatPercentage(data.returns)}
               </p>
             </>
@@ -186,12 +186,12 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
               <p className={`text-sm ${data.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 P&L: {formatUSDC(data.pnl)}
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Returns: {formatPercentage(data.returns)}
               </p>
             </>
           )}
-          <p className="text-gray-400 text-xs mt-2">
+          <p className="text-muted-foreground text-xs mt-2">
             Positions: {data.opinionCount}
           </p>
         </div>
@@ -205,9 +205,9 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
       case 'portfolio':
         return (
           <AreaChart data={chartData.timeline}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={(value) => `$${value.toFixed(0)}`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} tickFormatter={(value) => `$${value.toFixed(0)}`} />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
@@ -231,9 +231,9 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
       case 'pnl':
         return (
           <LineChart data={chartData.timeline}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={(value) => `${value.toFixed(1)}%`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} tickFormatter={(value) => `${value.toFixed(1)}%`} />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
@@ -257,12 +257,19 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
                 outerRadius={120}
                 paddingAngle={5}
                 dataKey="value"
+                label={({ name, percentage }) => `${name}: ${percentage.toFixed(0)}%`}
+                labelLine={{ stroke: 'var(--muted-foreground)' }}
               >
                 {chartData.categoryData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: any) => [formatUSDC(value), 'Value']} />
+              <Tooltip
+                formatter={(value: any) => [formatUSDC(value), 'Value']}
+                contentStyle={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)' }}
+                itemStyle={{ color: 'var(--foreground)' }}
+                labelStyle={{ color: 'var(--foreground)' }}
+              />
             </PieChart>
           </div>
         );
@@ -270,11 +277,16 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
       case 'performance':
         return (
           <BarChart data={chartData.performanceData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
-            <Tooltip formatter={(value: any) => [value, 'Count']} />
-            <Bar dataKey="count" fill="#10b981" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} />
+            <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} />
+            <Tooltip
+              formatter={(value: any) => [value, 'Count']}
+              contentStyle={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)' }}
+              itemStyle={{ color: 'var(--foreground)' }}
+              labelStyle={{ color: 'var(--foreground)' }}
+            />
+            <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
           </BarChart>
         );
 
@@ -288,7 +300,10 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
       <CardContent className="p-6">
         {/* Header with controls */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
-          <h2 className="text-xl font-bold text-white">Enhanced Portfolio Analytics</h2>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Enhanced Portfolio Analytics</h2>
+            <div className="h-0.5 w-16 mt-1 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-transparent" />
+          </div>
           
           {/* Time Frame Selector */}
           <div className="flex items-center space-x-2">
@@ -300,7 +315,7 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
                 onClick={() => setSelectedTimeFrame(timeFrame)}
                 className={`${selectedTimeFrame === timeFrame 
                   ? 'bg-emerald-600 hover:bg-emerald-700' 
-                  : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                  : 'bg-transparent border-border hover:bg-muted'
                 }`}
               >
                 {timeFrame === 'all' ? 'All Time' : timeFrame.toUpperCase()}
@@ -341,9 +356,9 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
               ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg mb-2">No data for this time period</p>
-                  <p className="text-gray-500 text-sm">
+                  <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg mb-2">No data for this time period</p>
+                  <p className="text-muted-foreground text-sm">
                     Try selecting a different time frame or start trading!
                   </p>
                 </div>
@@ -355,15 +370,15 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
 
         {/* Quick Stats Below Chart */}
         {chartData.timeline.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-700/40">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border/40">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 {chartData.timeline[chartData.timeline.length - 1]?.portfolioValue 
                   ? formatUSDC(chartData.timeline[chartData.timeline.length - 1].portfolioValue)
                   : '$0.00'
                 }
               </div>
-              <div className="text-sm text-gray-400">Portfolio Value</div>
+              <div className="text-sm text-muted-foreground">Portfolio Value</div>
             </div>
             <div className="text-center">
               <div className={`text-2xl font-bold ${
@@ -374,43 +389,43 @@ export function EnhancedPortfolioPerformanceChart({ opinions, loading }: Enhance
                   : '$0.00'
                 }
               </div>
-              <div className="text-sm text-gray-400">Total P&L</div>
+              <div className="text-sm text-muted-foreground">Total P&L</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 {chartData.performanceData[0]?.percentage.toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-400">Win Rate</div>
+              <div className="text-sm text-muted-foreground">Win Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 {chartData.timeline.length}
               </div>
-              <div className="text-sm text-gray-400">Total Positions</div>
+              <div className="text-sm text-muted-foreground">Total Positions</div>
             </div>
           </div>
         )}
 
         {/* Category Breakdown - Only show for allocation chart */}
         {chartType === 'allocation' && chartData.categoryData.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-700/40">
-            <h3 className="text-lg font-semibold text-white mb-4">Category Breakdown</h3>
+          <div className="mt-6 pt-6 border-t border-border/40">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Category Breakdown</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {chartData.categoryData.map((category, index) => (
-                <div key={category.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50">
+                <div key={category.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center space-x-3">
                     <div 
                       className="w-4 h-4 rounded-full" 
                       style={{ backgroundColor: category.color }}
                     />
                     <div>
-                      <div className="text-white font-medium">{category.name}</div>
-                      <div className="text-gray-400 text-sm">{category.count} positions</div>
+                      <div className="text-foreground font-medium">{category.name}</div>
+                      <div className="text-muted-foreground text-sm">{category.count} positions</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-white font-medium">{formatUSDC(category.value)}</div>
-                    <div className="text-gray-400 text-sm">{category.percentage.toFixed(1)}%</div>
+                    <div className="text-foreground font-medium">{formatUSDC(category.value)}</div>
+                    <div className="text-muted-foreground text-sm">{category.percentage.toFixed(1)}%</div>
                   </div>
                 </div>
               ))}

@@ -121,7 +121,7 @@ export function useWithdrawFromExpiredPool() {
         duration: 5000,
         action: {
           label: 'View Transaction',
-          onClick: () => window.open(`https://sepolia.basescan.org/tx/${withdrawTxHash}`, '_blank')
+          onClick: () => window.open(`https://basescan.org/tx/${withdrawTxHash}`, '_blank')
         }
       });
       

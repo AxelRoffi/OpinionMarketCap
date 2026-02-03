@@ -311,6 +311,9 @@ export const USDC_ABI = [
   },
 ] as const;
 
+// BaseScan URL for Base Mainnet
+export const BASESCAN_URL = 'https://basescan.org';
+
 // USDC contract address on Base Mainnet
 export const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`;
 

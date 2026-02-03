@@ -185,11 +185,11 @@ export function AdvancedPositionManagement({
       <Card className="glass-card">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-700 rounded w-1/3"></div>
-            <div className="h-32 bg-gray-700 rounded"></div>
+            <div className="h-8 bg-muted rounded w-1/3"></div>
+            <div className="h-32 bg-muted rounded"></div>
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-700 rounded"></div>
+                <div key={i} className="h-24 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -203,7 +203,7 @@ export function AdvancedPositionManagement({
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Position Management</h2>
+          <h2 className="text-xl font-bold text-foreground">Position Management</h2>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
               {stats.total} Positions
@@ -221,21 +221,21 @@ export function AdvancedPositionManagement({
               <TrendingUp className="w-4 h-4 text-emerald-500" />
               <span className="text-emerald-400 font-medium">{stats.profitable}</span>
             </div>
-            <div className="text-xs text-gray-400">Profitable</div>
+            <div className="text-xs text-muted-foreground">Profitable</div>
           </div>
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <TrendingDown className="w-4 h-4 text-red-500" />
               <span className="text-red-400 font-medium">{stats.losing}</span>
             </div>
-            <div className="text-xs text-gray-400">Losing</div>
+            <div className="text-xs text-muted-foreground">Losing</div>
           </div>
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <Target className="w-4 h-4 text-blue-500" />
               <span className="text-blue-400 font-medium">{stats.winRate.toFixed(1)}%</span>
             </div>
-            <div className="text-xs text-gray-400">Win Rate</div>
+            <div className="text-xs text-muted-foreground">Win Rate</div>
           </div>
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
@@ -244,7 +244,7 @@ export function AdvancedPositionManagement({
                 {formatUSDC(stats.totalPnL)}
               </span>
             </div>
-            <div className="text-xs text-gray-400">Total P&L</div>
+            <div className="text-xs text-muted-foreground">Total P&L</div>
           </div>
         </div>
 
@@ -253,13 +253,13 @@ export function AdvancedPositionManagement({
           {/* Search and Clear */}
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search positions..."
                 value={filters.search}
                 onChange={(e) => updateFilter('search', e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500"
+                className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-emerald-500"
               />
             </div>
             {(filters.search || filters.status !== 'all' || filters.type !== 'all' || filters.category !== 'all') && (
@@ -274,8 +274,8 @@ export function AdvancedPositionManagement({
           <div className="flex flex-wrap items-center gap-2">
             {/* Status Filter */}
             <div className="flex items-center space-x-1">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-400">Status:</span>
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Status:</span>
               {(['all', 'profitable', 'losing', 'breakeven'] as FilterStatus[]).map((status) => (
                 <Button
                   key={status}
@@ -284,7 +284,7 @@ export function AdvancedPositionManagement({
                   onClick={() => updateFilter('status', status)}
                   className={`text-xs ${filters.status === status 
                     ? 'bg-emerald-600 hover:bg-emerald-700' 
-                    : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                    : 'bg-transparent border-border hover:bg-muted'
                   }`}
                 >
                   {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
@@ -294,7 +294,7 @@ export function AdvancedPositionManagement({
 
             {/* Type Filter */}
             <div className="flex items-center space-x-1">
-              <span className="text-sm text-gray-400">Type:</span>
+              <span className="text-sm text-muted-foreground">Type:</span>
               {(['all', 'owned', 'created'] as FilterType[]).map((type) => (
                 <Button
                   key={type}
@@ -303,7 +303,7 @@ export function AdvancedPositionManagement({
                   onClick={() => updateFilter('type', type)}
                   className={`text-xs ${filters.type === type 
                     ? 'bg-emerald-600 hover:bg-emerald-700' 
-                    : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                    : 'bg-transparent border-border hover:bg-muted'
                   }`}
                 >
                   {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -314,11 +314,11 @@ export function AdvancedPositionManagement({
             {/* Category Filter */}
             {categories.length > 0 && (
               <div className="flex items-center space-x-1">
-                <Tag className="w-4 h-4 text-gray-400" />
+                <Tag className="w-4 h-4 text-muted-foreground" />
                 <select
                   value={filters.category}
                   onChange={(e) => updateFilter('category', e.target.value)}
-                  className="text-xs bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white"
+                  className="text-xs bg-muted border border-border rounded px-2 py-1 text-foreground"
                 >
                   <option value="all">All Categories</option>
                   {categories.map(cat => (
@@ -334,19 +334,19 @@ export function AdvancedPositionManagement({
         <div className="space-y-4">
           {filteredAndSortedOpinions.length === 0 ? (
             <div className="text-center py-12">
-              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg mb-2">No positions found</p>
-              <p className="text-gray-500 text-sm">
+              <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg mb-2">No positions found</p>
+              <p className="text-muted-foreground text-sm">
                 Try adjusting your filters or search terms
               </p>
             </div>
           ) : (
             <>
               {/* Sort Header */}
-              <div className="flex items-center space-x-4 text-sm text-gray-400 border-b border-gray-700 pb-2">
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground border-b border-border pb-2">
                 <button
                   onClick={() => toggleSort('question')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>Question</span>
                   {filters.sortField === 'question' && (
@@ -355,7 +355,7 @@ export function AdvancedPositionManagement({
                 </button>
                 <button
                   onClick={() => toggleSort('currentValue')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>Value</span>
                   {filters.sortField === 'currentValue' && (
@@ -364,7 +364,7 @@ export function AdvancedPositionManagement({
                 </button>
                 <button
                   onClick={() => toggleSort('pnlPercentage')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>P&L %</span>
                   {filters.sortField === 'pnlPercentage' && (
@@ -373,7 +373,7 @@ export function AdvancedPositionManagement({
                 </button>
                 <button
                   onClick={() => toggleSort('timestamp')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>Date</span>
                   {filters.sortField === 'timestamp' && (
@@ -389,11 +389,11 @@ export function AdvancedPositionManagement({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-4 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors bg-gray-800/30"
+                  className="p-4 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors bg-muted/30"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold mb-2">{opinion.question}</h3>
+                      <h3 className="text-foreground font-semibold mb-2">{opinion.question}</h3>
                       <div className="flex items-center space-x-2 mb-2">
                         {opinion.categories.map((category) => (
                           <Badge key={category} className="bg-blue-600/20 text-blue-400 text-xs">
@@ -419,10 +419,10 @@ export function AdvancedPositionManagement({
                           </Badge>
                         )}
                       </div>
-                      <div className="text-gray-400 text-sm mb-2">
+                      <div className="text-muted-foreground text-sm mb-2">
                         <strong>Answer:</strong> {opinion.currentAnswer}
                       </div>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                         <span className="flex items-center">
                           <Calendar className="w-3 h-3 mr-1" />
                           {formatTimeAgo(opinion.timestamp)}
@@ -434,7 +434,7 @@ export function AdvancedPositionManagement({
                       </div>
                     </div>
                     <div className="text-right ml-4">
-                      <div className="text-white font-bold text-lg">
+                      <div className="text-foreground font-bold text-lg">
                         {formatUSDC(opinion.currentValue)}
                       </div>
                       <div className={`text-sm font-medium ${opinion.pnl >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -448,7 +448,7 @@ export function AdvancedPositionManagement({
                   
                   {/* Action Buttons */}
                   {isOwnProfile && (
-                    <div className="flex items-center justify-end space-x-2 pt-3 border-t border-gray-700/40">
+                    <div className="flex items-center justify-end space-x-2 pt-3 border-t border-border/40">
                       {onTrade && (
                         <Button 
                           size="sm"
@@ -466,7 +466,7 @@ export function AdvancedPositionManagement({
                               size="sm"
                               variant="outline"
                               onClick={() => onListForSale(opinion)}
-                              className="border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-white"
+                              className="border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-foreground"
                             >
                               <Tag className="w-4 h-4 mr-1" />
                               List for Sale
@@ -476,7 +476,7 @@ export function AdvancedPositionManagement({
                               size="sm"
                               variant="outline"
                               onClick={() => onCancelListing && onCancelListing(opinion)}
-                              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-foreground"
                             >
                               <X className="w-4 h-4 mr-1" />
                               Cancel Listing ({formatUSDC(opinion.salePrice)})

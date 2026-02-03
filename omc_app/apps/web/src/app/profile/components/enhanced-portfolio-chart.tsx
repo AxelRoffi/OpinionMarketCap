@@ -72,8 +72,8 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
       <Card className="glass-card">
         <CardContent className="p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-1/4 mb-4"></div>
-            <div className="h-64 bg-gray-700 rounded"></div>
+            <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
+            <div className="h-64 bg-muted rounded"></div>
           </div>
         </CardContent>
       </Card>
@@ -104,10 +104,10 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
               {formatPercentage(analytics.performance.timeRanges[timeRange].pnlPercentage)}
             </span>
           </div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-foreground">
             {formatCurrency(analytics.performance.timeRanges[timeRange].value)}
           </div>
-          <div className="text-sm text-gray-400">Portfolio Value</div>
+          <div className="text-sm text-muted-foreground">Portfolio Value</div>
         </motion.div>
 
         <motion.div
@@ -122,10 +122,10 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
               {analytics.riskMetrics.volatility.toFixed(1)}%
             </span>
           </div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-foreground">
             {analytics.tradingPatterns.winRate.toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-400">Win Rate</div>
+          <div className="text-sm text-muted-foreground">Win Rate</div>
         </motion.div>
 
         <motion.div
@@ -140,10 +140,10 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
               {analytics.categoryAnalysis.diversification.toFixed(0)}
             </span>
           </div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-foreground">
             {analytics.categoryAnalysis.topCategory}
           </div>
-          <div className="text-sm text-gray-400">Top Category</div>
+          <div className="text-sm text-muted-foreground">Top Category</div>
         </motion.div>
 
         <motion.div
@@ -154,16 +154,16 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
         >
           <div className="flex items-center justify-between mb-2">
             <Award className="w-5 h-5 text-orange-400" />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-muted-foreground">
               {analytics.comparison.vsPlatformAverage.performance === 0 
                 ? "—" 
                 : formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
             </span>
           </div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-foreground">
             {analytics.comparison.rank.overall === 0 ? "—" : `#${analytics.comparison.rank.overall}`}
           </div>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-muted-foreground">
             {analytics.comparison.rank.overall === 0 ? "Coming Soon" : "Platform Rank"}
           </div>
         </motion.div>
@@ -174,7 +174,10 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
         <CardContent className="p-6">
           {/* Time Range Selector */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Portfolio Analytics</h3>
+            <div>
+              <h3 className="text-xl font-bold text-foreground">Portfolio Analytics</h3>
+              <div className="h-0.5 w-16 mt-1 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-transparent" />
+            </div>
             <div className="flex space-x-2">
               {timeRangeOptions.map((option) => (
                 <Button
@@ -184,8 +187,8 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                   onClick={() => setTimeRange(option.value)}
                   className={`${
                     timeRange === option.value
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                      : 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-foreground'
+                      : 'bg-transparent border-border text-foreground/80 hover:bg-muted'
                   }`}
                 >
                   {option.label}
@@ -219,20 +222,21 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                           <stop offset="95%" stopColor={chartColors.secondary} stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="#9CA3AF"
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis
+                        dataKey="date"
+                        stroke="var(--muted-foreground)"
+                        tick={{ fill: 'var(--muted-foreground)' }}
                         fontSize={12}
                         tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       />
-                      <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={formatCurrency} />
+                      <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} tickFormatter={formatCurrency} />
                       <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1F2937', 
-                          border: '1px solid #374151',
+                        contentStyle={{
+                          backgroundColor: 'var(--muted)',
+                          border: '1px solid var(--border)',
                           borderRadius: '8px',
-                          color: '#F9FAFB'
+                          color: 'var(--foreground)'
                         }}
                         formatter={(value, name) => [
                           formatCurrency(typeof value === 'number' ? value : 0),
@@ -277,33 +281,39 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                         fill="#8884d8"
                         dataKey="value"
                         label={({ category, percentage }: any) => `${category}: ${percentage.toFixed(1)}%`}
+                        labelLine={{ stroke: 'var(--muted-foreground)' }}
                       >
                         {analytics.categoryAnalysis.allocation.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)} />
+                      <Tooltip
+                        formatter={(value) => formatCurrency(typeof value === 'number' ? value : 0)}
+                        contentStyle={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)' }}
+                        itemStyle={{ color: 'var(--foreground)' }}
+                        labelStyle={{ color: 'var(--foreground)' }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
                 {/* Category Performance Table */}
                 <div className="space-y-3">
-                  <h4 className="text-lg font-semibold text-white">Category Performance</h4>
+                  <h4 className="text-lg font-semibold text-foreground">Category Performance</h4>
                   {analytics.categoryAnalysis.performance.map((category, index) => (
-                    <div key={category.category} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                    <div key={category.category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div 
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: categoryColors[index % categoryColors.length] }}
                         />
-                        <span className="text-white font-medium">{category.category}</span>
+                        <span className="text-foreground font-medium">{category.category}</span>
                       </div>
                       <div className="text-right">
                         <div className={`font-bold ${category.totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {formatCurrency(category.totalPnL)}
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           {category.winRate.toFixed(1)}% win rate
                         </div>
                       </div>
@@ -318,26 +328,26 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Risk Metrics */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-white">Risk Metrics</h4>
+                  <h4 className="text-lg font-semibold text-foreground">Risk Metrics</h4>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Portfolio Volatility</span>
-                      <span className="text-white font-bold">{analytics.riskMetrics.volatility.toFixed(1)}%</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Portfolio Volatility</span>
+                      <span className="text-foreground font-bold">{analytics.riskMetrics.volatility.toFixed(1)}%</span>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Sharpe Ratio</span>
-                      <span className="text-white font-bold">{analytics.riskMetrics.sharpeRatio.toFixed(2)}</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Sharpe Ratio</span>
+                      <span className="text-foreground font-bold">{analytics.riskMetrics.sharpeRatio.toFixed(2)}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Max Drawdown</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Max Drawdown</span>
                       <span className="text-red-400 font-bold">{analytics.riskMetrics.maxDrawdown.toFixed(1)}%</span>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Risk Score</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Risk Score</span>
                       <div className="flex items-center space-x-2">
                         <span className={`font-bold ${
                           analytics.riskMetrics.riskScore < 30 ? 'text-emerald-400' :
@@ -356,34 +366,34 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
 
                 {/* Trading Patterns */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-white">Trading Patterns</h4>
+                  <h4 className="text-lg font-semibold text-foreground">Trading Patterns</h4>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Avg Hold Time</span>
-                      <span className="text-white font-bold">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Avg Hold Time</span>
+                      <span className="text-foreground font-bold">
                         {analytics.tradingPatterns.avgHoldTime === 15 ? "—" : `${analytics.tradingPatterns.avgHoldTime} days`}
                       </span>
                     </div>
                     {analytics.tradingPatterns.avgHoldTime === 15 && (
-                      <div className="text-xs text-gray-500 px-3">
+                      <div className="text-xs text-muted-foreground px-3">
                         Coming soon - requires historical transaction analysis
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Trading Frequency</span>
-                      <span className="text-white font-bold">{analytics.tradingPatterns.tradingFrequency.toFixed(1)}/month</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Trading Frequency</span>
+                      <span className="text-foreground font-bold">{analytics.tradingPatterns.tradingFrequency.toFixed(1)}/month</span>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Profit Factor</span>
-                      <span className="text-white font-bold">{analytics.tradingPatterns.profitFactor.toFixed(2)}</span>
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Profit Factor</span>
+                      <span className="text-foreground font-bold">{analytics.tradingPatterns.profitFactor.toFixed(2)}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                      <span className="text-gray-300">Avg Win/Loss</span>
-                      <span className="text-white font-bold">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground/80">Avg Win/Loss</span>
+                      <span className="text-foreground font-bold">
                         {formatCurrency(analytics.tradingPatterns.avgWinAmount)} / 
                         {formatCurrency(analytics.tradingPatterns.avgLossAmount)}
                       </span>
@@ -399,59 +409,59 @@ export function EnhancedPortfolioChart({ opinions, transactions, loading }: Enha
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-300">vs Platform Avg</span>
-                      <Badge className="bg-gray-500">
+                      <span className="text-foreground/80">vs Platform Avg</span>
+                      <Badge className="bg-muted-foreground/30 text-foreground">
                         {analytics.comparison.vsPlatformAverage.performance === 0 ? "—" : formatPercentage(analytics.comparison.vsPlatformAverage.performance)}
                       </Badge>
                     </div>
-                    <div className="text-xl font-bold text-white">Performance</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xl font-bold text-foreground">Performance</div>
+                    <div className="text-xs text-muted-foreground mt-1">
                       {analytics.comparison.vsPlatformAverage.performance === 0 ? "Insufficient data" : ""}
                     </div>
                   </div>
                   
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-300">vs Platform Avg</span>
-                      <Badge className="bg-gray-500">
+                      <span className="text-foreground/80">vs Platform Avg</span>
+                      <Badge className="bg-muted-foreground/30 text-foreground">
                         {analytics.comparison.vsPlatformAverage.winRate === 0 ? "—" : formatPercentage(analytics.comparison.vsPlatformAverage.winRate)}
                       </Badge>
                     </div>
-                    <div className="text-xl font-bold text-white">Win Rate</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xl font-bold text-foreground">Win Rate</div>
+                    <div className="text-xs text-muted-foreground mt-1">
                       {analytics.comparison.vsPlatformAverage.winRate === 0 ? "Insufficient data" : ""}
                     </div>
                   </div>
                   
                   <div className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-300">Overall Rank</span>
+                      <span className="text-foreground/80">Overall Rank</span>
                       <Badge className="bg-purple-500">
                         {analytics.comparison.rank.overall === 0 ? "—" : `#${analytics.comparison.rank.overall}`}
                       </Badge>
                     </div>
-                    <div className="text-xl font-bold text-white">Platform</div>
+                    <div className="text-xl font-bold text-foreground">Platform</div>
                   </div>
                 </div>
 
                 {/* Category Rankings */}
                 <div>
-                  <h4 className="text-lg font-semibold text-white mb-4">Category Rankings</h4>
+                  <h4 className="text-lg font-semibold text-foreground mb-4">Category Rankings</h4>
                   <div className="space-y-2">
                     {Object.entries(analytics.comparison.rank.byCategory).map(([category, rank]) => (
-                      <div key={category} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                        <span className="text-gray-300">{category}</span>
-                        <Badge className="bg-gray-500">
+                      <div key={category} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <span className="text-foreground/80">{category}</span>
+                        <Badge className="bg-muted-foreground/30 text-foreground">
                           {rank === 0 ? "—" : `#${rank}`}
                         </Badge>
                       </div>
                     ))}
                     {Object.entries(analytics.comparison.rank.byCategory).every(([, rank]) => rank === 0) && (
                       <div className="text-center py-4">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           Category rankings coming soon
                         </div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           Requires comprehensive platform data analysis
                         </div>
                       </div>

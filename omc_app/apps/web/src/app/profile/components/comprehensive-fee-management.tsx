@@ -265,15 +265,15 @@ export function ComprehensiveFeeManagement({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg">
-          <p className="text-white font-medium mb-2">{label}</p>
+        <div className="bg-muted border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-foreground font-medium mb-2">{label}</p>
           <p className="text-emerald-400 text-sm">
             Creator Fees: {formatUSDC(data.creatorFees)}
           </p>
           <p className="text-blue-400 text-sm">
             Trading Fees: {formatUSDC(data.tradingFees)}
           </p>
-          <p className="text-white text-sm font-medium">
+          <p className="text-foreground text-sm font-medium">
             Total: {formatUSDC(data.totalFees)}
           </p>
         </div>
@@ -286,7 +286,7 @@ export function ComprehensiveFeeManagement({
     <Card className="glass-card">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold text-white">Fee Management Center</CardTitle>
+          <CardTitle className="text-xl font-bold text-foreground">Fee Management Center</CardTitle>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
               {formatUSDC(feeAnalytics.totalEarnings)} Total
@@ -314,7 +314,7 @@ export function ComprehensiveFeeManagement({
               {/* Claimable Fees */}
               <Card className={`${stats.accumulatedFees > 0 
                 ? 'bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-transparent border-emerald-500/30' 
-                : 'bg-gray-800/50 border-gray-700/50'
+                : 'bg-muted/50 border-border/50'
               }`}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -325,10 +325,10 @@ export function ComprehensiveFeeManagement({
                       </Badge>
                     )}
                   </div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                  <div className="text-2xl font-bold text-foreground mb-1">
                     {formatUSDC(stats.accumulatedFees)}
                   </div>
-                  <div className="text-sm text-gray-400">Accumulated Fees</div>
+                  <div className="text-sm text-muted-foreground">Accumulated Fees</div>
                   {stats.accumulatedFees > 0 && isOwnProfile && (
                     <Button 
                       className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700"
@@ -365,10 +365,10 @@ export function ComprehensiveFeeManagement({
                       {feeAnalytics.breakdown[1].count} Questions
                     </Badge>
                   </div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                  <div className="text-2xl font-bold text-foreground mb-1">
                     {formatUSDC(stats.creatorFees)}
                   </div>
-                  <div className="text-sm text-gray-400">Creator Fees</div>
+                  <div className="text-sm text-muted-foreground">Creator Fees</div>
                   <div className="text-xs text-blue-400 mt-2">
                     {creatorFeeRate}% from owned questions
                   </div>
@@ -384,10 +384,10 @@ export function ComprehensiveFeeManagement({
                       {feeAnalytics.breakdown[2].count} Wins
                     </Badge>
                   </div>
-                  <div className="text-2xl font-bold text-white mb-1">
+                  <div className="text-2xl font-bold text-foreground mb-1">
                     {formatUSDC(stats.tradingProfits)}
                   </div>
-                  <div className="text-sm text-gray-400">Trading Profits</div>
+                  <div className="text-sm text-muted-foreground">Trading Profits</div>
                   <div className="text-xs text-yellow-400 mt-2">
                     Unrealized gains
                   </div>
@@ -417,7 +417,7 @@ export function ComprehensiveFeeManagement({
                       {claimSuccess && transactionHash && (
                         <div className="flex items-center space-x-2 mt-2">
                           <a 
-                            href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+                            href={`https://basescan.org/tx/${transactionHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-emerald-400 hover:text-emerald-300 text-sm flex items-center space-x-1"
@@ -437,7 +437,7 @@ export function ComprehensiveFeeManagement({
             <Card className="bg-purple-500/10 border-purple-500/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">Earnings Projection</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Earnings Projection</h3>
                   <Target className="w-5 h-5 text-purple-500" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -445,13 +445,13 @@ export function ComprehensiveFeeManagement({
                     <div className="text-xl font-bold text-purple-400">
                       {formatUSDC(feeAnalytics.avgDailyEarnings)}
                     </div>
-                    <div className="text-sm text-gray-400">Avg. Daily</div>
+                    <div className="text-sm text-muted-foreground">Avg. Daily</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-purple-400">
                       {formatUSDC(feeAnalytics.monthlyProjection)}
                     </div>
-                    <div className="text-sm text-gray-400">Monthly Projection</div>
+                    <div className="text-sm text-muted-foreground">Monthly Projection</div>
                   </div>
                 </div>
               </CardContent>
@@ -462,7 +462,7 @@ export function ComprehensiveFeeManagement({
           <TabsContent value="breakdown" className="space-y-6">
             <div className="space-y-4">
               {feeAnalytics.breakdown.map((item, index) => (
-                <Card key={item.source} className="bg-gray-800/30">
+                <Card key={item.source} className="bg-muted/30">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -473,20 +473,20 @@ export function ComprehensiveFeeManagement({
                           <item.icon className="w-5 h-5" style={{ color: item.color }} />
                         </div>
                         <div>
-                          <div className="text-white font-medium">{item.source}</div>
-                          <div className="text-gray-400 text-sm">{item.description}</div>
+                          <div className="text-foreground font-medium">{item.source}</div>
+                          <div className="text-muted-foreground text-sm">{item.description}</div>
                           {item.count !== undefined && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {item.count} {item.source.includes('Creator') ? 'questions' : 'positions'}
                             </div>
                           )}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-white font-bold text-lg">
+                        <div className="text-foreground font-bold text-lg">
                           {formatUSDC(item.amount)}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-muted-foreground text-sm">
                           {item.percentage.toFixed(1)}% of total
                         </div>
                       </div>
@@ -501,7 +501,7 @@ export function ComprehensiveFeeManagement({
           <TabsContent value="history" className="space-y-6">
             {/* Time Frame Selector */}
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Fee History</h3>
+              <h3 className="text-lg font-semibold text-foreground">Fee History</h3>
               <div className="flex items-center space-x-2">
                 {(['7d', '30d', '90d', 'all'] as const).map((tf) => (
                   <Button
@@ -511,7 +511,7 @@ export function ComprehensiveFeeManagement({
                     onClick={() => setTimeFrame(tf)}
                     className={`${timeFrame === tf 
                       ? 'bg-emerald-600 hover:bg-emerald-700' 
-                      : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                      : 'bg-transparent border-border hover:bg-muted'
                     }`}
                   >
                     {tf === 'all' ? 'All Time' : tf.toUpperCase()}
@@ -527,9 +527,9 @@ export function ComprehensiveFeeManagement({
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={feeAnalytics.historicalData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                        <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={(value) => `$${value.toFixed(0)}`} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="date" stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} />
+                        <YAxis stroke="var(--muted-foreground)" tick={{ fill: 'var(--muted-foreground)' }} fontSize={12} tickFormatter={(value) => `$${value.toFixed(0)}`} />
                         <Tooltip content={<CustomTooltip />} />
                         <Area
                           type="monotone"
@@ -547,9 +547,9 @@ export function ComprehensiveFeeManagement({
             ) : (
               <Card className="glass-card">
                 <CardContent className="p-8 text-center">
-                  <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg mb-2">No fee history for this period</p>
-                  <p className="text-gray-500 text-sm">Try selecting a different time frame</p>
+                  <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg mb-2">No fee history for this period</p>
+                  <p className="text-muted-foreground text-sm">Try selecting a different time frame</p>
                 </CardContent>
               </Card>
             )}
@@ -560,7 +560,7 @@ export function ComprehensiveFeeManagement({
             {/* Top Performing Questions */}
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white">
+                <CardTitle className="text-lg font-semibold text-foreground">
                   Top Revenue Generating Questions
                 </CardTitle>
               </CardHeader>
@@ -568,16 +568,16 @@ export function ComprehensiveFeeManagement({
                 {feeAnalytics.topPerformingOpinions.length > 0 ? (
                   <div className="space-y-3">
                     {feeAnalytics.topPerformingOpinions.map((opinion, index) => (
-                      <div key={opinion.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50">
+                      <div key={opinion.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
                             <span className="text-emerald-400 text-sm font-medium">{index + 1}</span>
                           </div>
                           <div>
-                            <div className="text-white font-medium">
+                            <div className="text-foreground font-medium">
                               {opinion.question.substring(0, 60)}...
                             </div>
-                            <div className="text-gray-400 text-sm">
+                            <div className="text-muted-foreground text-sm">
                               Volume: {formatUSDC(opinion.totalVolume)}
                             </div>
                           </div>
@@ -587,16 +587,16 @@ export function ComprehensiveFeeManagement({
                             {/* FIXED: Remove hardcoded 3% - use real accumulated fees */}
                             {formatUSDC(0)} {/* PLACEHOLDER: Real fees from FeeManager */}
                           </div>
-                          <div className="text-gray-400 text-sm">Fees Earned</div>
+                          <div className="text-muted-foreground text-sm">Fees Earned</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No revenue-generating questions yet</p>
-                    <p className="text-gray-500 text-sm">Create questions to start earning fees!</p>
+                    <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No revenue-generating questions yet</p>
+                    <p className="text-muted-foreground text-sm">Create questions to start earning fees!</p>
                   </div>
                 )}
               </CardContent>

@@ -271,15 +271,15 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
       <Card className="glass-card">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-700 rounded w-1/3"></div>
+            <div className="h-8 bg-muted rounded w-1/3"></div>
             <div className="grid grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-700 rounded"></div>
+                <div key={i} className="h-24 bg-muted rounded"></div>
               ))}
             </div>
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-700 rounded"></div>
+                <div key={i} className="h-16 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -292,7 +292,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
     <Card className="glass-card">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold text-white">Trading History & P&L Attribution</CardTitle>
+          <CardTitle className="text-xl font-bold text-foreground">Trading History & P&L Attribution</CardTitle>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={downloadCSV}>
               <Download className="w-4 h-4 mr-1" />
@@ -315,7 +315,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                   {formatUSDC(tradingMetrics.totalVolume)}
                 </span>
               </div>
-              <div className="text-xs text-gray-400">Total Volume</div>
+              <div className="text-xs text-muted-foreground">Total Volume</div>
             </CardContent>
           </Card>
           
@@ -330,7 +330,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                   {formatUSDC(tradingMetrics.totalPnL)}
                 </span>
               </div>
-              <div className="text-xs text-gray-400">Total P&L</div>
+              <div className="text-xs text-muted-foreground">Total P&L</div>
             </CardContent>
           </Card>
 
@@ -342,7 +342,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                   {tradingMetrics.winRate.toFixed(1)}%
                 </span>
               </div>
-              <div className="text-xs text-gray-400">Win Rate</div>
+              <div className="text-xs text-muted-foreground">Win Rate</div>
             </CardContent>
           </Card>
 
@@ -354,28 +354,28 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                   {tradingMetrics.avgTradingDays.toFixed(1)}d
                 </span>
               </div>
-              <div className="text-xs text-gray-400">Avg. Hold</div>
+              <div className="text-xs text-muted-foreground">Avg. Hold</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-800/50 rounded-lg">
+        <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search transactions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500"
+              className="pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           {/* Time Filter */}
           <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4 text-gray-400" />
+            <Calendar className="w-4 h-4 text-muted-foreground" />
             {(['7d', '30d', '90d', 'all'] as TimeFilter[]).map((tf) => (
               <Button
                 key={tf}
@@ -384,7 +384,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                 onClick={() => setTimeFilter(tf)}
                 className={`text-xs ${timeFilter === tf 
                   ? 'bg-emerald-600 hover:bg-emerald-700' 
-                  : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                  : 'bg-transparent border-border hover:bg-muted'
                 }`}
               >
                 {tf === 'all' ? 'All' : tf.toUpperCase()}
@@ -394,7 +394,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
 
           {/* Type Filter */}
           <div className="flex items-center space-x-1">
-            <Filter className="w-4 h-4 text-gray-400" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             {(['all', 'BUY', 'SELL', 'CREATE'] as TransactionType[]).map((type) => (
               <Button
                 key={type}
@@ -403,7 +403,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                 onClick={() => setTypeFilter(type)}
                 className={`text-xs ${typeFilter === type 
                   ? 'bg-emerald-600 hover:bg-emerald-700' 
-                  : 'bg-transparent border-gray-600 hover:bg-gray-700'
+                  : 'bg-transparent border-border hover:bg-muted'
                 }`}
               >
                 {type === 'all' ? 'All Types' : type}
@@ -416,17 +416,17 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
         <div className="space-y-4">
           {filteredTransactions.length === 0 ? (
             <div className="text-center py-12">
-              <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg mb-2">No transactions found</p>
-              <p className="text-gray-500 text-sm">Try adjusting your filters</p>
+              <Activity className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg mb-2">No transactions found</p>
+              <p className="text-muted-foreground text-sm">Try adjusting your filters</p>
             </div>
           ) : (
             <>
               {/* Sort Header */}
-              <div className="flex items-center space-x-4 text-sm text-gray-400 border-b border-gray-700 pb-2">
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground border-b border-border pb-2">
                 <button
                   onClick={() => toggleSort('timestamp')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>Date</span>
                   {sortField === 'timestamp' && (
@@ -436,7 +436,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                 <span className="flex-1">Transaction</span>
                 <button
                   onClick={() => toggleSort('price')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>Price</span>
                   {sortField === 'price' && (
@@ -445,7 +445,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                 </button>
                 <button
                   onClick={() => toggleSort('pnl')}
-                  className="flex items-center space-x-1 hover:text-white"
+                  className="flex items-center space-x-1 hover:text-foreground"
                 >
                   <span>P&L</span>
                   {sortField === 'pnl' && (
@@ -462,7 +462,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.02 }}
-                  className="p-4 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors bg-gray-800/30"
+                  className="p-4 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors bg-muted/30"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -494,7 +494,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                             {transaction.type}
                           </Badge>
                           {transaction.category && (
-                            <Badge className="bg-gray-500/20 text-gray-400 text-xs">
+                            <Badge className="bg-gray-500/20 text-muted-foreground text-xs">
                               {transaction.category}
                             </Badge>
                           )}
@@ -504,10 +504,10 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                             </Badge>
                           )}
                         </div>
-                        <div className="text-white font-medium">
+                        <div className="text-foreground font-medium">
                           {transaction.opinionTitle.substring(0, 60)}...
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-muted-foreground text-sm">
                           {formatTimeAgo(transaction.timestamp)} • Amount: {transaction.amount}
                         </div>
                       </div>
@@ -515,7 +515,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
 
                     {/* Price and P&L */}
                     <div className="text-right">
-                      <div className="text-white font-medium">
+                      <div className="text-foreground font-medium">
                         {formatUSDC(transaction.price)}
                       </div>
                       {transaction.pnl !== undefined && transaction.pnl !== 0 && (
@@ -539,7 +539,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(`https://sepolia.basescan.org/tx/${transaction.txHash}`, '_blank')}
+                        onClick={() => window.open(`https://basescan.org/tx/${transaction.txHash}`, '_blank')}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
@@ -553,19 +553,19 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
 
         {/* Category Performance Summary */}
         {Object.keys(tradingMetrics.categoryBreakdown).length > 1 && (
-          <Card className="mt-6 bg-gray-800/30">
+          <Card className="mt-6 bg-muted/30">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-white">Performance by Category</CardTitle>
+              <CardTitle className="text-lg font-semibold text-foreground">Performance by Category</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div className="space-y-3">
                 {Object.entries(tradingMetrics.categoryBreakdown)
                   .sort(([,a], [,b]) => b.pnl - a.pnl)
                   .map(([category, data]) => (
-                    <div key={category} className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50">
+                    <div key={category} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                       <div>
-                        <div className="text-white font-medium">{category}</div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-foreground font-medium">{category}</div>
+                        <div className="text-muted-foreground text-sm">
                           {data.count} transactions • {formatUSDC(data.volume)} volume
                         </div>
                       </div>
@@ -573,7 +573,7 @@ export function DetailedTradingHistory({ opinions, transactions, loading }: Deta
                         <div className={`font-medium ${data.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {data.pnl >= 0 ? '+' : ''}{formatUSDC(data.pnl)}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-muted-foreground text-sm">
                           {data.count > 0 ? formatPercentage((data.pnl / data.volume) * 100) : '0%'} ROI
                         </div>
                       </div>
