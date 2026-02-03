@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { createOpinionUrl } from '@/lib/url-utils';
 import { useAccount } from 'wagmi';
 import { AlertCircle, Zap, Target } from 'lucide-react';
@@ -18,9 +19,24 @@ import { DetailedStats } from '../components/opinion-stats';
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { InlineTradingPanel } from '../components/inline-trading-panel';
 import { MobileTradingSheet } from '../components/mobile-trading-sheet';
+import { AmbientBackground } from '../components/ambient-background';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
 import CancelListingModal from '@/components/modals/CancelListingModal';
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5, delay, ease: 'easeOut' as const },
+});
+
+const slideInRight = (delay = 0) => ({
+  initial: { opacity: 0, x: 30 },
+  whileInView: { opacity: 1, x: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5, delay, ease: 'easeOut' as const },
+});
 
 export default function OpinionPageClient() {
   const params = useParams();
@@ -84,52 +100,66 @@ export default function OpinionPageClient() {
   const canCancelListing = address?.toLowerCase() === opinion.questionOwner?.toLowerCase() && isForSale;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-4 pb-24 lg:pb-4">
+    <div className="min-h-screen bg-background relative">
+      <AmbientBackground />
+
+      <div className="max-w-7xl mx-auto p-4 pb-24 lg:pb-4 relative z-10">
         {/* Question Hero */}
-        <QuestionHero opinion={opinion} />
+        <motion.div {...fadeUp(0)}>
+          <QuestionHero opinion={opinion} />
+        </motion.div>
 
         {/* 2-Column Layout */}
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Left Column: Content (60%) */}
           <div className="lg:col-span-3 space-y-4">
             {/* Price Bar */}
-            <PriceBar opinion={opinion} totalTrades={stats?.totalTrades ?? 0} />
+            <motion.div {...fadeUp(0.1)}>
+              <PriceBar opinion={opinion} totalTrades={stats?.totalTrades ?? 0} />
+            </motion.div>
 
             {/* Chart */}
-            <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
-              <OpinionChart
-                data={stats?.volumeHistory || []}
-                currentPrice={Number(opinion.nextPrice) / 1_000_000}
-              />
-            </div>
+            <motion.div {...fadeUp(0.15)}>
+              <div className="bg-card rounded-lg border border-border p-4 lg:p-6 hover:shadow-lg transition-shadow duration-300">
+                <OpinionChart
+                  data={stats?.volumeHistory || []}
+                  currentPrice={Number(opinion.nextPrice) / 1_000_000}
+                />
+              </div>
+            </motion.div>
 
             {/* Answer History */}
-            <AnswerHistoryPanel
-              opinionId={opinion.id}
-              currentAnswer={opinion.currentAnswer}
-            />
+            <motion.div {...fadeUp(0.2)}>
+              <AnswerHistoryPanel
+                opinionId={opinion.id}
+                currentAnswer={opinion.currentAnswer}
+              />
+            </motion.div>
 
             {/* Activity Feed */}
-            <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
-              <OpinionActivity activity={activity} loading={loading} />
-            </div>
+            <motion.div {...fadeUp(0.25)}>
+              <div className="bg-card rounded-lg border border-border p-4 lg:p-6 hover:shadow-lg transition-shadow duration-300">
+                <OpinionActivity activity={activity} loading={loading} />
+              </div>
+            </motion.div>
 
             {/* Detailed Stats */}
             {stats && (
-              <div className="bg-card rounded-lg border border-border p-4 lg:p-6">
-                <DetailedStats
-                  stats={stats}
-                  currentPrice={Number(opinion.nextPrice) / 1_000_000}
-                  totalVolume={Number(opinion.totalVolume) / 1_000_000}
-                />
-              </div>
+              <motion.div {...fadeUp(0.3)}>
+                <div className="bg-card rounded-lg border border-border p-4 lg:p-6 hover:shadow-lg transition-shadow duration-300">
+                  <DetailedStats
+                    stats={stats}
+                    currentPrice={Number(opinion.nextPrice) / 1_000_000}
+                    totalVolume={Number(opinion.totalVolume) / 1_000_000}
+                  />
+                </div>
+              </motion.div>
             )}
           </div>
 
           {/* Right Column: Trading Panel (40%) - Desktop only */}
           <div className="hidden lg:block lg:col-span-2">
-            <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <motion.div {...slideInRight(0.2)} className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
               <InlineTradingPanel
                 opinionId={opinion.id}
                 opinionData={{
@@ -152,7 +182,7 @@ export default function OpinionPageClient() {
                 isForSale={isForSale}
                 salePrice={opinion.salePrice}
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -162,7 +192,7 @@ export default function OpinionPageClient() {
         <div className="flex gap-2.5">
           <Button
             onClick={() => setShowMobileTrading(true)}
-            className="flex-1 h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm"
+            className="flex-1 h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm cta-pulse"
           >
             <Zap className="w-4 h-4 mr-1.5" />
             Trade

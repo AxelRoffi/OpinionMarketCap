@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ErrorState, BalanceWarning, AllowanceInfo } from '@/components/transaction';
 import { useTradingFlow, type TradingOpinionData } from '@/hooks/useTradingFlow';
+import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { formatUSDC } from '../hooks/use-opinion-detail';
@@ -52,6 +53,7 @@ export function InlineTradingPanel({
 }: InlineTradingPanelProps) {
   const { address } = useAccount();
   const flow = useTradingFlow(opinionId, opinionData);
+  const animatedPrice = useAnimatedCounter(Number(opinionData.nextPrice) / 1_000_000, 800);
 
   if (!address) {
     return (
@@ -65,11 +67,13 @@ export function InlineTradingPanel({
   }
 
   return (
-    <div className="bg-card rounded-lg border border-border overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden shadow-emerald-500/5 shadow-lg">
       {/* Price Hero */}
       <div className="p-4 border-b border-border bg-muted/20">
         <div className="flex items-center justify-center gap-3">
-          <span className="text-3xl font-black text-foreground">{flow.formatUSDC(opinionData.nextPrice)}</span>
+          <span className="text-3xl font-black text-foreground">
+            ${animatedPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
           <span className={`${flow.change.isPositive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'} px-2.5 py-1 rounded-full text-xs font-semibold`}>
             {flow.change.isPositive ? '+' : '-'}{flow.change.percentage.toFixed(1)}%
           </span>
@@ -235,7 +239,7 @@ export function InlineTradingPanel({
             <Button
               type="submit"
               disabled={!flow.hasBalance || flow.isSubmitting || !flow.formData.acceptedTerms}
-              className="w-full h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm disabled:opacity-50 rounded-xl hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-200"
+              className="w-full h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm disabled:opacity-50 rounded-xl hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-200 cta-pulse"
             >
               <Zap className="w-4 h-4 mr-1.5" />
               {flow.needsApproval ? 'Approve & Trade' : 'Trade'}

@@ -59,10 +59,10 @@ export function AnswerHistoryPanel({ opinionId, currentAnswer, onSelectAnswer }:
               key={index}
               onClick={() => !isCurrent && onSelectAnswer?.(entry.answer, entry.description)}
               disabled={isCurrent}
-              className={`w-full text-left rounded-lg px-3 py-2.5 border transition-all duration-150 ${
+              className={`w-full text-left rounded-lg px-3 py-2.5 border transition-all duration-200 ${
                 isCurrent
                   ? 'bg-emerald-500/10 border-emerald-500/40 cursor-default'
-                  : `${color.bg} ${color.border} hover:brightness-125 cursor-pointer`
+                  : `${color.bg} ${color.border} hover:brightness-125 hover:scale-[1.01] cursor-pointer`
               }`}
             >
               <div className="flex items-center justify-between gap-2">
