@@ -220,6 +220,11 @@ body {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+/* Hide scrollbar for horizontal scroll areas */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Ensure text readability in light mode */
 :root {
   color-scheme: light;

@@ -8,10 +8,7 @@ import {
   Search,
   ChevronUp,
   ChevronDown,
-  BarChart3,
   Flame,
-  Users,
-  MessageSquare,
   Zap,
   ExternalLink,
   Filter,
@@ -26,7 +23,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // Charts removed from main page - available on opinion detail page
 import { TradingModal } from '@/components/TradingModal';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
@@ -770,104 +766,91 @@ function HomePageInner() {
           </div>
         )}
 
-        {/* Compact Header: Tagline + Stats + CTA in one strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-xl md:text-2xl font-black text-gradient whitespace-nowrap">
-              Opinion Markets
-            </h1>
-            <span className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse-dot" />
-              Live on Base
-            </span>
+        {/* Row 1: Search + Create (Polymarket-style) */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+            <Input
+              type="text"
+              placeholder="Search opinions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 text-sm bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
+            />
           </div>
-
-          {/* Inline stats */}
-          <div className="flex items-center gap-3 md:gap-5 text-sm flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="text-emerald-500 font-bold text-xs">$</span>
-              <span className="text-muted-foreground text-xs">Cap</span>
-              <span className="text-foreground font-semibold">{formatLargeUSDC(marketStats.totalMarketCap)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <BarChart3 className="w-3 h-3 text-blue-500" />
-              <span className="text-muted-foreground text-xs">Vol</span>
-              <span className="text-foreground font-semibold">{formatLargeUSDC(marketStats.totalVolume)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Users className="w-3 h-3 text-orange-500" />
-              <span className="text-foreground font-semibold">{marketStats.activeTraders.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <MessageSquare className="w-3 h-3 text-purple-500" />
-              <span className="text-foreground font-semibold">{marketStats.totalOpinions}</span>
-            </div>
-          </div>
-
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowQualityFilter(!showQualityFilter)}
+            className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 flex-shrink-0"
+            title="Quality Filter"
+          >
+            <Filter className="w-3.5 h-3.5" />
+          </Button>
           <Button
             onClick={() => router.push('/mint')}
             size="sm"
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold px-4 py-2 rounded-lg shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 flex-shrink-0"
+            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold h-8 px-3 text-xs rounded-lg flex-shrink-0"
           >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            <Plus className="w-3 h-3 mr-1" />
             Create
           </Button>
-        </motion.div>
+        </div>
 
-
-        {/* Search & Filter System */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass-card p-2.5 rounded-xl mb-4"
-        >
-          <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="Search topics, answers, categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500"
-            />
-          </div>
-
-          <Select value={selectedCategory} onValueChange={handleCategorySelect}>
-            <SelectTrigger className="bg-muted border-border text-foreground w-full md:w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {getSmartContractCategories().map((category) => (
-                <SelectItem key={category} value={category} className="text-foreground hover:bg-muted">
-                  {category === 'Adult' ? '🔞 Adult' : category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Quality Filter Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowQualityFilter(!showQualityFilter)}
-            className="bg-muted border-border text-foreground hover:bg-accent w-full md:w-auto"
+        {/* Row 2: Tabs + Category pills (horizontal scroll like Polymarket) */}
+        <div className="flex items-center gap-1 mb-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {/* Tab buttons */}
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+              activeTab === 'all'
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Quality Filter
-            {filterStats.filtered > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {filterStats.filtered} hidden
-              </Badge>
-            )}
-          </Button>
-          </div>
-        </motion.div>
+            All Markets
+          </button>
+          <button
+            onClick={() => setActiveTab('trending')}
+            className={`flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+              activeTab === 'trending'
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
+            <Flame className="w-3 h-3 inline mr-0.5" />
+            Hot
+          </button>
+          <button
+            onClick={() => setActiveTab('newest')}
+            className={`flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+              activeTab === 'newest'
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
+            <Sparkles className="w-3 h-3 inline mr-0.5" />
+            New
+          </button>
+
+          {/* Separator */}
+          <div className="w-px h-4 bg-border mx-1 flex-shrink-0" />
+
+          {/* Category pills */}
+          {getSmartContractCategories().filter(c => c !== 'All Categories').map((category) => (
+            <button
+              key={category}
+              onClick={() => handleCategorySelect(category === selectedCategory ? 'All Categories' : category)}
+              className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full transition-colors ${
+                selectedCategory === category
+                  ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
 
         {/* Quality Filter Controls */}
         {showQualityFilter && (
@@ -962,85 +945,42 @@ function HomePageInner() {
           </motion.div>
         )}
 
-        {/* Tab Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mb-6"
-        >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-muted/50 border border-border p-1 rounded-xl">
-              <TabsTrigger value="all" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
-                <BarChart3 className="w-4 h-4" />
-                All Markets
-              </TabsTrigger>
-              <TabsTrigger value="trending" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
-                <Flame className="w-4 h-4" />
-                Hot
-              </TabsTrigger>
-              <TabsTrigger value="newest" className="flex items-center gap-2 text-muted-foreground data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-400 data-[state=active]:border data-[state=active]:border-emerald-500/20 rounded-lg">
-                <Sparkles className="w-4 h-4" />
-                Newest
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </motion.div>
-
-        {/* Live Markets Card-List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="rounded-xl overflow-hidden"
-        >
-          {/* Title + Sort Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-foreground text-2xl font-black flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-emerald-500" />
-                Live Markets
-                <Badge variant="secondary" className="text-xs font-medium">{totalFiltered}</Badge>
-              </h2>
-              <p className="text-muted-foreground text-sm mt-1">Every question is a market. Every answer is a trade.</p>
-            </div>
-            {/* Sort Pills */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground">Sort:</span>
-              {[
-                { key: 'id', label: 'ID' },
-                { key: 'price', label: 'Price' },
-                { key: 'volume', label: 'Volume' },
-                { key: 'change', label: 'Change' },
-                { key: 'trades', label: 'Trades' },
-              ].map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => handleSort(opt.key)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors duration-150 ${
-                    sortState.column === opt.key
-                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                      : 'text-muted-foreground border-border hover:border-emerald-500/30 hover:text-foreground'
-                  }`}
-                >
-                  {opt.label}
-                  {sortState.column === opt.key && (
-                    sortState.direction === 'desc' ? <ChevronDown className="w-3 h-3 inline ml-0.5" /> : <ChevronUp className="w-3 h-3 inline ml-0.5" />
-                  )}
-                </button>
-              ))}
-            </div>
+        {/* Row 3: Sort + Stats (compact) */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">Sort:</span>
+            {[
+              { key: 'id', label: 'ID' },
+              { key: 'price', label: 'Price' },
+              { key: 'volume', label: 'Vol' },
+              { key: 'change', label: 'Change' },
+              { key: 'trades', label: 'Trades' },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => handleSort(opt.key)}
+                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${
+                  sortState.column === opt.key
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+                {sortState.column === opt.key && (
+                  sortState.direction === 'desc' ? <ChevronDown className="w-2.5 h-2.5 inline ml-0.5" /> : <ChevronUp className="w-2.5 h-2.5 inline ml-0.5" />
+                )}
+              </button>
+            ))}
           </div>
-
-          {/* Pagination Info */}
-          <div className="px-1 py-2 mb-3 flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">
-              Showing <span className="text-foreground font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalFiltered)}</span> to <span className="text-foreground font-medium">{Math.min(currentPage * itemsPerPage, totalFiltered)}</span> of <span className="text-foreground font-medium">{totalFiltered}</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Page <span className="text-foreground font-medium">{currentPage}</span> of <span className="text-foreground font-medium">{totalPages}</span>
-            </div>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-shrink-0">
+            <span><span className="text-foreground font-medium">{formatLargeUSDC(marketStats.totalMarketCap)}</span> Cap</span>
+            <span><span className="text-foreground font-medium">{marketStats.activeTraders.toLocaleString()}</span> Traders</span>
+            <span><span className="text-foreground font-medium">{totalFiltered}</span> Markets</span>
           </div>
+        </div>
+
+        {/* Markets List */}
+        <div>
 
           {/* Opinion Card List */}
           <div className="space-y-3">
@@ -1178,7 +1118,7 @@ function HomePageInner() {
               );
             })}
           </div>
-        </motion.div>
+        </div>
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
