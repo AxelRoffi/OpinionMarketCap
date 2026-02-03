@@ -983,7 +983,7 @@ function HomePageInner() {
         <div>
 
           {/* Opinion Card List */}
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             {paginatedOpinions.map((opinion, index) => {
               const change = calculateChange(opinion.nextPrice, opinion.lastPrice);
               const displayCategories = opinion.categories && opinion.categories.length > 0
@@ -996,63 +996,49 @@ function HomePageInner() {
               return (
                 <motion.div
                   key={opinion.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(index * 0.05, 0.5) }}
-                  className="flex items-stretch gap-3 md:gap-4 p-4 rounded-xl border border-border/50 hover:border-emerald-500/30 hover:bg-muted/20 transition-all duration-200 cursor-pointer"
+                  transition={{ delay: Math.min(index * 0.03, 0.3) }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/30 hover:border-emerald-500/30 hover:bg-muted/20 transition-all duration-150 cursor-pointer group"
                   onClick={() => router.push(createOpinionUrl(opinion.id, opinion.question))}
                 >
-                  {/* Left: Rank */}
-                  <div className="hidden md:flex items-center justify-center w-10 flex-shrink-0">
-                    <span className="text-muted-foreground font-mono text-sm">#{opinion.id}</span>
-                  </div>
+                  {/* Rank */}
+                  <span className="text-muted-foreground font-mono text-[10px] w-6 text-right flex-shrink-0">#{opinion.id}</span>
 
-                  {/* Center: Content */}
+                  {/* Content: two rows - question on top, answer prominent below */}
                   <div className="flex-1 min-w-0">
-                    {/* Question */}
-                    <div className="flex items-start gap-2 mb-1">
-                      <span className="md:hidden text-muted-foreground font-mono text-xs">#{opinion.id}</span>
-                      <h3 className="text-foreground font-bold text-base leading-tight">
+                    {/* Row 1: Question + categories inline */}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <h3 className="text-foreground font-semibold text-sm leading-snug truncate">
                         {formatQuestion(opinion.question)}
                       </h3>
+                      <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
+                        {displayCategories.slice(0, 2).map((category, catIndex) => (
+                          <Badge
+                            key={catIndex}
+                            className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-1 py-0 rounded text-[9px] font-medium leading-tight`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (category === 'Adult (NSFW)' && !adultContentEnabled) {
+                                setShowAdultModal(true);
+                              } else {
+                                setSelectedCategory(category);
+                                setActiveTab('all');
+                                router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
+                              }
+                            }}
+                          >
+                            {category}
+                            {category === 'Adult (NSFW)' && ' 🔞'}
+                          </Badge>
+                        ))}
+                        {getTrendingBadge(opinion.totalVolume)}
+                      </div>
                     </div>
-                    {/* Meta: author + categories + badges */}
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="text-xs text-muted-foreground">
-                        by <ClickableAddress
-                          address={opinion.creator}
-                          className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
-                        >
-                          {truncateAddress(opinion.creator)}
-                        </ClickableAddress>
-                      </span>
-                      {displayCategories.map((category, catIndex) => (
-                        <Badge
-                          key={catIndex}
-                          className={`${getCategoryColor(category)} cursor-pointer transition-colors duration-200 px-1.5 py-0.5 rounded text-[10px] font-medium`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (category === 'Adult (NSFW)' && !adultContentEnabled) {
-                              setShowAdultModal(true);
-                            } else {
-                              setSelectedCategory(category);
-                              setActiveTab('all');
-                              router.push(`/?category=${encodeURIComponent(category)}`, { scroll: false });
-                            }
-                          }}
-                        >
-                          {category}
-                          {category === 'Adult (NSFW)' && ' 🔞'}
-                        </Badge>
-                      ))}
-                      {getTrendingBadge(opinion.totalVolume)}
-                      {getMarketStatusBadge(opinion.marketStatus)}
-                    </div>
-                    {/* Answer */}
-                    <div className="flex items-center gap-2 text-sm flex-wrap">
-                      <span className="text-muted-foreground text-xs">Answer:</span>
+                    {/* Row 2: Answer (prominent) + owner + trades */}
+                    <div className="flex items-center gap-1.5">
                       <button
-                        className="text-foreground/80 font-medium hover:text-emerald-400 transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none"
+                        className="text-emerald-400 font-bold text-base leading-tight hover:text-emerald-300 transition-colors flex items-center gap-1 bg-transparent border-none p-0 text-left focus:outline-none truncate"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -1063,54 +1049,51 @@ function HomePageInner() {
                         type="button"
                       >
                         {opinion.link && opinion.link.trim() && <ExternalLink className="w-3 h-3 flex-shrink-0" />}
-                        <span>{opinion.currentAnswer}</span>
+                        <span className="truncate">{opinion.currentAnswer}</span>
                       </button>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-[10px] flex-shrink-0 hidden md:inline">
                         {(() => {
                           if (poolDataLoading && opinion.currentAnswerOwner.toLowerCase() === '0x3b4584e690109484059d95d7904dd9feba246612') {
-                            return <span className="animate-pulse">loading...</span>;
+                            return <span className="animate-pulse">...</span>;
                           }
                           const ownerDisplay = getOwnerDisplay(opinion.currentAnswerOwner, opinion.id, opinion.currentAnswer);
                           return ownerDisplay.isPoolOwned ? (
-                            <span className="text-emerald-500 font-medium">by {ownerDisplay.displayName}</span>
+                            <span className="text-emerald-500">{ownerDisplay.displayName}</span>
                           ) : (
-                            <span>
-                              by <ClickableAddress
-                                address={opinion.currentAnswerOwner}
-                                className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
-                              >
-                                {ownerDisplay.displayName}
-                              </ClickableAddress>
-                            </span>
+                            <ClickableAddress
+                              address={opinion.currentAnswerOwner}
+                              className="text-muted-foreground hover:text-emerald-500 cursor-pointer transition-colors"
+                            >
+                              {ownerDisplay.displayName}
+                            </ClickableAddress>
                           );
                         })()}
                       </span>
-                      <span className="text-muted-foreground text-xs hidden sm:inline">
-                        · {accurateTradesCount || opinion.tradesCount || 0} trades
+                      <span className="text-muted-foreground text-[10px] flex-shrink-0 hidden sm:inline">
+                        · {accurateTradesCount || opinion.tradesCount || 0}t
                       </span>
                     </div>
                   </div>
 
-                  {/* Right: Price + Action */}
-                  <div className="flex flex-col items-end justify-center gap-2 min-w-[100px] md:min-w-[120px] flex-shrink-0">
-                    <div className="text-foreground font-bold text-lg">{formatUSDC(opinion.nextPrice)}</div>
-                    <div className={`${
-                      change.isPositive
-                        ? 'bg-emerald-500/15 text-emerald-400'
-                        : 'bg-red-500/15 text-red-400'
-                    } px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-0.5`}>
-                      {change.isPositive ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      {change.percentage.toFixed(1)}%
+                  {/* Right: Price + Change + Trade */}
+                  <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <div className="text-foreground font-bold text-sm">{formatUSDC(opinion.nextPrice)}</div>
+                      <div className={`${
+                        change.isPositive ? 'text-emerald-400' : 'text-red-400'
+                      } text-[10px] font-semibold`}>
+                        {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
+                      </div>
                     </div>
                     <Button
                       size="sm"
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm px-4 py-1.5 rounded-lg hover:shadow-[0_0_16px_rgba(16,185,129,0.3)] transition-all duration-200"
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs px-3 py-1 h-7 rounded-lg hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedOpinion(opinion);
                       }}
                     >
-                      <Zap className="w-3.5 h-3.5 mr-1" />
+                      <Zap className="w-3 h-3 mr-0.5" />
                       Trade
                     </Button>
                   </div>
