@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schema.vercel.app/project.json",
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "buildCommand": "cd apps/web && next build --no-lint",
+  "outputDirectory": "apps/web/.next"
+}
