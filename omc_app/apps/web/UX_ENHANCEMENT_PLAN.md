@@ -1013,6 +1013,90 @@ New answer:              Revival:
 
 ---
 
+### 13.3 UX Innovation: Answer Illustration Images
+
+**Problem**: Answers are text-only. A picture illustrating the answer (e.g., a photo of "Emmanuel Macron" for "Most powerful person?") adds visual context, makes cards more engaging, and improves scannability — similar to how Polymarket uses event images.
+
+**Concept: User-Provided Answer Images**
+```
+Trading Modal (Submit Answer):
+┌─────────────────────────────────────────┐
+│ Your Answer: [Emmanuel Macron_________] │
+│                                         │
+│ ▸ Add context (optional)                │
+│   Description: [____________________]   │
+│   Link: [https://___________________]   │
+│   Image: [Paste URL________________]    │  ← NEW
+│                                         │
+│        [Submit Answer - $12.50]         │
+└─────────────────────────────────────────┘
+
+Question Creation:
+┌─────────────────────────────────────────┐
+│ Question: [Who is the GOAT?___________] │
+│ Initial Answer: [Messi________________] │
+│ Answer Image: [Paste URL______________] │  ← NEW
+│        [Create - 2 USDC]               │
+└─────────────────────────────────────────┘
+```
+
+**Card Display (Main Table)**:
+```
+┌──────────────────────────────────────────┐
+│ #5  Question text?           [Cat] [🔥]  │
+│                                          │
+│ [IMG 48x48]  Answer text                 │
+│              by 0x12..                   │
+│                                          │
+│ $4.91  +12%  ·  7 trades  ·  Vol $18    │
+│ by 0xCreator                   [Trade]   │
+└──────────────────────────────────────────┘
+```
+
+**Detail Page (Price Bar)**:
+```
+● Current Answer  [IMG 56x56]  Emmanuel Macron  |  Description...  |  by 0x..
+────────────────────────────────────────────────────────────────────────────
+Price: $4.91 +12%     Volume: $18.32     Trades: 7
+```
+
+**Architecture Decisions (Decided)**:
+- **Storage**: URL-only (user pastes an image link, no file upload)
+- **Reference**: Off-chain (Vercel KV or simple API route, no contract upgrade)
+- **Moderation**: Moderate — file type + size check via HEAD request + NSFW detection API (Google Vision SafeSearch or similar) before accepting the URL
+
+**Guardrails**:
+- Validate URL resolves to an actual image (check Content-Type header: `image/jpeg`, `image/png`, `image/webp`, `image/gif`)
+- Max file size: 5MB (via HEAD request Content-Length)
+- Min dimensions: 100x100px
+- NSFW detection API call before storing
+- Proxy display through Next.js Image or a CDN to avoid XSS
+- Fallback placeholder if image fails to load
+
+**Implementation**:
+- API route: `POST /api/answer-image` — validates URL, runs NSFW check, stores in KV
+- API route: `GET /api/answer-image/[opinionId]` — returns image URL
+- Frontend: Add optional image URL field to trading modal and question creation
+- Display: Show image in card and detail page, with fallback to no image
+
+**Files to Create/Modify**:
+```
+apps/web/src/app/api/answer-image/
+├── route.ts                    # POST: validate + store image URL
+└── [opinionId]/route.ts        # GET: retrieve image URL
+apps/web/src/lib/image-validation.ts   # URL validation + NSFW check
+apps/web/src/app/page.tsx              # Display image in cards
+apps/web/src/app/opinions/components/price-bar.tsx  # Display in detail
+apps/web/src/app/create/               # Add image field to creation
+Trading modal component                # Add image field to trading
+```
+
+| Status | Priority | Effort |
+|--------|----------|--------|
+| ❌ Not Started | Medium | 3-4 days |
+
+---
+
 ### 14. Moonshot Features (Future Vision)
 
 | Feature | Status | Notes |

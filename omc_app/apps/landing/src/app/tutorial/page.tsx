@@ -664,9 +664,9 @@ const PoolSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: "Pool target", value: "$6,000", color: "text-blue-400" },
-            { label: "Your share", value: "$60 (10%)", color: "text-purple-400" },
+            { label: "Your share", value: "$600 (10%)", color: "text-purple-400" },
             { label: "Contributors", value: "20 people", color: "text-emerald-400" },
-            { label: "If it hits", value: "You earn 10% of all future trade rewards", color: "text-yellow-400" },
+            { label: "If it hits", value: "You earn 10% of rewards when someone replaces the answer", color: "text-yellow-400" },
           ].map((item) => (
             <div key={item.label} className="bg-gray-900/40 rounded-lg p-4">
               <p className="text-gray-500 text-xs mb-1">{item.label}</p>
@@ -676,7 +676,7 @@ const PoolSection = () => {
         </div>
 
         <p className="text-gray-500 text-sm">
-          Pool hits target → answer changes to &quot;Taylor Swift&quot; → pool becomes the answer owner → everyone earns proportional rewards on every future trade.
+          Pool hits target → answer changes to &quot;Taylor Swift&quot; → pool becomes the answer owner → everyone earns proportional rewards when someone pays to replace the answer.
         </p>
       </motion.div>
 
