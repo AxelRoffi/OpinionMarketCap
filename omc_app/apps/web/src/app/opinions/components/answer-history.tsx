@@ -38,7 +38,9 @@ export function AnswerHistoryPanel({ opinionId, currentAnswer, onSelectAnswer }:
     );
   }
 
-  const displayedAnswers = showAll ? rankedAnswers : rankedAnswers.slice(0, 8);
+  // Sort chronologically (newest first) instead of by rank
+  const chronologicalAnswers = [...rankedAnswers].sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+  const displayedAnswers = showAll ? chronologicalAnswers : chronologicalAnswers.slice(0, 5);
 
   return (
     <div className="bg-card rounded-lg border border-border p-4">
@@ -98,12 +100,12 @@ export function AnswerHistoryPanel({ opinionId, currentAnswer, onSelectAnswer }:
         })}
       </div>
 
-      {rankedAnswers.length > 8 && (
+      {chronologicalAnswers.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
           className="w-full text-center text-xs text-blue-400 hover:text-blue-300 mt-2 py-1.5 transition-colors"
         >
-          {showAll ? 'Show less' : `Show all ${rankedAnswers.length} answers`}
+          {showAll ? 'Show less' : `Show all ${chronologicalAnswers.length} answers`}
         </button>
       )}
     </div>
