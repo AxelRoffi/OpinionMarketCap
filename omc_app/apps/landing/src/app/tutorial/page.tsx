@@ -141,7 +141,7 @@ const HeroSection = () => {
           <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
             <span className="animated-gradient-text">Your First Trade</span>
             <br />
-            <span className="text-white">in 5 Minutes</span>
+            <span className="text-white">in Under 30 Seconds</span>
           </h1>
         </motion.div>
 
