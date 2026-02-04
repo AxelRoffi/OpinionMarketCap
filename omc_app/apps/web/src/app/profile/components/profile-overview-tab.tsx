@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Award, Clock, TrendingUp, TrendingDown, Plus } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 import { formatUSDC, formatPercentage, formatTimeAgo, type UserStats, type UserOpinion, type Transaction } from '../hooks/use-user-profile';
 import { EnhancedPortfolioPerformanceChart } from './enhanced-portfolio-performance-chart';
@@ -89,84 +88,102 @@ export function ProfileOverviewTab({ stats, opinions, transactions, loading }: P
       {/* Recent Activity + Top Performing side-by-side */}
       <motion.div {...fadeUp(0.15)}>
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Recent Activity */}
+          {/* Recent Activity — built from opinions data */}
           <div className="bg-card rounded-lg border border-border p-5">
             <h3 className="text-base font-semibold text-foreground mb-4">Recent Activity</h3>
             <div className="space-y-2.5">
-              {transactions.slice(0, 5).map((transaction) => (
-                <div key={transaction.id} className="p-3 rounded-lg bg-muted/20 flex items-center gap-3 hover:bg-muted/30 transition-colors">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    transaction.type === 'BUY' ? 'bg-emerald-500/20' :
-                    transaction.type === 'SELL' ? 'bg-red-500/20' : 'bg-blue-500/20'
-                  }`}>
-                    {transaction.type === 'BUY' ? (
-                      <TrendingUp className="w-4 h-4 text-emerald-500" />
-                    ) : transaction.type === 'SELL' ? (
-                      <TrendingDown className="w-4 h-4 text-red-500" />
-                    ) : (
-                      <Plus className="w-4 h-4 text-blue-500" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-foreground">{transaction.type}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {transaction.opinionTitle.substring(0, 30)}...
+              {(() => {
+                // Build activity from opinions: each opinion the user is involved with is an activity entry
+                const activityItems = opinions
+                  .map(op => ({
+                    id: op.id,
+                    question: op.question,
+                    answer: op.currentAnswer,
+                    value: op.currentValue,
+                    type: op.isCreator && !op.isOwner ? 'CREATED' as const : 'POSITION' as const,
+                    pnl: op.pnl,
+                    timestamp: op.timestamp,
+                  }))
+                  .sort((a, b) => b.timestamp - a.timestamp)
+                  .slice(0, 5);
+
+                if (activityItems.length === 0) {
+                  return <div className="text-center text-muted-foreground text-sm py-6">No recent activity</div>;
+                }
+
+                return activityItems.map(item => (
+                  <div key={item.id} className="p-3 rounded-lg bg-muted/20 flex items-center gap-3 hover:bg-muted/30 transition-colors">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      item.type === 'CREATED' ? 'bg-blue-500/20' : item.pnl >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                    }`}>
+                      {item.type === 'CREATED' ? (
+                        <Plus className="w-4 h-4 text-blue-500" />
+                      ) : item.pnl >= 0 ? (
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {item.type === 'CREATED' ? 'Created' : 'Position'}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {item.question.length > 35 ? `${item.question.substring(0, 35)}...` : item.question}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-sm font-medium text-foreground">
+                        {formatUSDC(item.value)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatTimeAgo(item.timestamp)}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-medium text-foreground">
-                      {formatUSDC(transaction.price)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatTimeAgo(transaction.timestamp)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {transactions.length === 0 && (
-                <div className="text-center text-muted-foreground text-sm py-6">No recent activity</div>
-              )}
+                ));
+              })()}
             </div>
           </div>
 
-          {/* Top Performing Opinions */}
+          {/* Top Positions (by P&L) */}
           <div className="bg-card rounded-lg border border-border p-5">
-            <h3 className="text-base font-semibold text-foreground mb-4">Top Performing</h3>
+            <h3 className="text-base font-semibold text-foreground mb-4">Top Positions</h3>
             <div className="space-y-2.5">
               {opinions
-                .filter(opinion => opinion.pnl > 0)
-                .sort((a, b) => b.pnlPercentage - a.pnlPercentage)
-                .slice(0, 5)
-                .map((opinion) => (
-                  <div key={opinion.id} className="p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-sm font-medium text-foreground truncate flex-1 mr-2">
-                        {opinion.question.substring(0, 30)}...
+                .filter(opinion => opinion.isOwner)
+                .sort((a, b) => b.pnl - a.pnl)
+                .slice(0, 3)
+                .map((opinion, idx) => {
+                  const isProfit = opinion.pnl >= 0;
+                  return (
+                    <div key={opinion.id} className="p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-xs text-muted-foreground w-4">{idx + 1}.</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-foreground truncate">
+                              {opinion.question.length > 30 ? `${opinion.question.substring(0, 30)}...` : opinion.question}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {opinion.currentAnswer}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className={`text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {isProfit ? '+' : ''}{formatUSDC(opinion.pnl)}
+                          </div>
+                          <div className={`text-xs ${isProfit ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {formatPercentage(opinion.pnlPercentage)}
+                          </div>
+                        </div>
                       </div>
-                      <Badge className="bg-blue-600/20 text-blue-400 text-xs flex-shrink-0">
-                        {opinion.categories[0]}
-                      </Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground truncate">
-                        {opinion.currentAnswer.substring(0, 20)}...
-                      </div>
-                      <div className="text-emerald-500 font-medium text-sm">
-                        {formatPercentage(opinion.pnlPercentage)}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="text-xs text-muted-foreground">
-                        Value: {formatUSDC(opinion.currentValue)}
-                      </div>
-                      <div className="text-xs text-emerald-400">
-                        +{formatUSDC(opinion.pnl)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              {opinions.filter(o => o.pnl > 0).length === 0 && (
-                <div className="text-center text-muted-foreground text-sm py-6">No profitable positions yet</div>
+                  );
+                })}
+              {opinions.filter(o => o.isOwner).length === 0 && (
+                <div className="text-center text-muted-foreground text-sm py-6">No positions yet</div>
               )}
             </div>
           </div>

@@ -26,7 +26,7 @@
 
 import { useState, useMemo } from 'react';
 import { useReadContract } from 'wagmi';
-import { CONTRACTS } from '../hooks/use-user-profile';
+import { CONTRACTS } from '@/lib/contracts';
 import { motion } from 'framer-motion';
 import { 
   DollarSign,

@@ -36,6 +36,9 @@ import { ProfileHero } from './components/profile-hero';
 import { ProfileStatCards } from './components/profile-stat-cards';
 import { ProfileFeeBanner } from './components/profile-fee-banner';
 import { ProfileOverviewTab } from './components/profile-overview-tab';
+import { TraderSummary } from './components/trader-summary';
+import { CategoryBreakdown } from './components/category-breakdown';
+import { CreatorStats } from './components/creator-stats';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -169,6 +172,21 @@ function ProfilePageContent() {
         <motion.div {...fadeUp(0.1)}>
           <ProfileStatCards stats={stats} />
         </motion.div>
+
+        {/* Trader Summary */}
+        <motion.div {...fadeUp(0.12)}>
+          <TraderSummary stats={stats} />
+        </motion.div>
+
+        {/* Category Breakdown + Creator Stats side by side */}
+        {(stats.topCategories.length > 0 || stats.questionsCreated > 0) && (
+          <motion.div {...fadeUp(0.14)}>
+            <div className="grid md:grid-cols-2 gap-3">
+              <CategoryBreakdown topCategories={stats.topCategories} />
+              <CreatorStats stats={stats} />
+            </div>
+          </motion.div>
+        )}
 
         {/* Badges Preview */}
         <motion.div {...fadeUp(0.15)}>

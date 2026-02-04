@@ -2,7 +2,8 @@
 
 import { DollarSign, Loader2, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatUSDC, CONTRACTS } from '../hooks/use-user-profile';
+import { formatUSDC } from '../hooks/use-user-profile';
+import { CONTRACTS } from '@/lib/contracts';
 
 interface ProfileFeeBannerProps {
   accumulatedFees: number;

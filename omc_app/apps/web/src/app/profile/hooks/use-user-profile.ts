@@ -5,8 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAllOpinions } from '@/hooks/useAllOpinions';
 import { CONTRACTS, USDC_ADDRESS } from '@/lib/contracts';
 
-// Re-export CONTRACTS for backward compatibility with components that import from this file
-export { CONTRACTS } from '@/lib/contracts';
+// NOTE: CONTRACTS should be imported directly from '@/lib/contracts', not re-exported here
 
 // ABIs
 const FEE_MANAGER_ABI = [
@@ -93,6 +92,16 @@ export interface Transaction {
   status: 'success' | 'pending' | 'failed';
 }
 
+export interface CategoryCount {
+  category: string;
+  count: number;
+}
+
+export interface CreatorVolumeStats {
+  totalVolumeGenerated: number;
+  avgVolumePerQuestion: number;
+}
+
 export interface UserStats {
   totalValue: number;
   totalPnL: number;
@@ -113,6 +122,10 @@ export interface UserStats {
   tradingProfits: number;
   marketShare: number;
   platformTVL: number;
+  // New fields for enhanced profile
+  topCategories: CategoryCount[];
+  creatorVolumeStats: CreatorVolumeStats;
+  memberSince: number; // timestamp (0 = unknown)
 }
 
 export interface UserProfile {
@@ -148,6 +161,9 @@ export function useUserProfile(userAddress?: string) {
       tradingProfits: 0,
       marketShare: 0,
       platformTVL: 0,
+      topCategories: [],
+      creatorVolumeStats: { totalVolumeGenerated: 0, avgVolumePerQuestion: 0 },
+      memberSince: 0,
     },
     opinions: [],
     transactions: [],
@@ -264,6 +280,33 @@ export function useUserProfile(userAddress?: string) {
         }
       });
 
+      // Aggregate categories from user's opinions
+      const categoryMap = new Map<string, number>();
+      userOpinions.forEach(op => {
+        op.categories?.forEach(cat => {
+          categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+        });
+      });
+      const topCategories: CategoryCount[] = Array.from(categoryMap.entries())
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4);
+
+      // Creator volume stats
+      const createdOpinions = userOpinions.filter(op => op.isCreator);
+      const totalVolumeGenerated = createdOpinions.reduce((sum, op) => sum + op.totalVolume, 0);
+      const avgVolumePerQuestion = createdOpinions.length > 0 ? totalVolumeGenerated / createdOpinions.length : 0;
+
+      // "Member since" — approximate from opinion IDs (lower ID = earlier)
+      // Opinion IDs are sequential, so the lowest ID the user is involved with is their earliest activity
+      const earliestOpinionId = userOpinions.length > 0
+        ? Math.min(...userOpinions.map(op => op.id))
+        : 0;
+      // Use the simulated timestamp pattern (same as existing code: Date.now() - id * 86400000)
+      const memberSince = earliestOpinionId > 0
+        ? Date.now() - (earliestOpinionId * 86400000)
+        : 0;
+
       const totalTrades = Number(tradeCount || 0);
       
       // FIXED: Real total invested calculation using lastPrice (purchase prices)
@@ -317,6 +360,9 @@ export function useUserProfile(userAddress?: string) {
           tradingProfits,
           marketShare,
           platformTVL: platformTotalValue, // FIXED: Real platform TVL
+          topCategories,
+          creatorVolumeStats: { totalVolumeGenerated, avgVolumePerQuestion },
+          memberSince,
         },
         opinions: userOpinions.sort((a, b) => b.timestamp - a.timestamp),
         transactions: [], // REMOVED: Fake transaction data - needs real blockchain event parsing
