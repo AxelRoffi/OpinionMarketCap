@@ -429,6 +429,42 @@ All contracts successfully verified on BaseScan:
 **PriceCalculator Library**: `contracts/active/libraries/PriceCalculator.sol`
 **Deployment Info**: `deployments/v3-upgrade-info.json`
 
+### February 5, 2025 Session - PROFILE PAGE ENHANCEMENTS + UX FIXES
+- **Enhanced public profile page** — visitors now see rich trader information:
+  - **Trader Summary card**: rank, trades, win rate, TVL, questions created, top %, member since date, top category
+  - **Category Breakdown**: horizontal bar chart of most active categories with colored progress bars
+  - **Creator Stats**: questions created, total volume generated, avg volume per question (conditional, only if user created questions)
+  - **Fixed Recent Activity feed**: was always empty, now shows user's positions/creations from opinion data
+  - **Improved Top Positions section**: top 3 by P&L (was 5), shows both gains and losses, cleaner layout
+- **New profile hook fields**: `topCategories`, `creatorVolumeStats`, `memberSince` computed from existing on-chain data
+- **Fixed webpack runtime error**: removed `CONTRACTS` re-export from `use-user-profile.ts` that was causing circular dependency issues
+- **Answer history improvements**:
+  - Limited to 5 items (was 8)
+  - Changed to chronological order (newest first) instead of ranked by popularity
+  - "Show all" button when more than 5 exist
+- **Main table grid**: changed to 3 columns on large screens (`lg:grid-cols-3`)
+- **Tutorial page fix**: hero changed from "in 5 Minutes" to "in Under 30 Seconds"
+
+**New Files Created:**
+- `apps/web/src/app/profile/components/trader-summary.tsx`
+- `apps/web/src/app/profile/components/category-breakdown.tsx`
+- `apps/web/src/app/profile/components/creator-stats.tsx`
+
+**Files Modified:**
+- `apps/web/src/app/profile/hooks/use-user-profile.ts` — new `CategoryCount`, `CreatorVolumeStats` interfaces, new stats fields
+- `apps/web/src/app/profile/page.tsx` — wired in new components
+- `apps/web/src/app/profile/components/profile-overview-tab.tsx` — fixed recent activity, improved top positions
+- `apps/web/src/app/profile/components/profile-fee-banner.tsx` — import fix
+- `apps/web/src/app/profile/components/comprehensive-fee-management.tsx` — import fix
+- `apps/web/src/app/opinions/components/answer-history.tsx` — 5 items, chronological
+- `apps/web/src/app/page.tsx` — 3-column grid
+- `apps/landing/src/app/tutorial/page.tsx` — hero text fix
+
+**Commits:**
+- `62bc462` — answer history + 3-column grid
+- `7065cbc` — profile page enhancements + webpack fix
+- `93d1200` — tutorial hero text fix
+
 ---
 
 ## Known Issues (Deployed Contracts)
