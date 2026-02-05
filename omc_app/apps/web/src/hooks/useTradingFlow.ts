@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import confetti from 'canvas-confetti'
 
 import { CONTRACTS, OPINION_CORE_ABI, USDC_ABI, USDC_ADDRESS } from '@/lib/contracts'
@@ -106,6 +107,7 @@ export function useTradingFlow(
   opinionData: TradingOpinionData
 ): UseTradingFlowReturn {
   const { address } = useAccount()
+  const queryClient = useQueryClient()
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -325,6 +327,21 @@ export function useTradingFlow(
   // Submit success
   useEffect(() => {
     if (isSubmitSuccess && currentStep === 'submit') {
+      // Invalidate answer history and opinion data queries to show new answer immediately
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey as unknown[]
+          // Invalidate getAnswerHistory and getOpinionDetails queries for this opinion
+          if (key[0] === 'readContract') {
+            const config = key[1] as { functionName?: string; args?: unknown[] } | undefined
+            if (config?.functionName === 'getAnswerHistory' || config?.functionName === 'getOpinionDetails') {
+              const args = config.args as [bigint] | undefined
+              return args?.[0] === BigInt(opinionId)
+            }
+          }
+          return false
+        }
+      })
       resetForm()
       setCurrentStep('success')
       setIsSubmitting(false)
@@ -333,7 +350,7 @@ export function useTradingFlow(
     if (isSubmitError && submitError) {
       handleError(submitError, 'Transaction submission')
     }
-  }, [isSubmitSuccess, isSubmitError, submitError, currentStep, handleError])
+  }, [isSubmitSuccess, isSubmitError, submitError, currentStep, handleError, queryClient, opinionId])
 
   // Computed
   const change = calculateChange(opinionData.nextPrice, opinionData.lastPrice)

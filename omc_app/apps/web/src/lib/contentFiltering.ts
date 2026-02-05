@@ -6,49 +6,31 @@ export interface ContentScore {
 }
 
 /**
- * Calculate text entropy to detect gibberish/random text
- */
-function calculateTextEntropy(text: string): number {
-  if (!text || text.length === 0) return 0;
-  
-  const chars = text.toLowerCase().split('');
-  const freq: Record<string, number> = {};
-  
-  chars.forEach(char => {
-    if (char.match(/[a-z]/)) { // Only count letters
-      freq[char] = (freq[char] || 0) + 1;
-    }
-  });
-  
-  const total = Object.values(freq).reduce((sum, count) => sum + count, 0);
-  if (total === 0) return 0;
-  
-  return Object.values(freq).reduce((entropy, count) => {
-    const p = count / total;
-    return entropy - p * Math.log2(p);
-  }, 0);
-}
-
-/**
  * Detect likely gibberish or keyboard mashing
+ * Note: This is intentionally lenient to avoid false positives on legitimate content
  */
 function isLikelyGibberish(text: string): boolean {
   if (!text || text.length < 5) return false;
-  
-  const entropy = calculateTextEntropy(text);
-  const hasRepeatedChars = /(.)\1{4,}/.test(text); // 5+ repeated chars
-  const randomKeyPattern = /[qwertyuiop]{4,}|[asdfghjkl]{4,}|[zxcvbnm]{4,}/i.test(text);
+
+  const hasRepeatedChars = /(.)\1{4,}/.test(text); // 5+ repeated chars (e.g., "aaaaa")
+  const randomKeyPattern = /[qwertyuiop]{5,}|[asdfghjkl]{5,}|[zxcvbnm]{5,}/i.test(text);
   const hasVowels = /[aeiouAEIOU]/.test(text);
   const onlySpecialChars = /^[^a-zA-Z0-9\s?!.,;:'"()-]+$/.test(text);
-  
-  // Very low entropy suggests repetitive or non-random text
-  // Very high entropy with no vowels suggests random characters
+  const hasMultipleWords = /\s+/.test(text.trim()); // Has spaces = likely real words
+
+  // If text has multiple words with spaces, it's likely not gibberish
+  // Only apply strict checks to single "words" that look like keyboard mashing
+  if (hasMultipleWords && hasVowels) {
+    // Multi-word text: only flag obvious issues
+    return hasRepeatedChars || onlySpecialChars;
+  }
+
+  // Single word or no spaces: apply stricter checks
   return (
-    entropy < 1.5 || // Too repetitive
-    (entropy > 4.0 && !hasVowels) || // Too random without vowels
     hasRepeatedChars ||
     randomKeyPattern ||
-    onlySpecialChars
+    onlySpecialChars ||
+    (!hasVowels && text.length > 5) // No vowels in longer text
   );
 }
 
@@ -139,11 +121,10 @@ export function validateAnswerForTrading(
     return { valid: false, error: 'Answer appears to be test content. Please enter a genuine answer.' };
   }
 
-  // Check description if provided
+  // Check description if provided (relaxed validation - descriptions are optional context)
   if (description && description.trim().length > 0) {
-    if (isLikelyGibberish(description)) {
-      return { valid: false, error: 'Description appears to be gibberish. Please enter meaningful content or leave it empty.' };
-    }
+    // Only check for ALL CAPS - no gibberish check for descriptions
+    // Descriptions can contain technical terms, abbreviations, or specialized language
     const descUpperRatio = (description.match(/[A-Z]/g) || []).length / description.length;
     if (descUpperRatio > 0.7 && description.length > 15) {
       return { valid: false, error: 'Please don\'t use ALL CAPS for your description.' };
