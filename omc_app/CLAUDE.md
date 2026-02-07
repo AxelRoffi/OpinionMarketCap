@@ -465,6 +465,139 @@ All contracts successfully verified on BaseScan:
 - `7065cbc` — profile page enhancements + webpack fix
 - `93d1200` — tutorial hero text fix
 
+### February 7, 2025 Session - ANSWER SHARES SYSTEM
+- **Created new Answer Shares bonding curve trading model** (`apps/shares/`)
+- **Contract**: `AnswerSharesCore.sol` (15.2 KB, 98 tests passing)
+  - UUPS upgradeable with 8 roles for future modular expansion
+  - Bonding curve AMM: `price = poolValue / totalShares`
+  - Users can exit anytime by selling shares back to pool
+  - Fee structure: 1.5% platform + 0.5% creator = 2% total
+  - Question creation: $2 USDC, Answer proposal: $5 USDC stake
+  - Fee accumulation with `claimAccumulatedFees()`
+- **Test suite**: 98 comprehensive tests in `test/AnswerSharesCore.test.ts`
+- **Frontend scaffold**: Next.js 15 + Tailwind + Wagmi/RainbowKit
+
+**Commits:**
+- `a2fb8f7` — feat(shares): add Answer Shares bonding curve trading system
+
+---
+
+## Answer Shares Frontend Implementation Plan
+
+### Overview
+Build a fully functional dApp frontend for the Answer Shares bonding curve trading system, matching the look and feel of the existing Hot Potato app (`apps/web`).
+
+### Current State
+
+**Already Done ✅**
+- Next.js 15 app structure (`apps/shares/`)
+- Wagmi/RainbowKit configured
+- Dark theme with green accent
+- Mock homepage with trading UI
+- Utility functions (formatUSDC, shortenAddress, etc.)
+- AnswerSharesCore.sol contract (15.2 KB, 98 tests passing)
+
+**Needs Implementation**
+- Contract ABI and hooks
+- Real data fetching
+- Trading modals (buy/sell)
+- Create question flow
+- Propose answer flow
+- Fee claiming
+- Portfolio/profile pages
+
+### Phase 1: Contract Integration Layer
+
+**1.1 Contract ABI & Addresses** (`src/lib/contracts.ts`)
+- Export AnswerSharesCore ABI
+- Export USDC ABI
+- Update addresses after testnet deployment
+
+**1.2 Core Hooks** (`src/hooks/`)
+
+| Hook | Purpose |
+|------|---------|
+| `useQuestions.ts` | Fetch all questions with pagination |
+| `useQuestion.ts` | Single question details |
+| `useAnswers.ts` | Answers for a question |
+| `useUserPositions.ts` | User's share positions across answers |
+| `useAccumulatedFees.ts` | User's claimable fees |
+
+**1.3 Write Hooks** (`src/hooks/`)
+
+| Hook | Purpose |
+|------|---------|
+| `useCreateQuestion.ts` | Create question transaction |
+| `useProposeAnswer.ts` | Propose answer transaction |
+| `useBuyShares.ts` | Buy shares with approval flow |
+| `useSellShares.ts` | Sell shares transaction |
+| `useClaimFees.ts` | Claim accumulated fees |
+
+### Phase 2: UI Components (Copy from apps/web)
+
+**2.1 Copy UI Component Library** (`src/components/ui/`)
+- button.tsx, card.tsx, dialog.tsx, input.tsx, textarea.tsx
+- select.tsx, tabs.tsx, badge.tsx, tooltip.tsx, slider.tsx
+
+**2.2 Trading Components** (`src/components/trading/`)
+- BuySharesModal.tsx
+- SellSharesModal.tsx
+- PositionCard.tsx
+
+**2.3 Question/Answer Components** (`src/components/`)
+- QuestionCard.tsx, AnswerCard.tsx
+- CreateQuestionModal.tsx, ProposeAnswerModal.tsx
+
+### Phase 3: Pages
+
+| Page | Path | Description |
+|------|------|-------------|
+| Home | `src/app/page.tsx` | Question grid, search, sort |
+| Question Detail | `src/app/questions/[id]/page.tsx` | Answers list, buy/sell |
+| Portfolio | `src/app/portfolio/page.tsx` | User positions, fee claiming |
+| Profile | `src/app/profile/[address]/page.tsx` | User stats, history |
+| Create | `src/app/create/page.tsx` | Create question form |
+
+### Phase 4: Trading Flow
+
+**Buy Shares**: Click Buy → Amount input → Show fees → Check approval → Submit tx → Refresh UI
+**Sell Shares**: Click Sell → Share amount → Show USDC received → Submit tx → Refresh UI
+**Claim Fees**: Display claimable → Click Claim → Submit tx → Refresh balance
+
+### Phase 5: Styling & Polish
+- Glassmorphism effects from apps/web
+- Skeleton loaders, transaction pending indicators
+- Error parsing for user-friendly messages
+
+### File Structure (Final)
+```
+apps/shares/src/
+├── app/
+│   ├── page.tsx, layout.tsx, providers.tsx, globals.css
+│   ├── questions/[id]/page.tsx
+│   ├── portfolio/page.tsx
+│   ├── profile/[address]/page.tsx
+│   └── create/page.tsx
+├── components/
+│   ├── ui/ (copied from apps/web)
+│   ├── trading/ (BuySharesModal, SellSharesModal, PositionCard)
+│   ├── questions/ (QuestionCard, QuestionGrid)
+│   └── answers/ (AnswerCard, AnswerList)
+├── hooks/ (useQuestions, useBuyShares, useClaimFees, etc.)
+└── lib/ (contracts.ts, wagmi.ts, utils.ts, errors.ts)
+```
+
+### Priority Order
+1. Contract integration (hooks) - Foundation
+2. Trading modals - Core functionality
+3. Home page - Replace mock data
+4. Question detail - Full trading experience
+5. Portfolio - User positions + fee claiming
+6. Create/Propose flows - Content creation
+7. Polish - Animations, loading states, errors
+
+### Estimated: ~44 new files (5 pages, 12 UI components, 15 feature components, 12 hooks)
+
 ---
 
 ## Known Issues (Deployed Contracts)
