@@ -194,6 +194,7 @@ Both use bonding curves on Base, but different value props:
 - BasedApp: https://basedapp.com/
 - BasedApp Docs: https://basedapp.gitbook.io/docs
 - Polymarket: https://polymarket.com/
+- 
 - Friend.tech: https://friend.tech/
 
 ---
