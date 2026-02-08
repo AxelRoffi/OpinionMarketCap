@@ -39,6 +39,25 @@ interface LeaderboardUser {
   rank: number;
 }
 
+// Mock data for demo (shown when no contract data available)
+const MOCK_USERS: LeaderboardUser[] = [
+  { address: '0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C', questionsCreated: 12, totalVolume: 45230, positionsHeld: 8, sharesValue: 12500, rank: 1 },
+  { address: '0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9', questionsCreated: 8, totalVolume: 32100, positionsHeld: 15, sharesValue: 8900, rank: 2 },
+  { address: '0xA1B2C3D4E5F6789012345678901234567890ABCD', questionsCreated: 5, totalVolume: 28500, positionsHeld: 12, sharesValue: 7200, rank: 3 },
+  { address: '0xDEADBEEF1234567890ABCDEF1234567890ABCDEF', questionsCreated: 15, totalVolume: 21000, positionsHeld: 6, sharesValue: 5400, rank: 4 },
+  { address: '0xCAFEBABE0987654321FEDCBA0987654321FEDCBA', questionsCreated: 3, totalVolume: 18750, positionsHeld: 22, sharesValue: 4100, rank: 5 },
+  { address: '0x1111222233334444555566667777888899990000', questionsCreated: 7, totalVolume: 15200, positionsHeld: 9, sharesValue: 3800, rank: 6 },
+  { address: '0xAAAABBBBCCCCDDDDEEEEFFFF0000111122223333', questionsCreated: 2, totalVolume: 12800, positionsHeld: 18, sharesValue: 2900, rank: 7 },
+  { address: '0x4444555566667777888899990000AAAABBBBCCCC', questionsCreated: 9, totalVolume: 9500, positionsHeld: 4, sharesValue: 2100, rank: 8 },
+];
+
+const MOCK_STATS = {
+  totalUsers: 156,
+  totalVolume: 245000,
+  totalQuestions: 89,
+  totalPositions: 412,
+};
+
 export default function LeaderboardPage() {
   const router = useRouter();
   const { address: connectedAddress } = useAccount();
@@ -50,10 +69,37 @@ export default function LeaderboardPage() {
 
   // Calculate leaderboard data from questions
   const { users, stats } = useMemo(() => {
+    // Use mock data if no questions available (contract not deployed yet)
     if (!questions || questions.length === 0) {
+      // Sort mock users based on current ranking type
+      const sortedMockUsers = [...MOCK_USERS].sort((a, b) => {
+        let aVal: number;
+        let bVal: number;
+        switch (rankingType) {
+          case 'shares':
+            aVal = a.sharesValue;
+            bVal = b.sharesValue;
+            break;
+          case 'questions':
+            aVal = a.questionsCreated;
+            bVal = b.questionsCreated;
+            break;
+          case 'positions':
+            aVal = a.positionsHeld;
+            bVal = b.positionsHeld;
+            break;
+          case 'volume':
+          default:
+            aVal = a.totalVolume;
+            bVal = b.totalVolume;
+            break;
+        }
+        return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
+      }).map((user, index) => ({ ...user, rank: index + 1 }));
+
       return {
-        users: [],
-        stats: { totalUsers: 0, totalVolume: 0, totalQuestions: 0, totalPositions: 0 },
+        users: sortedMockUsers,
+        stats: MOCK_STATS,
       };
     }
 
