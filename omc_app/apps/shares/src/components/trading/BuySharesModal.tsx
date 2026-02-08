@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  TrendingUp,
+  Info,
+  ExternalLink,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useBuyShares } from '@/hooks/useBuyShares';
 import { formatUSDC, parseUSDCInput } from '@/lib/utils';
+import { parseContractError, isUserRejection } from '@/lib/errors';
 import type { Answer } from '@/lib/contracts';
 
 interface BuySharesModalProps {
@@ -47,13 +56,30 @@ export function BuySharesModal({
     isPending,
     isSuccess,
     balance,
+    txHash,
   } = useBuyShares({
     onSuccess: () => {
+      toast.success('Shares purchased successfully!', {
+        description: `You bought shares in "${answer.text.slice(0, 30)}${answer.text.length > 30 ? '...' : ''}"`,
+        action: txHash
+          ? {
+              label: 'View',
+              onClick: () => window.open(`https://basescan.org/tx/${txHash}`, '_blank'),
+            }
+          : undefined,
+      });
       onSuccess?.();
       setTimeout(() => {
         onOpenChange(false);
         reset();
-      }, 2000);
+      }, 1500);
+    },
+    onError: (err) => {
+      if (!isUserRejection(err)) {
+        toast.error('Transaction failed', {
+          description: parseContractError(err),
+        });
+      }
     },
   });
 
@@ -65,14 +91,36 @@ export function BuySharesModal({
     }
   }, [open, reset]);
 
+  // Show toast when approving
+  useEffect(() => {
+    if (isApproving) {
+      toast.loading('Approving USDC...', {
+        id: 'approve-toast',
+        description: 'Please confirm in your wallet',
+      });
+    } else {
+      toast.dismiss('approve-toast');
+    }
+  }, [isApproving]);
+
   // Calculate estimated shares
   const usdcAmount = parseUSDCInput(amount);
   const currentPrice = answer.pricePerShare;
   const estimatedShares = currentPrice > 0n ? (usdcAmount * BigInt(1e6)) / currentPrice : 0n;
 
   // Calculate fees (2% total: 1.5% platform + 0.5% creator)
-  const feeAmount = (usdcAmount * 2n) / 100n;
-  const netAmount = usdcAmount - feeAmount;
+  const platformFee = (usdcAmount * 15n) / 1000n;
+  const creatorFee = (usdcAmount * 5n) / 1000n;
+  const totalFees = platformFee + creatorFee;
+  const netAmount = usdcAmount - totalFees;
+
+  // Calculate new price after purchase (simplified bonding curve)
+  const newPoolValue = answer.poolValue + netAmount;
+  const newTotalShares = answer.totalShares + estimatedShares;
+  const newPrice = newTotalShares > 0n ? (newPoolValue * BigInt(1e6)) / newTotalShares : 0n;
+  const priceImpact = currentPrice > 0n
+    ? Number((newPrice - currentPrice) * 10000n / currentPrice) / 100
+    : 0;
 
   const hasEnoughBalance = balance !== undefined && balance >= usdcAmount;
 
@@ -82,31 +130,59 @@ export function BuySharesModal({
     // Calculate min shares with slippage
     const minShares = (estimatedShares * BigInt(100 - slippage)) / 100n;
 
-    await buy(answer.id, amount, minShares);
+    toast.loading('Buying shares...', {
+      id: 'buy-toast',
+      description: 'Please confirm in your wallet',
+    });
+
+    try {
+      await buy(answer.id, amount, minShares);
+      toast.dismiss('buy-toast');
+    } catch {
+      toast.dismiss('buy-toast');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Buy Shares</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Buy Shares
+          </DialogTitle>
           <DialogDescription className="line-clamp-2">
             {answer.text}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-4">
           {/* Current Price */}
-          <div className="rounded-lg bg-muted/50 p-4 text-center">
+          <div className="rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4 text-center">
             <div className="text-sm text-muted-foreground">Current Share Price</div>
             <div className="text-2xl font-bold text-primary">
               {formatUSDC(answer.pricePerShare)}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Market Cap: {formatUSDC(answer.poolValue)}
             </div>
           </div>
 
           {/* Amount Input */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (USDC)</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="amount">Amount (USDC)</Label>
+              {balance !== undefined && (
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setAmount((Number(balance) / 1e6).toString())}
+                  disabled={isPending}
+                >
+                  Max: {formatUSDC(balance)}
+                </button>
+              )}
+            </div>
             <Input
               id="amount"
               type="number"
@@ -114,6 +190,7 @@ export function BuySharesModal({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               disabled={isPending}
+              className="text-lg"
             />
             <div className="flex flex-wrap gap-2">
               {PRESET_AMOUNTS.map((preset) => (
@@ -128,18 +205,16 @@ export function BuySharesModal({
                 </Button>
               ))}
             </div>
-            {balance !== undefined && (
-              <div className="text-xs text-muted-foreground">
-                Balance: {formatUSDC(balance)} USDC
-              </div>
-            )}
           </div>
 
           {/* Slippage */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Slippage Tolerance</Label>
-              <span className="text-sm text-muted-foreground">{slippage}%</span>
+              <Label className="flex items-center gap-1">
+                Slippage Tolerance
+                <Info className="h-3 w-3 text-muted-foreground" />
+              </Label>
+              <span className="text-sm font-medium">{slippage}%</span>
             </div>
             <Slider
               value={[slippage]}
@@ -152,34 +227,42 @@ export function BuySharesModal({
           </div>
 
           {/* Summary */}
-          <div className="space-y-2 rounded-lg border border-border p-4 text-sm">
+          <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-4 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">You pay</span>
               <span className="font-medium">{formatUSDC(usdcAmount)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Platform fee (1.5%)</span>
-              <span>{formatUSDC((usdcAmount * 15n) / 1000n)}</span>
+              <span className="text-muted-foreground">-{formatUSDC(platformFee)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Creator fee (0.5%)</span>
-              <span>{formatUSDC((usdcAmount * 5n) / 1000n)}</span>
+              <span className="text-muted-foreground">-{formatUSDC(creatorFee)}</span>
             </div>
+            {priceImpact > 0.1 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Price impact</span>
+                <span className={priceImpact > 5 ? 'text-orange-500' : 'text-muted-foreground'}>
+                  +{priceImpact.toFixed(2)}%
+                </span>
+              </div>
+            )}
             <div className="border-t border-border pt-2">
               <div className="flex justify-between font-medium">
                 <span>Est. shares received</span>
                 <span className="text-primary">
-                  ~{(Number(estimatedShares) / 1e6).toFixed(2)}
+                  ~{(Number(estimatedShares) / 1e6).toFixed(4)}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Error Message */}
-          {error && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error.message}</span>
+          {error && !isUserRejection(error) && (
+            <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{parseContractError(error)}</span>
             </div>
           )}
 
@@ -201,12 +284,14 @@ export function BuySharesModal({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isApproving ? 'Approving...' : 'Buying...'}
+                {isApproving ? 'Approving USDC...' : 'Buying Shares...'}
               </>
             ) : !isConnected ? (
               'Connect Wallet'
             ) : !hasEnoughBalance ? (
               'Insufficient Balance'
+            ) : usdcAmount === 0n ? (
+              'Enter Amount'
             ) : (
               `Buy for ${formatUSDC(usdcAmount)}`
             )}

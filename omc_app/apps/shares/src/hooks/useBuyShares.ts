@@ -140,5 +140,6 @@ export function useBuyShares(options?: UseBuySharesOptions) {
     isError: status === 'error',
     balance: balance as bigint | undefined,
     allowance: allowance as bigint | undefined,
+    txHash: buyHash,
   };
 }

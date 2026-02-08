@@ -102,5 +102,6 @@ export function useSellShares(options?: UseSellSharesOptions) {
     isPending: status === 'selling' || isSelling,
     isSuccess: status === 'success',
     isError: status === 'error',
+    txHash: sellHash,
   };
 }
