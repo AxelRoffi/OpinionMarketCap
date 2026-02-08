@@ -14,7 +14,6 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { GlobalNavbar } from '@/components/layout';
 import { AnswerCard, AnswerCardSkeleton, ProposeAnswerModal } from '@/components/answers';
 import { BuySharesModal, SellSharesModal } from '@/components/trading';
 import { Button } from '@/components/ui/button';
@@ -66,9 +65,7 @@ export default function QuestionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <GlobalNavbar />
-        <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
           {/* Back button */}
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
@@ -93,16 +90,13 @@ export default function QuestionDetailPage() {
               <AnswerCardSkeleton key={i} />
             ))}
           </div>
-        </div>
       </div>
     );
   }
 
   if (!question) {
     return (
-      <div className="min-h-screen bg-background">
-        <GlobalNavbar />
-        <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
           <div className="py-12 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
             <h3 className="mb-2 text-lg font-medium">Question not found</h3>
@@ -113,15 +107,11 @@ export default function QuestionDetailPage() {
             </Button>
           </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <GlobalNavbar />
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Back button */}
         <Link href="/" className="mb-6 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
@@ -213,42 +203,41 @@ export default function QuestionDetailPage() {
             })}
           </div>
         )}
+
+        {/* Propose Answer Modal */}
+        {question && (
+          <ProposeAnswerModal
+            open={showProposeModal}
+            onOpenChange={setShowProposeModal}
+            question={question}
+            onSuccess={() => {
+              refetchAnswers();
+              refetchQuestion();
+              setShowProposeModal(false);
+            }}
+          />
+        )}
+
+        {/* Buy Shares Modal */}
+        {buyingAnswer && (
+          <BuySharesModal
+            open={!!buyingAnswer}
+            onOpenChange={(open) => !open && setBuyingAnswer(null)}
+            answer={buyingAnswer}
+            onSuccess={handleTradeSuccess}
+          />
+        )}
+
+        {/* Sell Shares Modal */}
+        {sellingAnswer && positions[sellingAnswer.id.toString()] && (
+          <SellSharesModal
+            open={!!sellingAnswer}
+            onOpenChange={(open) => !open && setSellingAnswer(null)}
+            answer={sellingAnswer}
+            position={positions[sellingAnswer.id.toString()]}
+            onSuccess={handleTradeSuccess}
+          />
+        )}
       </div>
-
-      {/* Propose Answer Modal */}
-      {question && (
-        <ProposeAnswerModal
-          open={showProposeModal}
-          onOpenChange={setShowProposeModal}
-          question={question}
-          onSuccess={() => {
-            refetchAnswers();
-            refetchQuestion();
-            setShowProposeModal(false);
-          }}
-        />
-      )}
-
-      {/* Buy Shares Modal */}
-      {buyingAnswer && (
-        <BuySharesModal
-          open={!!buyingAnswer}
-          onOpenChange={(open) => !open && setBuyingAnswer(null)}
-          answer={buyingAnswer}
-          onSuccess={handleTradeSuccess}
-        />
-      )}
-
-      {/* Sell Shares Modal */}
-      {sellingAnswer && positions[sellingAnswer.id.toString()] && (
-        <SellSharesModal
-          open={!!sellingAnswer}
-          onOpenChange={(open) => !open && setSellingAnswer(null)}
-          answer={sellingAnswer}
-          position={positions[sellingAnswer.id.toString()]}
-          onSuccess={handleTradeSuccess}
-        />
-      )}
-    </div>
   );
 }

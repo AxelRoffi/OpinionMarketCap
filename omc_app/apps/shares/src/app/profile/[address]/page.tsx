@@ -12,7 +12,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useState } from 'react';
-import { GlobalNavbar } from '@/components/layout';
 import { QuestionCard, QuestionCardSkeleton } from '@/components/questions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,10 +38,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <GlobalNavbar />
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Profile Header */}
         <Card variant="glass" className="mb-8 animate-fade-in-up">
           <CardContent className="p-6">
@@ -167,6 +163,5 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
   );
 }

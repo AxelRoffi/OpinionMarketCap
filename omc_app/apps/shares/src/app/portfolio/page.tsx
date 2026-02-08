@@ -12,7 +12,6 @@ import {
   Loader2,
   ExternalLink,
 } from 'lucide-react';
-import { GlobalNavbar } from '@/components/layout';
 import { BuySharesModal, SellSharesModal } from '@/components/trading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,26 +65,20 @@ export default function PortfolioPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-background">
-        <GlobalNavbar />
-        <div className="mx-auto max-w-4xl px-4 py-8">
-          <div className="py-12 text-center">
-            <Wallet className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mb-2 text-lg font-medium">Connect your wallet</h3>
-            <p className="mb-4 text-muted-foreground">
-              Connect your wallet to view your portfolio and positions.
-            </p>
-          </div>
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="py-12 text-center">
+          <Wallet className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+          <h3 className="mb-2 text-lg font-medium">Connect your wallet</h3>
+          <p className="mb-4 text-muted-foreground">
+            Connect your wallet to view your portfolio and positions.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <GlobalNavbar />
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="mb-8 text-2xl font-bold animate-fade-in-up">Portfolio</h1>
 
         {/* Stats Cards */}
@@ -279,33 +272,32 @@ export default function PortfolioPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Buy Modal */}
+        {buyingAnswer && (
+          <BuySharesModal
+            open={!!buyingAnswer}
+            onOpenChange={(open) => !open && setBuyingAnswer(null)}
+            answer={buyingAnswer}
+            onSuccess={() => {
+              setBuyingAnswer(null);
+            }}
+          />
+        )}
+
+        {/* Sell Modal */}
+        {sellingAnswer && (
+          <SellSharesModal
+            open={!!sellingAnswer}
+            onOpenChange={(open) => !open && setSellingAnswer(null)}
+            answer={sellingAnswer}
+            position={sellingPosition!}
+            onSuccess={() => {
+              setSellingAnswer(null);
+              setSellingPosition(undefined);
+            }}
+          />
+        )}
       </div>
-
-      {/* Buy Modal */}
-      {buyingAnswer && (
-        <BuySharesModal
-          open={!!buyingAnswer}
-          onOpenChange={(open) => !open && setBuyingAnswer(null)}
-          answer={buyingAnswer}
-          onSuccess={() => {
-            setBuyingAnswer(null);
-          }}
-        />
-      )}
-
-      {/* Sell Modal */}
-      {sellingAnswer && (
-        <SellSharesModal
-          open={!!sellingAnswer}
-          onOpenChange={(open) => !open && setSellingAnswer(null)}
-          answer={sellingAnswer}
-          position={sellingPosition!}
-          onSuccess={() => {
-            setSellingAnswer(null);
-            setSellingPosition(undefined);
-          }}
-        />
-      )}
-    </div>
   );
 }

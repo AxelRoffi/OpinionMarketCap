@@ -12,7 +12,6 @@ import {
   Info,
 } from 'lucide-react';
 import Link from 'next/link';
-import { GlobalNavbar } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,10 +56,7 @@ export default function CreateQuestionPage() {
   const isValid = text.trim().length > 0 && text.length <= MAX_QUESTION_LENGTH;
 
   return (
-    <div className="min-h-screen bg-background">
-      <GlobalNavbar />
-
-      <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Back button */}
         <Link
           href="/"
@@ -204,6 +200,5 @@ export default function CreateQuestionPage() {
           </ul>
         </div>
       </div>
-    </div>
   );
 }
