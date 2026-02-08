@@ -61,7 +61,7 @@ export function useCreateQuestion(options?: UseCreateQuestionOptions) {
   });
 
   const create = useCallback(
-    async (text: string, description: string) => {
+    async (text: string, description: string, link: string = '', category: string = 'Other') => {
       if (!address) {
         const err = new Error('Wallet not connected');
         setError(err);
@@ -120,7 +120,7 @@ export function useCreateQuestion(options?: UseCreateQuestionOptions) {
           address: contracts.ANSWER_SHARES_CORE,
           abi: ANSWER_SHARES_CORE_ABI,
           functionName: 'createQuestion',
-          args: [text, description],
+          args: [text, description, link, category],
         });
 
         setStatus('success');

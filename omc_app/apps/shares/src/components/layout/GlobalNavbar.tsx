@@ -23,19 +23,19 @@ export function GlobalNavbar() {
           <Link href="/" className="flex items-center space-x-1.5 hover:opacity-80 transition-opacity flex-shrink-0">
             <BarChart3 className="w-6 h-6 text-emerald-500" />
             <span className="text-base font-bold text-foreground hidden sm:inline">
-              AnswerShares
+              OpinionMarketCap
             </span>
             <span className="text-base font-bold text-foreground sm:hidden">
-              AS
+              OMC
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1 ml-auto mr-3">
-            <Link href="/" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Questions</Link>
+            <Link href="/" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Market</Link>
             <Link href="/create" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Create</Link>
-            <Link href="/portfolio" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Portfolio</Link>
             <Link href="/leaderboard" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Leaderboard</Link>
+            <Link href="/portfolio" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Portfolio</Link>
           </nav>
 
           {/* Right Side */}
@@ -75,7 +75,7 @@ export function GlobalNavbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
                 >
-                  Questions
+                  Market
                 </Link>
                 <Link
                   href="/create"
@@ -85,18 +85,18 @@ export function GlobalNavbar() {
                   Create
                 </Link>
                 <Link
-                  href="/portfolio"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
-                >
-                  Portfolio
-                </Link>
-                <Link
                   href="/leaderboard"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
                 >
                   Leaderboard
+                </Link>
+                <Link
+                  href="/portfolio"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Portfolio
                 </Link>
               </div>
             </motion.nav>

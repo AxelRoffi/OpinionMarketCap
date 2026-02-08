@@ -55,6 +55,8 @@ contract AnswerSharesCore is
         uint256 id;
         string text;
         string description;
+        string link;           // External link (optional)
+        string category;       // Category for filtering
         address creator;
         uint48 createdAt;
         bool isActive;
@@ -125,7 +127,9 @@ contract AnswerSharesCore is
         uint256 indexed questionId,
         address indexed creator,
         string text,
-        string description
+        string description,
+        string link,
+        string category
     );
 
     event AnswerProposed(
@@ -249,16 +253,22 @@ contract AnswerSharesCore is
      * @notice Create a new question
      * @param text The question text (5-100 chars)
      * @param description Optional description (max 280 chars)
+     * @param link Optional external link (max 200 chars)
+     * @param category Category for filtering (max 50 chars)
      * @return questionId The ID of the created question
      */
     function createQuestion(
         string calldata text,
-        string calldata description
+        string calldata description,
+        string calldata link,
+        string calldata category
     ) external nonReentrant whenNotPaused returns (uint256 questionId) {
         // Validate text
         if (bytes(text).length < 5) revert TextTooShort();
         if (bytes(text).length > 100) revert TextTooLong();
         if (bytes(description).length > 280) revert TextTooLong();
+        if (bytes(link).length > 200) revert TextTooLong();
+        if (bytes(category).length > 50) revert TextTooLong();
 
         // Collect creation fee
         if (questionCreationFee > 0) {
@@ -271,13 +281,15 @@ contract AnswerSharesCore is
             id: questionId,
             text: text,
             description: description,
+            link: link,
+            category: category,
             creator: msg.sender,
             createdAt: uint48(block.timestamp),
             isActive: true,
             totalVolume: 0
         });
 
-        emit QuestionCreated(questionId, msg.sender, text, description);
+        emit QuestionCreated(questionId, msg.sender, text, description, link, category);
     }
 
     /**
@@ -604,6 +616,8 @@ contract AnswerSharesCore is
         uint256 id,
         string memory text,
         string memory description,
+        string memory link,
+        string memory category,
         address creator,
         uint48 createdAt,
         bool isActive,
@@ -615,6 +629,8 @@ contract AnswerSharesCore is
             question.id,
             question.text,
             question.description,
+            question.link,
+            question.category,
             question.creator,
             question.createdAt,
             question.isActive,

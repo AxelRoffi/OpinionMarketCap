@@ -17,7 +17,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-foreground">AnswerShares</h3>
+              <h3 className="text-xl font-bold text-foreground">OpinionMarketCap</h3>
             </div>
             <p className="text-muted-foreground text-sm">
               Trade shares in answers you believe in. The best answers rise to the top through market dynamics.
@@ -115,7 +115,7 @@ export function Footer() {
         <div className="border-t border-border mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
-              <p>&copy; {currentYear} AnswerShares. All rights reserved.</p>
+              <p>&copy; {currentYear} OpinionMarketCap. All rights reserved.</p>
               <div className="flex items-center gap-1">
                 <Shield className="w-4 h-4" />
                 <span>Built on Base Blockchain</span>

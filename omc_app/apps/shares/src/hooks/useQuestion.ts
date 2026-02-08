@@ -46,14 +46,16 @@ export function useQuestion(questionId: bigint | number | undefined) {
   if (data) {
     // Parse question
     if (data[0].status === 'success' && data[0].result) {
-      const [qId, text, description, creator, createdAt, isActive, totalVolume, answerCount] =
-        data[0].result as [bigint, string, string, `0x${string}`, number, boolean, bigint, bigint];
+      const [qId, text, description, link, category, creator, createdAt, isActive, totalVolume, answerCount] =
+        data[0].result as [bigint, string, string, string, string, `0x${string}`, number, boolean, bigint, bigint];
 
       if (qId > 0n) {
         question = {
           id: qId,
           text,
           description,
+          link,
+          category,
           creator,
           createdAt,
           isActive,

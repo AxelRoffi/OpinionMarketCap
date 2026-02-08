@@ -23,21 +23,21 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "AnswerShares | Trade Opinions Like Stocks",
-    template: "%s | AnswerShares",
+    default: "OpinionMarketCap | Trade Opinions Like Stocks",
+    template: "%s | OMC",
   },
   description: "Buy and sell shares in answers you believe in. The best answers rise to the top through market dynamics. Built on Base blockchain.",
-  keywords: ["prediction market", "opinion trading", "crypto", "base", "blockchain", "defi"],
+  keywords: ["prediction market", "opinion trading", "crypto", "base", "blockchain", "defi", "omc", "opinionmarketcap"],
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    siteName: 'AnswerShares',
-    title: 'AnswerShares | Trade Opinions Like Stocks',
+    siteName: 'OpinionMarketCap',
+    title: 'OpinionMarketCap | Trade Opinions Like Stocks',
     description: 'Buy and sell shares in answers you believe in. The best answers rise to the top.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AnswerShares | Trade Opinions Like Stocks',
+    title: 'OpinionMarketCap | Trade Opinions Like Stocks',
     description: 'Buy and sell shares in answers you believe in. The best answers rise to the top.',
   },
   robots: {

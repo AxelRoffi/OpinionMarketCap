@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Loader2,
   Info,
+  Link as LinkIcon,
+  Tag,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -18,15 +20,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useCreateQuestion } from '@/hooks';
+import { CATEGORIES } from '@/lib/contracts';
 
 const MAX_QUESTION_LENGTH = 120;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_LINK_LENGTH = 256;
 
 export default function CreateQuestionPage() {
   const router = useRouter();
   const { isConnected } = useAccount();
   const [text, setText] = useState('');
   const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
+  const [category, setCategory] = useState<string>('Other');
 
   const [createdQuestionId, setCreatedQuestionId] = useState<bigint | null>(null);
 
@@ -50,7 +56,7 @@ export default function CreateQuestionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    await create(text.trim(), description.trim());
+    await create(text.trim(), description.trim(), link.trim(), category);
   };
 
   const isValid = text.trim().length > 0 && text.length <= MAX_QUESTION_LENGTH;
@@ -114,6 +120,56 @@ export default function CreateQuestionPage() {
                   rows={4}
                   disabled={isPending || isSuccess}
                 />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="category">Category</Label>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      disabled={isPending || isSuccess}
+                      className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${
+                        category === cat
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                      } disabled:opacity-50`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* External Link */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="link">External Link (optional)</Label>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {link.length}/{MAX_LINK_LENGTH}
+                  </span>
+                </div>
+                <Input
+                  id="link"
+                  type="url"
+                  placeholder="https://example.com/relevant-article"
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  maxLength={MAX_LINK_LENGTH}
+                  disabled={isPending || isSuccess}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Add a link to relevant context, article, or source.
+                </p>
               </div>
 
               {/* Fee Info */}

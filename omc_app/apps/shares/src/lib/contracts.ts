@@ -62,6 +62,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { indexed: true, name: "creator", type: "address" },
       { indexed: false, name: "text", type: "string" },
       { indexed: false, name: "description", type: "string" },
+      { indexed: false, name: "link", type: "string" },
+      { indexed: false, name: "category", type: "string" },
     ],
     name: "QuestionCreated",
     type: "event",
@@ -189,6 +191,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "id", type: "uint256" },
       { name: "text", type: "string" },
       { name: "description", type: "string" },
+      { name: "link", type: "string" },
+      { name: "category", type: "string" },
       { name: "creator", type: "address" },
       { name: "createdAt", type: "uint48" },
       { name: "isActive", type: "bool" },
@@ -293,6 +297,8 @@ export const ANSWER_SHARES_CORE_ABI = [
     inputs: [
       { name: "text", type: "string" },
       { name: "description", type: "string" },
+      { name: "link", type: "string" },
+      { name: "category", type: "string" },
     ],
     name: "createQuestion",
     outputs: [{ name: "questionId", type: "uint256" }],
@@ -347,12 +353,34 @@ export interface Question {
   id: bigint;
   text: string;
   description: string;
+  link: string;
+  category: string;
   creator: `0x${string}`;
   createdAt: number;
   isActive: boolean;
   totalVolume: bigint;
   answerCount: bigint;
 }
+
+// Categories available for questions
+export const CATEGORIES = [
+  "Crypto",
+  "DeFi",
+  "NFTs",
+  "Gaming",
+  "AI",
+  "Technology",
+  "Politics",
+  "Sports",
+  "Entertainment",
+  "Business",
+  "Science",
+  "Culture",
+  "Memes",
+  "Other",
+] as const;
+
+export type Category = typeof CATEGORIES[number];
 
 export interface Answer {
   id: bigint;
