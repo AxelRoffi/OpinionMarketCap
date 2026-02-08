@@ -44,11 +44,11 @@ export default function ProfilePage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Profile Header */}
-        <Card className="mb-8">
+        <Card variant="glass" className="mb-8 animate-fade-in-up">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               {/* Avatar */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/10 glow-primary-sm">
                 <User className="h-8 w-8 text-primary" />
               </div>
 
@@ -122,7 +122,7 @@ export default function ProfilePage() {
                 ))}
               </div>
             ) : questions.length === 0 ? (
-              <Card>
+              <Card variant="glass">
                 <CardContent className="py-12 text-center">
                   <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                   <h3 className="mb-2 text-lg font-medium">No questions created</h3>
@@ -142,7 +142,7 @@ export default function ProfilePage() {
 
           {/* Positions Tab */}
           <TabsContent value="positions">
-            <Card>
+            <Card variant="glass">
               <CardContent className="py-12 text-center">
                 <TrendingUp className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mb-2 text-lg font-medium">Positions</h3>
@@ -155,7 +155,7 @@ export default function ProfilePage() {
 
           {/* Activity Tab */}
           <TabsContent value="activity">
-            <Card>
+            <Card variant="glass">
               <CardContent className="py-12 text-center">
                 <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mb-2 text-lg font-medium">Activity History</h3>

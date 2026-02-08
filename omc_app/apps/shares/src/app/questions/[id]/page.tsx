@@ -76,13 +76,13 @@ export default function QuestionDetailPage() {
           </Link>
 
           {/* Question skeleton */}
-          <Card className="mb-8 animate-pulse">
+          <Card variant="glass" className="mb-8">
             <CardContent className="p-6">
-              <div className="mb-4 h-8 w-3/4 rounded bg-muted" />
-              <div className="mb-4 h-4 w-full rounded bg-muted" />
+              <div className="mb-4 h-8 w-3/4 rounded-lg animate-shimmer" />
+              <div className="mb-4 h-4 w-full rounded-lg animate-shimmer delay-75" />
               <div className="flex gap-4">
-                <div className="h-4 w-24 rounded bg-muted" />
-                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-4 w-24 rounded-lg animate-shimmer delay-100" />
+                <div className="h-4 w-24 rounded-lg animate-shimmer delay-100" />
               </div>
             </CardContent>
           </Card>
@@ -129,7 +129,7 @@ export default function QuestionDetailPage() {
         </Link>
 
         {/* Question Card */}
-        <Card className="mb-8">
+        <Card variant="glass" className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -138,7 +138,7 @@ export default function QuestionDetailPage() {
                     <Badge variant="secondary">Inactive</Badge>
                   )}
                 </div>
-                <h1 className="mb-2 text-2xl font-bold">{question.text}</h1>
+                <h1 className="mb-2 text-2xl font-bold animate-fade-in-up">{question.text}</h1>
                 {question.description && (
                   <p className="mb-4 text-muted-foreground">{question.description}</p>
                 )}
@@ -178,7 +178,7 @@ export default function QuestionDetailPage() {
         </div>
 
         {sortedAnswers.length === 0 ? (
-          <Card>
+          <Card variant="glass">
             <CardContent className="py-12 text-center">
               <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
               <h3 className="mb-2 text-lg font-medium">No answers yet</h3>

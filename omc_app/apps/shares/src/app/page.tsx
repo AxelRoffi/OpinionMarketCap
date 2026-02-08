@@ -51,36 +51,46 @@ export default function HomePage() {
       <GlobalNavbar />
 
       {/* Hero Section */}
-      <section className="border-b border-border/40 bg-gradient-to-b from-primary/5 to-transparent py-12">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">
-            Trade Opinions Like Stocks
+      <section className="relative overflow-hidden border-b border-border/40 py-16">
+        {/* Background gradient orbs */}
+        <div className="pointer-events-none absolute inset-0">
+          <div
+            className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-primary/20 blur-[100px] animate-orb"
+            style={{ '--duration': '12s', '--delay': '0s' } as React.CSSProperties}
+          />
+          <div
+            className="absolute -right-32 top-20 h-80 w-80 rounded-full bg-cyan-500/10 blur-[100px] animate-orb"
+            style={{ '--duration': '15s', '--delay': '2s' } as React.CSSProperties}
+          />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl animate-fade-in-up">
+            Trade <span className="text-gradient">Opinions</span> Like Stocks
           </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground animate-fade-in-up delay-100">
             Buy shares in answers you believe will become popular.
             Sell anytime. The most popular answer leads.
           </p>
 
           {/* Quick Stats */}
-          <div className="mb-8 flex items-center justify-center gap-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold">{formatUSDC(totalVolume)}</div>
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-6 md:gap-8 animate-fade-in-up delay-150">
+            <div className="glass-card rounded-xl px-6 py-4 text-center">
+              <div className="text-2xl font-bold text-gradient md:text-3xl">{formatUSDC(totalVolume)}</div>
               <div className="text-sm text-muted-foreground">Total Volume</div>
             </div>
-            <div className="h-12 w-px bg-border" />
-            <div className="text-center">
-              <div className="text-3xl font-bold">{totalQuestions}</div>
+            <div className="glass-card rounded-xl px-6 py-4 text-center">
+              <div className="text-2xl font-bold md:text-3xl">{totalQuestions}</div>
               <div className="text-sm text-muted-foreground">Questions</div>
             </div>
-            <div className="h-12 w-px bg-border" />
-            <div className="text-center">
-              <div className="text-3xl font-bold">{Number(totalAnswers)}</div>
+            <div className="glass-card rounded-xl px-6 py-4 text-center">
+              <div className="text-2xl font-bold md:text-3xl">{Number(totalAnswers)}</div>
               <div className="text-sm text-muted-foreground">Answers</div>
             </div>
           </div>
 
           {/* CTA Button */}
-          <Button size="lg" onClick={() => setShowCreateModal(true)}>
+          <Button size="lg" onClick={() => setShowCreateModal(true)} className="animate-pulse-glow animate-fade-in-up delay-200">
             <Plus className="mr-2 h-5 w-5" />
             Create Question ($2)
           </Button>
@@ -144,14 +154,14 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section className="border-t border-border/40 bg-muted/30 py-12">
+      <section className="border-t border-border/40 bg-gradient-dark py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="mb-8 text-center text-2xl font-semibold">How It Works</h2>
+          <h2 className="mb-10 text-center text-2xl font-semibold">How It Works</h2>
 
-          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                <Plus className="h-6 w-6 text-primary" />
+          <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
+            <div className="glass-card rounded-xl p-6 text-center interactive-card">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/10 glow-primary-sm">
+                <Plus className="h-7 w-7 text-primary" />
               </div>
               <h3 className="mb-2 font-semibold">1. Create or Propose</h3>
               <p className="text-sm text-muted-foreground">
@@ -159,9 +169,9 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                <TrendingUp className="h-6 w-6 text-primary" />
+            <div className="glass-card rounded-xl p-6 text-center interactive-card">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/10 glow-primary-sm">
+                <TrendingUp className="h-7 w-7 text-primary" />
               </div>
               <h3 className="mb-2 font-semibold">2. Buy & Sell Shares</h3>
               <p className="text-sm text-muted-foreground">
@@ -169,9 +179,9 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                <Wallet className="h-6 w-6 text-primary" />
+            <div className="glass-card rounded-xl p-6 text-center interactive-card">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/10 glow-primary-sm">
+                <Wallet className="h-7 w-7 text-primary" />
               </div>
               <h3 className="mb-2 font-semibold">3. Sell Anytime</h3>
               <p className="text-sm text-muted-foreground">

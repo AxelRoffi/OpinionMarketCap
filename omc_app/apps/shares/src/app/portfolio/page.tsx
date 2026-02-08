@@ -86,24 +86,24 @@ export default function PortfolioPage() {
       <GlobalNavbar />
 
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-8 text-2xl font-bold">Portfolio</h1>
+        <h1 className="mb-8 text-2xl font-bold animate-fade-in-up">Portfolio</h1>
 
         {/* Stats Cards */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Value */}
-          <Card>
+          <Card variant="glass">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Portfolio Value
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatUSDC(totalValue)}</div>
+              <div className="text-2xl font-bold text-gradient">{formatUSDC(totalValue)}</div>
             </CardContent>
           </Card>
 
           {/* Total P&L */}
-          <Card>
+          <Card variant="glass">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total P&L
@@ -127,7 +127,7 @@ export default function PortfolioPage() {
           </Card>
 
           {/* Positions Count */}
-          <Card>
+          <Card variant="glass">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Positions
@@ -139,7 +139,7 @@ export default function PortfolioPage() {
           </Card>
 
           {/* Claimable Fees */}
-          <Card>
+          <Card variant="glass" className={fees > 0n ? 'glow-primary-sm' : ''}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Claimable Fees
@@ -149,7 +149,7 @@ export default function PortfolioPage() {
               <div className="flex items-center justify-between">
                 <div className="text-2xl font-bold text-primary">{formatUSDC(fees)}</div>
                 {fees > 0n && (
-                  <Button size="sm" onClick={claim} disabled={isClaimingFees}>
+                  <Button size="sm" onClick={claim} disabled={isClaimingFees} className="animate-pulse-glow">
                     {isClaimingFees ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -169,16 +169,16 @@ export default function PortfolioPage() {
           {isLoadingPositions ? (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
+                <Card key={i} variant="glass">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-2">
-                        <div className="h-4 w-48 rounded bg-muted" />
-                        <div className="h-6 w-32 rounded bg-muted" />
+                        <div className="h-4 w-48 rounded-lg animate-shimmer" />
+                        <div className="h-6 w-32 rounded-lg animate-shimmer delay-75" />
                       </div>
                       <div className="space-y-2 text-right">
-                        <div className="h-4 w-24 rounded bg-muted" />
-                        <div className="h-6 w-20 rounded bg-muted" />
+                        <div className="h-4 w-24 rounded-lg animate-shimmer delay-100" />
+                        <div className="h-6 w-20 rounded-lg animate-shimmer delay-150" />
                       </div>
                     </div>
                   </CardContent>
@@ -186,7 +186,7 @@ export default function PortfolioPage() {
               ))}
             </div>
           ) : positions.length === 0 ? (
-            <Card>
+            <Card variant="glass">
               <CardContent className="py-12 text-center">
                 <TrendingUp className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mb-2 text-lg font-medium">No positions yet</h3>
@@ -206,7 +206,7 @@ export default function PortfolioPage() {
               {positions.map((item) => {
                 const isProfitable = item.position.profitLoss > 0n;
                 return (
-                  <Card key={item.answer.id.toString()}>
+                  <Card key={item.answer.id.toString()} variant="glass" className="interactive-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         {/* Answer Info */}
@@ -273,7 +273,7 @@ export default function PortfolioPage() {
         {/* Activity History */}
         <div>
           <h2 className="mb-4 text-xl font-semibold">Recent Activity</h2>
-          <Card>
+          <Card variant="glass">
             <CardContent className="py-8 text-center text-muted-foreground">
               Activity history coming soon...
             </CardContent>

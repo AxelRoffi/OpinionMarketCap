@@ -44,8 +44,9 @@ export function AnswerCard({
 
   return (
     <Card
+      variant="glass"
       className={`transition-all ${
-        isLeading ? 'border-primary/50 bg-primary/5' : 'hover:border-border'
+        isLeading ? 'border-primary/50 bg-primary/5 glow-primary-sm' : 'hover:border-primary/20'
       } ${!answer.isActive ? 'opacity-60' : ''}`}
     >
       <CardContent className="p-4">
@@ -140,22 +141,22 @@ export function AnswerCard({
 // Skeleton loader for AnswerCard
 export function AnswerCardSkeleton() {
   return (
-    <Card className="animate-pulse">
+    <Card variant="glass">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
-            <div className="h-5 w-16 rounded bg-muted" />
-            <div className="h-6 w-3/4 rounded bg-muted" />
+            <div className="h-5 w-16 rounded-lg animate-shimmer" />
+            <div className="h-6 w-3/4 rounded-lg animate-shimmer delay-75" />
             <div className="flex gap-4">
-              <div className="h-4 w-24 rounded bg-muted" />
-              <div className="h-4 w-20 rounded bg-muted" />
+              <div className="h-4 w-24 rounded-lg animate-shimmer delay-100" />
+              <div className="h-4 w-20 rounded-lg animate-shimmer delay-100" />
             </div>
           </div>
           <div className="space-y-2 text-right">
-            <div className="h-4 w-16 rounded bg-muted" />
-            <div className="h-6 w-20 rounded bg-muted" />
-            <div className="h-4 w-16 rounded bg-muted" />
-            <div className="h-5 w-16 rounded bg-muted" />
+            <div className="h-4 w-16 rounded-lg animate-shimmer delay-150" />
+            <div className="h-6 w-20 rounded-lg animate-shimmer delay-150" />
+            <div className="h-4 w-16 rounded-lg animate-shimmer delay-200" />
+            <div className="h-5 w-16 rounded-lg animate-shimmer delay-200" />
           </div>
         </div>
       </CardContent>

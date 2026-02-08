@@ -22,7 +22,8 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   return (
     <Link href={`/questions/${question.id}`}>
       <Card
-        className="group cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+        variant="interactive"
+        className="group"
         onClick={onClick}
       >
         <CardHeader className="pb-3">
@@ -94,23 +95,23 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 // Skeleton loader for QuestionCard
 export function QuestionCardSkeleton() {
   return (
-    <Card className="animate-pulse">
+    <Card variant="glass">
       <CardHeader className="pb-3">
-        <div className="h-6 w-3/4 rounded bg-muted" />
-        <div className="h-4 w-full rounded bg-muted" />
+        <div className="h-6 w-3/4 rounded-lg animate-shimmer" />
+        <div className="h-4 w-full rounded-lg animate-shimmer delay-75" />
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-lg bg-muted/50 p-3">
-          <div className="h-3 w-24 rounded bg-muted" />
-          <div className="mt-2 h-4 w-3/4 rounded bg-muted" />
+        <div className="rounded-lg bg-muted/30 p-3">
+          <div className="h-3 w-24 rounded-lg animate-shimmer delay-100" />
+          <div className="mt-2 h-4 w-3/4 rounded-lg animate-shimmer delay-150" />
         </div>
         <div className="flex gap-4">
-          <div className="h-4 w-20 rounded bg-muted" />
-          <div className="h-4 w-20 rounded bg-muted" />
+          <div className="h-4 w-20 rounded-lg animate-shimmer delay-200" />
+          <div className="h-4 w-20 rounded-lg animate-shimmer delay-200" />
         </div>
         <div className="flex justify-between border-t border-border/40 pt-3">
-          <div className="h-3 w-24 rounded bg-muted" />
-          <div className="h-3 w-16 rounded bg-muted" />
+          <div className="h-3 w-24 rounded-lg animate-shimmer delay-300" />
+          <div className="h-3 w-16 rounded-lg animate-shimmer delay-300" />
         </div>
       </CardContent>
     </Card>

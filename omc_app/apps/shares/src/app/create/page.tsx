@@ -70,9 +70,9 @@ export default function CreateQuestionPage() {
           Back to Questions
         </Link>
 
-        <Card>
+        <Card variant="glass" className="animate-fade-in-up">
           <CardHeader>
-            <CardTitle>Create a Question</CardTitle>
+            <CardTitle className="text-gradient">Create a Question</CardTitle>
             <CardDescription>
               Ask a question that people can propose answers to and trade shares on.
             </CardDescription>
@@ -121,7 +121,7 @@ export default function CreateQuestionPage() {
               </div>
 
               {/* Fee Info */}
-              <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <div className="glass-card rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Info className="mt-0.5 h-5 w-5 text-primary" />
                   <div className="text-sm">
