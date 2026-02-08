@@ -1,171 +1,108 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Menu, X, TrendingUp, PlusCircle, Wallet, User } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import {
+  BarChart3,
+  Menu,
+  X,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-
-const navItems = [
-  { href: '/', label: 'Questions', icon: TrendingUp },
-  { href: '/create', label: 'Create', icon: PlusCircle },
-  { href: '/portfolio', label: 'Portfolio', icon: Wallet },
-];
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function GlobalNavbar() {
-  const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-sm bg-card/80">
+      <div className="container mx-auto px-4 py-1.5">
+        <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <TrendingUp className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="hidden text-xl font-bold sm:block">
-              Answer<span className="text-primary">Shares</span>
+          <Link href="/" className="flex items-center space-x-1.5 hover:opacity-80 transition-opacity flex-shrink-0">
+            <BarChart3 className="w-6 h-6 text-emerald-500" />
+            <span className="text-base font-bold text-foreground hidden sm:inline">
+              AnswerShares
+            </span>
+            <span className="text-base font-bold text-foreground sm:hidden">
+              AS
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
+          <nav className="hidden lg:flex items-center gap-1 ml-auto mr-3">
+            <Link href="/" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Questions</Link>
+            <Link href="/create" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Create</Link>
+            <Link href="/portfolio" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Portfolio</Link>
+            <Link href="/leaderboard" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Leaderboard</Link>
+          </nav>
 
-          {/* Wallet Connection */}
-          <div className="flex items-center gap-2">
-            <ConnectButton.Custom>
-              {({
-                account,
-                chain,
-                openAccountModal,
-                openChainModal,
-                openConnectModal,
-                mounted,
-              }) => {
-                const ready = mounted;
-                const connected = ready && account && chain;
+          {/* Right Side */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
-                return (
-                  <div
-                    {...(!ready && {
-                      'aria-hidden': true,
-                      style: {
-                        opacity: 0,
-                        pointerEvents: 'none',
-                        userSelect: 'none',
-                      },
-                    })}
-                  >
-                    {(() => {
-                      if (!connected) {
-                        return (
-                          <Button onClick={openConnectModal} size="sm">
-                            Connect Wallet
-                          </Button>
-                        );
-                      }
-
-                      if (chain.unsupported) {
-                        return (
-                          <Button onClick={openChainModal} variant="destructive" size="sm">
-                            Wrong Network
-                          </Button>
-                        );
-                      }
-
-                      return (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            onClick={openChainModal}
-                            variant="outline"
-                            size="sm"
-                            className="hidden sm:flex"
-                          >
-                            {chain.hasIcon && chain.iconUrl && (
-                              <img
-                                alt={chain.name ?? 'Chain icon'}
-                                src={chain.iconUrl}
-                                className="mr-2 h-4 w-4"
-                              />
-                            )}
-                            {chain.name}
-                          </Button>
-                          <Button onClick={openAccountModal} variant="outline" size="sm">
-                            <User className="mr-2 h-4 w-4" />
-                            {account.displayName}
-                          </Button>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                );
-              }}
-            </ConnectButton.Custom>
+            {/* Wallet Connection */}
+            <div className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg">
+              <ConnectButton />
+            </div>
 
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden text-muted-foreground hover:text-foreground h-7 w-7 p-0"
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="border-t border-border/40 py-4 md:hidden">
-            <div className="flex flex-col gap-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.nav
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden mt-2 pt-2 border-t border-border/40"
+            >
+              <div className="flex flex-col gap-1 pb-2">
+                <Link
+                  href="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Questions
+                </Link>
+                <Link
+                  href="/create"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Create
+                </Link>
+                <Link
+                  href="/portfolio"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Portfolio
+                </Link>
+                <Link
+                  href="/leaderboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Leaderboard
+                </Link>
+              </div>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </div>
-    </nav>
+    </header>
   );
 }
