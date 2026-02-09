@@ -61,8 +61,6 @@ export const ANSWER_SHARES_CORE_ABI = [
       { indexed: true, name: "questionId", type: "uint256" },
       { indexed: true, name: "creator", type: "address" },
       { indexed: false, name: "text", type: "string" },
-      { indexed: false, name: "description", type: "string" },
-      { indexed: false, name: "link", type: "string" },
       { indexed: false, name: "category", type: "string" },
     ],
     name: "QuestionCreated",
@@ -76,6 +74,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { indexed: true, name: "creator", type: "address" },
       { indexed: false, name: "questionText", type: "string" },
       { indexed: false, name: "answerText", type: "string" },
+      { indexed: false, name: "answerDescription", type: "string" },
+      { indexed: false, name: "answerLink", type: "string" },
       { indexed: false, name: "initialShares", type: "uint256" },
     ],
     name: "QuestionCreatedWithAnswer",
@@ -88,6 +88,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { indexed: true, name: "questionId", type: "uint256" },
       { indexed: true, name: "proposer", type: "address" },
       { indexed: false, name: "text", type: "string" },
+      { indexed: false, name: "description", type: "string" },
+      { indexed: false, name: "link", type: "string" },
       { indexed: false, name: "initialShares", type: "uint256" },
     ],
     name: "AnswerProposed",
@@ -203,8 +205,6 @@ export const ANSWER_SHARES_CORE_ABI = [
     outputs: [
       { name: "id", type: "uint256" },
       { name: "text", type: "string" },
-      { name: "description", type: "string" },
-      { name: "link", type: "string" },
       { name: "category", type: "string" },
       { name: "creator", type: "address" },
       { name: "createdAt", type: "uint48" },
@@ -248,6 +248,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "id", type: "uint256" },
       { name: "questionId", type: "uint256" },
       { name: "text", type: "string" },
+      { name: "description", type: "string" },
+      { name: "link", type: "string" },
       { name: "proposer", type: "address" },
       { name: "totalShares", type: "uint256" },
       { name: "poolValue", type: "uint256" },
@@ -309,8 +311,6 @@ export const ANSWER_SHARES_CORE_ABI = [
   {
     inputs: [
       { name: "text", type: "string" },
-      { name: "description", type: "string" },
-      { name: "link", type: "string" },
       { name: "category", type: "string" },
     ],
     name: "createQuestion",
@@ -321,10 +321,10 @@ export const ANSWER_SHARES_CORE_ABI = [
   {
     inputs: [
       { name: "questionText", type: "string" },
-      { name: "description", type: "string" },
-      { name: "link", type: "string" },
       { name: "category", type: "string" },
       { name: "answerText", type: "string" },
+      { name: "answerDescription", type: "string" },
+      { name: "answerLink", type: "string" },
     ],
     name: "createQuestionWithAnswer",
     outputs: [
@@ -338,6 +338,8 @@ export const ANSWER_SHARES_CORE_ABI = [
     inputs: [
       { name: "questionId", type: "uint256" },
       { name: "answerText", type: "string" },
+      { name: "description", type: "string" },
+      { name: "link", type: "string" },
     ],
     name: "proposeAnswer",
     outputs: [{ name: "answerId", type: "uint256" }],
@@ -381,8 +383,6 @@ export const ANSWER_SHARES_CORE_ABI = [
 export interface Question {
   id: bigint;
   text: string;
-  description: string;
-  link: string;
   category: string;
   creator: `0x${string}`;
   createdAt: number;
@@ -415,6 +415,8 @@ export interface Answer {
   id: bigint;
   questionId: bigint;
   text: string;
+  description: string;
+  link: string;
   proposer: `0x${string}`;
   totalShares: bigint;
   poolValue: bigint;

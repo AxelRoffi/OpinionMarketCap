@@ -61,7 +61,7 @@ export function useCreateQuestion(options?: UseCreateQuestionOptions) {
   });
 
   const create = useCallback(
-    async (text: string, description: string, link: string = '', category: string = 'Other') => {
+    async (text: string, category: string = 'Other') => {
       if (!address) {
         const err = new Error('Wallet not connected');
         setError(err);
@@ -87,9 +87,6 @@ export function useCreateQuestion(options?: UseCreateQuestionOptions) {
         if (text.length > 200) {
           throw new Error('Question text must be 200 characters or less');
         }
-        if (description.length > 500) {
-          throw new Error('Description must be 500 characters or less');
-        }
 
         // Check balance
         if (balance !== undefined && (balance as bigint) < fee) {
@@ -113,14 +110,14 @@ export function useCreateQuestion(options?: UseCreateQuestionOptions) {
           await refetchAllowance();
         }
 
-        // Create question
+        // Create question (just text + category, no description/link)
         setStatus('creating');
 
         const result = await createQuestion({
           address: contracts.ANSWER_SHARES_CORE,
           abi: ANSWER_SHARES_CORE_ABI,
           functionName: 'createQuestion',
-          args: [text, description, link, category],
+          args: [text, category],
         });
 
         setStatus('success');

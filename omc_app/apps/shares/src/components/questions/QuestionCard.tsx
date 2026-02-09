@@ -37,11 +37,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
               </Badge>
             )}
           </div>
-          {question.description && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">
-              {question.description}
-            </p>
-          )}
         </CardHeader>
 
         <CardContent className="space-y-4">

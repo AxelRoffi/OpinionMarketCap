@@ -112,7 +112,7 @@ export default function HomePage() {
     // Filter
     let filtered = questions.filter((q) => {
       const searchWords = searchQuery.toLowerCase().split(' ').filter(w => w);
-      const questionText = (q.text + ' ' + q.description + ' ' + (q.category || '')).toLowerCase();
+      const questionText = (q.text + ' ' + (q.category || '')).toLowerCase();
       const matchesSearch = searchWords.every(word => questionText.includes(word));
 
       let matchesTab = true;
@@ -372,20 +372,6 @@ export default function HomePage() {
                 <h3 className="text-foreground font-medium text-sm leading-snug line-clamp-2 min-h-[2.5rem]">
                   {question.text}
                 </h3>
-
-                {/* Link if exists */}
-                {question.link && (
-                  <a
-                    href={question.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 truncate"
-                  >
-                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{question.link.replace(/^https?:\/\//, '')}</span>
-                  </a>
-                )}
 
                 {/* Stats Row */}
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/20">

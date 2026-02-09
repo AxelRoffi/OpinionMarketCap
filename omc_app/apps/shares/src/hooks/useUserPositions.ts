@@ -102,13 +102,16 @@ export function useUserPositions(answerIds: bigint[], userAddress?: `0x${string}
           let answer: Answer | undefined;
 
           if (answersData?.[index]?.status === 'success' && answersData[index].result) {
-            const [id, questionId, text, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
-              answersData[index].result as unknown as [bigint, bigint, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+            // Answer struct now includes description and link
+            const [id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
+              answersData[index].result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
 
             answer = {
               id,
               questionId,
               text,
+              description,
+              link,
               proposer,
               totalShares,
               poolValue,

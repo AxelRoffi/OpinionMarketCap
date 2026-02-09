@@ -61,7 +61,7 @@ export function useProposeAnswer(options?: UseProposeAnswerOptions) {
   });
 
   const propose = useCallback(
-    async (questionId: bigint, answerText: string) => {
+    async (questionId: bigint, answerText: string, description: string = '', link: string = '') => {
       if (!address) {
         const err = new Error('Wallet not connected');
         setError(err);
@@ -84,8 +84,14 @@ export function useProposeAnswer(options?: UseProposeAnswerOptions) {
         if (!answerText.trim()) {
           throw new Error('Answer text is required');
         }
-        if (answerText.length > 200) {
-          throw new Error('Answer text must be 200 characters or less');
+        if (answerText.length > 60) {
+          throw new Error('Answer text must be 60 characters or less');
+        }
+        if (description.length > 280) {
+          throw new Error('Description must be 280 characters or less');
+        }
+        if (link.length > 200) {
+          throw new Error('Link must be 200 characters or less');
         }
 
         // Check balance
@@ -117,7 +123,7 @@ export function useProposeAnswer(options?: UseProposeAnswerOptions) {
           address: contracts.ANSWER_SHARES_CORE,
           abi: ANSWER_SHARES_CORE_ABI,
           functionName: 'proposeAnswer',
-          args: [questionId, answerText],
+          args: [questionId, answerText, description, link],
         });
 
         setStatus('success');

@@ -62,7 +62,8 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
   if (questionsData) {
     questionsData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
-        const [id, text, description, link, category, creator, createdAt, isActive, totalVolume, answerCount] = result.result as unknown as [bigint, string, string, string, string, `0x${string}`, number, boolean, bigint, bigint];
+        // Question struct no longer has description/link - those are on answers now
+        const [id, text, category, creator, createdAt, isActive, totalVolume, answerCount] = result.result as unknown as [bigint, string, string, `0x${string}`, number, boolean, bigint, bigint];
 
         // Skip invalid questions (id = 0 means doesn't exist)
         if (id === 0n) return;
@@ -73,8 +74,6 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
         questions.push({
           id,
           text,
-          description,
-          link,
           category,
           creator,
           createdAt,

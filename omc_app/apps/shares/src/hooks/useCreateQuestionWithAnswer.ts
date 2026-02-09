@@ -75,10 +75,10 @@ export function useCreateQuestionWithAnswer(options?: UseCreateQuestionWithAnswe
   const create = useCallback(
     async (
       questionText: string,
-      description: string,
-      link: string,
       category: string,
-      answerText: string
+      answerText: string,
+      answerDescription: string,
+      answerLink: string
     ) => {
       if (!address) {
         const err = new Error('Wallet not connected');
@@ -104,14 +104,17 @@ export function useCreateQuestionWithAnswer(options?: UseCreateQuestionWithAnswe
         if (questionText.length > 100) {
           throw new Error('Question must be 100 characters or less');
         }
-        if (description.length > 280) {
-          throw new Error('Description must be 280 characters or less');
-        }
         if (!answerText.trim()) {
           throw new Error('Answer text is required');
         }
         if (answerText.length > 60) {
           throw new Error('Answer must be 60 characters or less');
+        }
+        if (answerDescription.length > 280) {
+          throw new Error('Answer description must be 280 characters or less');
+        }
+        if (answerLink.length > 200) {
+          throw new Error('Link must be 200 characters or less');
         }
 
         // Check balance
@@ -143,7 +146,7 @@ export function useCreateQuestionWithAnswer(options?: UseCreateQuestionWithAnswe
           address: contracts.ANSWER_SHARES_CORE,
           abi: ANSWER_SHARES_CORE_ABI,
           functionName: 'createQuestionWithAnswer',
-          args: [questionText, description, link, category, answerText],
+          args: [questionText, category, answerText, answerDescription, answerLink],
         });
 
         setStatus('success');

@@ -31,11 +31,15 @@ const MAX_LINK_LENGTH = 200;
 export default function CreateQuestionPage() {
   const router = useRouter();
   const { isConnected } = useAccount();
-  const [text, setText] = useState('');
-  const [description, setDescription] = useState('');
-  const [link, setLink] = useState('');
+
+  // Question fields (simple)
+  const [questionText, setQuestionText] = useState('');
   const [category, setCategory] = useState<string>('Other');
+
+  // Answer fields (with context)
   const [answerText, setAnswerText] = useState('');
+  const [answerDescription, setAnswerDescription] = useState('');
+  const [answerLink, setAnswerLink] = useState('');
 
   const {
     create,
@@ -47,7 +51,6 @@ export default function CreateQuestionPage() {
     totalCost,
   } = useCreateQuestionWithAnswer({
     onSuccess: () => {
-      // Navigate to home after a short delay
       setTimeout(() => {
         router.push('/');
       }, 2000);
@@ -56,82 +59,75 @@ export default function CreateQuestionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || !answerText.trim()) return;
-    await create(text.trim(), description.trim(), link.trim(), category, answerText.trim());
+    if (!questionText.trim() || !answerText.trim()) return;
+    await create(
+      questionText.trim(),
+      category,
+      answerText.trim(),
+      answerDescription.trim(),
+      answerLink.trim()
+    );
   };
 
   const isValid =
-    text.trim().length >= 5 &&
-    text.length <= MAX_QUESTION_LENGTH &&
+    questionText.trim().length >= 5 &&
+    questionText.length <= MAX_QUESTION_LENGTH &&
     answerText.trim().length >= 1 &&
     answerText.length <= MAX_ANSWER_LENGTH;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Back button */}
-        <Link
-          href="/"
-          className="mb-6 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Questions
-        </Link>
+      {/* Back button */}
+      <Link
+        href="/"
+        className="mb-6 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Questions
+      </Link>
 
-        <Card variant="glass" className="animate-fade-in-up">
-          <CardHeader>
-            <CardTitle className="text-gradient">Create a Question</CardTitle>
-            <CardDescription>
-              Ask a question and propose the first answer. Others can add competing answers and trade shares.
-            </CardDescription>
-          </CardHeader>
+      <Card variant="glass" className="animate-fade-in-up">
+        <CardHeader>
+          <CardTitle className="text-gradient">Create a Question</CardTitle>
+          <CardDescription>
+            Ask a question and propose the first answer with your reasoning.
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* === QUESTION SECTION === */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Your Question
+              </h3>
+
               {/* Question Text */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="question">Question</Label>
                   <span className="text-sm text-muted-foreground">
-                    {text.length}/{MAX_QUESTION_LENGTH}
+                    {questionText.length}/{MAX_QUESTION_LENGTH}
                   </span>
                 </div>
                 <Input
                   id="question"
                   placeholder="What's the best L2 for DeFi?"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
                   maxLength={MAX_QUESTION_LENGTH}
                   disabled={isPending || isSuccess}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Make it clear, specific, and debatable.
+                  Keep it simple, specific, and debatable.
                 </p>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <span className="text-sm text-muted-foreground">
-                    {description.length}/{MAX_DESCRIPTION_LENGTH}
-                  </span>
-                </div>
-                <Textarea
-                  id="description"
-                  placeholder="Add context or criteria for answers..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={MAX_DESCRIPTION_LENGTH}
-                  rows={4}
-                  disabled={isPending || isSuccess}
-                />
               </div>
 
               {/* Category */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="category">Category</Label>
+                  <Label>Category</Label>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {CATEGORIES.map((cat) => (
@@ -151,42 +147,20 @@ export default function CreateQuestionPage() {
                   ))}
                 </div>
               </div>
+            </div>
 
-              {/* External Link */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="link">External Link (optional)</Label>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {link.length}/{MAX_LINK_LENGTH}
-                  </span>
-                </div>
-                <Input
-                  id="link"
-                  type="url"
-                  placeholder="https://example.com/relevant-article"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  maxLength={MAX_LINK_LENGTH}
-                  disabled={isPending || isSuccess}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Add a link to relevant context, article, or source.
-                </p>
+            {/* Divider */}
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
               </div>
-
-              {/* Divider */}
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-card px-4 text-sm text-muted-foreground">Your First Answer</span>
-                </div>
+              <div className="relative flex justify-center">
+                <span className="bg-card px-4 text-sm text-muted-foreground">Your First Answer</span>
               </div>
+            </div>
 
+            {/* === ANSWER SECTION === */}
+            <div className="space-y-4">
               {/* Answer Text */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -207,97 +181,145 @@ export default function CreateQuestionPage() {
                   disabled={isPending || isSuccess}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Propose the first answer. You&apos;ll receive 5 shares at $1 each.
+                  You&apos;ll receive 5 shares at $1 each for staking this answer.
                 </p>
               </div>
 
-              {/* Fee Info */}
-              <div className="glass-card rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Info className="mt-0.5 h-5 w-5 text-primary" />
-                  <div className="text-sm">
-                    <p className="font-medium">Total Cost: $7 USDC</p>
-                    <ul className="mt-2 space-y-1 text-muted-foreground">
-                      <li>• $2 question creation fee</li>
-                      <li>• $5 answer stake (you receive 5 shares)</li>
-                    </ul>
-                    <p className="mt-2 text-muted-foreground">
-                      As the question creator, you earn 0.5% of all trading volume.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{error.message}</span>
-                </div>
-              )}
-
-              {/* Success Message */}
-              {isSuccess && (
-                <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span>
-                    Question and answer created successfully! Redirecting...
+              {/* Answer Description */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Why this answer? (optional)</Label>
+                  <span className="text-sm text-muted-foreground">
+                    {answerDescription.length}/{MAX_DESCRIPTION_LENGTH}
                   </span>
                 </div>
+                <Textarea
+                  id="description"
+                  placeholder="Base has the lowest fees, best developer tools, and strongest ecosystem growth..."
+                  value={answerDescription}
+                  onChange={(e) => setAnswerDescription(e.target.value)}
+                  maxLength={MAX_DESCRIPTION_LENGTH}
+                  rows={3}
+                  disabled={isPending || isSuccess}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Explain your reasoning to convince others to buy shares in your answer.
+                </p>
+              </div>
+
+              {/* Answer Link */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="link">Evidence Link (optional)</Label>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {answerLink.length}/{MAX_LINK_LENGTH}
+                  </span>
+                </div>
+                <Input
+                  id="link"
+                  type="url"
+                  placeholder="https://example.com/why-base-is-best"
+                  value={answerLink}
+                  onChange={(e) => setAnswerLink(e.target.value)}
+                  maxLength={MAX_LINK_LENGTH}
+                  disabled={isPending || isSuccess}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Link to data, articles, or sources that support your answer.
+                </p>
+              </div>
+            </div>
+
+            {/* Fee Info */}
+            <div className="glass-card rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="text-sm">
+                  <p className="font-medium">Total Cost: $7 USDC</p>
+                  <ul className="mt-2 space-y-1 text-muted-foreground">
+                    <li>• $2 question creation fee</li>
+                    <li>• $5 answer stake (you receive 5 shares)</li>
+                  </ul>
+                  <p className="mt-2 text-muted-foreground">
+                    As the question creator, you earn 0.5% of all trading volume.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error.message}</span>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {isSuccess && (
+              <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>
+                  Question and answer created successfully! Redirecting...
+                </span>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={!isConnected || !isValid || isPending || isSuccess}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : isSuccess ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Created!
+                </>
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Question + Answer ($7)
+                </>
               )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={!isConnected || !isValid || isPending || isSuccess}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : isSuccess ? (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Created!
-                  </>
-                ) : !isConnected ? (
-                  'Connect Wallet'
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Question + Answer ($7)
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Tips */}
-        <div className="mt-8">
-          <h3 className="mb-4 text-lg font-semibold">Tips for success</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Be specific - &quot;Best DEX on Base?&quot; is better than &quot;Best DEX?&quot;</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Make it debatable - questions with clear answers aren&apos;t fun to trade</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Propose a strong answer - if you believe in it, others might buy shares too</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Add context - descriptions help people understand what you&apos;re asking</span>
-            </li>
-          </ul>
-        </div>
+      {/* Tips */}
+      <div className="mt-8">
+        <h3 className="mb-4 text-lg font-semibold">Tips for success</h3>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+            <span>Be specific - &quot;Best DEX on Base?&quot; is better than &quot;Best DEX?&quot;</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+            <span>Make it debatable - questions with obvious answers aren&apos;t fun to trade</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+            <span>Back up your answer - add description and links to convince others</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+            <span>Your answer stake = your conviction - you get 5 shares to start</span>
+          </li>
+        </ul>
       </div>
+    </div>
   );
 }

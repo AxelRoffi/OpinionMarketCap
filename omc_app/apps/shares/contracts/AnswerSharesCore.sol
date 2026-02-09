@@ -54,8 +54,6 @@ contract AnswerSharesCore is
     struct Question {
         uint256 id;
         string text;
-        string description;
-        string link;           // External link (optional)
         string category;       // Category for filtering
         address creator;
         uint48 createdAt;
@@ -67,6 +65,8 @@ contract AnswerSharesCore is
         uint256 id;
         uint256 questionId;
         string text;
+        string description;      // Context/reasoning for this answer
+        string link;             // External link (evidence/source)
         address proposer;
         uint128 totalShares;     // Total shares in circulation
         uint128 poolValue;       // USDC backing this answer
@@ -127,8 +127,6 @@ contract AnswerSharesCore is
         uint256 indexed questionId,
         address indexed creator,
         string text,
-        string description,
-        string link,
         string category
     );
 
@@ -138,6 +136,8 @@ contract AnswerSharesCore is
         address indexed creator,
         string questionText,
         string answerText,
+        string answerDescription,
+        string answerLink,
         uint256 initialShares
     );
 
@@ -146,6 +146,8 @@ contract AnswerSharesCore is
         uint256 indexed questionId,
         address indexed proposer,
         string text,
+        string description,
+        string link,
         uint256 initialShares
     );
 
@@ -259,24 +261,19 @@ contract AnswerSharesCore is
     // === CORE FUNCTIONS ===
 
     /**
-     * @notice Create a new question
+     * @notice Create a new question (without initial answer)
+     * @dev Consider using createQuestionWithAnswer() instead to include first answer
      * @param text The question text (5-100 chars)
-     * @param description Optional description (max 280 chars)
-     * @param link Optional external link (max 200 chars)
      * @param category Category for filtering (max 50 chars)
      * @return questionId The ID of the created question
      */
     function createQuestion(
         string calldata text,
-        string calldata description,
-        string calldata link,
         string calldata category
     ) external nonReentrant whenNotPaused returns (uint256 questionId) {
         // Validate text
         if (bytes(text).length < 5) revert TextTooShort();
         if (bytes(text).length > 100) revert TextTooLong();
-        if (bytes(description).length > 280) revert TextTooLong();
-        if (bytes(link).length > 200) revert TextTooLong();
         if (bytes(category).length > 50) revert TextTooLong();
 
         // Collect creation fee
@@ -289,8 +286,6 @@ contract AnswerSharesCore is
         questions[questionId] = Question({
             id: questionId,
             text: text,
-            description: description,
-            link: link,
             category: category,
             creator: msg.sender,
             createdAt: uint48(block.timestamp),
@@ -298,37 +293,37 @@ contract AnswerSharesCore is
             totalVolume: 0
         });
 
-        emit QuestionCreated(questionId, msg.sender, text, description, link, category);
+        emit QuestionCreated(questionId, msg.sender, text, category);
     }
 
     /**
      * @notice Create a question with an initial answer (recommended)
      * @dev Combines createQuestion + proposeAnswer in one transaction
      * @param questionText The question text (5-100 chars)
-     * @param description Optional description (max 280 chars)
-     * @param link Optional external link (max 200 chars)
      * @param category Category for filtering (max 50 chars)
      * @param answerText The initial answer text (1-60 chars)
+     * @param answerDescription Context/reasoning for the answer (max 280 chars)
+     * @param answerLink External link for evidence/source (max 200 chars)
      * @return questionId The ID of the created question
      * @return answerId The ID of the created answer
      */
     function createQuestionWithAnswer(
         string calldata questionText,
-        string calldata description,
-        string calldata link,
         string calldata category,
-        string calldata answerText
+        string calldata answerText,
+        string calldata answerDescription,
+        string calldata answerLink
     ) external nonReentrant whenNotPaused returns (uint256 questionId, uint256 answerId) {
         // Validate question text
         if (bytes(questionText).length < 5) revert TextTooShort();
         if (bytes(questionText).length > 100) revert TextTooLong();
-        if (bytes(description).length > 280) revert TextTooLong();
-        if (bytes(link).length > 200) revert TextTooLong();
         if (bytes(category).length > 50) revert TextTooLong();
 
-        // Validate answer text
+        // Validate answer
         if (bytes(answerText).length < 1) revert TextTooShort();
         if (bytes(answerText).length > 60) revert TextTooLong();
+        if (bytes(answerDescription).length > 280) revert TextTooLong();
+        if (bytes(answerLink).length > 200) revert TextTooLong();
 
         // Calculate total cost: creation fee + proposal stake
         uint256 totalCost = uint256(questionCreationFee) + uint256(answerProposalStake);
@@ -346,8 +341,6 @@ contract AnswerSharesCore is
         questions[questionId] = Question({
             id: questionId,
             text: questionText,
-            description: description,
-            link: link,
             category: category,
             creator: msg.sender,
             createdAt: uint48(block.timestamp),
@@ -359,7 +352,7 @@ contract AnswerSharesCore is
         bytes32 textHash = keccak256(abi.encodePacked(_toLowerCase(answerText)));
         answerTextExists[questionId][textHash] = true;
 
-        // Create answer
+        // Create answer with description and link
         answerId = nextAnswerId++;
         uint128 initialShares = uint128(answerProposalStake / 1e6);  // 1 share per $1
 
@@ -367,6 +360,8 @@ contract AnswerSharesCore is
             id: answerId,
             questionId: questionId,
             text: answerText,
+            description: answerDescription,
+            link: answerLink,
             proposer: msg.sender,
             totalShares: initialShares,
             poolValue: uint128(answerProposalStake),
@@ -393,6 +388,8 @@ contract AnswerSharesCore is
             msg.sender,
             questionText,
             answerText,
+            answerDescription,
+            answerLink,
             initialShares
         );
     }
@@ -401,11 +398,15 @@ contract AnswerSharesCore is
      * @notice Propose a new answer to a question
      * @param questionId The question to answer
      * @param answerText The answer text (1-60 chars)
+     * @param description Context/reasoning for this answer (max 280 chars)
+     * @param link External link for evidence/source (max 200 chars)
      * @return answerId The ID of the created answer
      */
     function proposeAnswer(
         uint256 questionId,
-        string calldata answerText
+        string calldata answerText,
+        string calldata description,
+        string calldata link
     ) external nonReentrant whenNotPaused returns (uint256 answerId) {
         Question storage question = questions[questionId];
         if (question.id == 0) revert QuestionNotFound();
@@ -415,6 +416,8 @@ contract AnswerSharesCore is
         // Validate text
         if (bytes(answerText).length < 1) revert TextTooShort();
         if (bytes(answerText).length > 60) revert TextTooLong();
+        if (bytes(description).length > 280) revert TextTooLong();
+        if (bytes(link).length > 200) revert TextTooLong();
 
         // Check for duplicates (case-insensitive)
         bytes32 textHash = keccak256(abi.encodePacked(_toLowerCase(answerText)));
@@ -432,6 +435,8 @@ contract AnswerSharesCore is
             id: answerId,
             questionId: questionId,
             text: answerText,
+            description: description,
+            link: link,
             proposer: msg.sender,
             totalShares: initialShares,
             poolValue: uint128(answerProposalStake),
@@ -452,7 +457,7 @@ contract AnswerSharesCore is
         answerHolders[answerId].push(msg.sender);
         isHolder[answerId][msg.sender] = true;
 
-        emit AnswerProposed(answerId, questionId, msg.sender, answerText, initialShares);
+        emit AnswerProposed(answerId, questionId, msg.sender, answerText, description, link, initialShares);
     }
 
     /**
@@ -690,6 +695,8 @@ contract AnswerSharesCore is
         uint256 id,
         uint256 questionId,
         string memory text,
+        string memory description,
+        string memory link,
         address proposer,
         uint256 totalShares,
         uint256 poolValue,
@@ -703,6 +710,8 @@ contract AnswerSharesCore is
             answer.id,
             answer.questionId,
             answer.text,
+            answer.description,
+            answer.link,
             answer.proposer,
             answer.totalShares,
             answer.poolValue,
@@ -720,8 +729,6 @@ contract AnswerSharesCore is
     function getQuestion(uint256 questionId) external view returns (
         uint256 id,
         string memory text,
-        string memory description,
-        string memory link,
         string memory category,
         address creator,
         uint48 createdAt,
@@ -733,8 +740,6 @@ contract AnswerSharesCore is
         return (
             question.id,
             question.text,
-            question.description,
-            question.link,
             question.category,
             question.creator,
             question.createdAt,
@@ -1027,6 +1032,6 @@ contract AnswerSharesCore is
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 }

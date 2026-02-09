@@ -129,9 +129,6 @@ export default function QuestionDetailPage() {
                   )}
                 </div>
                 <h1 className="mb-2 text-2xl font-bold animate-fade-in-up">{question.text}</h1>
-                {question.description && (
-                  <p className="mb-4 text-muted-foreground">{question.description}</p>
-                )}
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
