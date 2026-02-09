@@ -1,13 +1,13 @@
-// Contract addresses - TO BE DEPLOYED
+// Contract addresses
 export const CONTRACTS = {
   // Base Mainnet
   mainnet: {
-    ANSWER_SHARES_CORE: "0x0000000000000000000000000000000000000000" as `0x${string}`, // TODO: Deploy
+    ANSWER_SHARES_CORE: "0x0000000000000000000000000000000000000000" as `0x${string}`, // TODO: Deploy to mainnet
     USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as `0x${string}`,
   },
   // Base Sepolia (Testnet)
   testnet: {
-    ANSWER_SHARES_CORE: "0x0000000000000000000000000000000000000000" as `0x${string}`, // TODO: Deploy
+    ANSWER_SHARES_CORE: "0xb0461e420F65d711f84a7daA0E94893482435617" as `0x${string}`, // Deployed Feb 9, 2025
     USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`, // Base Sepolia USDC
   },
 } as const;
