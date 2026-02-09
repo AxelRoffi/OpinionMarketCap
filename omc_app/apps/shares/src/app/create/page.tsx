@@ -12,6 +12,7 @@ import {
   Info,
   Link as LinkIcon,
   Tag,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,12 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useCreateQuestion } from '@/hooks';
+import { useCreateQuestionWithAnswer } from '@/hooks';
 import { CATEGORIES } from '@/lib/contracts';
 
-const MAX_QUESTION_LENGTH = 120;
-const MAX_DESCRIPTION_LENGTH = 500;
-const MAX_LINK_LENGTH = 256;
+const MAX_QUESTION_LENGTH = 100;
+const MAX_ANSWER_LENGTH = 60;
+const MAX_DESCRIPTION_LENGTH = 280;
+const MAX_LINK_LENGTH = 200;
 
 export default function CreateQuestionPage() {
   const router = useRouter();
@@ -33,8 +35,7 @@ export default function CreateQuestionPage() {
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [category, setCategory] = useState<string>('Other');
-
-  const [createdQuestionId, setCreatedQuestionId] = useState<bigint | null>(null);
+  const [answerText, setAnswerText] = useState('');
 
   const {
     create,
@@ -43,10 +44,10 @@ export default function CreateQuestionPage() {
     error,
     isPending,
     isSuccess,
-  } = useCreateQuestion({
-    onSuccess: (id) => {
-      setCreatedQuestionId(id);
-      // Navigate to home after a short delay (can't get exact ID without event parsing)
+    totalCost,
+  } = useCreateQuestionWithAnswer({
+    onSuccess: () => {
+      // Navigate to home after a short delay
       setTimeout(() => {
         router.push('/');
       }, 2000);
@@ -55,11 +56,15 @@ export default function CreateQuestionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    await create(text.trim(), description.trim(), link.trim(), category);
+    if (!text.trim() || !answerText.trim()) return;
+    await create(text.trim(), description.trim(), link.trim(), category, answerText.trim());
   };
 
-  const isValid = text.trim().length > 0 && text.length <= MAX_QUESTION_LENGTH;
+  const isValid =
+    text.trim().length >= 5 &&
+    text.length <= MAX_QUESTION_LENGTH &&
+    answerText.trim().length >= 1 &&
+    answerText.length <= MAX_ANSWER_LENGTH;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -76,7 +81,7 @@ export default function CreateQuestionPage() {
           <CardHeader>
             <CardTitle className="text-gradient">Create a Question</CardTitle>
             <CardDescription>
-              Ask a question that people can propose answers to and trade shares on.
+              Ask a question and propose the first answer. Others can add competing answers and trade shares.
             </CardDescription>
           </CardHeader>
 
@@ -172,14 +177,52 @@ export default function CreateQuestionPage() {
                 </p>
               </div>
 
+              {/* Divider */}
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-card px-4 text-sm text-muted-foreground">Your First Answer</span>
+                </div>
+              </div>
+
+              {/* Answer Text */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <Label htmlFor="answer">Your Answer</Label>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {answerText.length}/{MAX_ANSWER_LENGTH}
+                  </span>
+                </div>
+                <Input
+                  id="answer"
+                  placeholder="Base"
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  maxLength={MAX_ANSWER_LENGTH}
+                  disabled={isPending || isSuccess}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Propose the first answer. You&apos;ll receive 5 shares at $1 each.
+                </p>
+              </div>
+
               {/* Fee Info */}
               <div className="glass-card rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Info className="mt-0.5 h-5 w-5 text-primary" />
                   <div className="text-sm">
-                    <p className="font-medium">Creation Fee: $2 USDC</p>
-                    <p className="mt-1 text-muted-foreground">
-                      As the question creator, you&apos;ll earn 0.5% of all trading volume on answers to your question.
+                    <p className="font-medium">Total Cost: $7 USDC</p>
+                    <ul className="mt-2 space-y-1 text-muted-foreground">
+                      <li>• $2 question creation fee</li>
+                      <li>• $5 answer stake (you receive 5 shares)</li>
+                    </ul>
+                    <p className="mt-2 text-muted-foreground">
+                      As the question creator, you earn 0.5% of all trading volume.
                     </p>
                   </div>
                 </div>
@@ -198,7 +241,7 @@ export default function CreateQuestionPage() {
                 <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <span>
-                    Question created successfully! Redirecting...
+                    Question and answer created successfully! Redirecting...
                   </span>
                 </div>
               )}
@@ -225,7 +268,7 @@ export default function CreateQuestionPage() {
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Question ($2)
+                    Create Question + Answer ($7)
                   </>
                 )}
               </Button>
@@ -235,7 +278,7 @@ export default function CreateQuestionPage() {
 
         {/* Tips */}
         <div className="mt-8">
-          <h3 className="mb-4 text-lg font-semibold">Tips for good questions</h3>
+          <h3 className="mb-4 text-lg font-semibold">Tips for success</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
@@ -247,11 +290,11 @@ export default function CreateQuestionPage() {
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Keep it timely - trending topics attract more traders</span>
+              <span>Propose a strong answer - if you believe in it, others might buy shares too</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-              <span>Add description - context helps people understand what you&apos;re asking</span>
+              <span>Add context - descriptions help people understand what you&apos;re asking</span>
             </li>
           </ul>
         </div>

@@ -132,6 +132,15 @@ contract AnswerSharesCore is
         string category
     );
 
+    event QuestionCreatedWithAnswer(
+        uint256 indexed questionId,
+        uint256 indexed answerId,
+        address indexed creator,
+        string questionText,
+        string answerText,
+        uint256 initialShares
+    );
+
     event AnswerProposed(
         uint256 indexed answerId,
         uint256 indexed questionId,
@@ -290,6 +299,102 @@ contract AnswerSharesCore is
         });
 
         emit QuestionCreated(questionId, msg.sender, text, description, link, category);
+    }
+
+    /**
+     * @notice Create a question with an initial answer (recommended)
+     * @dev Combines createQuestion + proposeAnswer in one transaction
+     * @param questionText The question text (5-100 chars)
+     * @param description Optional description (max 280 chars)
+     * @param link Optional external link (max 200 chars)
+     * @param category Category for filtering (max 50 chars)
+     * @param answerText The initial answer text (1-60 chars)
+     * @return questionId The ID of the created question
+     * @return answerId The ID of the created answer
+     */
+    function createQuestionWithAnswer(
+        string calldata questionText,
+        string calldata description,
+        string calldata link,
+        string calldata category,
+        string calldata answerText
+    ) external nonReentrant whenNotPaused returns (uint256 questionId, uint256 answerId) {
+        // Validate question text
+        if (bytes(questionText).length < 5) revert TextTooShort();
+        if (bytes(questionText).length > 100) revert TextTooLong();
+        if (bytes(description).length > 280) revert TextTooLong();
+        if (bytes(link).length > 200) revert TextTooLong();
+        if (bytes(category).length > 50) revert TextTooLong();
+
+        // Validate answer text
+        if (bytes(answerText).length < 1) revert TextTooShort();
+        if (bytes(answerText).length > 60) revert TextTooLong();
+
+        // Calculate total cost: creation fee + proposal stake
+        uint256 totalCost = uint256(questionCreationFee) + uint256(answerProposalStake);
+
+        // Transfer total amount from user
+        usdcToken.safeTransferFrom(msg.sender, address(this), totalCost);
+
+        // Send creation fee to treasury
+        if (questionCreationFee > 0) {
+            usdcToken.safeTransfer(treasury, questionCreationFee);
+        }
+
+        // Create question
+        questionId = nextQuestionId++;
+        questions[questionId] = Question({
+            id: questionId,
+            text: questionText,
+            description: description,
+            link: link,
+            category: category,
+            creator: msg.sender,
+            createdAt: uint48(block.timestamp),
+            isActive: true,
+            totalVolume: 0
+        });
+
+        // Mark answer text as used (case-insensitive)
+        bytes32 textHash = keccak256(abi.encodePacked(_toLowerCase(answerText)));
+        answerTextExists[questionId][textHash] = true;
+
+        // Create answer
+        answerId = nextAnswerId++;
+        uint128 initialShares = uint128(answerProposalStake / 1e6);  // 1 share per $1
+
+        answers[answerId] = Answer({
+            id: answerId,
+            questionId: questionId,
+            text: answerText,
+            proposer: msg.sender,
+            totalShares: initialShares,
+            poolValue: uint128(answerProposalStake),
+            createdAt: uint48(block.timestamp),
+            isActive: true,
+            isFlagged: false
+        });
+
+        questionAnswerIds[questionId].push(answerId);
+
+        // Give creator their shares
+        positions[answerId][msg.sender] = Position({
+            shares: initialShares,
+            costBasis: uint128(answerProposalStake)
+        });
+
+        // Track holder
+        answerHolders[answerId].push(msg.sender);
+        isHolder[answerId][msg.sender] = true;
+
+        emit QuestionCreatedWithAnswer(
+            questionId,
+            answerId,
+            msg.sender,
+            questionText,
+            answerText,
+            initialShares
+        );
     }
 
     /**
@@ -922,6 +1027,6 @@ contract AnswerSharesCore is
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return "1.0.0";
+        return "1.1.0";
     }
 }

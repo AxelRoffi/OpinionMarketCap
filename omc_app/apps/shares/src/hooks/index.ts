@@ -9,5 +9,6 @@ export { useAccumulatedFees, useTotalAccumulatedFees } from './useAccumulatedFee
 export { useBuyShares, type BuySharesStatus } from './useBuyShares';
 export { useSellShares, type SellSharesStatus } from './useSellShares';
 export { useCreateQuestion, type CreateQuestionStatus } from './useCreateQuestion';
+export { useCreateQuestionWithAnswer, type CreateQuestionWithAnswerStatus } from './useCreateQuestionWithAnswer';
 export { useProposeAnswer, type ProposeAnswerStatus } from './useProposeAnswer';
 export { useClaimFees, type ClaimFeesStatus } from './useClaimFees';

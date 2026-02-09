@@ -71,6 +71,19 @@ export const ANSWER_SHARES_CORE_ABI = [
   {
     anonymous: false,
     inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "answerId", type: "uint256" },
+      { indexed: true, name: "creator", type: "address" },
+      { indexed: false, name: "questionText", type: "string" },
+      { indexed: false, name: "answerText", type: "string" },
+      { indexed: false, name: "initialShares", type: "uint256" },
+    ],
+    name: "QuestionCreatedWithAnswer",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
       { indexed: true, name: "answerId", type: "uint256" },
       { indexed: true, name: "questionId", type: "uint256" },
       { indexed: true, name: "proposer", type: "address" },
@@ -302,6 +315,22 @@ export const ANSWER_SHARES_CORE_ABI = [
     ],
     name: "createQuestion",
     outputs: [{ name: "questionId", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "questionText", type: "string" },
+      { name: "description", type: "string" },
+      { name: "link", type: "string" },
+      { name: "category", type: "string" },
+      { name: "answerText", type: "string" },
+    ],
+    name: "createQuestionWithAnswer",
+    outputs: [
+      { name: "questionId", type: "uint256" },
+      { name: "answerId", type: "uint256" },
+    ],
     stateMutability: "nonpayable",
     type: "function",
   },
