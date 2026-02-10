@@ -70,3 +70,119 @@ export function formatNumber(value: number | bigint): string {
 
   return num.toLocaleString();
 }
+
+// ============================================
+// Duplicate Answer Detection Utilities
+// ============================================
+
+// Common suffixes/words to strip for normalization
+const STRIP_WORDS = [
+  'blockchain', 'chain', 'network', 'protocol', 'token', 'coin',
+  'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
+  'layer', 'l1', 'l2', 'layer1', 'layer2', 'layer-1', 'layer-2',
+];
+
+/**
+ * Normalizes answer text for comparison
+ * - Lowercase
+ * - Remove punctuation and extra spaces
+ * - Remove common suffixes like "blockchain", "network", etc.
+ */
+export function normalizeAnswerText(text: string): string {
+  let normalized = text
+    .toLowerCase()
+    .trim()
+    // Remove punctuation
+    .replace(/[^\w\s]/g, '')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ');
+
+  // Remove common words
+  const words = normalized.split(' ').filter(word =>
+    !STRIP_WORDS.includes(word) && word.length > 0
+  );
+
+  return words.join(' ');
+}
+
+/**
+ * Calculate similarity between two strings using Levenshtein distance
+ * Returns a score from 0 to 1, where 1 = identical
+ */
+export function getSimilarityScore(str1: string, str2: string): number {
+  const s1 = normalizeAnswerText(str1);
+  const s2 = normalizeAnswerText(str2);
+
+  if (s1 === s2) return 1;
+  if (s1.length === 0 || s2.length === 0) return 0;
+
+  // Check if one contains the other
+  if (s1.includes(s2) || s2.includes(s1)) {
+    return 0.9;
+  }
+
+  // Levenshtein distance
+  const len1 = s1.length;
+  const len2 = s2.length;
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,      // deletion
+        matrix[i][j - 1] + 1,      // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+
+  const distance = matrix[len1][len2];
+  const maxLen = Math.max(len1, len2);
+  return 1 - distance / maxLen;
+}
+
+export interface SimilarAnswer {
+  text: string;
+  score: number;
+  normalizedNew: string;
+  normalizedExisting: string;
+}
+
+/**
+ * Find similar answers from existing list
+ * Returns answers with similarity score >= threshold (default 0.7)
+ */
+export function findSimilarAnswers(
+  newAnswer: string,
+  existingAnswers: { text: string }[],
+  threshold: number = 0.7
+): SimilarAnswer[] {
+  const normalizedNew = normalizeAnswerText(newAnswer);
+
+  if (!normalizedNew) return [];
+
+  const similar: SimilarAnswer[] = [];
+
+  for (const existing of existingAnswers) {
+    const score = getSimilarityScore(newAnswer, existing.text);
+    if (score >= threshold) {
+      similar.push({
+        text: existing.text,
+        score,
+        normalizedNew,
+        normalizedExisting: normalizeAnswerText(existing.text),
+      });
+    }
+  }
+
+  // Sort by similarity score descending
+  return similar.sort((a, b) => b.score - a.score);
+}

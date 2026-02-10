@@ -86,11 +86,52 @@ export default function CreateQuestionPage() {
         Back to Questions
       </Link>
 
+      {/* How It Works - Expanded Explanation */}
+      <Card variant="glass" className="mb-6 animate-fade-in-up">
+        <CardContent className="p-4">
+          <details className="group" open>
+            <summary className="flex cursor-pointer items-center justify-between font-semibold">
+              <div className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-primary" />
+                How does this work?
+              </div>
+              <span className="text-xs text-muted-foreground">Click to collapse</span>
+            </summary>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="mb-2 text-sm font-medium">📝 Questions</div>
+                <p className="text-xs text-muted-foreground">
+                  You ask a debatable question. This becomes a tradeable topic where people can propose and trade on different answers.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="mb-2 text-sm font-medium">💡 Answers</div>
+                <p className="text-xs text-muted-foreground">
+                  Each answer has its own market. You stake $5 to propose an answer and receive 5 shares at $1 each.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="mb-2 text-sm font-medium">📈 Trading</div>
+                <p className="text-xs text-muted-foreground">
+                  Others can buy shares in answers they believe in. More buyers = higher price. Sell anytime to profit (or cut losses).
+                </p>
+              </div>
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <div className="mb-2 text-sm font-medium text-primary">💰 Earn Forever</div>
+                <p className="text-xs text-muted-foreground">
+                  As the question or answer creator, you earn 0.5% of all future trading volume on your creation. Forever.
+                </p>
+              </div>
+            </div>
+          </details>
+        </CardContent>
+      </Card>
+
       <Card variant="glass" className="animate-fade-in-up">
         <CardHeader>
           <CardTitle className="text-gradient">Create a Question</CardTitle>
           <CardDescription>
-            Ask a question and propose the first answer with your reasoning.
+            Ask a question and propose the first answer. Your answer becomes tradeable shares.
           </CardDescription>
         </CardHeader>
 
@@ -300,25 +341,53 @@ export default function CreateQuestionPage() {
 
       {/* Tips */}
       <div className="mt-8">
-        <h3 className="mb-4 text-lg font-semibold">Tips for success</h3>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-            <span>Be specific - &quot;Best DEX on Base?&quot; is better than &quot;Best DEX?&quot;</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-            <span>Make it debatable - questions with obvious answers aren&apos;t fun to trade</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-            <span>Back up your answer - add description and links to convince others</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-            <span>Your answer stake = your conviction - you get 5 shares to start</span>
-          </li>
-        </ul>
+        <h3 className="mb-4 text-lg font-semibold">💡 Tips for success</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Be specific</p>
+                <p className="text-xs text-muted-foreground">
+                  &quot;Best DEX on Base?&quot; beats &quot;Best DEX?&quot;
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Make it debatable</p>
+                <p className="text-xs text-muted-foreground">
+                  Controversial questions get more trades
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Back it up</p>
+                <p className="text-xs text-muted-foreground">
+                  Add links and reasoning to convince traders
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+              <div>
+                <p className="text-sm font-medium">Stake = conviction</p>
+                <p className="text-xs text-muted-foreground">
+                  Your 5 shares show you believe in your answer
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

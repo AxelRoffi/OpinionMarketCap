@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useBuyShares } from '@/hooks/useBuyShares';
-import { formatUSDC, parseUSDCInput } from '@/lib/utils';
+import { formatUSDC, formatShares, parseUSDCInput } from '@/lib/utils';
 import { parseContractError, isUserRejection } from '@/lib/errors';
 import type { Answer } from '@/lib/contracts';
 
@@ -157,6 +157,31 @@ export function BuySharesModal({
         </DialogHeader>
 
         <div className="space-y-5 py-4">
+          {/* How It Works - Collapsible Info */}
+          <details className="group rounded-lg border border-border bg-muted/30">
+            <summary className="flex cursor-pointer items-center justify-between p-3 text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary" />
+                How does buying shares work?
+              </div>
+              <span className="text-xs text-muted-foreground group-open:hidden">Click to learn</span>
+            </summary>
+            <div className="border-t border-border px-3 pb-3 pt-2 text-xs text-muted-foreground space-y-2">
+              <p>
+                <strong className="text-foreground">Shares = ownership in this answer.</strong> When you buy shares,
+                you&apos;re betting this answer will gain popularity.
+              </p>
+              <p>
+                <strong className="text-foreground">Price goes up</strong> when more people buy →
+                your shares become worth more.
+              </p>
+              <p>
+                <strong className="text-foreground">Sell anytime</strong> to cash out. If the price increased,
+                you profit. If it dropped, you lose.
+              </p>
+            </div>
+          </details>
+
           {/* Current Price */}
           <div className="rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4 text-center">
             <div className="text-sm text-muted-foreground">Current Share Price</div>
@@ -164,7 +189,7 @@ export function BuySharesModal({
               {formatUSDC(answer.pricePerShare)}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              Market Cap: {formatUSDC(answer.poolValue)}
+              Pool Size: {formatUSDC(answer.poolValue)} • {formatShares(answer.totalShares)} shares
             </div>
           </div>
 

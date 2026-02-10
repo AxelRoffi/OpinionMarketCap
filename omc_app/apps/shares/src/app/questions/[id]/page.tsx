@@ -207,6 +207,7 @@ export default function QuestionDetailPage() {
             open={showProposeModal}
             onOpenChange={setShowProposeModal}
             question={question}
+            existingAnswers={answers}
             onSuccess={() => {
               refetchAnswers();
               refetchQuestion();
