@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useUserPositions, useAccumulatedFees, useClaimFees, useQuestions, useAnswers } from '@/hooks';
-import { formatUSDC, formatShares, shortenAddress } from '@/lib/utils';
+import { formatUSDC, formatSharePrice, formatShares, shortenAddress } from '@/lib/utils';
 import type { Answer, UserPosition } from '@/lib/contracts';
 
 interface PositionWithAnswer {
@@ -213,7 +213,7 @@ export default function PortfolioPage() {
                           <h3 className="text-lg font-medium">{item.answer.text}</h3>
                           <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                             <span>{formatShares(item.position.shares)} shares</span>
-                            <span>@ {formatUSDC(item.answer.pricePerShare)}/share</span>
+                            <span>@ {formatSharePrice(item.answer.pricePerShare)}/share</span>
                           </div>
                         </div>
 

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useProposeAnswer } from '@/hooks/useProposeAnswer';
+import { useProposeAnswer, useChainSwitch } from '@/hooks';
 import { formatUSDC, findSimilarAnswers } from '@/lib/utils';
 import type { Question, Answer } from '@/lib/contracts';
 
@@ -39,6 +39,7 @@ export function ProposeAnswerModal({
   onSuccess,
 }: ProposeAnswerModalProps) {
   const { isConnected } = useAccount();
+  const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
   const [answerText, setAnswerText] = useState('');
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
@@ -212,13 +213,12 @@ export function ProposeAnswerModal({
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold">3.</span>
-                <span>You earn 0.5% of every trade on your answer forever</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary font-bold">4.</span>
                 <span>Sell anytime to cash out your gains (or losses)</span>
               </li>
             </ul>
+            <p className="mt-2 text-xs text-muted-foreground/70 italic">
+              Note: The question creator earns 0.5% on all trades
+            </p>
           </div>
 
           {/* Stake Info */}
@@ -252,27 +252,45 @@ export function ProposeAnswerModal({
           )}
 
           {/* Action Button */}
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handlePropose}
-            disabled={!isConnected || isPending || !isValid || !hasEnoughBalance || isSuccess}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isApproving ? 'Approving USDC...' : 'Proposing Answer...'}
-              </>
-            ) : !isConnected ? (
-              'Connect Wallet'
-            ) : !hasEnoughBalance ? (
-              'Insufficient Balance'
-            ) : isExactDuplicate ? (
-              'Answer Already Exists'
-            ) : (
-              `Propose Answer for ${proposalStake ? formatUSDC(proposalStake) : '$5.00'}`
-            )}
-          </Button>
+          {isConnected && !isCorrectChain ? (
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={switchToTargetChain}
+              disabled={isSwitching}
+            >
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching Network...
+                </>
+              ) : (
+                `Switch to ${targetChainName}`
+              )}
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handlePropose}
+              disabled={!isConnected || isPending || !isValid || !hasEnoughBalance || isSuccess}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isApproving ? 'Approving USDC...' : 'Proposing Answer...'}
+                </>
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : !hasEnoughBalance ? (
+                'Insufficient Balance'
+              ) : isExactDuplicate ? (
+                'Answer Already Exists'
+              ) : (
+                `Propose Answer for ${proposalStake ? formatUSDC(proposalStake) : '$5.00'}`
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

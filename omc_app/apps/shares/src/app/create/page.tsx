@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useCreateQuestionWithAnswer } from '@/hooks';
+import { useCreateQuestionWithAnswer, useChainSwitch } from '@/hooks';
 import { CATEGORIES } from '@/lib/contracts';
 
 const MAX_QUESTION_LENGTH = 100;
@@ -31,10 +31,11 @@ const MAX_LINK_LENGTH = 200;
 export default function CreateQuestionPage() {
   const router = useRouter();
   const { isConnected } = useAccount();
+  const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
 
   // Question fields (simple)
   const [questionText, setQuestionText] = useState('');
-  const [category, setCategory] = useState<string>('Other');
+  const [category, setCategory] = useState<string>(''); // Empty by default - user must select
 
   // Answer fields (with context)
   const [answerText, setAnswerText] = useState('');
@@ -72,6 +73,7 @@ export default function CreateQuestionPage() {
   const isValid =
     questionText.trim().length >= 5 &&
     questionText.length <= MAX_QUESTION_LENGTH &&
+    category !== '' && // Category must be selected
     answerText.trim().length >= 1 &&
     answerText.length <= MAX_ANSWER_LENGTH;
 
@@ -119,7 +121,7 @@ export default function CreateQuestionPage() {
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
                 <div className="mb-2 text-sm font-medium text-primary">💰 Earn Forever</div>
                 <p className="text-xs text-muted-foreground">
-                  As the question or answer creator, you earn 0.5% of all future trading volume on your creation. Forever.
+                  As the question creator, you earn 0.5% of all trading volume on ALL answers to your question. Forever.
                 </p>
               </div>
             </div>
@@ -164,13 +166,24 @@ export default function CreateQuestionPage() {
                 </p>
               </div>
 
-              {/* Category */}
+              {/* Category - Required */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <Label>Category</Label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-primary" />
+                    <Label>Category</Label>
+                    <span className="text-xs text-red-400">*required</span>
+                  </div>
+                  {!category && (
+                    <span className="text-xs text-amber-400 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Please select a category
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                <div className={`grid grid-cols-3 sm:grid-cols-4 gap-2 p-3 rounded-lg border ${
+                  !category ? 'border-amber-500/50 bg-amber-500/5' : 'border-border/50 bg-muted/20'
+                }`}>
                   {CATEGORIES.map((cat) => (
                     <button
                       key={cat}
@@ -179,14 +192,17 @@ export default function CreateQuestionPage() {
                       disabled={isPending || isSuccess}
                       className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${
                         category === cat
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground border-primary ring-2 ring-primary/30'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted'
                       } disabled:opacity-50`}
                     >
                       {cat}
                     </button>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Choose the category that best fits your question. This helps traders discover it.
+                </p>
               </div>
             </div>
 
@@ -310,31 +326,50 @@ export default function CreateQuestionPage() {
             )}
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={!isConnected || !isValid || isPending || isSuccess}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : isSuccess ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Created!
-                </>
-              ) : !isConnected ? (
-                'Connect Wallet'
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Question + Answer ($7)
-                </>
-              )}
-            </Button>
+            {isConnected && !isCorrectChain ? (
+              <Button
+                type="button"
+                className="w-full"
+                size="lg"
+                onClick={switchToTargetChain}
+                disabled={isSwitching}
+              >
+                {isSwitching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Switching Network...
+                  </>
+                ) : (
+                  `Switch to ${targetChainName}`
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={!isConnected || !isValid || isPending || isSuccess}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : isSuccess ? (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Created!
+                  </>
+                ) : !isConnected ? (
+                  'Connect Wallet'
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Question + Answer ($7)
+                  </>
+                )}
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>

@@ -24,6 +24,11 @@ const CONTRACT_ERROR_PATTERNS: Record<string, string> = {
   'ZeroAmount': 'Amount must be greater than zero',
   'AnswerNotActive': 'This answer is no longer active for trading',
   'QuestionNotActive': 'This question is no longer active',
+  'SharesReserveViolation': 'Cannot sell - pool must keep at least 1 share',
+  'PoolReserveViolation': 'Cannot sell - pool must keep at least $1',
+  'PoolOverflow': 'Transaction too large for this pool',
+  'SharesOverflow': 'Transaction too large for this pool',
+  'exceeds max transaction gas limit': 'Transaction would fail - try selling fewer shares',
 
   // Question/Answer errors
   'QuestionNotFound': 'Question not found',

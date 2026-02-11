@@ -1,0 +1,162 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useAccount, useReconnect, useConnect } from 'wagmi';
+
+// Storage key prefix
+const STORAGE_PREFIX = 'answershares.wallet';
+
+// Inner component that uses wagmi hooks (only rendered on client)
+function WalletPersistenceInner() {
+  const { isConnected, isConnecting, isReconnecting, address, connector } = useAccount();
+  const { reconnect } = useReconnect();
+  const { connectors } = useConnect();
+  const connectionStateRef = useRef<{
+    address?: string;
+    connector?: string;
+    isConnected: boolean;
+  }>({ isConnected: false });
+
+  // Enhanced connection persistence logic
+  useEffect(() => {
+    const attemptReconnection = async () => {
+      if (!isConnected && !isConnecting && !isReconnecting) {
+        try {
+          // Check multiple storage locations for wallet state
+          const wagmiStore = localStorage.getItem('wagmi.store');
+          const walletState = localStorage.getItem(`${STORAGE_PREFIX}.state`);
+          const backupState = localStorage.getItem(`${STORAGE_PREFIX}.backup`);
+
+          if (wagmiStore || walletState || backupState) {
+            console.log('[WalletPersistence] Attempting wallet reconnection...');
+
+            // Try reconnecting with available connectors
+            const availableConnectors = connectors.filter(c => c.type !== 'injected' || window?.ethereum);
+
+            if (availableConnectors.length > 0) {
+              await reconnect();
+            }
+          }
+        } catch (error) {
+          console.log('[WalletPersistence] Auto-reconnect attempt failed:', error);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(attemptReconnection, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [isConnected, isConnecting, isReconnecting, connectors, reconnect]);
+
+  // Save connection state whenever it changes
+  useEffect(() => {
+    if (isConnected && address && connector) {
+      const connectionState = {
+        address,
+        connector: connector.name,
+        isConnected: true,
+        timestamp: Date.now(),
+      };
+
+      localStorage.setItem(`${STORAGE_PREFIX}.backup`, JSON.stringify(connectionState));
+      connectionStateRef.current = connectionState;
+
+      console.log('[WalletPersistence] Wallet connection saved:', connectionState.address.slice(0, 6) + '...');
+    } else if (!isConnected) {
+      connectionStateRef.current = { isConnected: false };
+    }
+  }, [isConnected, address, connector]);
+
+  // Enhanced beforeunload handler
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isConnected) {
+        // Save current state to multiple locations
+        const currentState = {
+          ...connectionStateRef.current,
+          timestamp: Date.now(),
+        };
+
+        localStorage.setItem(`${STORAGE_PREFIX}.backup`, JSON.stringify(currentState));
+        localStorage.setItem(`${STORAGE_PREFIX}.timestamp`, Date.now().toString());
+
+        // Try to preserve wagmi's internal state
+        const wagmiState = localStorage.getItem('wagmi.store');
+        if (wagmiState) {
+          localStorage.setItem('wagmi.store.backup', wagmiState);
+        }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isConnected) {
+        // Page is being hidden - save state
+        const currentState = {
+          ...connectionStateRef.current,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(`${STORAGE_PREFIX}.backup`, JSON.stringify(currentState));
+      }
+    };
+
+    // Handle page unload
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    // Handle tab switching
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isConnected]);
+
+  // Monitor for unexpected disconnections and attempt immediate reconnect
+  useEffect(() => {
+    let reconnectTimeout: NodeJS.Timeout;
+
+    if (!isConnected && !isConnecting && !isReconnecting) {
+      // Check if we should be connected based on recent activity
+      const lastConnectionTime = localStorage.getItem(`${STORAGE_PREFIX}.timestamp`);
+      const backupState = localStorage.getItem(`${STORAGE_PREFIX}.backup`);
+
+      if (lastConnectionTime && backupState) {
+        const timeSinceLastConnection = Date.now() - parseInt(lastConnectionTime);
+        // If disconnected within the last 30 seconds, attempt reconnect
+        if (timeSinceLastConnection < 30000) {
+          console.log('[WalletPersistence] Unexpected disconnection detected, attempting reconnect...');
+          reconnectTimeout = setTimeout(async () => {
+            try {
+              await reconnect();
+            } catch (error) {
+              console.log('[WalletPersistence] Automatic reconnect failed:', error);
+            }
+          }, 1000);
+        }
+      }
+    }
+
+    return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [isConnected, isConnecting, isReconnecting, reconnect]);
+
+  return null;
+}
+
+// Outer wrapper that ensures component only renders on client (after mount)
+// This prevents SSR/static generation issues with wagmi hooks
+export function WalletPersistence() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR/static generation, return null to avoid wagmi context errors
+  if (!mounted) {
+    return null;
+  }
+
+  return <WalletPersistenceInner />;
+}

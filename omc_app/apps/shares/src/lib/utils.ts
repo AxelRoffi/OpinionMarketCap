@@ -15,10 +15,43 @@ export function formatUSDC(amount: bigint | number): string {
   }).format(value);
 }
 
-export function formatShares(shares: bigint | number): string {
-  const value = typeof shares === "bigint" ? Number(shares) : shares;
+/**
+ * Format share price from contract (12 decimals: 6 USDC + 6 precision)
+ * Contract returns: (poolValue * 1e6) / totalShares
+ * So $1.00 = 1e12 in contract format
+ */
+export function formatSharePrice(pricePerShare: bigint | number): string {
+  const value = typeof pricePerShare === "bigint" ? Number(pricePerShare) / 1e12 : pricePerShare / 1e6;
   return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+/**
+ * Format shares from contract (2 decimals: SHARES_DECIMALS = 100)
+ * Contract stores: 500 = 5.00 shares, 123 = 1.23 shares
+ * Handles both raw contract values (bigint) and pre-converted display values (number)
+ * @param shares - Raw shares from contract (bigint) or display value (number)
+ * @param isRawContract - If true, divide by 100 for display. Default true for bigint, false for number.
+ */
+export function formatShares(shares: bigint | number, isRawContract?: boolean): string {
+  const SHARES_DECIMALS = 100;
+
+  // Determine if we need to convert
+  const shouldConvert = isRawContract ?? (typeof shares === "bigint");
+
+  let value: number;
+  if (typeof shares === "bigint") {
+    value = shouldConvert ? Number(shares) / SHARES_DECIMALS : Number(shares);
+  } else {
+    value = shouldConvert ? shares / SHARES_DECIMALS : shares;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
 }

@@ -56,8 +56,30 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
     },
   });
 
+  // Extract leading answer IDs for fetching answer details
+  const leadingAnswerIds = leadingAnswersData?.map((result) => {
+    if (result.status === 'success' && result.result) {
+      const [answerId] = result.result as unknown as [bigint, bigint];
+      return answerId;
+    }
+    return 0n;
+  }) || [];
+
+  // Fetch leading answer details (text, etc.)
+  const { data: answerDetailsData } = useReadContracts({
+    contracts: leadingAnswerIds.map((answerId) => ({
+      address: contracts.ANSWER_SHARES_CORE,
+      abi: ANSWER_SHARES_CORE_ABI,
+      functionName: 'getAnswer',
+      args: [answerId],
+    })),
+    query: {
+      enabled: leadingAnswerIds.some(id => id > 0n),
+    },
+  });
+
   // Parse results
-  const questions: (Question & { leadingAnswerId?: bigint; leadingMarketCap?: bigint })[] = [];
+  const questions: (Question & { leadingAnswerId?: bigint; leadingMarketCap?: bigint; leadingAnswerText?: string })[] = [];
 
   if (questionsData) {
     questionsData.forEach((result, index) => {
@@ -71,6 +93,15 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
         const leadingAnswer = leadingAnswersData?.[index];
         const leadingData = leadingAnswer?.status === 'success' ? leadingAnswer.result as unknown as [bigint, bigint] : undefined;
 
+        // Get leading answer text from answer details
+        const answerDetail = answerDetailsData?.[index];
+        let leadingAnswerText: string | undefined;
+        if (answerDetail?.status === 'success' && answerDetail.result) {
+          // getAnswer returns: id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged
+          const answerData = answerDetail.result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+          leadingAnswerText = answerData[2]; // text is at index 2
+        }
+
         questions.push({
           id,
           text,
@@ -82,6 +113,7 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
           answerCount,
           leadingAnswerId: leadingData?.[0],
           leadingMarketCap: leadingData?.[1],
+          leadingAnswerText,
         });
       }
     });

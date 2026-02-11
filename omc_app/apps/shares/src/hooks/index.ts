@@ -8,7 +8,11 @@ export { useAccumulatedFees, useTotalAccumulatedFees } from './useAccumulatedFee
 // Write hooks
 export { useBuyShares, type BuySharesStatus } from './useBuyShares';
 export { useSellShares, type SellSharesStatus } from './useSellShares';
-export { useCreateQuestion, type CreateQuestionStatus } from './useCreateQuestion';
 export { useCreateQuestionWithAnswer, type CreateQuestionWithAnswerStatus } from './useCreateQuestionWithAnswer';
 export { useProposeAnswer, type ProposeAnswerStatus } from './useProposeAnswer';
 export { useClaimFees, type ClaimFeesStatus } from './useClaimFees';
+
+// Utility hooks
+export { useChainSwitch, TARGET_CHAIN_ID, TARGET_CHAIN } from './useChainSwitch';
+export { usePriceHistory, type PricePoint } from './usePriceHistory';
+export { useTotalMarketCapHistory } from './useTotalMarketCapHistory';

@@ -113,8 +113,9 @@ contract AnswerSharesCore is
 
     // === CONSTANTS ===
 
+    uint256 public constant SHARES_DECIMALS = 100;       // 2 decimal places (1 share = 100 internally, 4.52 shares = 452)
     uint256 public constant MIN_POOL_RESERVE = 1e6;      // $1 minimum pool (math safety)
-    uint256 public constant MIN_SHARES_RESERVE = 1;      // 1 share minimum (prevent division by zero)
+    uint256 public constant MIN_SHARES_RESERVE = 1;      // 0.01 share minimum (prevent division by zero)
     uint256 public constant MAX_FEE_BPS = 1000;          // 10% max fee
     uint256 public constant MAX_QUESTION_FEE = 100e6;    // $100 max question fee
     uint256 public constant MAX_PROPOSAL_STAKE = 1000e6; // $1000 max proposal stake
@@ -354,7 +355,8 @@ contract AnswerSharesCore is
 
         // Create answer with description and link
         answerId = nextAnswerId++;
-        uint128 initialShares = uint128(answerProposalStake / 1e6);  // 1 share per $1
+        // Initial shares: $5 stake → 5.00 shares → 500 internal units (with 2 decimals)
+        uint128 initialShares = uint128((answerProposalStake * SHARES_DECIMALS) / 1e6);
 
         answers[answerId] = Answer({
             id: answerId,
@@ -429,7 +431,8 @@ contract AnswerSharesCore is
 
         // Create answer
         answerId = nextAnswerId++;
-        uint128 initialShares = uint128(answerProposalStake / 1e6);  // 1 share per $1
+        // Initial shares: $5 stake → 5.00 shares → 500 internal units (with 2 decimals)
+        uint128 initialShares = uint128((answerProposalStake * SHARES_DECIMALS) / 1e6);
 
         answers[answerId] = Answer({
             id: answerId,
@@ -616,14 +619,17 @@ contract AnswerSharesCore is
     /**
      * @notice Get current share price for an answer
      * @param answerId The answer ID
-     * @return pricePerShare Price per share in USDC (6 decimals)
+     * @return pricePerShare Price per share in USDC with 12 decimals (6 USDC + 6 precision)
+     * @dev Example: $1.00 = 1e12, $0.50 = 5e11
      */
     function getSharePrice(uint256 answerId) public view returns (uint256 pricePerShare) {
         Answer storage answer = answers[answerId];
         if (answer.totalShares == 0) {
-            return 1e6; // Base price: $1.00
+            return 1e12; // Base price: $1.00 (with 12 decimals)
         }
-        return (uint256(answer.poolValue) * 1e6) / answer.totalShares;
+        // Account for SHARES_DECIMALS: totalShares is 100x the display value
+        // price = (poolValue * 1e6 * SHARES_DECIMALS) / totalShares
+        return (uint256(answer.poolValue) * 1e6 * SHARES_DECIMALS) / answer.totalShares;
     }
 
     /**
@@ -667,9 +673,9 @@ contract AnswerSharesCore is
      * @notice Get user position with P&L
      * @param answerId The answer ID
      * @param user The user address
-     * @return shares Number of shares owned
-     * @return currentValue Current value in USDC
-     * @return costBasis Original cost in USDC
+     * @return shares Number of shares owned (in internal units, divide by 100 for display)
+     * @return currentValue Current value in USDC (6 decimals)
+     * @return costBasis Original cost in USDC (6 decimals)
      * @return profitLoss Profit/loss in USDC (can be negative)
      */
     function getUserPosition(uint256 answerId, address user) public view returns (
@@ -679,10 +685,13 @@ contract AnswerSharesCore is
         int256 profitLoss
     ) {
         Position storage pos = positions[answerId][user];
-        shares = pos.shares;
+        shares = pos.shares;  // Internal units (divide by SHARES_DECIMALS for display)
         costBasis = pos.costBasis;
         if (shares > 0) {
-            currentValue = (shares * getSharePrice(answerId)) / 1e6;
+            // shares are in internal units (100x), price is 1e12
+            // currentValue = (shares * price) / (1e12 * SHARES_DECIMALS / 1e6)
+            // = (shares * price) / (1e6 * SHARES_DECIMALS)
+            currentValue = (shares * getSharePrice(answerId)) / (1e6 * SHARES_DECIMALS);
             profitLoss = int256(currentValue) - int256(costBasis);
         }
     }
@@ -798,7 +807,9 @@ contract AnswerSharesCore is
     // === INTERNAL FUNCTIONS ===
 
     /**
-     * @notice Calculate shares for a given USDC amount
+     * @notice Calculate shares for a given USDC amount (2 decimal places)
+     * @dev Returns shares in internal units (1 share = 100 units)
+     * @dev Example: $4.90 at $1/share → 490 internal units (4.90 shares)
      */
     function _calculateSharesForAmount(
         uint256 poolValue,
@@ -806,10 +817,11 @@ contract AnswerSharesCore is
         uint256 usdcAmount
     ) internal pure returns (uint256) {
         if (totalShares == 0) {
-            // First purchase: 1 share per $1
-            return usdcAmount / 1e6;
+            // First purchase: 1.00 share per $1 (with 2 decimals: 100 units per $1)
+            return (usdcAmount * SHARES_DECIMALS) / 1e6;
         }
         // shares = (usdcAmount * totalShares) / poolValue
+        // totalShares already in decimal units, so result is also in decimal units
         return (usdcAmount * totalShares) / poolValue;
     }
 
@@ -1032,6 +1044,14 @@ contract AnswerSharesCore is
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return "1.2.0";
+        return "2.0.0";  // V2: Added 2 decimal places for shares (Polymarket-style)
+    }
+
+    /**
+     * @notice Get shares decimals constant
+     * @return Number of decimal places for shares (2 = 100)
+     */
+    function getSharesDecimals() external pure returns (uint256) {
+        return SHARES_DECIMALS;
     }
 }

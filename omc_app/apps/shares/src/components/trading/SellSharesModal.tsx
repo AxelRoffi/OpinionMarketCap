@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
 import {
@@ -8,23 +8,21 @@ import {
   AlertCircle,
   CheckCircle2,
   TrendingDown,
-  Info,
   Coins,
+  Info,
 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { useSellShares } from '@/hooks/useSellShares';
+import { useSellShares, useChainSwitch } from '@/hooks';
 import { formatUSDC, formatShares } from '@/lib/utils';
 import { parseContractError, isUserRejection } from '@/lib/errors';
-import type { Answer, UserPosition } from '@/lib/contracts';
+import { SHARES_DECIMALS, type Answer, type UserPosition } from '@/lib/contracts';
 
 interface SellSharesModalProps {
   open: boolean;
@@ -34,7 +32,10 @@ interface SellSharesModalProps {
   onSuccess?: () => void;
 }
 
-const PRESET_PERCENTAGES = [25, 50, 75, 100];
+// Contract constants
+// With 2 decimal places: 1.00 share = 100 internal units
+const MIN_SHARES_RESERVE = BigInt(1 * SHARES_DECIMALS); // 1.00 share in contract units
+const MIN_POOL_RESERVE = 1_000_000n; // $1 USDC
 
 export function SellSharesModal({
   open,
@@ -44,26 +45,67 @@ export function SellSharesModal({
   onSuccess,
 }: SellSharesModalProps) {
   const { isConnected } = useAccount();
-  const [percentage, setPercentage] = useState(100);
-  const [slippage, setSlippage] = useState(1); // 1%
+  const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
+
+  // Calculate max sellable shares (must leave MIN_SHARES_RESERVE in pool)
+  const { maxSellableShares, maxPercentage, limitReason } = useMemo(() => {
+    // How many shares can be sold while keeping MIN_SHARES_RESERVE in the pool?
+    const sharesLimit = answer.totalShares - MIN_SHARES_RESERVE;
+
+    // How many shares can be sold while keeping MIN_POOL_RESERVE in the pool?
+    // grossReturn = (shareAmount * poolValue) / totalShares
+    // We need: poolValue - grossReturn >= MIN_POOL_RESERVE
+    // poolValue - (shareAmount * poolValue / totalShares) >= MIN_POOL_RESERVE
+    // shareAmount <= (poolValue - MIN_POOL_RESERVE) * totalShares / poolValue
+    const poolBasedLimit = answer.poolValue > MIN_POOL_RESERVE
+      ? ((answer.poolValue - MIN_POOL_RESERVE) * answer.totalShares) / answer.poolValue
+      : 0n;
+
+    // Take the more restrictive limit
+    const maxFromPool = sharesLimit < poolBasedLimit ? sharesLimit : poolBasedLimit;
+
+    // User can only sell up to their own shares, capped by pool limit
+    const maxSellable = position.shares < maxFromPool ? position.shares : maxFromPool;
+
+    // Calculate percentage (avoid division by zero)
+    const maxPct = position.shares > 0n
+      ? Number((maxSellable * 100n) / position.shares)
+      : 0;
+
+    // Determine the reason for limit
+    let reason = '';
+    if (maxSellable < position.shares) {
+      if (sharesLimit <= poolBasedLimit) {
+        reason = 'Pool must keep at least 1 share';
+      } else {
+        reason = 'Pool must keep at least $1';
+      }
+    }
+
+    return {
+      maxSellableShares: maxSellable,
+      maxPercentage: Math.min(100, Math.max(0, maxPct)),
+      limitReason: reason
+    };
+  }, [answer.totalShares, answer.poolValue, position.shares]);
+
+  const [percentage, setPercentage] = useState(() => Math.min(100, maxPercentage));
 
   const {
     sell,
     reset,
-    status,
     error,
-    isSelling,
     isPending,
     isSuccess,
     txHash,
   } = useSellShares({
     onSuccess: () => {
       toast.success('Shares sold successfully!', {
-        description: `Sold ${percentage}% of your position in "${answer.text.slice(0, 30)}${answer.text.length > 30 ? '...' : ''}"`,
+        description: `Sold ${sharesToSell} shares`,
         action: txHash
           ? {
-              label: 'View',
-              onClick: () => window.open(`https://basescan.org/tx/${txHash}`, '_blank'),
+              label: 'View TX',
+              onClick: () => window.open(`https://sepolia.basescan.org/tx/${txHash}`, '_blank'),
             }
           : undefined,
       });
@@ -82,45 +124,57 @@ export function SellSharesModal({
     },
   });
 
-  // Reset state when modal opens
+  // Reset state when modal opens - use max percentage
   useEffect(() => {
     if (open) {
-      setPercentage(100);
+      setPercentage(Math.min(100, maxPercentage));
       reset();
     }
-  }, [open, reset]);
+  }, [open, reset, maxPercentage]);
 
   // Calculate shares to sell
-  const sharesToSell = (position.shares * BigInt(percentage)) / 100n;
+  // sharesToSell is for display (human-readable, e.g., 5.00)
+  // sharesToSellBigInt is for contract (internal units, e.g., 500)
+  const sharesToSell = (Number(position.shares) / SHARES_DECIMALS) * percentage / 100;
+  const sharesToSellBigInt = (position.shares * BigInt(percentage)) / 100n;
 
-  // Calculate estimated return
-  const estimatedReturn = (sharesToSell * answer.pricePerShare) / BigInt(1e6);
+  // Use position.currentValue for reliable calculation
+  // This already shows the correct USD value from the contract
+  const grossReturn = (position.currentValue * BigInt(percentage)) / 100n;
 
-  // Calculate fees (2% total)
-  const platformFee = (estimatedReturn * 15n) / 1000n;
-  const creatorFee = (estimatedReturn * 5n) / 1000n;
-  const totalFees = platformFee + creatorFee;
-  const netReturn = estimatedReturn - totalFees;
+  // Fees: 1.5% platform + 0.5% creator = 2% total
+  const totalFees = (grossReturn * 2n) / 100n;
+  const netReturn = grossReturn - totalFees;
 
-  // Calculate P&L for this sale
+  // P&L calculation
   const costBasisForSale = (position.costBasis * BigInt(percentage)) / 100n;
   const profitLoss = netReturn - costBasisForSale;
   const isProfitable = profitLoss > 0n;
 
-  // Calculate price impact (simplified)
-  const newPoolValue = answer.poolValue - netReturn;
-  const newTotalShares = answer.totalShares - sharesToSell;
-  const newPrice = newTotalShares > 0n ? (newPoolValue * BigInt(1e6)) / newTotalShares : 0n;
-  const currentPrice = answer.pricePerShare;
-  const priceImpact = currentPrice > 0n
-    ? Number((currentPrice - newPrice) * 10000n / currentPrice) / 100
+  // Price per share (for display)
+  // position.shares is in contract units (e.g., 500 = 5.00 shares)
+  const pricePerShare = position.shares > 0n
+    ? (Number(position.currentValue) * SHARES_DECIMALS) / Number(position.shares) / 1e6
     : 0;
 
   const handleSell = async () => {
-    if (sharesToSell === 0n) return;
+    if (sharesToSellBigInt === 0n) return;
 
-    // Calculate min USDC with slippage
-    const minUsdcOut = (netReturn * BigInt(100 - slippage)) / 100n;
+    // Min USDC with 2% slippage built in
+    const minUsdcOut = (netReturn * 98n) / 100n;
+
+    // Debug logging
+    console.log('[SellShares] Attempting sale:', {
+      answerId: answer.id.toString(),
+      sharesToSell: sharesToSellBigInt.toString(),
+      minUsdcOut: minUsdcOut.toString(),
+      maxSellable: maxSellableShares.toString(),
+      percentage,
+      maxPercentage,
+      totalSharesInPool: answer.totalShares.toString(),
+      poolValue: answer.poolValue.toString(),
+      userShares: position.shares.toString(),
+    });
 
     toast.loading('Selling shares...', {
       id: 'sell-toast',
@@ -128,205 +182,172 @@ export function SellSharesModal({
     });
 
     try {
-      await sell(answer.id, sharesToSell, minUsdcOut);
+      await sell(answer.id, sharesToSellBigInt, minUsdcOut);
       toast.dismiss('sell-toast');
-    } catch {
+    } catch (err) {
+      console.error('[SellShares] Transaction failed:', err);
       toast.dismiss('sell-toast');
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" />
-            Sell Shares
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Coins className="h-4 w-4 text-primary" />
+            Sell Shares: {answer.text}
           </DialogTitle>
-          <DialogDescription className="line-clamp-2">
-            {answer.text}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
-          {/* Current Position */}
-          <div className="rounded-lg bg-gradient-to-r from-muted/80 to-muted/40 p-4">
-            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <Info className="h-3 w-3" />
-              Your Current Position
+        <div className="space-y-4">
+          {/* Your Position - Compact */}
+          <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+            <div>
+              <div className="text-xs text-muted-foreground">Your Position</div>
+              <div className="font-semibold">{formatShares(position.shares)} shares</div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Shares Owned</div>
-                <div className="text-lg font-semibold">{formatShares(position.shares)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Current Value</div>
-                <div className="text-lg font-semibold text-primary">
-                  {formatUSDC(position.currentValue)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Cost Basis</div>
-                <div className="text-sm">{formatUSDC(position.costBasis)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Total P&L</div>
-                <div
-                  className={`text-sm font-medium ${
-                    position.profitLoss > 0n
-                      ? 'text-green-500'
-                      : position.profitLoss < 0n
-                      ? 'text-red-500'
-                      : ''
-                  }`}
-                >
-                  {position.profitLoss > 0n ? '+' : ''}
-                  {formatUSDC(position.profitLoss)}
-                </div>
-              </div>
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">Worth</div>
+              <div className="font-semibold text-primary">{formatUSDC(position.currentValue)}</div>
             </div>
           </div>
 
-          {/* Amount to Sell */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Amount to Sell</Label>
-              <div className="text-right">
-                <span className="text-2xl font-bold text-primary">{percentage}%</span>
-                <div className="text-xs text-muted-foreground">
-                  {formatShares(sharesToSell)} shares
-                </div>
-              </div>
-            </div>
-            <Slider
-              value={[percentage]}
-              onValueChange={(v) => setPercentage(v[0])}
-              min={1}
-              max={100}
-              step={1}
-              disabled={isPending}
-              className="py-2"
-            />
-            <div className="flex flex-wrap gap-2">
-              {PRESET_PERCENTAGES.map((preset) => (
-                <Button
-                  key={preset}
-                  variant={percentage === preset ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPercentage(preset)}
-                  disabled={isPending}
-                >
-                  {preset}%
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Slippage */}
+          {/* Amount Selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-1">
-                Slippage Tolerance
-                <Info className="h-3 w-3 text-muted-foreground" />
-              </Label>
-              <span className="text-sm font-medium">{slippage}%</span>
+              <span className="text-sm font-medium">Sell Amount</span>
+              <span className="text-lg font-bold text-primary">{percentage}%</span>
             </div>
+
             <Slider
-              value={[slippage]}
-              onValueChange={(v) => setSlippage(v[0])}
-              min={0.5}
-              max={5}
-              step={0.5}
-              disabled={isPending}
+              value={[percentage]}
+              onValueChange={(v) => setPercentage(Math.min(v[0], maxPercentage))}
+              min={1}
+              max={maxPercentage > 0 ? maxPercentage : 100}
+              step={1}
+              disabled={isPending || maxPercentage === 0}
             />
+
+            <div className="flex gap-1">
+              {[25, 50, 75, 100].map((preset) => {
+                const effectivePreset = Math.min(preset, maxPercentage);
+                const isDisabled = isPending || preset > maxPercentage;
+                return (
+                  <Button
+                    key={preset}
+                    variant={percentage === effectivePreset && !isDisabled ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 h-7 text-xs"
+                    onClick={() => setPercentage(effectivePreset)}
+                    disabled={isDisabled}
+                  >
+                    {preset === 100 && maxPercentage < 100 ? `${maxPercentage}%` : `${preset}%`}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Warning when can't sell 100% */}
+            {limitReason && (
+              <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 rounded-md p-2">
+                <Info className="h-3 w-3 shrink-0" />
+                <span>Max {maxPercentage}% sellable. {limitReason}.</span>
+              </div>
+            )}
           </div>
 
-          {/* Summary */}
-          <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Shares to sell</span>
-              <span className="font-medium">{formatShares(sharesToSell)}</span>
+          {/* Sale Summary - Clean & Clear */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Selling</span>
+              <span className="font-medium">{sharesToSell.toFixed(1)} shares @ ${pricePerShare.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Gross return</span>
-              <span>{formatUSDC(estimatedReturn)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Gross Value</span>
+              <span>{formatUSDC(grossReturn)}</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Platform fee (1.5%)</span>
-              <span className="text-muted-foreground">-{formatUSDC(platformFee)}</span>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Fees (2%)</span>
+              <span>-{formatUSDC(totalFees)}</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Creator fee (0.5%)</span>
-              <span className="text-muted-foreground">-{formatUSDC(creatorFee)}</span>
+            <div className="border-t border-primary/20 pt-2 flex justify-between">
+              <span className="font-semibold">You Receive</span>
+              <span className="font-bold text-lg text-primary">{formatUSDC(netReturn)}</span>
             </div>
-            {priceImpact > 0.1 && (
+            {profitLoss !== 0n && (
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Price impact</span>
-                <span className={priceImpact > 5 ? 'text-orange-500' : 'text-muted-foreground'}>
-                  -{priceImpact.toFixed(2)}%
+                <span className="text-muted-foreground">P&L on this sale</span>
+                <span className={`font-medium ${isProfitable ? 'text-green-500' : 'text-red-500'}`}>
+                  {isProfitable ? '+' : ''}{formatUSDC(profitLoss)}
                 </span>
               </div>
             )}
-            <div className="border-t border-border pt-2">
-              <div className="flex justify-between font-medium">
-                <span>You receive</span>
-                <span className="text-primary">{formatUSDC(netReturn)}</span>
-              </div>
-              <div className="mt-1 flex justify-between text-xs">
-                <span className="text-muted-foreground">P&L on this sale</span>
-                <span
-                  className={`font-medium ${
-                    isProfitable ? 'text-green-500' : profitLoss < 0n ? 'text-red-500' : ''
-                  }`}
-                >
-                  {isProfitable ? '+' : ''}
-                  {formatUSDC(profitLoss)}
-                </span>
-              </div>
-            </div>
           </div>
 
           {/* Error Message */}
           {error && !isUserRejection(error) && (
-            <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+              <AlertCircle className="h-3 w-3 shrink-0" />
               <span>{parseContractError(error)}</span>
             </div>
           )}
 
           {/* Success Message */}
           {isSuccess && (
-            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>Shares sold successfully!</span>
+            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-2 text-xs text-green-500">
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
+              <span>Sold successfully!</span>
             </div>
           )}
 
-          {/* Action Button */}
-          <Button
-            className="w-full"
-            size="lg"
-            variant={isProfitable ? 'default' : 'outline'}
-            onClick={handleSell}
-            disabled={!isConnected || isPending || sharesToSell === 0n}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Selling...
-              </>
-            ) : !isConnected ? (
-              'Connect Wallet'
-            ) : sharesToSell === 0n ? (
-              'Select Amount'
-            ) : (
-              <>
-                <TrendingDown className="mr-2 h-4 w-4" />
-                Sell for {formatUSDC(netReturn)}
-              </>
-            )}
-          </Button>
+          {/* Action Button - Always Visible */}
+          {isConnected && !isCorrectChain ? (
+            <Button
+              className="w-full"
+              onClick={switchToTargetChain}
+              disabled={isSwitching}
+            >
+              {isSwitching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Switching...
+                </>
+              ) : (
+                `Switch to ${targetChainName}`
+              )}
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              variant={isProfitable ? 'default' : 'destructive'}
+              onClick={handleSell}
+              disabled={!isConnected || isPending || sharesToSellBigInt === 0n || isSuccess || sharesToSellBigInt > maxSellableShares}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Confirming...
+                </>
+              ) : isSuccess ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Sold!
+                </>
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : sharesToSellBigInt > maxSellableShares ? (
+                'Exceeds Max Sellable'
+              ) : maxPercentage === 0 ? (
+                'Cannot Sell (Pool Reserve)'
+              ) : (
+                <>
+                  <TrendingDown className="mr-2 h-4 w-4" />
+                  Sell for {formatUSDC(netReturn)}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

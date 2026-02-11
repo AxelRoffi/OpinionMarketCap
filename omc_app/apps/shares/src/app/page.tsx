@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CreateQuestionModal } from '@/components/questions';
 import { useQuestions } from '@/hooks';
 import { formatUSDC, shortenAddress } from '@/lib/utils';
 import { CATEGORIES } from '@/lib/contracts';
@@ -75,7 +74,6 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('trending');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
@@ -228,7 +226,7 @@ export default function HomePage() {
           />
         </div>
         <Button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => router.push('/create')}
           size="sm"
           className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold h-10 px-4 text-sm rounded-xl flex-shrink-0 shadow-lg shadow-emerald-500/20"
         >
@@ -329,7 +327,7 @@ export default function HomePage() {
           <p className="mb-4 text-muted-foreground">
             {selectedCategory ? `No opinions in ${selectedCategory} category.` : 'Be the first to create an opinion and start trading.'}
           </p>
-          <Button onClick={() => setShowCreateModal(true)} className="rounded-xl">
+          <Button onClick={() => router.push('/create')} className="rounded-xl">
             <Plus className="mr-2 h-4 w-4" />
             Create Opinion
           </Button>
@@ -340,6 +338,7 @@ export default function HomePage() {
             const volumeUSDC = Number(question.totalVolume) / 1_000_000;
             const marketCapUSDC = Number(question.leadingMarketCap || 0n) / 1_000_000;
             const isHot = volumeUSDC > 5;
+            const hasLeadingAnswer = question.leadingAnswerText && question.leadingAnswerId && question.leadingAnswerId > 0n;
 
             return (
               <motion.div
@@ -369,17 +368,33 @@ export default function HomePage() {
                 </div>
 
                 {/* Question Text */}
-                <h3 className="text-foreground font-medium text-sm leading-snug line-clamp-2 min-h-[2.5rem]">
+                <h3 className="text-muted-foreground font-medium text-sm leading-snug">
                   {question.text}
                 </h3>
 
-                {/* Stats Row */}
+                {/* Leading Answer - THE MAIN FOCUS */}
+                {hasLeadingAnswer ? (
+                  <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20">
+                    <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="text-foreground font-bold text-base truncate flex-1">
+                      {question.leadingAnswerText}
+                    </span>
+                    <span className="text-emerald-400 font-semibold text-xs shrink-0">
+                      {formatLargeUSDC(question.leadingMarketCap || 0n)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted/30 border border-dashed border-border/50">
+                    <Sparkles className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground text-sm italic">
+                      Be first to answer!
+                    </span>
+                  </div>
+                )}
+
+                {/* Engaging CTA + Stats */}
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/20">
                   <div className="flex items-center gap-3 text-xs">
-                    <div>
-                      <div className="text-muted-foreground">MCap</div>
-                      <div className="font-bold text-emerald-400">{formatLargeUSDC(question.leadingMarketCap || 0n)}</div>
-                    </div>
                     <div>
                       <div className="text-muted-foreground">Vol</div>
                       <div className="font-medium text-foreground">{formatLargeUSDC(question.totalVolume)}</div>
@@ -389,17 +404,32 @@ export default function HomePage() {
                       <div className="font-medium text-foreground">{Number(question.answerCount)}</div>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs px-3 py-1 h-8 rounded-lg shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/questions/${question.id}`);
-                    }}
-                  >
-                    <Zap className="w-3 h-3 mr-1" />
-                    Trade
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    {hasLeadingAnswer && Number(question.answerCount) > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-2.5 py-1 h-7 rounded-lg border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/questions/${question.id}`);
+                        }}
+                      >
+                        Challenge
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs px-3 py-1 h-7 rounded-lg shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/questions/${question.id}`);
+                      }}
+                    >
+                      <Zap className="w-3 h-3 mr-1" />
+                      {hasLeadingAnswer ? 'Trade' : 'Answer'}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             );
@@ -445,7 +475,7 @@ export default function HomePage() {
             <span className="text-[10px] font-medium">Market</span>
           </button>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => router.push('/create')}
             className="flex flex-col items-center gap-0.5 text-muted-foreground hover:text-foreground"
           >
             <div className="w-10 h-10 -mt-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
@@ -461,16 +491,6 @@ export default function HomePage() {
           </button>
         </div>
       </div>
-
-      {/* Create Question Modal */}
-      <CreateQuestionModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onSuccess={() => {
-          refetch();
-          setShowCreateModal(false);
-        }}
-      />
     </div>
   );
 }

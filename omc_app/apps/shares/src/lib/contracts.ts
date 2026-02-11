@@ -1,3 +1,7 @@
+// Share decimals constant (matches contract SHARES_DECIMALS = 100)
+// 1 share = 100 internal units, so 5.00 shares = 500 in contract
+export const SHARES_DECIMALS = 100;
+
 // Contract addresses
 export const CONTRACTS = {
   // Base Mainnet
@@ -7,7 +11,7 @@ export const CONTRACTS = {
   },
   // Base Sepolia (Testnet)
   testnet: {
-    ANSWER_SHARES_CORE: "0xb0461e420F65d711f84a7daA0E94893482435617" as `0x${string}`, // Deployed Feb 9, 2025
+    ANSWER_SHARES_CORE: "0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA" as `0x${string}`, // v1.2.0 deployed Feb 10, 2025
     USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`, // Base Sepolia USDC
   },
 } as const;
