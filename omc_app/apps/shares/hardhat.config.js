@@ -1,18 +1,11 @@
-import "@nomicfoundation/hardhat-toolbox";
-import "@openzeppelin/hardhat-upgrades";
-import dotenv from "dotenv";
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-dotenv.config({ path: resolve(__dirname, "../../.env") });
+require("@nomicfoundation/hardhat-toolbox");
+require("@openzeppelin/hardhat-upgrades");
+require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 /** @type import('hardhat/config').HardhatUserConfig */
-export default {
+module.exports = {
   solidity: {
     version: "0.8.22",
     settings: {
@@ -20,7 +13,7 @@ export default {
         enabled: true,
         runs: 200,
       },
-      viaIR: false,
+      viaIR: true,
     },
   },
   paths: {

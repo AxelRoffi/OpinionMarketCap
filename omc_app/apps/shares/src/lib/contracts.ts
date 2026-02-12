@@ -11,7 +11,7 @@ export const CONTRACTS = {
   },
   // Base Sepolia (Testnet)
   testnet: {
-    ANSWER_SHARES_CORE: "0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA" as `0x${string}`, // v1.2.0 deployed Feb 10, 2025
+    ANSWER_SHARES_CORE: "0x43C8f0774b7635cf16eCf2238b974ad3b0370937" as `0x${string}`, // v2.1.0 deployed Feb 12, 2025 (2 decimals + marketplace)
     USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`, // Base Sepolia USDC
   },
 } as const;
@@ -211,10 +211,12 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "text", type: "string" },
       { name: "category", type: "string" },
       { name: "creator", type: "address" },
+      { name: "owner", type: "address" },
       { name: "createdAt", type: "uint48" },
       { name: "isActive", type: "bool" },
       { name: "totalVolume", type: "uint256" },
       { name: "answerCount", type: "uint256" },
+      { name: "salePrice", type: "uint96" },
     ],
     stateMutability: "view",
     type: "function",
@@ -381,6 +383,84 @@ export const ANSWER_SHARES_CORE_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
+
+  // === QUESTION MARKETPLACE ===
+  {
+    inputs: [
+      { name: "questionId", type: "uint256" },
+      { name: "price", type: "uint96" },
+    ],
+    name: "listQuestionForSale",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "questionId", type: "uint256" }],
+    name: "cancelQuestionSale",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "questionId", type: "uint256" }],
+    name: "buyQuestion",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "questionId", type: "uint256" },
+      { name: "newOwner", type: "address" },
+    ],
+    name: "transferQuestionOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+
+  // === MARKETPLACE EVENTS ===
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "owner", type: "address" },
+      { indexed: false, name: "price", type: "uint96" },
+    ],
+    name: "QuestionListedForSale",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "owner", type: "address" },
+    ],
+    name: "QuestionSaleCancelled",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "seller", type: "address" },
+      { indexed: true, name: "buyer", type: "address" },
+      { indexed: false, name: "price", type: "uint96" },
+    ],
+    name: "QuestionPurchased",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "from", type: "address" },
+      { indexed: true, name: "to", type: "address" },
+    ],
+    name: "QuestionOwnershipTransferred",
+    type: "event",
+  },
 ] as const;
 
 // ============ TYPES ============
@@ -389,10 +469,12 @@ export interface Question {
   text: string;
   category: string;
   creator: `0x${string}`;
+  owner: `0x${string}`;
   createdAt: number;
   isActive: boolean;
   totalVolume: bigint;
   answerCount: bigint;
+  salePrice: bigint;
 }
 
 // Categories available for questions

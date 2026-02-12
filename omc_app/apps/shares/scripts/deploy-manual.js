@@ -1,7 +1,7 @@
-const { ethers, upgrades } = require("hardhat");
+const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("🚀 Deploying AnswerSharesCore to Base Sepolia...\n");
+  console.log("🚀 Deploying AnswerSharesCore to Base Sepolia (Manual Deploy)...\n");
 
   const [deployer] = await ethers.getSigners();
   console.log("Deployer address:", deployer.address);
@@ -16,11 +16,8 @@ async function main() {
 
   // Configuration for Base Sepolia
   const config = {
-    // Base Sepolia USDC (test token)
     usdcToken: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-    // Treasury - receives platform fees
     treasury: process.env.TREASURY_ADDRESS || deployer.address,
-    // Admin - controls the contract
     admin: process.env.ADMIN_ADDRESS || deployer.address,
   };
 
@@ -30,31 +27,35 @@ async function main() {
   console.log("  Admin:", config.admin);
   console.log("");
 
-  // Deploy AnswerSharesCore as UUPS proxy
-  console.log("📦 Deploying AnswerSharesCore proxy...");
-
+  // Step 1: Deploy Implementation
+  console.log("📦 Step 1: Deploying AnswerSharesCore implementation...");
   const AnswerSharesCore = await ethers.getContractFactory("AnswerSharesCore");
+  const implementation = await AnswerSharesCore.deploy();
+  await implementation.waitForDeployment();
+  const implAddress = await implementation.getAddress();
+  console.log("   Implementation deployed at:", implAddress);
 
-  const answerSharesCore = await upgrades.deployProxy(
-    AnswerSharesCore,
-    [config.usdcToken, config.treasury, config.admin],
-    {
-      initializer: "initialize",
-      kind: "uups",
-    }
-  );
+  // Step 2: Deploy ERC1967 Proxy
+  console.log("📦 Step 2: Deploying ERC1967 Proxy...");
 
-  await answerSharesCore.waitForDeployment();
+  // Encode initialize call
+  const initData = AnswerSharesCore.interface.encodeFunctionData("initialize", [
+    config.usdcToken,
+    config.treasury,
+    config.admin,
+  ]);
 
-  const proxyAddress = await answerSharesCore.getAddress();
-  const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  // Get AnswerSharesProxy (wrapper for ERC1967Proxy)
+  const AnswerSharesProxy = await ethers.getContractFactory("AnswerSharesProxy");
+  const proxy = await AnswerSharesProxy.deploy(implAddress, initData);
+  await proxy.waitForDeployment();
+  const proxyAddress = await proxy.getAddress();
+  console.log("   Proxy deployed at:", proxyAddress);
 
-  console.log("\n✅ AnswerSharesCore deployed!");
-  console.log("   Proxy address:", proxyAddress);
-  console.log("   Implementation address:", implementationAddress);
-
-  // Verify configuration
+  // Step 3: Connect to proxy and verify
   console.log("\n🔍 Verifying configuration...");
+  const answerSharesCore = AnswerSharesCore.attach(proxyAddress);
+
   const usdcAddress = await answerSharesCore.usdcToken();
   const treasuryAddress = await answerSharesCore.treasury();
   const nextQuestionId = await answerSharesCore.nextQuestionId();
@@ -79,8 +80,9 @@ async function main() {
     chainId: 84532,
     deployer: deployer.address,
     proxyAddress: proxyAddress,
-    implementationAddress: implementationAddress,
+    implementationAddress: implAddress,
     config: config,
+    version: contractVersion,
     timestamp: new Date().toISOString(),
   };
 
@@ -92,7 +94,7 @@ async function main() {
   console.log("1. Update apps/shares/src/lib/contracts.ts with:");
   console.log(`   ANSWER_SHARES_CORE: "${proxyAddress}"`);
   console.log("2. Verify the contract on BaseScan:");
-  console.log(`   npx hardhat verify --network baseSepolia ${implementationAddress}`);
+  console.log(`   npx hardhat verify --network baseSepolia ${implAddress}`);
 
   return deploymentInfo;
 }

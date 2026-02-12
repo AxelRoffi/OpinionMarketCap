@@ -55,10 +55,12 @@ contract AnswerSharesCore is
         uint256 id;
         string text;
         string category;       // Category for filtering
-        address creator;
+        address creator;       // Original creator (never changes)
+        address owner;         // Current owner (can be transferred/sold)
         uint48 createdAt;
         bool isActive;
         uint256 totalVolume;
+        uint96 salePrice;      // If > 0, question is listed for sale
     }
 
     struct Answer {
@@ -186,6 +188,12 @@ contract AnswerSharesCore is
     event FeesAccumulated(address indexed recipient, uint96 amount, uint96 newTotal);
     event FeesClaimed(address indexed user, uint96 amount);
 
+    // Question marketplace events
+    event QuestionListedForSale(uint256 indexed questionId, address indexed owner, uint96 price);
+    event QuestionSaleCancelled(uint256 indexed questionId, address indexed owner);
+    event QuestionPurchased(uint256 indexed questionId, address indexed seller, address indexed buyer, uint96 price);
+    event QuestionOwnershipTransferred(uint256 indexed questionId, address indexed from, address indexed to);
+
     // === ERRORS ===
 
     error QuestionNotFound();
@@ -211,6 +219,9 @@ contract AnswerSharesCore is
     error InvalidMaxAnswers();
     error NotPaused();
     error NoFeesToClaim();
+    error NotTheQuestionOwner();
+    error NotForSale();
+    error SelfTransferNotAllowed();
 
     // === INITIALIZATION ===
 
@@ -289,9 +300,11 @@ contract AnswerSharesCore is
             text: text,
             category: category,
             creator: msg.sender,
+            owner: msg.sender,
             createdAt: uint48(block.timestamp),
             isActive: true,
-            totalVolume: 0
+            totalVolume: 0,
+            salePrice: 0
         });
 
         emit QuestionCreated(questionId, msg.sender, text, category);
@@ -344,9 +357,11 @@ contract AnswerSharesCore is
             text: questionText,
             category: category,
             creator: msg.sender,
+            owner: msg.sender,
             createdAt: uint48(block.timestamp),
             isActive: true,
-            totalVolume: 0
+            totalVolume: 0,
+            salePrice: 0
         });
 
         // Mark answer text as used (case-insensitive)
@@ -511,12 +526,12 @@ contract AnswerSharesCore is
             usdcToken.safeTransfer(treasury, platformFee);
         }
 
-        // Accumulate creator fee for question creator (claimable)
+        // Accumulate creator fee for question owner (claimable)
         if (creatorFee > 0) {
-            address questionCreator = questions[answer.questionId].creator;
-            accumulatedFees[questionCreator] += uint96(creatorFee);
+            address questionOwner = questions[answer.questionId].owner;
+            accumulatedFees[questionOwner] += uint96(creatorFee);
             totalAccumulatedFees += uint96(creatorFee);
-            emit FeesAccumulated(questionCreator, uint96(creatorFee), accumulatedFees[questionCreator]);
+            emit FeesAccumulated(questionOwner, uint96(creatorFee), accumulatedFees[questionOwner]);
         }
 
         // Update answer state (safe after overflow check)
@@ -602,12 +617,12 @@ contract AnswerSharesCore is
             usdcToken.safeTransfer(treasury, platformFee);
         }
 
-        // Accumulate creator fee for question creator (claimable)
+        // Accumulate creator fee for question owner (claimable)
         if (creatorFee > 0) {
-            address questionCreator = questions[answer.questionId].creator;
-            accumulatedFees[questionCreator] += uint96(creatorFee);
+            address questionOwner = questions[answer.questionId].owner;
+            accumulatedFees[questionOwner] += uint96(creatorFee);
             totalAccumulatedFees += uint96(creatorFee);
-            emit FeesAccumulated(questionCreator, uint96(creatorFee), accumulatedFees[questionCreator]);
+            emit FeesAccumulated(questionOwner, uint96(creatorFee), accumulatedFees[questionOwner]);
         }
 
         uint256 newPrice = getSharePrice(answerId);
@@ -740,10 +755,12 @@ contract AnswerSharesCore is
         string memory text,
         string memory category,
         address creator,
+        address owner,
         uint48 createdAt,
         bool isActive,
         uint256 totalVolume,
-        uint256 answerCount
+        uint256 answerCount,
+        uint96 salePrice
     ) {
         Question storage question = questions[questionId];
         return (
@@ -751,10 +768,12 @@ contract AnswerSharesCore is
             question.text,
             question.category,
             question.creator,
+            question.owner,
             question.createdAt,
             question.isActive,
             question.totalVolume,
-            questionAnswerIds[questionId].length
+            questionAnswerIds[questionId].length,
+            question.salePrice
         );
     }
 
@@ -802,6 +821,99 @@ contract AnswerSharesCore is
         usdcToken.safeTransfer(msg.sender, amount);
 
         emit FeesClaimed(msg.sender, amount);
+    }
+
+    // === QUESTION MARKETPLACE ===
+
+    /**
+     * @notice List a question for sale
+     * @dev Only the question owner can list. Setting price to 0 cancels the listing.
+     * @param questionId The question to list
+     * @param price Sale price in USDC (6 decimals)
+     */
+    function listQuestionForSale(uint256 questionId, uint96 price) external nonReentrant whenNotPaused {
+        Question storage question = questions[questionId];
+        if (question.id == 0) revert QuestionNotFound();
+        if (question.owner != msg.sender) revert NotTheQuestionOwner();
+
+        question.salePrice = price;
+
+        if (price > 0) {
+            emit QuestionListedForSale(questionId, msg.sender, price);
+        } else {
+            emit QuestionSaleCancelled(questionId, msg.sender);
+        }
+    }
+
+    /**
+     * @notice Cancel a question sale listing
+     * @param questionId The question to delist
+     */
+    function cancelQuestionSale(uint256 questionId) external nonReentrant whenNotPaused {
+        Question storage question = questions[questionId];
+        if (question.id == 0) revert QuestionNotFound();
+        if (question.owner != msg.sender) revert NotTheQuestionOwner();
+
+        question.salePrice = 0;
+        emit QuestionSaleCancelled(questionId, msg.sender);
+    }
+
+    /**
+     * @notice Buy a question that is listed for sale
+     * @dev 10% fee goes to platform (treasury), 90% to seller
+     * @param questionId The question to buy
+     */
+    function buyQuestion(uint256 questionId) external nonReentrant whenNotPaused {
+        Question storage question = questions[questionId];
+        if (question.id == 0) revert QuestionNotFound();
+        if (question.salePrice == 0) revert NotForSale();
+
+        uint96 salePrice = question.salePrice;
+        address seller = question.owner;
+
+        // 10% platform fee, 90% to seller
+        uint96 platformFee = (salePrice * 10) / 100;
+        uint96 sellerAmount = salePrice - platformFee;
+
+        // Transfer USDC from buyer
+        usdcToken.safeTransferFrom(msg.sender, address(this), salePrice);
+
+        // Send platform fee to treasury
+        if (platformFee > 0) {
+            usdcToken.safeTransfer(treasury, platformFee);
+        }
+
+        // Accumulate seller amount as claimable fees
+        accumulatedFees[seller] += sellerAmount;
+        totalAccumulatedFees += sellerAmount;
+        emit FeesAccumulated(seller, sellerAmount, accumulatedFees[seller]);
+
+        // Transfer ownership
+        question.owner = msg.sender;
+        question.salePrice = 0;
+
+        emit QuestionPurchased(questionId, seller, msg.sender, salePrice);
+    }
+
+    /**
+     * @notice Transfer question ownership without payment (free transfer)
+     * @dev Only the question owner can transfer. Clears any active sale listing.
+     * @param questionId The question to transfer
+     * @param newOwner The recipient address
+     */
+    function transferQuestionOwnership(uint256 questionId, address newOwner) external nonReentrant whenNotPaused {
+        if (newOwner == address(0)) revert InvalidAddress();
+
+        Question storage question = questions[questionId];
+        if (question.id == 0) revert QuestionNotFound();
+        if (question.owner != msg.sender) revert NotTheQuestionOwner();
+        if (newOwner == msg.sender) revert SelfTransferNotAllowed();
+
+        address previousOwner = question.owner;
+        question.owner = newOwner;
+        question.salePrice = 0;  // Clear any active listing
+
+        emit QuestionOwnershipTransferred(questionId, previousOwner, newOwner);
     }
 
     // === INTERNAL FUNCTIONS ===
@@ -1044,7 +1156,7 @@ contract AnswerSharesCore is
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return "2.0.0";  // V2: Added 2 decimal places for shares (Polymarket-style)
+        return "2.1.0";  // V2.1: Added question marketplace (list/buy/transfer)
     }
 
     /**

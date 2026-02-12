@@ -57,7 +57,7 @@
     "dotenv": "^17.2.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-    "hardhat": "^2.22.0",
+    "hardhat": "^2.22.19",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
