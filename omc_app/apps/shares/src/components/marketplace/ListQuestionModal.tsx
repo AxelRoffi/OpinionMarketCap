@@ -113,7 +113,7 @@ export function ListQuestionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="w-5 h-5 text-emerald-500" />
@@ -160,10 +160,26 @@ export function ListQuestionModal({
                 disabled={isLoading}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Buyer pays 10% platform fee. You receive 90% of sale price.
-            </p>
           </div>
+
+          {/* Fee Breakdown */}
+          {price && parseFloat(price) > 0 && (
+            <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Revenue Split</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Sale Price</span>
+                <span className="text-foreground">${parseFloat(price).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Platform Fee (10%)</span>
+                <span className="text-yellow-500">-${(parseFloat(price) * 0.1).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-border pt-2">
+                <span className="text-muted-foreground font-medium">You Receive (90%)</span>
+                <span className="text-emerald-500 font-bold">${(parseFloat(price) * 0.9).toFixed(2)}</span>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">

@@ -102,16 +102,15 @@ export default function QuestionDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div className="h-64 rounded-xl animate-shimmer" />
-          <div className="h-64 rounded-xl animate-shimmer delay-75" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div className="h-48 rounded-xl animate-shimmer" />
+          <div className="h-48 rounded-xl animate-shimmer delay-75" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 space-y-4">
-            <AnswerCardSkeleton />
-            <AnswerCardSkeleton />
-          </div>
-          <div className="h-80 rounded-xl animate-shimmer" />
+        <div className="h-32 rounded-xl animate-shimmer mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <AnswerCardSkeleton />
+          <AnswerCardSkeleton />
+          <AnswerCardSkeleton />
         </div>
       </div>
     );
@@ -231,20 +230,19 @@ export default function QuestionDetailPage() {
               )}
             </div>
 
-            {/* Quick actions */}
-            {question.isActive && answers.length > 0 && (
-              <div className="mt-auto pt-2 border-t border-border/30">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowProposeModal(true)}
-                  className="w-full text-[10px] h-7"
-                >
-                  <Plus className="mr-0.5 h-2.5 w-2.5" />
-                  Propose New Answer ($5)
-                </Button>
+            {/* Question Creator - moved from sidebar */}
+            <div className="border-t border-border/30 pt-2 mt-auto">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-[8px]">
+                  {question.creator.slice(2, 4).toUpperCase()}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-[10px]">{shortenAddress(question.creator)}</p>
+                  <p className="text-[9px] text-muted-foreground">Creator • Earns 0.5% on trades</p>
+                </div>
               </div>
-            )}
+            </div>
+
           </CardContent>
         </Card>
 
@@ -253,6 +251,8 @@ export default function QuestionDetailPage() {
           <InlineTradingPanel
             answers={sortedAnswers}
             onSuccess={handleTradeSuccess}
+            onProposeNew={question.isActive ? () => setShowProposeModal(true) : undefined}
+            proposalStake={5_000_000n}
           />
         </Card>
       </div>
@@ -313,92 +313,46 @@ export default function QuestionDetailPage() {
         </CardContent>
       </Card>
 
-      {/* ========== ANSWERS SECTION ========== */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* All Answers */}
-        <div className="lg:col-span-3 space-y-2">
-          <h2 className="text-sm font-semibold">All Answers ({answers.length})</h2>
+      {/* ========== ANSWERS SECTION (3-Column Grid) ========== */}
+      <div>
+        <h2 className="text-sm font-semibold mb-2">All Answers ({answers.length})</h2>
 
-          {sortedAnswers.length === 0 ? (
-            <Card variant="glass">
-              <CardContent className="py-6 text-center">
-                <MessageSquare className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <h3 className="mb-1 font-medium text-sm">No answers yet</h3>
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Be the first to propose an answer!
-                </p>
-                {question.isActive && (
-                  <Button size="sm" onClick={() => setShowProposeModal(true)}>
-                    <Plus className="mr-1 h-3 w-3" />
-                    Propose Answer ($5)
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {sortedAnswers.map((answer, index) => {
-                const position = positions[answer.id.toString()];
-                const isLeading = answer.id === leadingAnswerId;
-
-                return (
-                  <AnswerCard
-                    key={answer.id.toString()}
-                    answer={answer}
-                    rank={index + 1}
-                    userPosition={position}
-                    isLeading={isLeading}
-                    onBuy={() => setBuyingAnswer(answer)}
-                    onSell={() => setSellingAnswer(answer)}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Question Creator Sidebar */}
-        <div className="space-y-3">
+        {sortedAnswers.length === 0 ? (
           <Card variant="glass">
-            <CardContent className="p-3">
-              <h3 className="font-semibold mb-2 text-xs">Question Creator</h3>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-[10px]">
-                  {question.creator.slice(2, 4).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium text-xs">{shortenAddress(question.creator)}</p>
-                  <p className="text-[10px] text-muted-foreground">Earns 0.5% on all trades</p>
-                </div>
-              </div>
+            <CardContent className="py-6 text-center">
+              <MessageSquare className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+              <h3 className="mb-1 font-medium text-sm">No answers yet</h3>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Be the first to propose an answer!
+              </p>
+              {question.isActive && (
+                <Button size="sm" onClick={() => setShowProposeModal(true)}>
+                  <Plus className="mr-1 h-3 w-3" />
+                  Propose Answer ($5)
+                </Button>
+              )}
             </CardContent>
           </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sortedAnswers.map((answer, index) => {
+              const position = positions[answer.id.toString()];
+              const isLeading = answer.id === leadingAnswerId;
 
-          {/* Market Info Card */}
-          <Card variant="glass">
-            <CardContent className="p-3">
-              <h3 className="font-semibold mb-2 text-xs">How Shares Work</h3>
-              <ul className="text-[10px] text-muted-foreground space-y-1.5">
-                <li className="flex items-start gap-1.5">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>Price increases as more people buy</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>Sell anytime to exit your position</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>Leading answer has highest market cap</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-emerald-400 mt-0.5">•</span>
-                  <span>2% fee (1.5% platform + 0.5% creator)</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+              return (
+                <AnswerCard
+                  key={answer.id.toString()}
+                  answer={answer}
+                  rank={index + 1}
+                  userPosition={position}
+                  isLeading={isLeading}
+                  onBuy={() => setBuyingAnswer(answer)}
+                  onSell={() => setSellingAnswer(answer)}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ========== MODALS ========== */}

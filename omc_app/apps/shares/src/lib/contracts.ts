@@ -11,7 +11,7 @@ export const CONTRACTS = {
   },
   // Base Sepolia (Testnet)
   testnet: {
-    ANSWER_SHARES_CORE: "0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA" as `0x${string}`, // v2.1.0 upgraded Feb 12, 2025 (2 decimals + marketplace)
+    ANSWER_SHARES_CORE: "0x43C8f0774b7635cf16eCf2238b974ad3b0370937" as `0x${string}`, // v2.1.0 fresh deploy Feb 12, 2025 (2 decimals + marketplace)
     USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`, // Base Sepolia USDC
   },
 } as const;

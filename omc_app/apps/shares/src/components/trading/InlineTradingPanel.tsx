@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { Zap, ChevronDown, Loader2, AlertCircle, TrendingUp, DollarSign, Coins, HelpCircle } from 'lucide-react';
+import { Zap, ChevronDown, Loader2, AlertCircle, TrendingUp, DollarSign, Coins, HelpCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBuyShares, useChainSwitch } from '@/hooks';
 import { formatUSDC, formatSharePrice } from '@/lib/utils';
@@ -11,9 +11,11 @@ import { SHARES_DECIMALS, type Answer } from '@/lib/contracts';
 interface InlineTradingPanelProps {
   answers: Answer[];
   onSuccess?: () => void;
+  onProposeNew?: () => void;
+  proposalStake?: bigint;
 }
 
-export function InlineTradingPanel({ answers, onSuccess }: InlineTradingPanelProps) {
+export function InlineTradingPanel({ answers, onSuccess, onProposeNew, proposalStake }: InlineTradingPanelProps) {
   const { isConnected } = useAccount();
   const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
 
@@ -91,9 +93,24 @@ export function InlineTradingPanel({ answers, onSuccess }: InlineTradingPanelPro
 
   if (answers.length === 0) {
     return (
-      <div className="p-6 text-center text-muted-foreground">
-        <p className="text-sm">No answers to trade yet.</p>
-        <p className="text-xs mt-1">Propose the first answer!</p>
+      <div className="p-4 space-y-3">
+        <h3 className="font-semibold text-sm flex items-center gap-2">
+          <Zap className="h-4 w-4 text-emerald-400" />
+          Quick Trade
+        </h3>
+        <div className="text-center py-4 text-muted-foreground">
+          <p className="text-sm">No answers to trade yet.</p>
+          <p className="text-xs mt-1 mb-3">Be the first to propose an answer!</p>
+          {onProposeNew && (
+            <Button
+              onClick={onProposeNew}
+              className="bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Propose Answer ({proposalStake ? formatUSDC(proposalStake) : '$5'})
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -127,7 +144,7 @@ export function InlineTradingPanel({ answers, onSuccess }: InlineTradingPanelPro
 
         {/* Dropdown */}
         {showDropdown && (
-          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg max-h-40 overflow-auto">
+          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg max-h-48 overflow-auto">
             {answers.map((answer, index) => (
               <button
                 key={answer.id.toString()}
@@ -138,7 +155,7 @@ export function InlineTradingPanel({ answers, onSuccess }: InlineTradingPanelPro
                 }}
                 className={`w-full flex items-center gap-2 p-2 text-left hover:bg-muted/50 transition-colors text-sm ${
                   answer.id.toString() === selectedAnswerId ? 'bg-emerald-500/10' : ''
-                } ${index !== answers.length - 1 ? 'border-b border-border/50' : ''}`}
+                } border-b border-border/50`}
               >
                 <span className="w-5 text-center text-xs">
                   {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
@@ -147,6 +164,23 @@ export function InlineTradingPanel({ answers, onSuccess }: InlineTradingPanelPro
                 <span className="text-xs text-muted-foreground">{formatSharePrice(answer.pricePerShare)}</span>
               </button>
             ))}
+            {/* Propose New Answer Option */}
+            {onProposeNew && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDropdown(false);
+                  onProposeNew();
+                }}
+                className="w-full flex items-center gap-2 p-2 text-left hover:bg-purple-500/10 transition-colors text-sm text-purple-400"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="flex-1">Propose New Answer</span>
+                <span className="text-xs text-muted-foreground">
+                  {proposalStake ? formatUSDC(proposalStake) : '$5'}
+                </span>
+              </button>
+            )}
           </div>
         )}
       </div>

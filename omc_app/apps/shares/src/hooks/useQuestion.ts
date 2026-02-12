@@ -44,10 +44,10 @@ export function useQuestion(questionId: bigint | number | undefined) {
   let answerIds: bigint[] = [];
 
   if (data) {
-    // Parse question (no description/link - those are on answers now)
+    // Parse question: id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice
     if (data[0].status === 'success' && data[0].result) {
-      const [qId, text, category, creator, createdAt, isActive, totalVolume, answerCount] =
-        data[0].result as unknown as [bigint, string, string, `0x${string}`, number, boolean, bigint, bigint];
+      const [qId, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice] =
+        data[0].result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint];
 
       if (qId > 0n) {
         question = {
@@ -55,10 +55,12 @@ export function useQuestion(questionId: bigint | number | undefined) {
           text,
           category,
           creator,
+          owner,
           createdAt,
           isActive,
           totalVolume,
           answerCount,
+          salePrice,
         };
       }
     }

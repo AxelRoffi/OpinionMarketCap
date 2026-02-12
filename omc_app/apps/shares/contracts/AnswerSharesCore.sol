@@ -604,6 +604,9 @@ contract AnswerSharesCore is
         answer.poolValue -= uint128(grossReturn);
         answer.totalShares -= uint128(shareAmount);
 
+        // Update question volume (track sell volume same as buy volume)
+        questions[answer.questionId].totalVolume += grossReturn;
+
         // Update user position (pro-rata cost basis reduction)
         uint256 costBasisReduction = (uint256(pos.costBasis) * shareAmount) / pos.shares;
         pos.shares -= uint128(shareAmount);
@@ -1156,7 +1159,7 @@ contract AnswerSharesCore is
      * @return Version string
      */
     function version() external pure returns (string memory) {
-        return "2.1.0";  // V2.1: Added question marketplace (list/buy/transfer)
+        return "2.2.0";  // V2.2: Volume tracking includes sell trades
     }
 
     /**

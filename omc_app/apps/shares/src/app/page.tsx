@@ -85,9 +85,9 @@ export default function HomePage() {
 
   // Calculate market stats
   const marketStats = useMemo(() => {
-    const totalVolume = questions.reduce((sum, q) => sum + q.totalVolume, 0n);
-    const totalMarketCap = questions.reduce((sum, q) => sum + (q.leadingMarketCap || 0n), 0n);
-    const totalAnswers = questions.reduce((sum, q) => sum + q.answerCount, 0n);
+    const totalVolume = questions.reduce((sum, q) => sum + BigInt(q.totalVolume || 0), 0n);
+    const totalMarketCap = questions.reduce((sum, q) => sum + BigInt(q.leadingMarketCap || 0), 0n);
+    const totalAnswers = questions.reduce((sum, q) => sum + BigInt(q.answerCount || 0), 0n);
     return {
       totalVolume,
       totalMarketCap,
@@ -379,9 +379,16 @@ export default function HomePage() {
                     <span className="text-foreground font-bold text-base truncate flex-1">
                       {question.leadingAnswerText}
                     </span>
-                    <span className="text-emerald-400 font-semibold text-xs shrink-0">
-                      {formatLargeUSDC(question.leadingMarketCap || 0n)}
-                    </span>
+                    <div className="flex flex-col items-end shrink-0">
+                      <span className="text-emerald-400 font-semibold text-xs">
+                        {formatLargeUSDC(question.leadingMarketCap || 0n)} MCap
+                      </span>
+                      {question.leadingPricePerShare && (
+                        <span className="text-muted-foreground text-[10px]">
+                          ${(Number(question.leadingPricePerShare) / 1e12).toFixed(2)}/share
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted/30 border border-dashed border-border/50">
@@ -396,13 +403,19 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/20">
                   <div className="flex items-center gap-3 text-xs">
                     <div>
-                      <div className="text-muted-foreground">Vol</div>
+                      <div className="text-muted-foreground">Volume</div>
                       <div className="font-medium text-foreground">{formatLargeUSDC(question.totalVolume)}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Answers</div>
                       <div className="font-medium text-foreground">{Number(question.answerCount)}</div>
                     </div>
+                    {question.leadingTotalShares && question.leadingTotalShares > 0n && (
+                      <div>
+                        <div className="text-muted-foreground">Shares</div>
+                        <div className="font-medium text-foreground">{(Number(question.leadingTotalShares) / 100).toFixed(2)}</div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     {hasLeadingAnswer && Number(question.answerCount) > 0 && (
