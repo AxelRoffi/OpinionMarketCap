@@ -34,6 +34,7 @@ export function GlobalNavbar() {
           <nav className="hidden lg:flex items-center gap-1 ml-auto mr-3">
             <Link href="/" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Market</Link>
             <Link href="/create" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Create</Link>
+            <Link href="/marketplace" className="text-xs text-muted-foreground font-medium hover:text-purple-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Marketplace</Link>
             <Link href="/leaderboard" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Leaderboard</Link>
             <Link href="/portfolio" className="text-xs text-muted-foreground font-medium hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-md hover:bg-muted">Portfolio</Link>
           </nav>
@@ -83,6 +84,13 @@ export function GlobalNavbar() {
                   className="text-sm text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
                 >
                   Create
+                </Link>
+                <Link
+                  href="/marketplace"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-sm text-muted-foreground hover:text-purple-400 transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
+                >
+                  Marketplace
                 </Link>
                 <Link
                   href="/leaderboard"
