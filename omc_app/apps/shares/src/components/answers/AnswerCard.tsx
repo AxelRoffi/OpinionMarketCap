@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, User, Zap, Target, TrendingUp, TrendingDown, Coins } from 'lucide-react';
+import { Users, User, Zap, Target, TrendingUp, TrendingDown, Coins, GraduationCap } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,6 +75,12 @@ export function AnswerCard({
               {isLeading && (
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[8px] px-1 py-0 shrink-0">
                   Leading
+                </Badge>
+              )}
+              {answer.hasGraduated && (
+                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[8px] px-1 py-0 shrink-0 gap-0.5">
+                  <GraduationCap className="h-2 w-2" />
+                  Graduated
                 </Badge>
               )}
             </div>

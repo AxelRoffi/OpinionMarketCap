@@ -11,7 +11,7 @@ export const CONTRACTS = {
   },
   // Base Sepolia (Testnet)
   testnet: {
-    ANSWER_SHARES_CORE: "0x43C8f0774b7635cf16eCf2238b974ad3b0370937" as `0x${string}`, // v2.1.0 fresh deploy Feb 12, 2025 (2 decimals + marketplace)
+    ANSWER_SHARES_CORE: "0x9be74C78AD107bbBf3580128d90ebb2aac022BfC" as `0x${string}`, // V3 deploy Feb 19, 2025 (exponential + king fees)
     USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`, // Base Sepolia USDC
   },
 } as const;
@@ -56,7 +56,7 @@ export const USDC_ABI = [
   },
 ] as const;
 
-// ============ ANSWER SHARES CORE ABI ============
+// ============ ANSWER SHARES CORE V3 ABI ============
 export const ANSWER_SHARES_CORE_ABI = [
   // === EVENTS ===
   {
@@ -107,6 +107,8 @@ export const ANSWER_SHARES_CORE_ABI = [
       { indexed: false, name: "shares", type: "uint256" },
       { indexed: false, name: "cost", type: "uint256" },
       { indexed: false, name: "newPrice", type: "uint256" },
+      { indexed: false, name: "newPoolValue", type: "uint256" },
+      { indexed: false, name: "newTotalShares", type: "uint256" },
     ],
     name: "SharesBought",
     type: "event",
@@ -142,6 +144,58 @@ export const ANSWER_SHARES_CORE_ABI = [
     name: "FeesAccumulated",
     type: "event",
   },
+  // V3 Events
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "answerId", type: "uint256" },
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: false, name: "marketCap", type: "uint256" },
+    ],
+    name: "AnswerGraduated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "newLeaderId", type: "uint256" },
+      { indexed: true, name: "oldLeaderId", type: "uint256" },
+      { indexed: false, name: "newLeaderMarketCap", type: "uint256" },
+    ],
+    name: "LeaderChanged",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "answerId", type: "uint256" },
+      { indexed: false, name: "amount", type: "uint96" },
+    ],
+    name: "KingFeesDistributed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "answerId", type: "uint256" },
+      { indexed: true, name: "user", type: "address" },
+      { indexed: false, name: "amount", type: "uint96" },
+    ],
+    name: "KingFeesClaimed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "questionId", type: "uint256" },
+      { indexed: true, name: "from", type: "address" },
+      { indexed: true, name: "to", type: "address" },
+    ],
+    name: "QuestionOwnershipTransferred",
+    type: "event",
+  },
 
   // === READ FUNCTIONS ===
   // Config
@@ -175,6 +229,13 @@ export const ANSWER_SHARES_CORE_ABI = [
   },
   {
     inputs: [],
+    name: "kingFeeBps",
+    outputs: [{ name: "", type: "uint16" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "paused",
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "view",
@@ -201,6 +262,63 @@ export const ANSWER_SHARES_CORE_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  // V3 Config
+  {
+    inputs: [],
+    name: "bootstrapThreshold",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "maxMultiplier",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "baseAnswerLimit",
+    outputs: [{ name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "maxAnswerLimit",
+    outputs: [{ name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "volumePerSlot",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "kingFlipThresholdBps",
+    outputs: [{ name: "", type: "uint16" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "graduationThreshold",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "version",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "pure",
+    type: "function",
+  },
 
   // Questions
   {
@@ -217,6 +335,7 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "totalVolume", type: "uint256" },
       { name: "answerCount", type: "uint256" },
       { name: "salePrice", type: "uint96" },
+      { name: "leadingAnswerId", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
@@ -245,6 +364,13 @@ export const ANSWER_SHARES_CORE_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [{ name: "questionId", type: "uint256" }],
+    name: "getMaxAnswersForQuestion",
+    outputs: [{ name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
 
   // Answers
   {
@@ -263,6 +389,7 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "createdAt", type: "uint48" },
       { name: "isActive", type: "bool" },
       { name: "isFlagged", type: "bool" },
+      { name: "hasGraduated", type: "bool" },
     ],
     stateMutability: "view",
     type: "function",
@@ -294,6 +421,7 @@ export const ANSWER_SHARES_CORE_ABI = [
       { name: "currentValue", type: "uint256" },
       { name: "costBasis", type: "uint256" },
       { name: "profitLoss", type: "int256" },
+      { name: "pendingKingFees", type: "uint96" },
     ],
     stateMutability: "view",
     type: "function",
@@ -308,6 +436,17 @@ export const ANSWER_SHARES_CORE_ABI = [
   {
     inputs: [{ name: "", type: "address" }],
     name: "accumulatedFees",
+    outputs: [{ name: "", type: "uint96" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  // V3: King fees
+  {
+    inputs: [
+      { name: "answerId", type: "uint256" },
+      { name: "user", type: "address" },
+    ],
+    name: "getPendingKingFees",
     outputs: [{ name: "", type: "uint96" }],
     stateMutability: "view",
     type: "function",
@@ -383,32 +522,15 @@ export const ANSWER_SHARES_CORE_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
-
-  // === QUESTION MARKETPLACE ===
+  // V3: King fee claiming
   {
-    inputs: [
-      { name: "questionId", type: "uint256" },
-      { name: "price", type: "uint96" },
-    ],
-    name: "listQuestionForSale",
+    inputs: [{ name: "answerId", type: "uint256" }],
+    name: "claimKingFees",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
-  {
-    inputs: [{ name: "questionId", type: "uint256" }],
-    name: "cancelQuestionSale",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "questionId", type: "uint256" }],
-    name: "buyQuestion",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
+  // Question ownership
   {
     inputs: [
       { name: "questionId", type: "uint256" },
@@ -418,48 +540,6 @@ export const ANSWER_SHARES_CORE_ABI = [
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
-  },
-
-  // === MARKETPLACE EVENTS ===
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "questionId", type: "uint256" },
-      { indexed: true, name: "owner", type: "address" },
-      { indexed: false, name: "price", type: "uint96" },
-    ],
-    name: "QuestionListedForSale",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "questionId", type: "uint256" },
-      { indexed: true, name: "owner", type: "address" },
-    ],
-    name: "QuestionSaleCancelled",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "questionId", type: "uint256" },
-      { indexed: true, name: "seller", type: "address" },
-      { indexed: true, name: "buyer", type: "address" },
-      { indexed: false, name: "price", type: "uint96" },
-    ],
-    name: "QuestionPurchased",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "questionId", type: "uint256" },
-      { indexed: true, name: "from", type: "address" },
-      { indexed: true, name: "to", type: "address" },
-    ],
-    name: "QuestionOwnershipTransferred",
-    type: "event",
   },
 ] as const;
 
@@ -475,6 +555,7 @@ export interface Question {
   totalVolume: bigint;
   answerCount: bigint;
   salePrice: bigint;
+  leadingAnswerId: bigint;
 }
 
 // All categories (matching Hot Potato + crypto-specific)
@@ -515,6 +596,7 @@ export interface Answer {
   createdAt: number;
   isActive: boolean;
   isFlagged: boolean;
+  hasGraduated: boolean;
 }
 
 export interface UserPosition {
@@ -522,6 +604,7 @@ export interface UserPosition {
   currentValue: bigint;
   costBasis: bigint;
   profitLoss: bigint;
+  pendingKingFees: bigint;
 }
 
 export interface LeadingAnswer {

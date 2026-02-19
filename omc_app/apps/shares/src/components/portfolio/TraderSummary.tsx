@@ -1,6 +1,6 @@
 'use client';
 
-import { Crown, BarChart3, Target, DollarSign, Plus, TrendingUp, Clock, Layers } from 'lucide-react';
+import { Crown, BarChart3, Target, DollarSign, Plus, TrendingUp, Clock, Layers, GraduationCap } from 'lucide-react';
 import { type UserStats } from '@/hooks/useUserProfile';
 
 interface TraderSummaryProps {
@@ -92,6 +92,32 @@ export function TraderSummary({ stats }: TraderSummaryProps) {
             <div>
               <div className="text-sm font-bold text-foreground">{stats.answersProposed}</div>
               <div className="text-[10px] text-muted-foreground">Proposed</div>
+            </div>
+          </div>
+        )}
+
+        {/* King Positions */}
+        {stats.kingPositions > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <Crown className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-foreground">{stats.kingPositions}</div>
+              <div className="text-[10px] text-muted-foreground">King</div>
+            </div>
+          </div>
+        )}
+
+        {/* Graduated Positions */}
+        {stats.graduatedPositions > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-4 h-4 text-purple-400" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-foreground">{stats.graduatedPositions}</div>
+              <div className="text-[10px] text-muted-foreground">Graduated</div>
             </div>
           </div>
         )}

@@ -33,7 +33,7 @@ export function useUserPosition(answerId: bigint | number | undefined, userAddre
   let position: UserPosition | undefined;
 
   if (data) {
-    const [shares, currentValue, costBasis, profitLoss] = data as [bigint, bigint, bigint, bigint];
+    const [shares, currentValue, costBasis, profitLoss, pendingKingFees] = data as [bigint, bigint, bigint, bigint, bigint];
 
     if (shares > 0n) {
       position = {
@@ -41,6 +41,7 @@ export function useUserPosition(answerId: bigint | number | undefined, userAddre
         currentValue,
         costBasis,
         profitLoss,
+        pendingKingFees,
       };
     }
   }
@@ -96,15 +97,14 @@ export function useUserPositions(answerIds: bigint[], userAddress?: `0x${string}
   if (positionsData) {
     positionsData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
-        const [shares, currentValue, costBasis, profitLoss] = result.result as unknown as [bigint, bigint, bigint, bigint];
+        const [shares, currentValue, costBasis, profitLoss, pendingKingFees] = result.result as unknown as [bigint, bigint, bigint, bigint, bigint];
 
         if (shares > 0n) {
           let answer: Answer | undefined;
 
           if (answersData?.[index]?.status === 'success' && answersData[index].result) {
-            // Answer struct now includes description and link
-            const [id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
-              answersData[index].result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+            const [id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged, hasGraduated] =
+              answersData[index].result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean, boolean];
 
             answer = {
               id,
@@ -119,6 +119,7 @@ export function useUserPositions(answerIds: bigint[], userAddress?: `0x${string}
               createdAt,
               isActive,
               isFlagged,
+              hasGraduated,
             };
           }
 
@@ -128,6 +129,7 @@ export function useUserPositions(answerIds: bigint[], userAddress?: `0x${string}
             currentValue,
             costBasis,
             profitLoss,
+            pendingKingFees,
             answer,
           });
         }

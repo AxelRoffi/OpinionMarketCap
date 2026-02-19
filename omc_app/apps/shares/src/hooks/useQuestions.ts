@@ -90,8 +90,8 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
   if (questionsData) {
     questionsData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
-        // Question struct: id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice
-        const [id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice] = result.result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint];
+        // Question struct V3: id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, leadingAnswerId
+        const [id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, qLeadingAnswerId] = result.result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint, bigint];
 
         // Skip invalid questions (id = 0 means doesn't exist)
         if (id === 0n) return;
@@ -123,7 +123,7 @@ export function useQuestions(options?: { limit?: number; offset?: number }) {
           totalVolume,
           answerCount,
           salePrice,
-          leadingAnswerId: leadingData?.[0],
+          leadingAnswerId: qLeadingAnswerId || leadingData?.[0] || 0n,
           leadingMarketCap: leadingData?.[1],
           leadingAnswerText,
           leadingPricePerShare,

@@ -43,8 +43,8 @@ export function useAnswers(questionId: bigint | number | undefined, answerIds?: 
   if (answersData) {
     answersData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
-        const [id, qId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
-          result.result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+        const [id, qId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged, hasGraduated] =
+          result.result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean, boolean];
 
         // Skip invalid answers
         if (id === 0n) return;
@@ -66,6 +66,7 @@ export function useAnswers(questionId: bigint | number | undefined, answerIds?: 
           createdAt,
           isActive,
           isFlagged,
+          hasGraduated,
           holderCount,
         });
       }
@@ -114,8 +115,8 @@ export function useAnswer(answerId: bigint | number | undefined) {
   let answer: (Answer & { holderCount?: bigint }) | undefined;
 
   if (data && data[0].status === 'success' && data[0].result) {
-    const [aId, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
-      data[0].result as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+    const [aId, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged, hasGraduated] =
+      data[0].result as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean, boolean];
 
     if (aId > 0n) {
       const holderCount = data[1]?.status === 'success' ? data[1].result as bigint : undefined;
@@ -133,6 +134,7 @@ export function useAnswer(answerId: bigint | number | undefined) {
         createdAt,
         isActive,
         isFlagged,
+        hasGraduated,
         holderCount,
       };
     }

@@ -1,11 +1,12 @@
 'use client';
 
-import { Coins, Loader2, ExternalLink, CheckCircle } from 'lucide-react';
+import { Coins, Loader2, ExternalLink, CheckCircle, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 
 interface FeeBannerProps {
   accumulatedFees: number;
+  totalKingFees: number;
   onClaimFees: () => void;
   isClaimingFees: boolean;
   claimSuccess: boolean;
@@ -16,6 +17,7 @@ interface FeeBannerProps {
 
 export function FeeBanner({
   accumulatedFees,
+  totalKingFees,
   onClaimFees,
   isClaimingFees,
   claimSuccess,
@@ -23,12 +25,14 @@ export function FeeBanner({
   transactionHash,
   isOwnProfile,
 }: FeeBannerProps) {
-  const animatedFees = useAnimatedCounter(accumulatedFees, 800);
+  const animatedCreatorFees = useAnimatedCounter(accumulatedFees, 800);
+  const animatedKingFees = useAnimatedCounter(totalKingFees, 800);
+  const totalFees = accumulatedFees + totalKingFees;
 
   const formatAnimated = (val: number) =>
     `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  if (!isOwnProfile || accumulatedFees === 0) return null;
+  if (!isOwnProfile || totalFees === 0) return null;
 
   return (
     <div className={`rounded-xl border p-4 ${
@@ -49,10 +53,27 @@ export function FeeBanner({
           </div>
           <div>
             <div className="text-sm text-muted-foreground">
-              {claimSuccess ? 'Fees Claimed Successfully!' : 'Claimable Creator Fees'}
+              {claimSuccess ? 'Fees Claimed Successfully!' : 'Claimable Fees'}
             </div>
-            <div className={`text-xl font-bold ${claimSuccess ? 'text-green-400' : 'text-primary'}`}>
-              {formatAnimated(animatedFees)}
+            <div className="flex items-center gap-3">
+              {accumulatedFees > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Coins className="w-3.5 h-3.5 text-primary" />
+                  <span className={`text-lg font-bold ${claimSuccess ? 'text-green-400' : 'text-primary'}`}>
+                    {formatAnimated(animatedCreatorFees)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">creator</span>
+                </div>
+              )}
+              {totalKingFees > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-lg font-bold text-amber-400">
+                    {formatAnimated(animatedKingFees)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">king</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -70,7 +91,7 @@ export function FeeBanner({
             </a>
           )}
 
-          {!claimSuccess && (
+          {!claimSuccess && accumulatedFees > 0 && (
             <Button
               onClick={onClaimFees}
               disabled={isClaimingFees || accumulatedFees === 0}
@@ -84,13 +105,19 @@ export function FeeBanner({
               ) : (
                 <>
                   <Coins className="w-4 h-4 mr-2" />
-                  Claim Fees
+                  Claim Creator Fees
                 </>
               )}
             </Button>
           )}
         </div>
       </div>
+
+      {totalKingFees > 0 && !claimSuccess && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          King fees are claimed per position from the positions list below.
+        </div>
+      )}
 
       {claimError && (
         <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">

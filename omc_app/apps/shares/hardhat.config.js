@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
+const path = require("path");
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001";
 
@@ -17,10 +18,10 @@ module.exports = {
     },
   },
   paths: {
-    sources: "./contracts",
-    tests: "./test",
-    cache: "./cache",
-    artifacts: "./artifacts",
+    sources: path.resolve(__dirname, "contracts"),
+    tests: path.resolve(__dirname, "test"),
+    cache: path.resolve(__dirname, "cache"),
+    artifacts: path.resolve(__dirname, "artifacts"),
   },
   networks: {
     hardhat: {

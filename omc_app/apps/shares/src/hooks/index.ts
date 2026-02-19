@@ -11,6 +11,7 @@ export { useSellShares, type SellSharesStatus } from './useSellShares';
 export { useCreateQuestionWithAnswer, type CreateQuestionWithAnswerStatus } from './useCreateQuestionWithAnswer';
 export { useProposeAnswer, type ProposeAnswerStatus } from './useProposeAnswer';
 export { useClaimFees, type ClaimFeesStatus } from './useClaimFees';
+export { useClaimKingFees, type ClaimKingFeesStatus } from './useClaimKingFees';
 
 // Utility hooks
 export { useChainSwitch, TARGET_CHAIN_ID, TARGET_CHAIN } from './useChainSwitch';

@@ -41,10 +41,15 @@ export interface UserStats {
 
   // Fees
   accumulatedFees: number;   // Claimable creator fees (USDC)
+  totalKingFees: number;     // Claimable king fees across all positions (USDC)
 
   // Platform metrics
   totalPlatformVolume: number; // Total platform volume
   marketShare: number;       // User's share of total platform value
+
+  // V3 metrics
+  graduatedPositions: number; // Number of graduated answer positions
+  kingPositions: number;      // Number of positions in #1 answers
 
   // Activity
   totalVolume: number;       // Volume from user's questions
@@ -156,8 +161,11 @@ export function useUserProfile(userAddress?: `0x${string}`) {
       bestPosition: 0,
       worstPosition: 0,
       accumulatedFees: 0,
+      totalKingFees: 0,
       totalPlatformVolume: 0,
       marketShare: 0,
+      graduatedPositions: 0,
+      kingPositions: 0,
       totalVolume: 0,
       memberSince: 0,
       topCategories: [],
@@ -181,10 +189,10 @@ export function useUserProfile(userAddress?: `0x${string}`) {
       if (questionsData) {
         questionsData.forEach((result) => {
           if (result.status === 'success' && result.result) {
-            const [id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice] =
-              result.result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint];
+            const [id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, leadingAnswerId] =
+              result.result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint, bigint];
             if (id > 0n) {
-              questions.push({ id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice });
+              questions.push({ id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, leadingAnswerId });
             }
           }
         });
@@ -195,10 +203,10 @@ export function useUserProfile(userAddress?: `0x${string}`) {
       if (answersData) {
         answersData.forEach((result) => {
           if (result.status === 'success' && result.result) {
-            const [id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged] =
-              result.result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean];
+            const [id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged, hasGraduated] =
+              result.result as unknown as [bigint, bigint, string, string, string, `0x${string}`, bigint, bigint, bigint, number, boolean, boolean, boolean];
             if (id > 0n) {
-              answers.push({ id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged });
+              answers.push({ id, questionId, text, description, link, proposer, totalShares, poolValue, pricePerShare, createdAt, isActive, isFlagged, hasGraduated });
             }
           }
         });
@@ -209,16 +217,19 @@ export function useUserProfile(userAddress?: `0x${string}`) {
       let totalValue = 0n;
       let totalCostBasis = 0n;
       let totalPnL = 0n;
+      let totalKingFees = 0n;
       let winningPositions = 0;
       let losingPositions = 0;
       let bestPosition = 0n;
       let worstPosition = 0n;
+      let graduatedPositions = 0;
+      let kingPositions = 0;
       let earliestActivity = 0;
 
       if (positionsData) {
         positionsData.forEach((result, index) => {
           if (result.status === 'success' && result.result) {
-            const [shares, currentValue, costBasis, profitLoss] = result.result as unknown as [bigint, bigint, bigint, bigint];
+            const [shares, currentValue, costBasis, profitLoss, pendingKingFees] = result.result as unknown as [bigint, bigint, bigint, bigint, bigint];
 
             if (shares > 0n) {
               const answerId = answerIds[index];
@@ -226,12 +237,13 @@ export function useUserProfile(userAddress?: `0x${string}`) {
               const question = answer ? questions.find(q => q.id === answer.questionId) : undefined;
 
               if (answer && question) {
-                const position: UserPosition = { shares, currentValue, costBasis, profitLoss };
+                const position: UserPosition = { shares, currentValue, costBasis, profitLoss, pendingKingFees };
                 positions.push({ answerId, answer, question, position });
 
                 totalValue += currentValue;
                 totalCostBasis += costBasis;
                 totalPnL += profitLoss;
+                totalKingFees += pendingKingFees;
 
                 if (profitLoss > 0n) {
                   winningPositions++;
@@ -240,6 +252,12 @@ export function useUserProfile(userAddress?: `0x${string}`) {
                   losingPositions++;
                   if (profitLoss < worstPosition) worstPosition = profitLoss;
                 }
+
+                // V3: Track graduated positions
+                if (answer.hasGraduated) graduatedPositions++;
+
+                // V3: Track king positions (user holds shares in #1 answer)
+                if (question.leadingAnswerId === answerId) kingPositions++;
 
                 // Track earliest activity
                 if (answer.createdAt > 0 && (earliestActivity === 0 || answer.createdAt < earliestActivity)) {
@@ -309,8 +327,11 @@ export function useUserProfile(userAddress?: `0x${string}`) {
           bestPosition: Number(bestPosition) / 1_000_000,
           worstPosition: Number(worstPosition) / 1_000_000,
           accumulatedFees: accumulatedFees ? Number(accumulatedFees) / 1_000_000 : 0,
+          totalKingFees: Number(totalKingFees) / 1_000_000,
           totalPlatformVolume,
           marketShare,
+          graduatedPositions,
+          kingPositions,
           totalVolume: userVolume,
           memberSince: earliestActivity * 1000, // Convert to ms
           topCategories,

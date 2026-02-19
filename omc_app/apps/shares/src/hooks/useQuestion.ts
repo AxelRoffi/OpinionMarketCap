@@ -44,10 +44,10 @@ export function useQuestion(questionId: bigint | number | undefined) {
   let answerIds: bigint[] = [];
 
   if (data) {
-    // Parse question: id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice
+    // Parse question V3: id, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, leadingAnswerId
     if (data[0].status === 'success' && data[0].result) {
-      const [qId, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice] =
-        data[0].result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint];
+      const [qId, text, category, creator, owner, createdAt, isActive, totalVolume, answerCount, salePrice, qLeadingAnswerId] =
+        data[0].result as unknown as [bigint, string, string, `0x${string}`, `0x${string}`, number, boolean, bigint, bigint, bigint, bigint];
 
       if (qId > 0n) {
         question = {
@@ -61,6 +61,7 @@ export function useQuestion(questionId: bigint | number | undefined) {
           totalVolume,
           answerCount,
           salePrice,
+          leadingAnswerId: qLeadingAnswerId || 0n,
         };
       }
     }

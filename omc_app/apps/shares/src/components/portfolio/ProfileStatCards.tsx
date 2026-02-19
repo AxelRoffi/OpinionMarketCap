@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingUp, TrendingDown, Plus, Target, BarChart3, Coins } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Target, BarChart3, Coins, Crown } from 'lucide-react';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 import { type UserStats } from '@/hooks/useUserProfile';
 
@@ -101,7 +101,9 @@ export function ProfileStatCards({ stats }: ProfileStatCardsProps) {
 // Secondary stat cards for additional metrics
 export function SecondaryStatCards({ stats }: ProfileStatCardsProps) {
   const animatedVolume = useAnimatedCounter(stats.totalVolume, 800);
-  const animatedFees = useAnimatedCounter(stats.accumulatedFees, 800);
+  const totalClaimable = stats.accumulatedFees + stats.totalKingFees;
+  const animatedFees = useAnimatedCounter(totalClaimable, 800);
+  const animatedKingFees = useAnimatedCounter(stats.totalKingFees, 600);
   const animatedBest = useAnimatedCounter(stats.bestPosition, 600);
   const animatedProposed = useAnimatedCounter(stats.answersProposed, 600);
 
@@ -124,41 +126,60 @@ export function SecondaryStatCards({ stats }: ProfileStatCardsProps) {
         </div>
       </motion.div>
 
-      {/* Claimable Fees */}
+      {/* Claimable Fees (Creator + King combined) */}
       <motion.div {...fadeUp(0.15)}>
         <div className={`group bg-card rounded-xl border p-4 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ${
-          stats.accumulatedFees > 0
+          totalClaimable > 0
             ? 'border-primary/30 hover:border-primary/50 hover:shadow-primary/10'
             : 'border-border hover:border-yellow-500/20 hover:shadow-yellow-500/5'
         }`}>
           <div className="flex items-center justify-between mb-1">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              stats.accumulatedFees > 0 ? 'bg-primary/10' : 'bg-muted group-hover:bg-yellow-500/10'
+              totalClaimable > 0 ? 'bg-primary/10' : 'bg-muted group-hover:bg-yellow-500/10'
             } transition-colors`}>
-              <Coins className={`w-4 h-4 ${stats.accumulatedFees > 0 ? 'text-primary' : 'text-yellow-400'}`} />
+              <Coins className={`w-4 h-4 ${totalClaimable > 0 ? 'text-primary' : 'text-yellow-400'}`} />
             </div>
             <span className="text-xs text-muted-foreground">Fees</span>
           </div>
-          <div className={`text-lg font-bold mt-2 ${stats.accumulatedFees > 0 ? 'text-primary' : 'text-foreground'}`}>
+          <div className={`text-lg font-bold mt-2 ${totalClaimable > 0 ? 'text-primary' : 'text-foreground'}`}>
             {formatAnimated(animatedFees)}
           </div>
           <div className="text-xs text-muted-foreground">Claimable</div>
         </div>
       </motion.div>
 
-      {/* Best Trade */}
+      {/* King Fees */}
       <motion.div {...fadeUp(0.2)}>
-        <div className="group bg-card rounded-xl border border-border p-4 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-500/5 hover:border-green-500/20 transition-all duration-300">
+        <div className={`group bg-card rounded-xl border p-4 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ${
+          stats.totalKingFees > 0
+            ? 'border-amber-500/20 hover:border-amber-500/40 hover:shadow-amber-500/10'
+            : 'border-border hover:border-green-500/20 hover:shadow-green-500/5'
+        }`}>
           <div className="flex items-center justify-between mb-1">
-            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center group-hover:bg-green-500/10 transition-colors">
-              <TrendingUp className="w-4 h-4 text-green-400" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              stats.totalKingFees > 0 ? 'bg-amber-500/10' : 'bg-muted group-hover:bg-green-500/10'
+            } transition-colors`}>
+              {stats.totalKingFees > 0 ? (
+                <Crown className="w-4 h-4 text-amber-400" />
+              ) : (
+                <TrendingUp className="w-4 h-4 text-green-400" />
+              )}
             </div>
-            <span className="text-xs text-muted-foreground">Best</span>
+            <span className="text-xs text-muted-foreground">
+              {stats.totalKingFees > 0 ? 'King' : 'Best'}
+            </span>
           </div>
-          <div className="text-lg font-bold text-green-400 mt-2">
-            {stats.bestPosition > 0 ? `+${formatAnimated(animatedBest)}` : '$0.00'}
+          <div className={`text-lg font-bold mt-2 ${
+            stats.totalKingFees > 0 ? 'text-amber-400' : 'text-green-400'
+          }`}>
+            {stats.totalKingFees > 0
+              ? formatAnimated(animatedKingFees)
+              : stats.bestPosition > 0 ? `+${formatAnimated(animatedBest)}` : '$0.00'
+            }
           </div>
-          <div className="text-xs text-muted-foreground">Trade P&L</div>
+          <div className="text-xs text-muted-foreground">
+            {stats.totalKingFees > 0 ? 'King Fees' : 'Trade P&L'}
+          </div>
         </div>
       </motion.div>
 

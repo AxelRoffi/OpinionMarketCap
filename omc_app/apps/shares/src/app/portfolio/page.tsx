@@ -18,7 +18,7 @@ import {
   TopPositions,
 } from '@/components/portfolio';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useClaimFees, useIsMobile } from '@/hooks';
+import { useClaimFees, useClaimKingFees, useIsMobile } from '@/hooks';
 import type { Answer, UserPosition } from '@/lib/contracts';
 
 const fadeUp = (delay = 0) => ({
@@ -41,6 +41,9 @@ export default function PortfolioPage() {
       refetchFees();
     },
   });
+
+  // King fee claiming
+  const { claimKingFees, isPending: isClaimingKingFees } = useClaimKingFees();
 
   // Modal states
   const [buyingAnswer, setBuyingAnswer] = useState<Answer | null>(null);
@@ -125,6 +128,7 @@ export default function PortfolioPage() {
         <motion.div {...fadeUp(0.25)}>
           <FeeBanner
             accumulatedFees={stats.accumulatedFees}
+            totalKingFees={stats.totalKingFees}
             onClaimFees={claim}
             isClaimingFees={isClaimingFees}
             claimSuccess={claimSuccess}
@@ -148,6 +152,8 @@ export default function PortfolioPage() {
                   setSellingAnswer(answer);
                   setSellingPosition(position);
                 }}
+                onClaimKingFees={claimKingFees}
+                isClaimingKingFees={isClaimingKingFees}
               />
             </div>
 

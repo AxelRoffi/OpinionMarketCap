@@ -27,9 +27,9 @@ describe("AnswerSharesCoreV3", function () {
   beforeEach(async function () {
     [owner, admin, user1, user2, user3, treasury] = await ethers.getSigners();
 
-    // Deploy mock USDC
+    // Deploy mock USDC (6 decimals hardcoded in contract)
     const MockERC20 = await ethers.getContractFactory("MockERC20");
-    usdc = await MockERC20.deploy("USD Coin", "USDC", 6);
+    usdc = await MockERC20.deploy("USD Coin", "USDC");
     await usdc.waitForDeployment();
 
     // Mint USDC to users

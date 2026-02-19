@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { TrendingUp, TrendingDown, Crown, GraduationCap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { type PositionWithDetails } from '@/hooks/useUserProfile';
@@ -14,6 +14,8 @@ interface PositionsListProps {
   isLoading: boolean;
   onBuy: (answer: Answer) => void;
   onSell: (answer: Answer, position: UserPosition) => void;
+  onClaimKingFees?: (answerId: bigint) => void;
+  isClaimingKingFees?: boolean;
 }
 
 const fadeUp = (delay = 0) => ({
@@ -23,7 +25,7 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.4, delay, ease: 'easeOut' as const },
 });
 
-export function PositionsList({ positions, isLoading, onBuy, onSell }: PositionsListProps) {
+export function PositionsList({ positions, isLoading, onBuy, onSell, onClaimKingFees, isClaimingKingFees }: PositionsListProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -70,10 +72,17 @@ export function PositionsList({ positions, isLoading, onBuy, onSell }: Positions
         const pnlNum = Number(item.position.profitLoss) / 1_000_000;
         const costBasis = Number(item.position.costBasis) / 1_000_000;
         const pnlPercentage = costBasis > 0 ? (pnlNum / costBasis) * 100 : 0;
+        const isKing = item.question.leadingAnswerId === item.answerId;
+        const isGraduated = item.answer.hasGraduated;
+        const kingFeesNum = Number(item.position.pendingKingFees) / 1_000_000;
 
         return (
           <motion.div key={item.answerId.toString()} {...fadeUp(index * 0.05)}>
-            <div className="group bg-card rounded-xl border border-border p-4 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+            <div className={`group bg-card rounded-xl border p-4 hover:shadow-lg transition-all duration-300 ${
+              isKing
+                ? 'border-amber-500/30 hover:border-amber-500/50 hover:shadow-amber-500/5'
+                : 'border-border hover:border-primary/20 hover:shadow-primary/5'
+            }`}>
               <div className="flex items-start justify-between gap-4">
                 {/* Position Info */}
                 <div className="flex-1 min-w-0">
@@ -86,14 +95,51 @@ export function PositionsList({ positions, isLoading, onBuy, onSell }: Positions
                   <h3 className="text-lg font-medium text-foreground mt-1 line-clamp-1">
                     {item.answer.text}
                   </h3>
-                  <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground flex-wrap">
                     <Badge variant="outline" className="text-xs">
                       {item.question.category}
                     </Badge>
+                    {isKing && (
+                      <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-xs gap-1">
+                        <Crown className="w-3 h-3" />
+                        King
+                      </Badge>
+                    )}
+                    {isGraduated && (
+                      <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/30 text-xs gap-1">
+                        <GraduationCap className="w-3 h-3" />
+                        Graduated
+                      </Badge>
+                    )}
                     <span>{formatShares(item.position.shares)} shares</span>
                     <span className="text-muted-foreground/60">@</span>
                     <span>{formatUSDC(Number(item.answer.pricePerShare) / 1e12)}/share</span>
                   </div>
+
+                  {/* King Fees row */}
+                  {kingFeesNum > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-amber-400">
+                        <Crown className="w-3 h-3" />
+                        <span>{formatUSDC(kingFeesNum)} king fees</span>
+                      </div>
+                      {onClaimKingFees && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onClaimKingFees(item.answerId)}
+                          disabled={isClaimingKingFees}
+                          className="h-6 text-xs px-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                        >
+                          {isClaimingKingFees ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            'Claim'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Position Value */}

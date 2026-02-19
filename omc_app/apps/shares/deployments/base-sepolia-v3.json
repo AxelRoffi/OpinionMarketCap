@@ -1,0 +1,27 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "timestamp": "2026-02-19T18:35:37.107Z",
+  "version": "3.0.0",
+  "contracts": {
+    "proxy": "0x9be74C78AD107bbBf3580128d90ebb2aac022BfC",
+    "implementation": "0x7d798D98AbD915F6f777D4a9AB0A210653d9F3fF"
+  },
+  "config": {
+    "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "treasury": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C",
+    "admin": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C",
+    "questionCreationFee": "5000000",
+    "answerProposalStake": "5000000",
+    "platformFeeBps": "200",
+    "creatorFeeBps": "50",
+    "kingFeeBps": "50",
+    "kingFlipThresholdBps": "500",
+    "graduationThreshold": "500000000",
+    "bootstrapThreshold": "50000000",
+    "maxMultiplier": "10",
+    "baseAnswerLimit": "7",
+    "maxAnswerLimit": "25",
+    "volumePerSlot": "50000000"
+  }
+}

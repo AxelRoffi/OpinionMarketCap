@@ -45,13 +45,14 @@ export default function QuestionDetailPage() {
   );
 
   // Convert positions array to a map by answer ID for easy lookup
-  const positions: Record<string, { shares: bigint; currentValue: bigint; costBasis: bigint; profitLoss: bigint }> = {};
+  const positions: Record<string, { shares: bigint; currentValue: bigint; costBasis: bigint; profitLoss: bigint; pendingKingFees: bigint }> = {};
   positionsArray.forEach((p) => {
     positions[p.answerId.toString()] = {
       shares: p.shares,
       currentValue: p.currentValue,
       costBasis: p.costBasis,
       profitLoss: p.profitLoss,
+      pendingKingFees: p.pendingKingFees,
     };
   });
   const leadingAnswerId = leadingAnswer?.answerId;
