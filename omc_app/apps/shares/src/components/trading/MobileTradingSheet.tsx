@@ -143,7 +143,7 @@ export function MobileTradingSheet({
   // Buy calculations
   const usdcAmount = parseUSDCInput(buyAmount);
   const grossAmount = Number(usdcAmount) / 1e6;
-  const buyFees = grossAmount * 0.02;
+  const buyFees = grossAmount * 0.03;
   const netAmount = grossAmount - buyFees;
   const estimatedShares = pricePerShare > 0 ? netAmount / pricePerShare : 0;
   const hasEnoughBalance = buyHook.balance !== undefined && buyHook.balance >= usdcAmount;
@@ -158,7 +158,7 @@ export function MobileTradingSheet({
   const grossReturn = position
     ? (position.currentValue * BigInt(sellPercentage)) / 100n
     : 0n;
-  const sellFees = (grossReturn * 2n) / 100n;
+  const sellFees = (grossReturn * 3n) / 100n;
   const netReturn = grossReturn - sellFees;
 
   // Handle buy
@@ -323,7 +323,7 @@ export function MobileTradingSheet({
                       <span className="font-semibold">${grossAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Fees (2%)</span>
+                      <span>Fees (3%)</span>
                       <span>-${buyFees.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-emerald-500/20 pt-3 flex justify-between items-center">
@@ -404,7 +404,7 @@ export function MobileTradingSheet({
                       <span className="font-semibold">{sharesToSell.toFixed(2)} shares</span>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Fees (2%)</span>
+                      <span>Fees (3%)</span>
                       <span>-{formatUSDC(sellFees)}</span>
                     </div>
                     <div className="border-t border-red-500/20 pt-3 flex justify-between items-center">

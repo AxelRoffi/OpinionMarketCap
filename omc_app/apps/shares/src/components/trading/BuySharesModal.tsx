@@ -102,9 +102,9 @@ export function BuySharesModal({
     ? (Number(answer.poolValue) * SHARES_DECIMALS) / Number(answer.totalShares) / 1e6
     : 1.0; // Default $1.00 for new answers
 
-  // Fees: 2% total
+  // Fees: 3% total (2% platform + 0.5% creator + 0.5% king)
   const grossAmount = Number(usdcAmount) / 1e6;
-  const fees = grossAmount * 0.02;
+  const fees = grossAmount * 0.03;
   const netAmount = grossAmount - fees;
 
   // Estimated shares (after fees)
@@ -205,7 +205,7 @@ export function BuySharesModal({
               <span className="font-medium">${grossAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Fees (2%)</span>
+              <span>Fees (3%)</span>
               <span>-${fees.toFixed(2)}</span>
             </div>
             <div className="border-t border-primary/20 pt-2 flex justify-between">

@@ -205,7 +205,7 @@ export function ProposeAnswerModal({
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold">1.</span>
-                <span>Your $5 stake buys you the first 5 shares at $1 each</span>
+                <span>Your $5 stake buys you the first 5 shares at $1 each (with early buyer bonus)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary font-bold">2.</span>
@@ -215,9 +215,13 @@ export function ProposeAnswerModal({
                 <span className="text-primary font-bold">3.</span>
                 <span>Sell anytime to cash out your gains (or losses)</span>
               </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">4.</span>
+                <span>If your answer becomes #1, its shareholders earn 0.5% king fees on all trades</span>
+              </li>
             </ul>
             <p className="mt-2 text-xs text-muted-foreground/70 italic">
-              Note: The question creator earns 0.5% on all trades
+              Fee: 3% total (2% platform + 0.5% creator + 0.5% king)
             </p>
           </div>
 

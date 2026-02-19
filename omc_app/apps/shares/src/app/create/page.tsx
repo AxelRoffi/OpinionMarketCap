@@ -109,13 +109,13 @@ export default function CreateQuestionPage() {
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <div className="mb-2 text-sm font-medium">💡 Answers</div>
                 <p className="text-xs text-muted-foreground">
-                  Each answer has its own market. You stake $5 to propose an answer and receive 5 shares at $1 each.
+                  Each answer has its own market. You stake $5 to propose an answer and receive 5 shares at $1 each. Early buyers get a bonus multiplier.
                 </p>
               </div>
               <div className="rounded-lg border border-border bg-muted/30 p-3">
-                <div className="mb-2 text-sm font-medium">📈 Trading</div>
+                <div className="mb-2 text-sm font-medium">👑 King of the Hill</div>
                 <p className="text-xs text-muted-foreground">
-                  Others can buy shares in answers they believe in. More buyers = higher price. Sell anytime to profit (or cut losses).
+                  The #1 answer (by market cap) is the King. Shareholders of the King earn 0.5% of ALL trades on the question.
                 </p>
               </div>
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
@@ -301,7 +301,7 @@ export default function CreateQuestionPage() {
                     <li>• $5 answer stake (you receive 5 shares)</li>
                   </ul>
                   <p className="mt-2 text-muted-foreground">
-                    As the question creator, you earn 0.5% of all trading volume.
+                    You earn 0.5% creator fees on all trades. Trading fee: 3% (2% platform + 0.5% creator + 0.5% king).
                   </p>
                 </div>
               </div>

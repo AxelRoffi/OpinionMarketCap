@@ -138,8 +138,8 @@ export function SellSharesModal({
   // This already shows the correct USD value from the contract
   const grossReturn = (position.currentValue * BigInt(percentage)) / 100n;
 
-  // Fees: 1.5% platform + 0.5% creator = 2% total
-  const totalFees = (grossReturn * 2n) / 100n;
+  // Fees: 2% platform + 0.5% creator + 0.5% king = 3% total
+  const totalFees = (grossReturn * 3n) / 100n;
   const netReturn = grossReturn - totalFees;
 
   // P&L calculation
@@ -264,7 +264,7 @@ export function SellSharesModal({
               <span>{formatUSDC(grossReturn)}</span>
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Fees (2%)</span>
+              <span>Fees (3%)</span>
               <span>-{formatUSDC(totalFees)}</span>
             </div>
             <div className="border-t border-primary/20 pt-2 flex justify-between">

@@ -130,8 +130,8 @@ export function useTotalMarketCapHistory(
         allEvents.forEach((event, index) => {
           if (event.type === 'buy') {
             // When someone buys, their cost (minus fees) goes into the pool
-            // Approximate: ~98% goes to pool after 2% fees
-            runningTotal += Number(event.amount) * 0.98;
+            // Approximate: ~97% goes to pool after 3% fees
+            runningTotal += Number(event.amount) * 0.97;
           } else {
             // When someone sells, returnAmount comes out of pool
             runningTotal -= Number(event.amount);

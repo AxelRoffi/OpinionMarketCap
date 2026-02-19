@@ -240,7 +240,7 @@ export default function QuestionDetailPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-[10px]">{shortenAddress(question.creator)}</p>
-                  <p className="text-[9px] text-muted-foreground">Creator • Earns 0.5% on trades</p>
+                  <p className="text-[9px] text-muted-foreground">Creator • Earns 0.5% fees on all trades</p>
                 </div>
               </div>
             </div>

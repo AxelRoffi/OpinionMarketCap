@@ -50,8 +50,8 @@ export function InlineTradingPanel({ answers, onSuccess, onProposeNew, proposalS
     const usdcValue = parseFloat(usdcInput) || 0;
     if (usdcValue <= 0) return 0;
 
-    // 2% total fee (1.5% platform + 0.5% creator)
-    const effectiveUsdc = usdcValue * 0.98;
+    // 3% total fee (2% platform + 0.5% creator + 0.5% king)
+    const effectiveUsdc = usdcValue * 0.97;
 
     // pricePerShare is in 1e12 format, so $1.00 = 1e12
     const priceInDollars = Number(selectedAnswer.pricePerShare) / 1e12;
@@ -233,7 +233,7 @@ export function InlineTradingPanel({ answers, onSuccess, onProposeNew, proposalS
               {estimatedSharesDecimal.toFixed(2)} shares
             </div>
             <div className="text-[10px] text-muted-foreground">
-              @ {selectedAnswer ? formatSharePrice(selectedAnswer.pricePerShare) : '--'}/share (2% fee incl.)
+              @ {selectedAnswer ? formatSharePrice(selectedAnswer.pricePerShare) : '--'}/share (3% fee incl.)
             </div>
           </div>
         </div>
@@ -283,7 +283,7 @@ export function InlineTradingPanel({ answers, onSuccess, onProposeNew, proposalS
           </div>
           <div className="flex items-start gap-2">
             <span className="text-emerald-400 font-bold">2.</span>
-            <span><strong>Price rises</strong> as more people buy (bonding curve)</span>
+            <span><strong>Price rises</strong> as more people buy — early buyers get a bonus multiplier</span>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-emerald-400 font-bold">3.</span>
@@ -291,10 +291,10 @@ export function InlineTradingPanel({ answers, onSuccess, onProposeNew, proposalS
           </div>
           <div className="flex items-start gap-2">
             <span className="text-emerald-400 font-bold">4.</span>
-            <span><strong>Leading answer</strong> = highest pool value (market cap)</span>
+            <span><strong>King of the Hill</strong> — hold shares in the #1 answer to earn 0.5% of all trades</span>
           </div>
           <div className="mt-2 pt-1.5 border-t border-border/30 text-[9px]">
-            <span className="text-muted-foreground">Fee: 2% (1.5% platform + 0.5% creator)</span>
+            <span className="text-muted-foreground">Fee: 3% (2% platform + 0.5% creator + 0.5% king)</span>
           </div>
         </div>
       </details>
