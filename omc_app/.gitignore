@@ -44,7 +44,9 @@ next-env.d.ts
 
 # Hardhat/Contract artifacts
 artifacts/
+artifacts-shares/
 cache/
+cache-shares/
 typechain-types/
 .openzeppelin/
 

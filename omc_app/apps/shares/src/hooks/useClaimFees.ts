@@ -90,5 +90,6 @@ export function useClaimFees(options?: UseClaimFeesOptions) {
     isSuccess: status === 'success',
     isError: status === 'error',
     refetchFees,
+    txHash: claimHash,
   };
 }

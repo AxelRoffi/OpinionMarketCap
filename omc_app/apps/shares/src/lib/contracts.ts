@@ -477,23 +477,28 @@ export interface Question {
   salePrice: bigint;
 }
 
-// Categories available for questions
-export const CATEGORIES = [
-  "Crypto",
-  "DeFi",
-  "NFTs",
-  "Gaming",
-  "AI",
-  "Technology",
-  "Politics",
-  "Sports",
-  "Entertainment",
-  "Business",
-  "Science",
-  "Culture",
-  "Memes",
-  "Other",
+// All categories (matching Hot Potato + crypto-specific)
+export const ALL_CATEGORIES = [
+  // Crypto/Web3 specific
+  "Crypto", "DeFi", "NFTs", "Gaming", "Memes",
+  // General topics (from Hot Potato)
+  "AI", "Automotive", "Books & Literature", "Business", "Celebrities",
+  "Conspiracy", "Dating & Relationships", "Entertainment", "Investing",
+  "Luxury", "Mobile Apps", "Movies & TV", "Music", "Parenting",
+  "Podcasts", "Politics", "Real Estate", "Social Media", "Sports",
+  "Other", "Adult"
 ] as const;
+
+// Categories to hide (deprecated/redundant)
+export const HIDDEN_CATEGORIES = ["Books & Literature", "Parenting", "Podcasts"] as const;
+
+// Visible categories (sorted, Adult at end)
+export const CATEGORIES = (() => {
+  const active = ALL_CATEGORIES.filter(cat => !HIDDEN_CATEGORIES.includes(cat as any));
+  const nonAdult = active.filter(cat => cat !== "Adult").sort();
+  const adult = active.filter(cat => cat === "Adult");
+  return [...nonAdult, ...adult] as readonly string[];
+})();
 
 export type Category = typeof CATEGORIES[number];
 

@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 // Dynamic imports to prevent SSR issues with wallet providers
 const Providers = dynamic(() => import('./providers').then(mod => ({ default: mod.Providers })), { ssr: false });
 const GlobalNavbar = dynamic(() => import('@/components/layout').then(mod => ({ default: mod.GlobalNavbar })), { ssr: false });
+const MobileBottomNav = dynamic(() => import('@/components/layout').then(mod => ({ default: mod.MobileBottomNav })), { ssr: false });
 const Footer = dynamic(() => import('@/components/Footer').then(mod => ({ default: mod.Footer })), { ssr: false });
 const Toaster = dynamic(() => import('sonner').then(mod => ({ default: mod.Toaster })), { ssr: false });
 
@@ -35,12 +36,18 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       <Providers>
         <div className="min-h-screen bg-background text-foreground flex flex-col">
           <GlobalNavbar />
-          <main className="flex-grow">
+          {/* Main content with bottom padding for mobile nav */}
+          <main className="flex-grow pb-bottom-nav lg:pb-0">
             {children}
           </main>
-          <Footer />
+          {/* Footer - hidden on mobile */}
+          <div className="hidden lg:block">
+            <Footer />
+          </div>
+          {/* Mobile bottom navigation */}
+          <MobileBottomNav />
         </div>
-        <Toaster position="bottom-right" richColors />
+        <Toaster position="top-center" richColors />
       </Providers>
     </ThemeProvider>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
   AlertCircle,
@@ -10,6 +11,8 @@ import {
   TrendingDown,
   Coins,
   Info,
+  Sparkles,
+  DollarSign,
 } from 'lucide-react';
 import {
   Dialog,
@@ -19,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { useSellShares, useChainSwitch } from '@/hooks';
+import { useSellShares, useChainSwitch, useConfetti } from '@/hooks';
 import { formatUSDC, formatShares } from '@/lib/utils';
 import { parseContractError, isUserRejection } from '@/lib/errors';
 import { SHARES_DECIMALS, type Answer, type UserPosition } from '@/lib/contracts';
@@ -46,6 +49,7 @@ export function SellSharesModal({
 }: SellSharesModalProps) {
   const { isConnected } = useAccount();
   const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
+  const { triggerSellSuccess } = useConfetti();
 
   // Calculate max sellable shares (must leave MIN_SHARES_RESERVE in pool)
   const { maxSellableShares, maxPercentage, limitReason } = useMemo(() => {
@@ -100,20 +104,12 @@ export function SellSharesModal({
     txHash,
   } = useSellShares({
     onSuccess: () => {
-      toast.success('Shares sold successfully!', {
-        description: `Sold ${sharesToSell} shares`,
-        action: txHash
-          ? {
-              label: 'View TX',
-              onClick: () => window.open(`https://sepolia.basescan.org/tx/${txHash}`, '_blank'),
-            }
-          : undefined,
-      });
+      triggerSellSuccess();
       onSuccess?.();
       setTimeout(() => {
         onOpenChange(false);
         reset();
-      }, 1500);
+      }, 2500);
     },
     onError: (err) => {
       if (!isUserRejection(err)) {
@@ -294,12 +290,64 @@ export function SellSharesModal({
           )}
 
           {/* Success Message */}
-          {isSuccess && (
-            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-2 text-xs text-green-500">
-              <CheckCircle2 className="h-3 w-3 shrink-0" />
-              <span>Sold successfully!</span>
-            </div>
-          )}
+          <AnimatePresence>
+            {isSuccess && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="py-6 text-center"
+              >
+                {/* Animated success icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', damping: 10, stiffness: 200 }}
+                  className="relative mx-auto w-16 h-16 mb-3"
+                >
+                  <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                  <div className="relative w-full h-full bg-gradient-to-br from-blue-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="absolute -top-1 -right-1"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                  </motion.div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <h3 className="text-lg font-bold text-foreground mb-1">Shares Sold!</h3>
+                  <p className="text-blue-500 text-xl font-bold">{formatUSDC(netReturn)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">sent to your wallet</p>
+                  {txHash && (
+                    <a
+                      href={`https://sepolia.basescan.org/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground mt-2 inline-block"
+                    >
+                      View transaction
+                    </a>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: 2.5, ease: 'linear' }}
+                  className="h-0.5 bg-blue-500/50 rounded-full mt-4 mx-auto"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Action Button - Always Visible */}
           {isConnected && !isCorrectChain ? (

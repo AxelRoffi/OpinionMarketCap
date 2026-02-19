@@ -16,3 +16,17 @@ export { useClaimFees, type ClaimFeesStatus } from './useClaimFees';
 export { useChainSwitch, TARGET_CHAIN_ID, TARGET_CHAIN } from './useChainSwitch';
 export { usePriceHistory, type PricePoint } from './usePriceHistory';
 export { useTotalMarketCapHistory } from './useTotalMarketCapHistory';
+export { useAnimatedCounter, useAnimatedBigIntCounter } from './useAnimatedCounter';
+export { useIsMobile } from './useIsMobile';
+export { useConfetti, type ConfettiType } from './useConfetti';
+export {
+  useUserProfile,
+  formatUSDC,
+  formatPercentage,
+  formatAddress,
+  formatTimeAgo,
+  type UserStats,
+  type UserProfile,
+  type PositionWithDetails,
+  type CategoryCount,
+} from './useUserProfile';

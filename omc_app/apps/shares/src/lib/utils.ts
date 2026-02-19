@@ -105,6 +105,39 @@ export function formatNumber(value: number | bigint): string {
 }
 
 // ============================================
+// URL Slug Utilities
+// ============================================
+
+/**
+ * Generate a URL-friendly slug from text
+ * Example: "Who is the most powerful person in the world?" -> "who-is-the-most-powerful-person-in-the-world"
+ */
+export function generateSlug(text: string, maxLength: number = 60): string {
+  return text
+    .toLowerCase()
+    .trim()
+    // Replace special characters with spaces
+    .replace(/[^\w\s-]/g, '')
+    // Replace multiple spaces/hyphens with single hyphen
+    .replace(/[\s_-]+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
+    // Truncate to max length at word boundary
+    .slice(0, maxLength)
+    .replace(/-+$/, '');
+}
+
+/**
+ * Build a question URL with ID and slug
+ * Example: getQuestionUrl(1, "Who is the most powerful?") -> "/questions/1/who-is-the-most-powerful"
+ */
+export function getQuestionUrl(id: bigint | number | string, questionText: string): string {
+  const idStr = typeof id === 'bigint' ? id.toString() : String(id);
+  const slug = generateSlug(questionText);
+  return `/questions/${idStr}/${slug}`;
+}
+
+// ============================================
 // Duplicate Answer Detection Utilities
 // ============================================
 

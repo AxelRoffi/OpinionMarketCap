@@ -11,7 +11,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 1,
       },
       viaIR: true,
     },
@@ -44,5 +44,9 @@ module.exports = {
   },
   sourcify: {
     enabled: false,
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
   },
 };

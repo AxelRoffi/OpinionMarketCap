@@ -21,11 +21,11 @@ import {
   Activity,
 } from 'lucide-react';
 import { AnswerCard, AnswerCardSkeleton, ProposeAnswerModal } from '@/components/answers';
-import { BuySharesModal, SellSharesModal, InlineTradingPanel } from '@/components/trading';
+import { BuySharesModal, SellSharesModal, InlineTradingPanel, MobileTradingSheet } from '@/components/trading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useQuestion, useAnswers, useUserPositions } from '@/hooks';
+import { useQuestion, useAnswers, useUserPositions, useIsMobile } from '@/hooks';
 import { formatUSDC, shortenAddress, formatTimeAgo, formatSharePrice, formatShares } from '@/lib/utils';
 import type { Answer } from '@/lib/contracts';
 import { TotalMarketCapChart } from '@/components/charts';
@@ -34,6 +34,7 @@ export default function QuestionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { address } = useAccount();
+  const isMobile = useIsMobile();
   const questionId = BigInt(params.id as string);
 
   const { question, leadingAnswer, answerIds, isLoading: isLoadingQuestion, refetch: refetchQuestion } = useQuestion(questionId);
@@ -370,7 +371,30 @@ export default function QuestionDetailPage() {
         />
       )}
 
-      {buyingAnswer && (
+      {/* Mobile Trading Sheet */}
+      {isMobile && buyingAnswer && (
+        <MobileTradingSheet
+          open={!!buyingAnswer}
+          onOpenChange={(open) => !open && setBuyingAnswer(null)}
+          answer={buyingAnswer}
+          mode="buy"
+          onSuccess={handleTradeSuccess}
+        />
+      )}
+
+      {isMobile && sellingAnswer && positions[sellingAnswer.id.toString()] && (
+        <MobileTradingSheet
+          open={!!sellingAnswer}
+          onOpenChange={(open) => !open && setSellingAnswer(null)}
+          answer={sellingAnswer}
+          mode="sell"
+          position={positions[sellingAnswer.id.toString()]}
+          onSuccess={handleTradeSuccess}
+        />
+      )}
+
+      {/* Desktop Trading Modals */}
+      {!isMobile && buyingAnswer && (
         <BuySharesModal
           open={!!buyingAnswer}
           onOpenChange={(open) => !open && setBuyingAnswer(null)}
@@ -379,7 +403,7 @@ export default function QuestionDetailPage() {
         />
       )}
 
-      {sellingAnswer && positions[sellingAnswer.id.toString()] && (
+      {!isMobile && sellingAnswer && positions[sellingAnswer.id.toString()] && (
         <SellSharesModal
           open={!!sellingAnswer}
           onOpenChange={(open) => !open && setSellingAnswer(null)}

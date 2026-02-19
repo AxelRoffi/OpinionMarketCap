@@ -1,48 +1,42 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useAccount } from 'wagmi';
+import { motion } from 'framer-motion';
+import { Wallet, Loader2 } from 'lucide-react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
+import { BuySharesModal, SellSharesModal, MobileTradingSheet } from '@/components/trading';
 import {
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  AlertCircle,
-  Loader2,
-  ExternalLink,
-} from 'lucide-react';
-import { BuySharesModal, SellSharesModal } from '@/components/trading';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useUserPositions, useAccumulatedFees, useClaimFees, useQuestions, useAnswers } from '@/hooks';
-import { formatUSDC, formatSharePrice, formatShares, shortenAddress } from '@/lib/utils';
+  ProfileHero,
+  ProfileStatCards,
+  SecondaryStatCards,
+  TraderSummary,
+  CategoryBreakdown,
+  FeeBanner,
+  PositionsList,
+  TopPositions,
+} from '@/components/portfolio';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useClaimFees, useIsMobile } from '@/hooks';
 import type { Answer, UserPosition } from '@/lib/contracts';
 
-interface PositionWithAnswer {
-  answer: Answer;
-  position: UserPosition;
-  questionText: string;
-}
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5, delay, ease: 'easeOut' as const },
+});
 
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
+  const isMobile = useIsMobile();
 
-  // Fetch all questions to get all answer IDs
-  const { questions, isLoading: isLoadingQuestions } = useQuestions({ limit: 100 });
+  // User profile data
+  const { stats, positions, loading, error, refetchFees } = useUserProfile(address);
 
-  // Get all answer IDs from all questions
-  const allAnswerIds = questions.flatMap((q) => {
-    const count = Number(q.answerCount);
-    // Generate answer IDs based on count - this is a simplification
-    // In reality, we'd need to fetch actual answer IDs
-    return [];
-  });
-
-  // Accumulated fees
-  const { accumulatedFees: fees, isLoading: isLoadingFees, refetch: refetchFees } = useAccumulatedFees(address);
-  const { claim, isPending: isClaimingFees, isSuccess: claimSuccess } = useClaimFees({
+  // Fee claiming
+  const { claim, isPending: isClaimingFees, isSuccess: claimSuccess, error: claimError, txHash } = useClaimFees({
     onSuccess: () => {
       refetchFees();
     },
@@ -53,251 +47,170 @@ export default function PortfolioPage() {
   const [sellingAnswer, setSellingAnswer] = useState<Answer | null>(null);
   const [sellingPosition, setSellingPosition] = useState<UserPosition | undefined>(undefined);
 
-  // Mock positions for now - in production, we'd need to track this
-  const positions: PositionWithAnswer[] = [];
-  const isLoadingPositions = isLoadingQuestions;
-
-  // Calculate portfolio stats
-  const totalValue = positions.reduce((sum, p) => sum + p.position.currentValue, 0n);
-  const totalCostBasis = positions.reduce((sum, p) => sum + p.position.costBasis, 0n);
-  const totalPnL = positions.reduce((sum, p) => sum + p.position.profitLoss, 0n);
-  const isProfitable = totalPnL > 0n;
-
+  // Not connected
   if (!isConnected) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="py-12 text-center">
-          <Wallet className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mb-2 text-lg font-medium">Connect your wallet</h3>
-          <p className="mb-4 text-muted-foreground">
-            Connect your wallet to view your portfolio and positions.
-          </p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Wallet className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Connect Your Wallet</h1>
+          <p className="text-muted-foreground mb-6">Connect your wallet to view your portfolio</p>
+          <ConnectButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading portfolio...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-card rounded-xl border border-red-500/30 p-8 text-center">
+            <h1 className="text-xl font-bold text-foreground mb-2">Error Loading Portfolio</h1>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-8 text-2xl font-bold animate-fade-in-up">Portfolio</h1>
-
-        {/* Stats Cards */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Total Value */}
-          <Card variant="glass">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Portfolio Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gradient">{formatUSDC(totalValue)}</div>
-            </CardContent>
-          </Card>
-
-          {/* Total P&L */}
-          <Card variant="glass">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total P&L
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`flex items-center gap-1 text-2xl font-bold ${
-                  isProfitable ? 'text-green-500' : totalPnL < 0n ? 'text-red-500' : ''
-                }`}
-              >
-                {isProfitable ? (
-                  <TrendingUp className="h-5 w-5" />
-                ) : totalPnL < 0n ? (
-                  <TrendingDown className="h-5 w-5" />
-                ) : null}
-                {isProfitable ? '+' : ''}
-                {formatUSDC(totalPnL)}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Positions Count */}
-          <Card variant="glass">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Positions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{positions.length}</div>
-            </CardContent>
-          </Card>
-
-          {/* Claimable Fees */}
-          <Card variant="glass" className={fees > 0n ? 'glow-primary-sm' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Claimable Fees
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold text-primary">{formatUSDC(fees)}</div>
-                {fees > 0n && (
-                  <Button size="sm" onClick={claim} disabled={isClaimingFees} className="animate-pulse-glow">
-                    {isClaimingFees ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      'Claim'
-                    )}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Positions List */}
-        <div className="mb-6">
-          <h2 className="mb-4 text-xl font-semibold">Your Positions</h2>
-
-          {isLoadingPositions ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} variant="glass">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-4 w-48 rounded-lg animate-shimmer" />
-                        <div className="h-6 w-32 rounded-lg animate-shimmer delay-75" />
-                      </div>
-                      <div className="space-y-2 text-right">
-                        <div className="h-4 w-24 rounded-lg animate-shimmer delay-100" />
-                        <div className="h-6 w-20 rounded-lg animate-shimmer delay-150" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : positions.length === 0 ? (
-            <Card variant="glass">
-              <CardContent className="py-12 text-center">
-                <TrendingUp className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-                <h3 className="mb-2 text-lg font-medium">No positions yet</h3>
-                <p className="mb-4 text-muted-foreground">
-                  Start trading by buying shares in answers you believe will become popular.
-                </p>
-                <Link href="/">
-                  <Button>
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Browse Questions
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {positions.map((item) => {
-                const isProfitable = item.position.profitLoss > 0n;
-                return (
-                  <Card key={item.answer.id.toString()} variant="glass" className="interactive-card">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Answer Info */}
-                        <div className="flex-1">
-                          <Link
-                            href={`/questions/${item.answer.questionId}`}
-                            className="mb-1 text-sm text-muted-foreground hover:text-foreground"
-                          >
-                            {item.questionText}
-                          </Link>
-                          <h3 className="text-lg font-medium">{item.answer.text}</h3>
-                          <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{formatShares(item.position.shares)} shares</span>
-                            <span>@ {formatSharePrice(item.answer.pricePerShare)}/share</span>
-                          </div>
-                        </div>
-
-                        {/* Position Value */}
-                        <div className="text-right">
-                          <div className="text-sm text-muted-foreground">Value</div>
-                          <div className="text-lg font-bold">
-                            {formatUSDC(item.position.currentValue)}
-                          </div>
-                          <div
-                            className={`text-sm ${
-                              isProfitable
-                                ? 'text-green-500'
-                                : item.position.profitLoss < 0n
-                                ? 'text-red-500'
-                                : ''
-                            }`}
-                          >
-                            {isProfitable ? '+' : ''}
-                            {formatUSDC(item.position.profitLoss)} P&L
-                          </div>
-                          <div className="mt-2 flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => setBuyingAnswer(item.answer)}
-                            >
-                              Buy
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSellingAnswer(item.answer);
-                                setSellingPosition(item.position);
-                              }}
-                            >
-                              Sell
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Activity History */}
-        <div>
-          <h2 className="mb-4 text-xl font-semibold">Recent Activity</h2>
-          <Card variant="glass">
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Activity history coming soon...
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Buy Modal */}
-        {buyingAnswer && (
-          <BuySharesModal
-            open={!!buyingAnswer}
-            onOpenChange={(open) => !open && setBuyingAnswer(null)}
-            answer={buyingAnswer}
-            onSuccess={() => {
-              setBuyingAnswer(null);
-            }}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto p-4 space-y-4">
+        {/* Profile Hero */}
+        <motion.div {...fadeUp(0)}>
+          <ProfileHero
+            stats={stats}
+            targetAddress={address!}
+            isOwnProfile={true}
           />
-        )}
+        </motion.div>
 
-        {/* Sell Modal */}
-        {sellingAnswer && (
-          <SellSharesModal
-            open={!!sellingAnswer}
-            onOpenChange={(open) => !open && setSellingAnswer(null)}
-            answer={sellingAnswer}
-            position={sellingPosition!}
-            onSuccess={() => {
-              setSellingAnswer(null);
-              setSellingPosition(undefined);
-            }}
+        {/* Primary Stat Cards */}
+        <motion.div {...fadeUp(0.1)}>
+          <ProfileStatCards stats={stats} />
+        </motion.div>
+
+        {/* Trader Summary */}
+        <motion.div {...fadeUp(0.15)}>
+          <TraderSummary stats={stats} />
+        </motion.div>
+
+        {/* Secondary Stats + Category Breakdown */}
+        <motion.div {...fadeUp(0.2)}>
+          <div className="grid md:grid-cols-2 gap-4">
+            <SecondaryStatCards stats={stats} />
+            <div className="md:col-span-1">
+              <CategoryBreakdown topCategories={stats.topCategories} />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Fee Banner */}
+        <motion.div {...fadeUp(0.25)}>
+          <FeeBanner
+            accumulatedFees={stats.accumulatedFees}
+            onClaimFees={claim}
+            isClaimingFees={isClaimingFees}
+            claimSuccess={claimSuccess}
+            claimError={claimError}
+            transactionHash={txHash}
+            isOwnProfile={true}
           />
-        )}
+        </motion.div>
+
+        {/* Main Content Grid */}
+        <motion.div {...fadeUp(0.3)}>
+          <div className="grid lg:grid-cols-3 gap-4">
+            {/* Positions List - 2 columns */}
+            <div className="lg:col-span-2">
+              <h2 className="text-lg font-semibold text-foreground mb-3">Your Positions</h2>
+              <PositionsList
+                positions={positions}
+                isLoading={loading}
+                onBuy={(answer) => setBuyingAnswer(answer)}
+                onSell={(answer, position) => {
+                  setSellingAnswer(answer);
+                  setSellingPosition(position);
+                }}
+              />
+            </div>
+
+            {/* Sidebar - 1 column */}
+            <div className="space-y-4">
+              <TopPositions positions={positions} limit={5} />
+            </div>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Mobile Trading Sheet */}
+      {isMobile && buyingAnswer && (
+        <MobileTradingSheet
+          open={!!buyingAnswer}
+          onOpenChange={(open) => !open && setBuyingAnswer(null)}
+          answer={buyingAnswer}
+          mode="buy"
+          onSuccess={() => {
+            setBuyingAnswer(null);
+          }}
+        />
+      )}
+
+      {isMobile && sellingAnswer && sellingPosition && (
+        <MobileTradingSheet
+          open={!!sellingAnswer}
+          onOpenChange={(open) => !open && setSellingAnswer(null)}
+          answer={sellingAnswer}
+          mode="sell"
+          position={sellingPosition}
+          onSuccess={() => {
+            setSellingAnswer(null);
+            setSellingPosition(undefined);
+          }}
+        />
+      )}
+
+      {/* Desktop Buy Modal */}
+      {!isMobile && buyingAnswer && (
+        <BuySharesModal
+          open={!!buyingAnswer}
+          onOpenChange={(open) => !open && setBuyingAnswer(null)}
+          answer={buyingAnswer}
+          onSuccess={() => {
+            setBuyingAnswer(null);
+          }}
+        />
+      )}
+
+      {/* Desktop Sell Modal */}
+      {!isMobile && sellingAnswer && sellingPosition && (
+        <SellSharesModal
+          open={!!sellingAnswer}
+          onOpenChange={(open) => !open && setSellingAnswer(null)}
+          answer={sellingAnswer}
+          position={sellingPosition}
+          onSuccess={() => {
+            setSellingAnswer(null);
+            setSellingPosition(undefined);
+          }}
+        />
+      )}
+    </div>
   );
 }

@@ -48,22 +48,36 @@ function QuestionCardSkeleton() {
   );
 }
 
-// Category color mapping
+// Category color mapping (expanded to match all categories)
 const CATEGORY_COLORS: Record<string, string> = {
+  // Crypto/Web3
   Crypto: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   DeFi: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   NFTs: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   Gaming: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-  AI: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-  Technology: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-  Politics: 'bg-red-500/20 text-red-400 border-red-500/30',
-  Sports: 'bg-green-500/20 text-green-400 border-green-500/30',
-  Entertainment: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  Business: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  Science: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
-  Culture: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
   Memes: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  // General
+  AI: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  Automotive: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  'Books & Literature': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  Business: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+  Celebrities: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30',
+  Conspiracy: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
+  'Dating & Relationships': 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  Entertainment: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  Investing: 'bg-lime-500/20 text-lime-400 border-lime-500/30',
+  Luxury: 'bg-amber-600/20 text-amber-300 border-amber-600/30',
+  'Mobile Apps': 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+  'Movies & TV': 'bg-red-500/20 text-red-400 border-red-500/30',
+  Music: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
+  Parenting: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+  Podcasts: 'bg-orange-600/20 text-orange-300 border-orange-600/30',
+  Politics: 'bg-red-600/20 text-red-400 border-red-600/30',
+  'Real Estate': 'bg-green-500/20 text-green-400 border-green-500/30',
+  'Social Media': 'bg-blue-600/20 text-blue-300 border-blue-600/30',
+  Sports: 'bg-green-600/20 text-green-400 border-green-600/30',
   Other: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  Adult: 'bg-pink-600/20 text-pink-400 border-pink-600/30',
 };
 
 export default function HomePage() {

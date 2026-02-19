@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
   AlertCircle,
   CheckCircle2,
   TrendingUp,
+  Sparkles,
+  PartyPopper,
 } from 'lucide-react';
 import {
   Dialog,
@@ -17,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useBuyShares, useChainSwitch } from '@/hooks';
+import { useBuyShares, useChainSwitch, useConfetti } from '@/hooks';
 import { formatUSDC, formatShares, parseUSDCInput } from '@/lib/utils';
 import { parseContractError, isUserRejection } from '@/lib/errors';
 import { SHARES_DECIMALS, type Answer } from '@/lib/contracts';
@@ -39,6 +42,7 @@ export function BuySharesModal({
 }: BuySharesModalProps) {
   const { isConnected } = useAccount();
   const { isCorrectChain, switchToTargetChain, isSwitching, targetChainName } = useChainSwitch();
+  const { triggerBuySuccess } = useConfetti();
   const [amount, setAmount] = useState('10');
 
   const {
@@ -52,20 +56,12 @@ export function BuySharesModal({
     txHash,
   } = useBuyShares({
     onSuccess: () => {
-      toast.success('Shares purchased!', {
-        description: `Bought ~${estimatedShares.toFixed(1)} shares`,
-        action: txHash
-          ? {
-              label: 'View TX',
-              onClick: () => window.open(`https://sepolia.basescan.org/tx/${txHash}`, '_blank'),
-            }
-          : undefined,
-      });
+      triggerBuySuccess();
       onSuccess?.();
       setTimeout(() => {
         onOpenChange(false);
         reset();
-      }, 1500);
+      }, 2500);
     },
     onError: (err) => {
       if (!isUserRejection(err)) {
@@ -230,12 +226,63 @@ export function BuySharesModal({
           )}
 
           {/* Success Message */}
-          {isSuccess && (
-            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 p-2 text-xs text-green-500">
-              <CheckCircle2 className="h-3 w-3 shrink-0" />
-              <span>Purchase successful!</span>
-            </div>
-          )}
+          <AnimatePresence>
+            {isSuccess && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="py-6 text-center"
+              >
+                {/* Animated success icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', damping: 10, stiffness: 200 }}
+                  className="relative mx-auto w-16 h-16 mb-3"
+                >
+                  <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" />
+                  <div className="relative w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <PartyPopper className="w-8 h-8 text-white" />
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="absolute -top-1 -right-1"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                  </motion.div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <h3 className="text-lg font-bold text-foreground mb-1">Shares Purchased!</h3>
+                  <p className="text-emerald-500 text-xl font-bold">+{estimatedShares.toFixed(2)} shares</p>
+                  {txHash && (
+                    <a
+                      href={`https://sepolia.basescan.org/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground mt-2 inline-block"
+                    >
+                      View transaction
+                    </a>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: 2.5, ease: 'linear' }}
+                  className="h-0.5 bg-emerald-500/50 rounded-full mt-4 mx-auto"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Action Button */}
           {isConnected && !isCorrectChain ? (
