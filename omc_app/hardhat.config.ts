@@ -32,7 +32,29 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: true  // Allow large contracts for testing
+      allowUnlimitedContractSize: true,
+      // Tell Hardhat which hardfork to use locally.
+      hardfork: "shanghai",
+      // Hardfork history for any chains we might fork from. Required when
+      // forking custom L2s like Base — without this, historical-block calls
+      // throw "No known hardfork for execution".
+      chains: {
+        8453: {
+          hardforkHistory: {
+            shanghai: 0,
+          },
+        },
+      },
+      // FORK_BASE=1 enables an in-process Base mainnet fork.
+      // Pin to a specific (recent) block so the hardfork lookup doesn't move.
+      ...(process.env.FORK_BASE
+        ? {
+            forking: {
+              url: "https://mainnet.base.org",
+              blockNumber: 45000000,
+            },
+          }
+        : {}),
     },
     "baseSepolia": {
       url: "https://sepolia.base.org",
