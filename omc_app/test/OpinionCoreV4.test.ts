@@ -686,7 +686,7 @@ describe("OpinionCoreV4 — Self-Exit Feature", function () {
       ).to.be.revertedWithCustomError(opinionCore, "SlotIsVacant");
     });
 
-    it("8.5 full lifecycle: create → trade → wait → self-exit → reclaim → trade", async function () {
+    it("8.5 full lifecycle: create → trade → wait → self-exit → reclaim → trade — sanity end-to-end", async function () {
       const id = await createV4Opinion(creator);
       const stakeInitial = await opinionCore.lockedStake(id);
       expect(stakeInitial).to.equal(INITIAL_PRICE);
@@ -725,6 +725,463 @@ describe("OpinionCoreV4 — Self-Exit Feature", function () {
       expect((await opinionCore.getOpinionDetails(id)).currentAnswerOwner).to.equal(
         buyer3.address
       );
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // SECTION 9 — Pool stale exit: HAPPY PATH
+  // ════════════════════════════════════════════════════════════════════
+  describe("9. processPoolStaleExit — happy path", function () {
+    it("9.1 dissolves a pool-owned slot and returns refund to caller", async function () {
+      // Setup: create opinion, then make `other` act as a pool by granting role
+      // and calling updateOpinionOnPoolExecution. This sidesteps PoolManager
+      // (tested separately) but exercises the V4 dissolution path.
+      const id = await createV4Opinion(creator);
+      const stake = await opinionCore.lockedStake(id);
+      expect(stake).to.equal(INITIAL_PRICE);
+
+      // Grant POOL_MANAGER_ROLE to `other` so it can act as both the pool
+      // king (via updateOpinionOnPoolExecution) and the caller of
+      // processPoolStaleExit.
+      await opinionCore.connect(deployer).grantRole(POOL_MANAGER_ROLE, other.address);
+
+      // `other` becomes pool king
+      await opinionCore
+        .connect(other)
+        .updateOpinionOnPoolExecution(id, "pool answer", other.address, INITIAL_PRICE);
+
+      const opinion = await opinionCore.getOpinionDetails(id);
+      expect(opinion.currentAnswerOwner).to.equal(other.address);
+
+      // Enable feature, advance past cooldown
+      await opinionCore.connect(deployer).setSelfExitFlag(0, true);
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      const expectedPenalty = (INITIAL_PRICE * EXIT_PENALTY_BPS) / BPS_DENOM;
+      const expectedRefund = INITIAL_PRICE - expectedPenalty;
+
+      // Solo selfExit must be rejected for pool-owned slots
+      await expect(opinionCore.connect(other).selfExit(id)).to.be.revertedWithCustomError(
+        opinionCore,
+        "PoolMustUsePoolExit"
+      );
+
+      // Pool exit succeeds — refund returned to msg.sender (the pool/poolManager)
+      const balBefore = await usdc.balanceOf(other.address);
+      const tx = await opinionCore.connect(other).processPoolStaleExit(id);
+      await tx.wait();
+      const balAfter = await usdc.balanceOf(other.address);
+
+      expect(balAfter - balBefore).to.equal(expectedRefund);
+
+      // State verification: stake zeroed, slot vacant, nextPrice set to reclaim
+      expect(await opinionCore.lockedStake(id)).to.equal(0);
+      const after = await opinionCore.getOpinionDetails(id);
+      expect(after.currentAnswerOwner).to.equal(ethers.ZeroAddress);
+    });
+
+    it("9.2 splits penalty 50/50 to creator + platform on pool exit", async function () {
+      const id = await createV4Opinion(creator);
+
+      await opinionCore.connect(deployer).grantRole(POOL_MANAGER_ROLE, other.address);
+      await opinionCore
+        .connect(other)
+        .updateOpinionOnPoolExecution(id, "pool answer", other.address, INITIAL_PRICE);
+
+      await opinionCore.connect(deployer).setSelfExitFlag(0, true);
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      const expectedPenalty = (INITIAL_PRICE * EXIT_PENALTY_BPS) / BPS_DENOM;
+      const expectedCreator = (expectedPenalty * PENALTY_CREATOR_SHARE_BPS) / BPS_DENOM;
+
+      const creatorAccBefore = await feeManager.getAccumulatedFees(creator.address);
+
+      await opinionCore.connect(other).processPoolStaleExit(id);
+
+      const creatorAccAfter = await feeManager.getAccumulatedFees(creator.address);
+      expect(creatorAccAfter - creatorAccBefore).to.equal(expectedCreator);
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // SECTION 10 — V3 → V4 upgrade migration
+  // ════════════════════════════════════════════════════════════════════
+  describe("10. V3 → V4 upgrade (Path A migration)", function () {
+    let v3Core: any;
+
+    // We deploy a V3-style stack here (same modular pieces, but the proxy
+    // points at V3). Then we upgrade the proxy to V4 and verify migration.
+    beforeEach(async function () {
+      // Deploy V3 stack alongside the existing V4 fixtures
+      const PriceCalc = await ethers.getContractFactory("PriceCalculator");
+      const priceCalc2 = await PriceCalc.deploy();
+      await priceCalc2.waitForDeployment();
+      const priceCalc2Addr = await priceCalc2.getAddress();
+
+      // FeeManager (fresh)
+      const FeeManager = await ethers.getContractFactory("FeeManager");
+      const fm = await upgrades.deployProxy(
+        FeeManager,
+        [await usdc.getAddress(), treasury.address],
+        { initializer: "initialize" }
+      );
+      await fm.waitForDeployment();
+
+      // PoolManager (fresh)
+      const PoolManager = await ethers.getContractFactory("PoolManager", {
+        libraries: { ValidationLibrary: validationLibAddress },
+      });
+      const pm = await upgrades.deployProxy(
+        PoolManager,
+        [
+          ethers.ZeroAddress,
+          await fm.getAddress(),
+          await usdc.getAddress(),
+          treasury.address,
+          admin.address,
+        ],
+        { initializer: "initialize", unsafeAllowLinkedLibraries: true }
+      );
+      await pm.waitForDeployment();
+
+      // OpinionAdmin (fresh)
+      const OpinionAdmin = await ethers.getContractFactory("OpinionAdmin");
+      const oa = await upgrades.deployProxy(
+        OpinionAdmin,
+        [ethers.ZeroAddress, await usdc.getAddress(), treasury.address, admin.address],
+        { initializer: "initialize" }
+      );
+      await oa.waitForDeployment();
+
+      // OpinionExtensions (fresh)
+      const OpinionExt = await ethers.getContractFactory("OpinionExtensionsV2");
+      const oe = await upgrades.deployProxy(
+        OpinionExt,
+        [ethers.ZeroAddress, admin.address],
+        { initializer: "initialize" }
+      );
+      await oe.waitForDeployment();
+
+      // V3 core proxy (this is what we'll upgrade)
+      const V3 = await ethers.getContractFactory("OpinionCoreV3", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: priceCalc2Addr,
+        },
+      });
+      v3Core = await upgrades.deployProxy(
+        V3,
+        [
+          await usdc.getAddress(),
+          deployer.address,
+          await fm.getAddress(),
+          await pm.getAddress(),
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          treasury.address,
+          await oe.getAddress(),
+          await oa.getAddress(),
+        ],
+        { initializer: "initialize", unsafeAllowLinkedLibraries: true }
+      );
+      await v3Core.waitForDeployment();
+
+      // Wire
+      const v3Addr = await v3Core.getAddress();
+      await oa.connect(admin).setCoreContract(v3Addr);
+      await oe.connect(admin).setCoreContract(v3Addr);
+      await pm.connect(admin).setOpinionCore(v3Addr);
+      await fm.connect(deployer).grantCoreContractRole(v3Addr);
+
+      // Create some V3 opinions BEFORE upgrade
+      const v3FundAmount = 50n * ONE_USDC; // generous coverage of creationFee
+      await usdc.mint(creator.address, v3FundAmount);
+      await usdc.connect(creator).approve(v3Addr, v3FundAmount);
+      await v3Core
+        .connect(creator)
+        .createOpinion(
+          "v3 question?",
+          "v3 answer",
+          "v3 desc",
+          INITIAL_PRICE,
+          ["Technology"]
+        );
+    });
+
+    it("10.1 preserves V3 opinion state across the V4 upgrade", async function () {
+      const idV3 = (await v3Core.nextOpinionId()) - 1n;
+      const detailsBefore = await v3Core.getOpinionDetails(idV3);
+      expect(detailsBefore.currentAnswerOwner).to.equal(creator.address);
+
+      // Upgrade
+      const V4 = await ethers.getContractFactory("OpinionCoreV4", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: (await ethers.getContractFactory("PriceCalculator")).getAddress
+            ? priceCalcAddress
+            : priceCalcAddress,
+          SelfExitLib: selfExitLibAddress,
+        },
+      });
+      const upgraded = await upgrades.upgradeProxy(await v3Core.getAddress(), V4, {
+        unsafeAllowLinkedLibraries: true,
+      });
+      await upgraded.connect(deployer).initializeV4();
+
+      // Verify state preserved
+      const detailsAfter = await upgraded.getOpinionDetails(idV3);
+      expect(detailsAfter.currentAnswerOwner).to.equal(creator.address);
+      expect(detailsAfter.lastPrice).to.equal(detailsBefore.lastPrice);
+      expect(detailsAfter.creator).to.equal(creator.address);
+    });
+
+    it("10.2 legacy V3 opinions have lockedStake = 0 after upgrade", async function () {
+      const idV3 = (await v3Core.nextOpinionId()) - 1n;
+
+      const V4 = await ethers.getContractFactory("OpinionCoreV4", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: priceCalcAddress,
+          SelfExitLib: selfExitLibAddress,
+        },
+      });
+      const upgraded = await upgrades.upgradeProxy(await v3Core.getAddress(), V4, {
+        unsafeAllowLinkedLibraries: true,
+      });
+      await upgraded.connect(deployer).initializeV4();
+
+      expect(await upgraded.lockedStake(idV3)).to.equal(0);
+    });
+
+    it("10.3 legacy opinion king CANNOT self-exit (LegacyPositionNotEligible)", async function () {
+      const idV3 = (await v3Core.nextOpinionId()) - 1n;
+
+      const V4 = await ethers.getContractFactory("OpinionCoreV4", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: priceCalcAddress,
+          SelfExitLib: selfExitLibAddress,
+        },
+      });
+      const upgraded = await upgrades.upgradeProxy(await v3Core.getAddress(), V4, {
+        unsafeAllowLinkedLibraries: true,
+      });
+      await upgraded.connect(deployer).initializeV4();
+      await upgraded.connect(deployer).setSelfExitFlag(0, true);
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      // Even after cooldown, legacy positions revert.
+      await expect(upgraded.connect(creator).selfExit(idV3)).to.be.reverted;
+    });
+
+    it("10.4 NEW opinions created post-upgrade have rescue enabled", async function () {
+      const V4 = await ethers.getContractFactory("OpinionCoreV4", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: priceCalcAddress,
+          SelfExitLib: selfExitLibAddress,
+        },
+      });
+      const upgraded = await upgrades.upgradeProxy(await v3Core.getAddress(), V4, {
+        unsafeAllowLinkedLibraries: true,
+      });
+      await upgraded.connect(deployer).initializeV4();
+
+      // Create a new opinion under V4 economics
+      await usdc.mint(buyer1.address, INITIAL_PRICE + SPAM_FEE);
+      await usdc.connect(buyer1).approve(await upgraded.getAddress(), INITIAL_PRICE + SPAM_FEE);
+      await upgraded
+        .connect(buyer1)
+        .createOpinion("new question?", "new ans", "desc", INITIAL_PRICE, ["Technology"]);
+
+      const newId = (await upgraded.nextOpinionId()) - 1n;
+      expect(await upgraded.lockedStake(newId)).to.equal(INITIAL_PRICE);
+
+      // Self-exit works for new opinions
+      await upgraded.connect(deployer).setSelfExitFlag(0, true);
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      const balBefore = await usdc.balanceOf(buyer1.address);
+      await upgraded.connect(buyer1).selfExit(newId);
+      const balAfter = await usdc.balanceOf(buyer1.address);
+      const expectedRefund = INITIAL_PRICE - (INITIAL_PRICE * EXIT_PENALTY_BPS) / BPS_DENOM;
+      expect(balAfter - balBefore).to.equal(expectedRefund);
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // SECTION 11 — Reentrancy attack via hookable USDC
+  // ════════════════════════════════════════════════════════════════════
+  // This block uses an entirely different USDC mock (HookableUSDC) that
+  // calls `onUSDCReceived()` on contract recipients after every transfer.
+  // It simulates an ERC777-style attack vector — real Base USDC has no such
+  // hook, but the test verifies our defensive guards (CEI + nonReentrant)
+  // would defeat it if the canonical token ever changed.
+  describe("11. Reentrancy attack defense", function () {
+    let hookUsdc: any;
+    let hookFeeManager: any;
+    let hookCore: any;
+    let attacker: any; // ReentrantKing contract
+
+    beforeEach(async function () {
+      // Deploy hookable USDC
+      const HookableUSDC = await ethers.getContractFactory("HookableUSDC");
+      hookUsdc = await HookableUSDC.deploy();
+      await hookUsdc.waitForDeployment();
+
+      // Disable hook during setup so deployment/initialization isn't disrupted.
+      await hookUsdc.setHookEnabled(false);
+
+      // Fresh FeeManager + PoolManager + Admin + Extensions, all wired to hookUsdc.
+      const FM = await ethers.getContractFactory("FeeManager");
+      hookFeeManager = await upgrades.deployProxy(
+        FM,
+        [await hookUsdc.getAddress(), treasury.address],
+        { initializer: "initialize" }
+      );
+      await hookFeeManager.waitForDeployment();
+
+      const PM = await ethers.getContractFactory("PoolManager", {
+        libraries: { ValidationLibrary: validationLibAddress },
+      });
+      const hookPm = await upgrades.deployProxy(
+        PM,
+        [
+          ethers.ZeroAddress,
+          await hookFeeManager.getAddress(),
+          await hookUsdc.getAddress(),
+          treasury.address,
+          admin.address,
+        ],
+        { initializer: "initialize", unsafeAllowLinkedLibraries: true }
+      );
+      await hookPm.waitForDeployment();
+
+      const OA = await ethers.getContractFactory("OpinionAdmin");
+      const hookOa = await upgrades.deployProxy(
+        OA,
+        [ethers.ZeroAddress, await hookUsdc.getAddress(), treasury.address, admin.address],
+        { initializer: "initialize" }
+      );
+      await hookOa.waitForDeployment();
+
+      const OE = await ethers.getContractFactory("OpinionExtensionsV2");
+      const hookOe = await upgrades.deployProxy(
+        OE,
+        [ethers.ZeroAddress, admin.address],
+        { initializer: "initialize" }
+      );
+      await hookOe.waitForDeployment();
+
+      const Core = await ethers.getContractFactory("OpinionCoreV4", {
+        libraries: {
+          ValidationLibrary: validationLibAddress,
+          PriceCalculator: priceCalcAddress,
+          SelfExitLib: selfExitLibAddress,
+        },
+      });
+      hookCore = await upgrades.deployProxy(
+        Core,
+        [
+          await hookUsdc.getAddress(),
+          deployer.address,
+          await hookFeeManager.getAddress(),
+          await hookPm.getAddress(),
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          treasury.address,
+          await hookOe.getAddress(),
+          await hookOa.getAddress(),
+        ],
+        { initializer: "initialize", unsafeAllowLinkedLibraries: true }
+      );
+      await hookCore.waitForDeployment();
+
+      const coreAddr = await hookCore.getAddress();
+      await hookOa.connect(admin).setCoreContract(coreAddr);
+      await hookOe.connect(admin).setCoreContract(coreAddr);
+      await hookPm.connect(admin).setOpinionCore(coreAddr);
+      await hookFeeManager.connect(deployer).grantCoreContractRole(coreAddr);
+      await hookCore.connect(deployer).initializeV4();
+      await hookCore.connect(deployer).setSelfExitFlag(0, true);
+      await hookCore.connect(deployer).setSelfExitFlag(1, true);
+
+      // Deploy the attacker
+      const Attacker = await ethers.getContractFactory("ReentrantKing");
+      attacker = await Attacker.deploy(coreAddr, await hookUsdc.getAddress());
+      await attacker.waitForDeployment();
+
+      // Fund attacker contract with USDC (it needs to pay create fees)
+      await hookUsdc.mint(await attacker.getAddress(), INITIAL_PRICE * 10n);
+      await attacker.approveCore(INITIAL_PRICE * 10n);
+    });
+
+    it("11.1 attacker cannot re-enter selfExit during refund transfer", async function () {
+      // Have attacker create an opinion (becomes king with stake locked)
+      // Disable hook during creation to avoid disrupting the setup transfer
+      const attackerAddr = await attacker.getAddress();
+
+      // Fund an EOA to create the opinion, then transfer ownership to attacker
+      await hookUsdc.mint(creator.address, INITIAL_PRICE + SPAM_FEE);
+      await hookUsdc
+        .connect(creator)
+        .approve(await hookCore.getAddress(), INITIAL_PRICE + SPAM_FEE);
+      await hookCore
+        .connect(creator)
+        .createOpinion("ree?", "yes", "desc", INITIAL_PRICE, ["Technology"]);
+      const id = (await hookCore.nextOpinionId()) - 1n;
+
+      // Transfer answer ownership to attacker (free, doesn't move USDC)
+      await hookCore.connect(creator).transferAnswerOwnership(id, attackerAddr);
+      await attacker.setOpinionId(id);
+      await attacker.setTarget(0); // SelfExit
+
+      // Enable hook so the attacker's onUSDCReceived fires during refund
+      await hookUsdc.setHookEnabled(true);
+
+      // Advance past cooldown
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      // Attacker triggers selfExit. The inner reentry MUST fail.
+      // The outer call may either:
+      //   (a) Succeed (if onUSDCReceived swallows the inner revert via try/catch)
+      //   (b) Revert in totality
+      // Either way, `reentrySucceeded` MUST stay false.
+      try {
+        await attacker.startSelfExit();
+      } catch {
+        // outer revert is acceptable
+      }
+
+      expect(await attacker.reentrySucceeded()).to.equal(false);
+      expect(await attacker.reentryReverted()).to.equal(true);
+    });
+
+    it("11.2 attacker cannot re-enter submitAnswer during selfExit refund", async function () {
+      const attackerAddr = await attacker.getAddress();
+
+      await hookUsdc.mint(creator.address, INITIAL_PRICE + SPAM_FEE);
+      await hookUsdc
+        .connect(creator)
+        .approve(await hookCore.getAddress(), INITIAL_PRICE + SPAM_FEE);
+      await hookCore
+        .connect(creator)
+        .createOpinion("ree?", "yes", "desc", INITIAL_PRICE, ["Technology"]);
+      const id = (await hookCore.nextOpinionId()) - 1n;
+
+      await hookCore.connect(creator).transferAnswerOwnership(id, attackerAddr);
+      await attacker.setOpinionId(id);
+      await attacker.setTarget(2); // SubmitAnswer
+
+      await hookUsdc.setHookEnabled(true);
+      await time.increase(SOLO_COOLDOWN + 1);
+
+      try {
+        await attacker.startSelfExit();
+      } catch {}
+
+      expect(await attacker.reentrySucceeded()).to.equal(false);
+      expect(await attacker.reentryReverted()).to.equal(true);
     });
   });
 });
