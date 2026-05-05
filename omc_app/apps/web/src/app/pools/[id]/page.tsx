@@ -13,6 +13,7 @@ import { JoinPoolModal } from './components/JoinPoolModal';
 import { PoolShareModal } from './components/PoolShareModal';
 import { FinancialDashboard } from './components/FinancialDashboard';
 import { CountdownTimer } from './components/CountdownTimer';
+import { PoolStaleExitPanel } from './components/PoolStaleExitPanel';
 
 interface PoolPageProps {
   // Will be populated by usePoolDetails hook later
@@ -280,6 +281,14 @@ function PoolPageContent() {
               deadline={poolDetails.deadline}
               status={poolDetails.status}
               size="medium"
+            />
+
+            {/* V4: Pool stale-exit dissolution + claim */}
+            <PoolStaleExitPanel
+              poolId={poolDetails.id}
+              opinionId={poolDetails.opinionId}
+              poolStatusNumber={poolDetails.statusNumber}
+              poolTotalAmount={BigInt(Math.round(parseFloat(poolDetails.currentAmount) * 1_000_000))}
             />
 
             {/* Quick Stats Card */}

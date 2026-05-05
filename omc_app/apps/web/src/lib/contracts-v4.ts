@@ -68,6 +68,13 @@ export const OPINION_CORE_V4_ABI = [
   },
   {
     inputs: [],
+    name: 'largeHolderThresholdBps',
+    outputs: [{ internalType: 'uint16', name: '', type: 'uint16' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
     name: 'minReclaimPrice',
     outputs: [{ internalType: 'uint96', name: '', type: 'uint96' }],
     stateMutability: 'view',

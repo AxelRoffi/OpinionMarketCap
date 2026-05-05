@@ -20,6 +20,9 @@ import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { InlineTradingPanel } from '../components/inline-trading-panel';
 import { MobileTradingSheet } from '../components/mobile-trading-sheet';
 import { SelfExitPanel } from '../components/self-exit-panel';
+import { VacantSlotReclaimPanel } from '../components/vacant-slot-reclaim-panel';
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 import { AmbientBackground } from '@/components/ambient-background';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
@@ -161,36 +164,47 @@ export default function OpinionPageClient() {
           {/* Right Column: Trading Panel (40%) - Desktop only */}
           <div className="hidden lg:block lg:col-span-2">
             <motion.div {...slideInRight(0.2)} className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
-              <InlineTradingPanel
-                opinionId={opinion.id}
-                opinionData={{
-                  id: opinion.id,
-                  question: opinion.question,
-                  currentAnswer: opinion.currentAnswer,
-                  nextPrice: opinion.nextPrice,
-                  lastPrice: opinion.lastPrice,
-                  totalVolume: opinion.totalVolume,
-                  creator: opinion.creator,
-                  currentAnswerOwner: opinion.currentAnswerOwner,
-                  categories: opinion.categories,
-                  isActive: opinion.isActive,
-                }}
-                onCreatePool={() => setShowPoolCreationModal(true)}
-                onListForSale={() => setShowListForSaleModal(true)}
-                onCancelListing={() => setShowCancelListingModal(true)}
-                canListForSale={canListForSale}
-                canCancelListing={canCancelListing}
-                isForSale={isForSale}
-                salePrice={opinion.salePrice}
-              />
-
-              {/* V4: Self-exit panel — hides itself when feature flag is off */}
-              <div className="mt-4">
-                <SelfExitPanel
+              {opinion.currentAnswerOwner === ZERO_ADDRESS ? (
+                /* V4: vacant slot — show reclaim form instead of trade panel */
+                <VacantSlotReclaimPanel
                   opinionId={opinion.id}
-                  currentAnswerOwner={opinion.currentAnswerOwner}
+                  reclaimPrice={opinion.nextPrice}
+                  previousAnswer={opinion.currentAnswer}
                 />
-              </div>
+              ) : (
+                <>
+                  <InlineTradingPanel
+                    opinionId={opinion.id}
+                    opinionData={{
+                      id: opinion.id,
+                      question: opinion.question,
+                      currentAnswer: opinion.currentAnswer,
+                      nextPrice: opinion.nextPrice,
+                      lastPrice: opinion.lastPrice,
+                      totalVolume: opinion.totalVolume,
+                      creator: opinion.creator,
+                      currentAnswerOwner: opinion.currentAnswerOwner,
+                      categories: opinion.categories,
+                      isActive: opinion.isActive,
+                    }}
+                    onCreatePool={() => setShowPoolCreationModal(true)}
+                    onListForSale={() => setShowListForSaleModal(true)}
+                    onCancelListing={() => setShowCancelListingModal(true)}
+                    canListForSale={canListForSale}
+                    canCancelListing={canCancelListing}
+                    isForSale={isForSale}
+                    salePrice={opinion.salePrice}
+                  />
+
+                  {/* V4: Self-exit panel — hides itself when feature flag is off */}
+                  <div className="mt-4">
+                    <SelfExitPanel
+                      opinionId={opinion.id}
+                      currentAnswerOwner={opinion.currentAnswerOwner}
+                    />
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         </div>
