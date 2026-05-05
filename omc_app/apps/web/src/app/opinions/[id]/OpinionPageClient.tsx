@@ -19,6 +19,7 @@ import { DetailedStats } from '../components/opinion-stats';
 import { OpinionDetailSkeleton } from '../components/opinion-detail-skeleton';
 import { InlineTradingPanel } from '../components/inline-trading-panel';
 import { MobileTradingSheet } from '../components/mobile-trading-sheet';
+import { SelfExitPanel } from '../components/self-exit-panel';
 import { AmbientBackground } from '@/components/ambient-background';
 import { CreatePoolModal } from '@/app/pools/components/CreatePoolModal';
 import ListForSaleModal from '@/components/modals/ListForSaleModal';
@@ -182,6 +183,14 @@ export default function OpinionPageClient() {
                 isForSale={isForSale}
                 salePrice={opinion.salePrice}
               />
+
+              {/* V4: Self-exit panel — hides itself when feature flag is off */}
+              <div className="mt-4">
+                <SelfExitPanel
+                  opinionId={opinion.id}
+                  currentAnswerOwner={opinion.currentAnswerOwner}
+                />
+              </div>
             </motion.div>
           </div>
         </div>
