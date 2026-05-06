@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
     "base": {
       url: "https://mainnet.base.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 1000000000, // 1 gwei (mainnet)
+      gasPrice: 50000000, // 0.05 gwei — typical Base mainnet level (was 1 gwei = 20× too high)
       gas: 5000000,
       timeout: 300000, // 5 minutes
     },

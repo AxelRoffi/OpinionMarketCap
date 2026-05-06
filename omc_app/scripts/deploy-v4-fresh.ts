@@ -124,19 +124,29 @@ async function main() {
 
   // ─── 1. ValidationLibrary ───────────────────────────────────────────
   divider("1/8 ValidationLibrary");
-  const ValidationLib = await ethers.getContractFactory("ValidationLibrary");
-  const valLib = await ValidationLib.deploy();
-  await valLib.waitForDeployment();
-  out.validationLibrary = await valLib.getAddress();
-  console.log(`  ✅ ${out.validationLibrary}`);
+  if (process.env.VALIDATION_LIB_ADDRESS) {
+    out.validationLibrary = process.env.VALIDATION_LIB_ADDRESS;
+    console.log(`  ⏭  Reusing deployed at ${out.validationLibrary}`);
+  } else {
+    const ValidationLib = await ethers.getContractFactory("ValidationLibrary");
+    const valLib = await ValidationLib.deploy();
+    await valLib.waitForDeployment();
+    out.validationLibrary = await valLib.getAddress();
+    console.log(`  ✅ ${out.validationLibrary}`);
+  }
 
   // ─── 2. PriceCalculator ─────────────────────────────────────────────
   divider("2/8 PriceCalculator");
-  const PriceCalc = await ethers.getContractFactory("PriceCalculator");
-  const priceCalc = await PriceCalc.deploy();
-  await priceCalc.waitForDeployment();
-  out.priceCalculator = await priceCalc.getAddress();
-  console.log(`  ✅ ${out.priceCalculator}`);
+  if (process.env.PRICE_CALC_ADDRESS) {
+    out.priceCalculator = process.env.PRICE_CALC_ADDRESS;
+    console.log(`  ⏭  Reusing deployed at ${out.priceCalculator}`);
+  } else {
+    const PriceCalc = await ethers.getContractFactory("PriceCalculator");
+    const priceCalc = await PriceCalc.deploy();
+    await priceCalc.waitForDeployment();
+    out.priceCalculator = await priceCalc.getAddress();
+    console.log(`  ✅ ${out.priceCalculator}`);
+  }
 
   // ─── 3. SelfExitLib ─────────────────────────────────────────────────
   divider("3/8 SelfExitLib");

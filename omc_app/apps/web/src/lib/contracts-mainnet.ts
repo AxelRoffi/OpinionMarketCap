@@ -1,15 +1,17 @@
 // 🚀 MAINNET CONTRACT CONFIGURATION
 // Base Mainnet (Chain ID: 8453) contract addresses and configuration
-// Deployed: 2025-01-07
+// V4 + V2 fresh deployment (May 2026): self-exit feature, α-vanilla economics
 
 // Contract addresses - LIVE ON BASE MAINNET
 export const MAINNET_CONTRACTS = {
-  OPINION_CORE: '0x7b5d97fb78fbf41432F34f46a901C6da7754A726' as `0x${string}`,
-  FEE_MANAGER: '0x31D604765CD76Ff098A283881B2ca57e7F703199' as `0x${string}`,
-  POOL_MANAGER: '0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e' as `0x${string}`,
-  OPINION_ADMIN: '0x4F0A1938E8707292059595275F9BBD067A301FD2' as `0x${string}`,
-  OPINION_EXTENSIONS: '0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA' as `0x${string}`,
-  VALIDATION_LIBRARY: '0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5' as `0x${string}`,
+  OPINION_CORE: '0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1' as `0x${string}`,        // OpinionCoreV4
+  FEE_MANAGER: '0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA' as `0x${string}`,
+  POOL_MANAGER: '0x34537a749F4b16E7542a59e5322338372A6a1E3c' as `0x${string}`,         // PoolManagerV2
+  OPINION_ADMIN: '0x202Bc4E3aB50147212bee0506bF5f2B544333b5D' as `0x${string}`,
+  OPINION_EXTENSIONS: '0x2eD0DC454043A768cB3FA7e480c41Be7b8954394' as `0x${string}`,
+  VALIDATION_LIBRARY: '0x95a60C951BCB6E77644081f0501c9d2dDDfDb681' as `0x${string}`,
+  PRICE_CALCULATOR: '0xb6cEB6F62e929aC99068255AA3E380F01Ed69cB7' as `0x${string}`,
+  SELF_EXIT_LIB: '0x30c465f5772dc86555d37fE1376218Cbf79a4D93' as `0x${string}`,
   // Real USDC on Base Mainnet
   USDC_TOKEN: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`,
 } as const;

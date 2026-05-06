@@ -1,0 +1,27 @@
+{
+  "network": "base",
+  "chainId": "8453",
+  "deployedAt": "2026-05-06T15:00:04.323Z",
+  "deployer": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C",
+  "treasury": "0x67902d93E37Ab7C1CD016affa797a4AF3b53D1a9",
+  "admin": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C",
+  "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "validationLibrary": "0x95a60C951BCB6E77644081f0501c9d2dDDfDb681",
+  "priceCalculator": "0xb6cEB6F62e929aC99068255AA3E380F01Ed69cB7",
+  "selfExitLib": "0x30c465f5772dc86555d37fE1376218Cbf79a4D93",
+  "feeManager": "0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA",
+  "feeManagerImpl": "0xBC2cc09AfB1c5fB47d40BF8860416FA7Be9804e6",
+  "poolManager": "0x34537a749F4b16E7542a59e5322338372A6a1E3c",
+  "poolManagerImpl": "0x2cb3b0b143d9155db3b007d90b20cecc1af69cdf",
+  "opinionAdmin": "0x202Bc4E3aB50147212bee0506bF5f2B544333b5D",
+  "opinionAdminImpl": "0x297a71b4e4d5dcc0d8d69995091b50359ca08fb7",
+  "opinionExtensions": "0x2eD0DC454043A768cB3FA7e480c41Be7b8954394",
+  "opinionExtensionsImpl": "0xd20C3d839C40A27327936224eE8912398b19A9C4",
+  "opinionCore": "0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1",
+  "opinionCoreImpl": "0xa5a47efc129ba25ec9066b6439684daa3e3df1e5",
+  "featureFlags": {
+    "selfExitEnabled": false,
+    "reclaimVacantSlotEnabled": false,
+    "stalePoolExitEnabled": false
+  }
+}
