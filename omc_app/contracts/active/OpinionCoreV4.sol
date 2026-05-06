@@ -77,7 +77,11 @@ contract OpinionCoreV4 is
     uint16 internal constant MAX_EXIT_PENALTY_BPS = 5000;
     uint16 internal constant MIN_EXIT_PENALTY_BPS = 500;
     uint32 internal constant MAX_COOLDOWN = 90 days;
-    uint32 internal constant MIN_COOLDOWN = 1 days;
+    /// @dev Lower bound on admin-settable cooldown. 60s permits live testing
+    ///      of the self-exit flow without waiting through a real 14-day cycle.
+    ///      Production cooldown is set to 14 days at initializeV4(); admin can
+    ///      temporarily lower for live tests, then restore.
+    uint32 internal constant MIN_COOLDOWN = 60;
     uint16 internal constant MIN_RECLAIM_DISCOUNT_BPS = 1000;
     uint16 internal constant MAX_RECLAIM_DISCOUNT_BPS = 9000;
     uint16 internal constant MAX_LARGE_HOLDER_THRESHOLD_BPS = 5000;

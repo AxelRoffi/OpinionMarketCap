@@ -614,8 +614,9 @@ describe("OpinionCoreV4 — Self-Exit Feature", function () {
     });
 
     it("7.8 cooldown setters enforce min/max bounds", async function () {
-      // soloCooldown (paramType 0): bounds 1–90 days
-      await expect(opinionCore.connect(deployer).setSelfExitParameter(0, 100)).to.be.reverted; // < 1 day
+      // soloCooldown (paramType 0): bounds 60s–90 days (60s lower bound
+      // permits live cooldown testing on real networks; production uses 14d).
+      await expect(opinionCore.connect(deployer).setSelfExitParameter(0, 30)).to.be.reverted; // < 60s
       await expect(opinionCore.connect(deployer).setSelfExitParameter(0, 100 * 24 * 60 * 60))
         .to.be.reverted; // > 90 days
       await opinionCore.connect(deployer).setSelfExitParameter(0, 7 * 24 * 60 * 60);
