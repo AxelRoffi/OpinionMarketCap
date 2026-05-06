@@ -1,31 +1,81 @@
 # Claude Code Session Memory - OpinionMarketCap Base Mainnet Deployment
 
-## Current Status: DEPLOYED ON BASE MAINNET
+## Current Status: V4 + V2 FRESH DEPLOY ON BASE MAINNET (May 6, 2026)
 
-All contracts successfully deployed and linked on Base Mainnet (Chain ID: 8453) on January 7, 2025.
-Last upgrade: January 15, 2025 (OpinionCoreV3 - Dynamic Pricing)
+The V4/V2 stack is the active production target. The V3 stack (Jan 2025)
+is still on-chain but no longer referenced by the frontend.
 
-## Deployed Contract Addresses (Base Mainnet)
+## ✅ CURRENT (V4 + V2) — Base Mainnet
 
 ### Proxy Addresses (use these in frontend)
-| Contract | Proxy Address |
-|----------|---------------|
-| ValidationLibrary | `0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5` |
-| FeeManager | `0x31D604765CD76Ff098A283881B2ca57e7F703199` |
-| PoolManager | `0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e` |
-| OpinionAdmin | `0x4F0A1938E8707292059595275F9BBD067A301FD2` |
-| OpinionExtensions | `0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA` |
-| OpinionCore | `0x7b5d97fb78fbf41432F34f46a901C6da7754A726` |
+| Contract | Address |
+|----------|---------|
+| **OpinionCoreV4** | `0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1` |
+| **PoolManagerV2** | `0x34537a749F4b16E7542a59e5322338372A6a1E3c` |
+| FeeManager | `0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA` |
+| OpinionAdmin | `0x202Bc4E3aB50147212bee0506bF5f2B544333b5D` |
+| OpinionExtensionsV2 | `0x2eD0DC454043A768cB3FA7e480c41Be7b8954394` |
 
-### Implementation Addresses (for verification)
+### Libraries (linked into OpinionCoreV4)
+| Library | Address |
+|---------|---------|
+| ValidationLibrary | `0x95a60C951BCB6E77644081f0501c9d2dDDfDb681` |
+| PriceCalculator | `0xb6cEB6F62e929aC99068255AA3E380F01Ed69cB7` |
+| **SelfExitLib** *(new in V4)* | `0x30c465f5772dc86555d37fE1376218Cbf79a4D93` |
+
+### Implementation Addresses
+| Contract | Implementation |
+|----------|----------------|
+| FeeManager | `0xBC2cc09AfB1c5fB47d40BF8860416FA7Be9804e6` |
+| PoolManagerV2 | `0x2cb3b0b143d9155db3b007d90b20cecc1af69cdf` |
+| OpinionAdmin | `0x297a71b4e4d5dcc0d8d69995091b50359ca08fb7` |
+| OpinionExtensionsV2 | `0xd20C3d839C40A27327936224eE8912398b19A9C4` |
+| OpinionCoreV4 | `0xa5a47efc129ba25ec9066b6439684daa3e3df1e5` |
+
+### V4 Feature Flags (currently FALSE — admin must enable manually)
+| Flag | Default | What it gates |
+|------|---------|---------------|
+| `selfExitEnabled` | false | Solo king `selfExit()` + pool `processPoolStaleExit()` |
+| `reclaimVacantSlotEnabled` | false | `reclaimVacantSlot()` on vacant slots |
+| `stalePoolExitEnabled` (V2) | false | `triggerLargePoolExit` / `triggerPoolStaleExit` / `claimStaleRefund` |
+
+### V4 Default Parameters (admin-tunable via `setSelfExitParameter`)
+| Param | Default | Bounds |
+|-------|---------|--------|
+| `soloCooldown` | 14 days | 60s–90 days |
+| `poolCooldown` | 21 days | 60s–90 days |
+| `poolExtendedCooldown` | 35 days | ≥ poolCooldown, ≤ 90 days |
+| `exitPenaltyBps` | 2000 (20%) | 500–5000 |
+| `penaltyCreatorShareBps` | 5000 (50/50) | 0–10000 |
+| `reclaimDiscountBps` | 5000 (50%) | 1000–9000 |
+| `largeHolderThresholdBps` | 1000 (10%) | 1–5000 |
+| `minReclaimPrice` | 2 USDC | > 0 |
+| `spamFee` | 2 USDC | ≤ 100 USDC |
+
+`MIN_COOLDOWN` is 60 seconds (constant) so admin can lower the cooldown
+for live testing without waiting 14 days. Restore production cooldown
+after testing: `setSelfExitParameter(0, 1209600)` (14 days).
+
+## 🗄 LEGACY (V3 / V1) Addresses — kept on-chain, no longer referenced
+
+| Contract | Proxy Address (deprecated) |
+|----------|----------------------------|
+| ValidationLibrary | `0xd65aeE5b31D1837767eaf23E76e82e5Ba375d1a5` |
+| FeeManager (V1) | `0x31D604765CD76Ff098A283881B2ca57e7F703199` |
+| PoolManager (V1) | `0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e` |
+| OpinionAdmin (V1) | `0x4F0A1938E8707292059595275F9BBD067A301FD2` |
+| OpinionExtensionsV2 (old) | `0x2a5a4Dc8AE4eF69a15D9974df54f3f38B3e883aA` |
+| OpinionCoreV3 | `0x7b5d97fb78fbf41432F34f46a901C6da7754A726` |
+| PriceCalculator (V3) | `0x99677761a6908EBde8BaD60cEfb2374C9f9afCEE` |
+
+### Legacy V3 Implementation Addresses (for verification reference)
 | Contract | Version | Implementation Address |
 |----------|---------|------------------------|
 | FeeManager | V1 | `0xa427dD680a9F56A26646e89A7DE74235486D07b9` |
 | PoolManager | V1 | `0xb0461E420f65d711F84A7dAa0e94893482435617` |
 | OpinionAdmin | V1 | `0xeF10FdFaf7876F63450207e62fba9d4b4A70DcBc` |
-| OpinionExtensions | **V2** | `0x3c04ea0fb84622b263fbdc91d2a3fe5adb4c6682` |
-| OpinionCore | **V3** | `0x8de10cFABaEE6dB8aA0c0fD88e6d3E228a59Ee6d` |
-| PriceCalculator | **V1** | `0x99677761a6908EBde8BaD60cEfb2374C9f9afCEE` |
+| OpinionExtensions | V2 | `0x3c04ea0fb84622b263fbdc91d2a3fe5adb4c6682` |
+| OpinionCore | V3 | `0x8de10cFABaEE6dB8aA0c0fD88e6d3E228a59Ee6d` |
 
 ### Configuration
 | Setting | Address |
