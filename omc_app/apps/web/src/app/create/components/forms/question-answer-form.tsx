@@ -183,9 +183,10 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
     return CATEGORIES
   }
 
-  // Correct fee calculation matching smart contract: 20% with 2 USDC minimum
-  const calculatedFee = formData.initialPrice * 0.2
-  const creationFee = calculatedFee < 2 ? 2 : calculatedFee
+  // V4 economics: flat 2 USDC spamFee + initialPrice locked as recoverable stake.
+  const SPAM_FEE = 2
+  const creationFee = SPAM_FEE
+  const totalCost = formData.initialPrice + SPAM_FEE
 
   return (
     <div className="space-y-6">
@@ -401,28 +402,25 @@ export function QuestionAnswerForm({ formData, onUpdate, onNext }: QuestionAnswe
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Initial Price:</span>
+                <span className="text-gray-400">Initial Price (locked stake):</span>
                 <span className="text-white font-medium">${formData.initialPrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">
-                  Creation Fee {creationFee === 2 ? '(2 USDC Min)' : '(20%)'}:
-                </span>
+                <span className="text-gray-400">Spam Fee:</span>
                 <span className="text-yellow-400 font-medium">${creationFee.toFixed(2)}</span>
               </div>
               <div className="border-t border-gray-700 pt-2">
                 <div className="flex justify-between text-sm font-bold">
                   <span className="text-white">You Pay:</span>
-                  <span className="text-emerald-400">${creationFee.toFixed(2)}</span>
+                  <span className="text-emerald-400">${totalCost.toFixed(2)}</span>
                 </div>
               </div>
               <div className="text-xs text-gray-500 space-y-1">
-                <p className="font-medium text-gray-400">Fee Structure:</p>
-                <p>• 20% of initial price with 2 USDC minimum</p>
-                <p>• Example: $3 → $2 fee, $50 → $10 fee</p>
-                <p className="pt-1">
-                  Users will pay ${formData.initialPrice.toFixed(2)} to take ownership of your answer.
-                </p>
+                <p className="font-medium text-gray-400">How it works:</p>
+                <p>• Flat <span className="text-yellow-400">2 USDC</span> spam fee → treasury</p>
+                <p>• Initial price is <span className="text-emerald-400">locked as your stake</span> in the contract</p>
+                <p>• You recover the stake when someone flips your answer (they pay it as entry price)</p>
+                <p>• Or pull it back via <span className="text-emerald-400">Self-Exit</span> after the cooldown (80% refund, 20% penalty)</p>
               </div>
             </CardContent>
           </Card>

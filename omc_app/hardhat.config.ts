@@ -75,28 +75,10 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: {
-      baseSepolia: process.env.BASESCAN_API_KEY || "PLACEHOLDER",
-      base: process.env.BASESCAN_API_KEY || "PLACEHOLDER",
-    },
-    customChains: [
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org"
-        }
-      },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org"
-        }
-      }
-    ]
+    // Etherscan V2 unified API — one key (etherscan.io) covers all chains.
+    // Get a free key at https://etherscan.io/myapikey then set ETHERSCAN_API_KEY (or
+    // re-use BASESCAN_API_KEY env var with a value that comes from etherscan.io).
+    apiKey: process.env.ETHERSCAN_API_KEY || process.env.BASESCAN_API_KEY || "PLACEHOLDER",
   },
   contractSizer: {
     alphaSort: true,

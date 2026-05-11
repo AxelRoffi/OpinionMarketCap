@@ -24,7 +24,8 @@ import {
   ExternalLink,
   Ban,
   UserCheck,
-  Clock
+  Clock,
+  Power
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ import { useRouter } from 'next/navigation'
 import { AdminAccessChecker } from '@/components/AdminAccessChecker'
 import { ExtensionErrorSuppressor } from '@/components/ExtensionErrorSuppressor'
 import { AdminActions } from './components/AdminActions'
+import { SelfExitAdminPanel } from './components/SelfExitAdminPanel'
 
 // Contract configuration - Updated to use environment-aware addresses
 import { CURRENT_CONTRACTS } from '@/lib/environment'
@@ -1135,6 +1137,10 @@ export default function AdminDashboard() {
               <DollarSign className="w-4 h-4" />
               Treasury
             </TabsTrigger>
+            <TabsTrigger value="self-exit" className="flex items-center gap-2">
+              <Power className="w-4 h-4" />
+              Self-Exit (V4)
+            </TabsTrigger>
           </TabsList>
 
           {/* Moderation Tab */}
@@ -1809,6 +1815,11 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Self-Exit (V4) Tab */}
+          <TabsContent value="self-exit" className="space-y-6">
+            <SelfExitAdminPanel />
           </TabsContent>
         </Tabs>
         </div>

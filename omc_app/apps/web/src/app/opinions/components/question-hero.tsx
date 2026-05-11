@@ -90,10 +90,12 @@ export function QuestionHero({ opinion }: QuestionHeroProps) {
               {category}
             </Badge>
           ))}
-          {opinion.isActive ? (
-            <Badge className="bg-emerald-600 text-white text-xs">Active</Badge>
-          ) : (
+          {!opinion.isActive ? (
             <Badge variant="secondary" className="bg-muted text-muted-foreground text-xs">Inactive</Badge>
+          ) : opinion.currentAnswerOwner.toLowerCase() === '0x0000000000000000000000000000000000000000' ? (
+            <Badge className="bg-purple-600 text-white text-xs">Vacant — claim it</Badge>
+          ) : (
+            <Badge className="bg-emerald-600 text-white text-xs">Active</Badge>
           )}
           {Number(opinion.totalVolume) >= 100_000_000 && (
             <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs">Trending</Badge>

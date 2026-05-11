@@ -27,9 +27,11 @@ export function CreateSidebar({ currentStep, formData }: CreateSidebarProps) {
     return `$${amount.toFixed(2)}`
   }
 
-  // Correct fee calculation matching smart contract: 20% with 2 USDC minimum
-  const calculatedFee = formData.initialPrice * 0.2
-  const creationFee = calculatedFee < 2 ? 2 : calculatedFee
+  // V4 economics: flat 2 USDC spamFee + initialPrice locked as recoverable stake.
+  // Matches OpinionCoreV4.createOpinion: totalCost = initialPrice + spamFee.
+  const SPAM_FEE = 2
+  const creationFee = SPAM_FEE
+  const totalCost = formData.initialPrice + SPAM_FEE
 
   return (
     <div className="space-y-6">
@@ -62,7 +64,7 @@ export function CreateSidebar({ currentStep, formData }: CreateSidebarProps) {
               <p>• Review all your information carefully</p>
               <p>• Check the creation fee calculation</p>
               <p>• Submit when you&apos;re ready to create</p>
-              <p>• Transaction will be processed on Base Sepolia</p>
+              <p>• Transaction will be processed on Base Mainnet</p>
             </>
           )}
         </CardContent>
@@ -84,28 +86,25 @@ export function CreateSidebar({ currentStep, formData }: CreateSidebarProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Initial Price:</span>
+                <span className="text-gray-400">Initial Price (locked stake):</span>
                 <span className="text-white font-medium">{formatUSDC(formData.initialPrice)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">
-                  Creation Fee {creationFee === 2 ? '(2 USDC Min)' : '(20%)'}:
-                </span>
+                <span className="text-gray-400">Spam Fee:</span>
                 <span className="text-yellow-400 font-medium">{formatUSDC(creationFee)}</span>
               </div>
               <div className="border-t border-gray-700 pt-2">
                 <div className="flex justify-between text-sm font-bold">
                   <span className="text-white">You Pay:</span>
-                  <span className="text-emerald-400">{formatUSDC(creationFee)}</span>
+                  <span className="text-emerald-400">{formatUSDC(totalCost)}</span>
                 </div>
               </div>
               <div className="text-xs text-gray-500 space-y-1">
-                <p className="font-medium text-gray-400">Fee Structure:</p>
-                <p>• 20% of initial price with 2 USDC minimum</p>
-                <p>• Example: $3 → $2 fee, $50 → $10 fee</p>
-                <p className="pt-1 border-t border-gray-700">
-                  The initial price is what users will pay to take ownership of your answer.
-                </p>
+                <p className="font-medium text-gray-400">How it works:</p>
+                <p>• Flat <span className="text-yellow-400">2 USDC</span> spam fee → treasury</p>
+                <p>• Initial price is <span className="text-emerald-400">locked as your stake</span></p>
+                <p>• You recover the stake when someone flips your answer (they pay it as entry price)</p>
+                <p>• Or pull it back via <span className="text-emerald-400">Self-Exit</span> after the cooldown (80% refund, 20% penalty)</p>
               </div>
             </CardContent>
           </Card>

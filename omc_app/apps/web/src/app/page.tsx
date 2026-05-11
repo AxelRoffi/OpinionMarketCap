@@ -100,6 +100,8 @@ interface MarketStats {
   totalOpinions: number;
 }
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 // Inner component that uses wagmi hooks (only rendered after mount)
 function HomePageInner() {
   const { address } = useAccount();
@@ -110,6 +112,20 @@ function HomePageInner() {
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+
+  // V4 self-exit explainer banner — dismissible, persisted in localStorage
+  const [showSelfExitBanner, setShowSelfExitBanner] = useState(true);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShowSelfExitBanner(localStorage.getItem('omc_v4_self_exit_dismissed') !== '1');
+    }
+  }, []);
+  const dismissSelfExitBanner = () => {
+    setShowSelfExitBanner(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('omc_v4_self_exit_dismissed', '1');
+    }
+  };
 
   // Read category from URL query params on mount
   useEffect(() => {
@@ -766,6 +782,30 @@ function HomePageInner() {
           </div>
         )}
 
+        {/* V4 Self-Exit explainer banner */}
+        {showSelfExitBanner && (
+          <div className="mb-3 px-3 py-2.5 rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-500/[0.06] via-purple-500/[0.04] to-fuchsia-500/[0.06] flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+            </div>
+            <div className="flex-1 min-w-0 text-xs sm:text-sm">
+              <span className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] mr-2">New · V4</span>
+              <span className="text-foreground">Don't like being stuck as the king of an answer? You can now </span>
+              <span className="text-purple-300 font-medium">Self-Exit</span>
+              <span className="text-foreground"> — pull back 80% of your locked stake (20% penalty splits 50/50 to creator + platform). The slot becomes </span>
+              <span className="text-purple-300 font-medium">vacant</span>
+              <span className="text-foreground"> and the next bidder can claim it at half price.</span>
+            </div>
+            <button
+              onClick={dismissSelfExitBanner}
+              className="flex-shrink-0 text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded hover:bg-muted/40 transition-colors"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Row 1: Search + Create (Polymarket-style) */}
         <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1">
@@ -993,13 +1033,20 @@ function HomePageInner() {
               // Get real data flags for this opinion
               const accurateTradesCount = getAccurateTradeCount(opinion.id);
 
+              // V4: detect vacant slot (king has self-exited; awaiting reclaim)
+              const isVacant = opinion.currentAnswerOwner.toLowerCase() === ZERO_ADDRESS;
+
               return (
                 <motion.div
                   key={opinion.id}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.02, 0.3) }}
-                  className="flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border border-border/30 hover:border-emerald-500/30 hover:bg-muted/20 transition-all duration-150 cursor-pointer group"
+                  className={`flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border ${
+                    isVacant
+                      ? 'border-purple-500/40 hover:border-purple-400/60 bg-purple-500/[0.03]'
+                      : 'border-border/30 hover:border-emerald-500/30 hover:bg-muted/20'
+                  } transition-all duration-150 cursor-pointer group`}
                   onClick={() => router.push(createOpinionUrl(opinion.id, opinion.question))}
                 >
                   {/* Row 1: Rank + Question + categories */}
@@ -1060,17 +1107,31 @@ function HomePageInner() {
                         {change.isPositive ? '+' : '-'}{change.percentage.toFixed(1)}%
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs px-3 py-1 h-7 rounded-lg hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-200 flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedOpinion(opinion);
-                      }}
-                    >
-                      <Zap className="w-3 h-3 mr-0.5" />
-                      Trade
-                    </Button>
+                    {isVacant ? (
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xs px-3 py-1 h-7 rounded-lg hover:shadow-[0_0_12px_rgba(168,85,247,0.3)] transition-all duration-200 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(createOpinionUrl(opinion.id, opinion.question));
+                        }}
+                      >
+                        <Sparkles className="w-3 h-3 mr-0.5" />
+                        Claim
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs px-3 py-1 h-7 rounded-lg hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-200 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedOpinion(opinion);
+                        }}
+                      >
+                        <Zap className="w-3 h-3 mr-0.5" />
+                        Trade
+                      </Button>
+                    )}
                   </div>
 
                   {/* Row 4: Metadata - creator, answer owner, trades, volume */}
@@ -1086,6 +1147,13 @@ function HomePageInner() {
                     <span>
                       · ans.{' '}
                       {(() => {
+                        if (isVacant) {
+                          return (
+                            <span className="text-purple-400 font-medium uppercase tracking-wide text-[9px] px-1.5 py-[1px] rounded border border-purple-500/40 bg-purple-500/10">
+                              vacant
+                            </span>
+                          );
+                        }
                         if (poolDataLoading && opinion.currentAnswerOwner.toLowerCase() === '0x3b4584e690109484059d95d7904dd9feba246612') {
                           return <span className="animate-pulse">...</span>;
                         }

@@ -52,11 +52,14 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
 
-  // Correct fee calculation matching smart contract: 20% with 2 USDC minimum
-  const calculatedFee = formData.initialPrice * 0.2
-  const creationFee = calculatedFee < 2 ? 2 : calculatedFee
-  const creationFeeWei = BigInt(Math.round(creationFee * 1_000_000)) // Convert to USDC wei (6 decimals)
+  // V4 economics: flat 2 USDC spamFee + initialPrice locked as recoverable stake.
+  // Matches OpinionCoreV4.createOpinion: totalCost = initialPrice + spamFee.
+  const SPAM_FEE = 2
+  const creationFee = SPAM_FEE
+  const totalCost = formData.initialPrice + SPAM_FEE
+  const creationFeeWei = BigInt(Math.round(creationFee * 1_000_000)) // 2 USDC in wei (kept for legacy logging)
   const initialPriceWei = BigInt(Math.round(formData.initialPrice * 1_000_000))
+  const totalCostWei = creationFeeWei + initialPriceWei // The actual amount the contract pulls
 
   // Conservative "infinite" approval amount - use a reasonable large number
   // Equivalent to 1 million USDC (6 decimals) - should be enough for any reasonable use
@@ -146,12 +149,12 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
     setErrorState(null)
     
     try {
-      // Check if approval is needed
-      const needsApproval = !allowance || allowance < creationFeeWei
-      
+      // V4: contract pulls totalCost = initialPrice + spamFee. Approval must cover that.
+      const needsApproval = !allowance || allowance < totalCostWei
+
       if (needsApproval) {
         setCurrentStep('approve')
-        const approvalAmount = useInfiniteApproval ? INFINITE_APPROVAL : creationFeeWei
+        const approvalAmount = useInfiniteApproval ? INFINITE_APPROVAL : totalCostWei
         
         console.log('🔄 Attempting USDC approval...')
         console.log('USDC Address:', USDC_ADDRESS)
@@ -169,14 +172,14 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
         } catch (approvalError) {
           console.error('❌ Infinite approval failed, trying exact amount:', approvalError)
           
-          // Fallback to exact amount if infinite approval fails
+          // Fallback to exact amount (totalCost) if infinite approval fails
           if (useInfiniteApproval) {
             console.log('🔄 Retrying with exact amount...')
             await approveUSDC({
               address: USDC_ADDRESS,
               abi: USDC_ABI,
               functionName: 'approve',
-              args: [CONTRACTS.OPINION_CORE, creationFeeWei]
+              args: [CONTRACTS.OPINION_CORE, totalCostWei]
             })
           } else {
             throw approvalError
@@ -354,9 +357,9 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
     }
   }, [createReceiptError, handleError])
 
-  // Check balances - need enough for creation fee (not initial price)
-  const hasBalance = balance ? balance >= creationFeeWei : false
-  const needsApproval = !allowance || allowance < creationFeeWei
+  // Check balances — V4 contract pulls totalCost = initialPrice + spamFee.
+  const hasBalance = balance ? balance >= totalCostWei : false
+  const needsApproval = !allowance || allowance < totalCostWei
 
   if (currentStep === 'success') {
     return (
@@ -483,20 +486,22 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-400">Initial Price:</span>
+              <span className="text-gray-400">Initial Price (locked stake):</span>
               <span className="text-white font-medium">${formData.initialPrice.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">
-                Creation Fee {creationFee === 2 ? '(2 USDC Min)' : '(20%)'}:
-              </span>
+              <span className="text-gray-400">Spam Fee:</span>
               <span className="text-yellow-400 font-medium">${creationFee.toFixed(2)}</span>
             </div>
             <div className="border-t border-gray-700 pt-2">
               <div className="flex justify-between font-bold">
                 <span className="text-white">You Pay:</span>
-                <span className="text-emerald-400">${creationFee.toFixed(2)}</span>
+                <span className="text-emerald-400">${totalCost.toFixed(2)}</span>
               </div>
+            </div>
+            <div className="text-xs text-gray-500 space-y-1 pt-1">
+              <p>• Spam fee goes to treasury.</p>
+              <p>• Initial price is <span className="text-emerald-400">locked as your stake</span>; recovered on flip or via Self-Exit (80% refund, 20% penalty after the cooldown).</p>
             </div>
           </CardContent>
         </Card>
@@ -546,14 +551,14 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
 
       {/* Balance Warning - Using new component */}
       <BalanceWarning
-        requiredAmount={creationFeeWei}
+        requiredAmount={totalCostWei}
         currentBalance={balance}
       />
 
       {/* USDC Approval Info - Using new component */}
       {hasBalance && (
         <AllowanceInfo
-          requiredAmount={creationFeeWei}
+          requiredAmount={totalCostWei}
           currentAllowance={allowance}
           useInfiniteApproval={useInfiniteApproval}
           onApprovalTypeChange={setUseInfiniteApproval}
@@ -573,7 +578,7 @@ export function ReviewSubmitForm({ formData, onPrevious, onSuccess }: ReviewSubm
           <a href="#" className="text-emerald-400 hover:text-emerald-300">
             terms and conditions
           </a>{' '}
-          and understand that creating an opinion requires paying a creation fee (20% of initial price with 2 USDC minimum).
+          and understand that creating an opinion requires paying a flat 2 USDC spam fee plus locking the initial price as a recoverable stake.
         </Label>
       </div>
 

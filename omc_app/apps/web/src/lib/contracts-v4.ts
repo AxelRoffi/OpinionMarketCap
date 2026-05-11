@@ -101,6 +101,35 @@ export const OPINION_CORE_V4_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [],
+    name: 'penaltyCreatorShareBps',
+    outputs: [{ internalType: 'uint16', name: '', type: 'uint16' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+
+  // ─── V4 admin writes ─────────────────────────────────────────────────
+  {
+    inputs: [
+      { internalType: 'uint8', name: 'paramType', type: 'uint8' },
+      { internalType: 'uint256', name: 'newValue', type: 'uint256' },
+    ],
+    name: 'setSelfExitParameter',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint8', name: 'flagType', type: 'uint8' },
+      { internalType: 'bool', name: 'enabled', type: 'bool' },
+    ],
+    name: 'setSelfExitFlag',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 
   // ─── V4 writes ───────────────────────────────────────────────────────
   {
@@ -202,6 +231,13 @@ export const POOL_MANAGER_V2_ABI = [
     name: 'stalePoolExitEnabled',
     outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bool', name: 'enabled', type: 'bool' }],
+    name: 'setStalePoolExitEnabled',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
