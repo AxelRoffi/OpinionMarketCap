@@ -761,3 +761,76 @@ function validateCategories(string[] memory _categories) external view returns (
 1. **Category Management**: Validate category additions/removals cannot cause inconsistencies
 2. **Extension Slots**: Future extensions should follow same security patterns
 3. **Role Permissions**: Ensure only authorized accounts can modify extensions
+
+---
+
+## Tooling — Plugins, Skills & Extensions
+
+**At the start of every session and before each non-trivial task, scan the installed
+toolset and use whatever fits.** Don't reinvent what a plugin already does.
+
+### Discovery
+
+- Installed skills appear in the `<system-reminder>` block at session start (and after
+  `/clear`). Read that list. Examples currently available in this project:
+  - **context-mode skills** (`ctx_batch_execute`, `ctx_execute`, `ctx_search`,
+    `ctx_fetch_and_index`, `ctx_insight`, `diagnose`, `tdd`, …) — use for any task
+    that would otherwise flood the context window with raw output.
+  - **superpowers** (`brainstorming`, `writing-plans`, `executing-plans`,
+    `test-driven-development`, `systematic-debugging`, `verification-before-completion`,
+    `using-git-worktrees`, `dispatching-parallel-agents`, `receiving-code-review`,
+    `requesting-code-review`, `writing-skills`, `finishing-a-development-branch`) —
+    rigid for process work, flexible for patterns. Invoke via the `Skill` tool.
+  - **gsd-\*** — full GSD workflow (plan/execute/verify/ship/etc.). Use only when the
+    user is actually running the GSD flow; don't impose it on quick edits.
+  - **vercel-\*** — for any task touching Vercel deploys, env vars, Next.js,
+    routing, AI SDK, etc.
+  - **frontend-design**, **simplify**, **claude-api**, **typo-litteraire-fr**,
+    **update-config**, **keybindings-help**, **fewer-permission-prompts**,
+    **loop**, **schedule**, **init**, **review**, **security-review**.
+- Subagents available via the `Agent` tool — listed in the system prompt. Prefer
+  `Explore` for broad codebase searches, `gsd-*` for GSD-flow tasks, and the
+  `general-purpose` agent for everything else.
+
+### Selection rules
+
+1. **If a skill matches the task even at ~1% probability, invoke it.** Don't
+   rationalize around it. (See the `using-superpowers` rule.)
+2. **Process skills first, implementation second.** `brainstorming` and
+   `systematic-debugging` decide *how* to approach a task; `frontend-design`,
+   `tdd`, etc. handle execution.
+3. **Use context-mode for anything that would print >20 lines** — shell output,
+   logs, API responses, page snapshots, search results. Bash is fine for short
+   git/mkdir/rm/mv commands only.
+4. **Never use `WebFetch`** — use `ctx_fetch_and_index` so the page is sandboxed
+   and the summary is what enters context.
+5. **Always use the Write/Edit tools for file changes.** `ctx_execute*` is for
+   analysis/computation, never for writing files.
+6. **Parallel agents for independent work.** When two or more tasks have no shared
+   state, dispatch them in a single message via `dispatching-parallel-agents`.
+7. **Verification before claiming done.** Use `verification-before-completion`
+   before any "this works" / "this is fixed" statement.
+
+### Examples
+
+- User asks to *"check the build"* → use context-mode (`ctx_execute` shell) not
+  raw Bash with tee.
+- User asks to *"design a new component"* → invoke `brainstorming` first, then
+  `frontend-design`.
+- User asks to *"debug a failing test"* → invoke `systematic-debugging` (or
+  `context-mode:diagnose`).
+- User asks to *"fix a Vercel deploy"* → invoke `vercel-deployments-cicd`.
+- Before finishing work and pushing → `verification-before-completion` then
+  `requesting-code-review`.
+- User says "from now on whenever X" → that's a hook in `settings.json` →
+  invoke `update-config`, NOT a memory entry.
+
+### Do not
+
+- Don't list/announce every available plugin in chat. Pick the relevant one,
+  state which one you're using in one short sentence (e.g. "Using
+  context-mode to batch these commands."), and proceed.
+- Don't invoke a skill that isn't in the active session's reminder list —
+  guessing names from training data will fail.
+- Don't duplicate a subagent's work. If you delegate research to `Explore`,
+  don't run the same `grep` yourself.
