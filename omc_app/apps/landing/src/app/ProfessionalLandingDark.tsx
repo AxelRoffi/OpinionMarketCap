@@ -24,7 +24,9 @@ import {
   Copy,
   ArrowUpRight,
   ArrowRight,
-  XCircle
+  XCircle,
+  Sparkles,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
@@ -699,6 +701,129 @@ const HowItWorksSection = () => {
           })}
         </div>
       </motion.div>
+    </Section>
+  );
+};
+
+// ============================================================
+// SECTION 3.5: SELF-EXIT (V4) - Pull back your stake, half-price reclaim
+// ============================================================
+const SelfExitFeatureSection = () => {
+  return (
+    <Section className="relative">
+      {/* NEW · V4 ribbon */}
+      <motion.div
+        className="flex items-center justify-center gap-2 mb-4"
+        initial={{ opacity: 0, y: -10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
+        <Sparkles className="w-4 h-4 text-purple-400" />
+        <span className="text-purple-300 font-semibold uppercase tracking-[0.25em] text-xs">New · V4</span>
+        <Sparkles className="w-4 h-4 text-purple-400" />
+      </motion.div>
+
+      <SectionTitle className="!mb-4">You Can Always Walk Away</SectionTitle>
+
+      <motion.p
+        className="text-gray-300 text-center max-w-2xl mx-auto mb-16 text-lg"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.15 }}
+      >
+        Held an answer too long and the wave never came? Self-Exit and recover most of your
+        stake. The slot opens up and the next person grabs it for half the price. Two winners,
+        no hostages.
+      </motion.p>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        {/* Card 1: Self-Exit */}
+        <motion.div
+          className="relative rounded-2xl p-8 border border-purple-500/30 bg-gradient-to-br from-purple-500/[0.08] via-purple-500/[0.04] to-fuchsia-500/[0.06] overflow-hidden"
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          whileHover={{ scale: 1.02, borderColor: "rgba(168, 85, 247, 0.6)" }}
+        >
+          <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-purple-300 border border-purple-500/40 bg-purple-500/10">
+            For the King
+          </div>
+          <div className="w-14 h-14 rounded-xl bg-purple-500/15 border border-purple-500/40 flex items-center justify-center mb-5">
+            <LogOut className="w-7 h-7 text-purple-300" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">Self-Exit</h3>
+          <p className="text-gray-300 mb-6 leading-relaxed">
+            Stuck owning an answer that nobody flips? After a short cooldown you can pull
+            back <span className="text-purple-300 font-semibold">80% of your locked stake</span>.
+            The 20% penalty splits 50/50 between the question creator and the platform — fair
+            on the way out.
+          </p>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
+              <span>Recover the bulk of your USDC instantly</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
+              <span>Cooldown protects against rage-quits</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
+              <span>One click in the dapp, no negotiation</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Card 2: Vacant Slot Reclaim */}
+        <motion.div
+          className="relative rounded-2xl p-8 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.08] via-emerald-500/[0.04] to-cyan-500/[0.06] overflow-hidden"
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          whileHover={{ scale: 1.02, borderColor: "rgba(16, 185, 129, 0.6)" }}
+        >
+          <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-emerald-300 border border-emerald-500/40 bg-emerald-500/10">
+            For the Next Bidder
+          </div>
+          <div className="w-14 h-14 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center mb-5">
+            <Sparkles className="w-7 h-7 text-emerald-300" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">Reclaim the Vacant Slot</h3>
+          <p className="text-gray-300 mb-6 leading-relaxed">
+            When the king walks, the answer goes <span className="text-emerald-300 font-semibold">vacant</span>.
+            The next person to claim it pays just <span className="text-emerald-300 font-semibold">50%
+            of the previous price</span> — a discounted entry into a market that's already warmed up.
+          </p>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>Half-price entry on a proven question</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>Take ownership in one transaction</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>The previous answer disappears — supply yours</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Footer line */}
+      <motion.p
+        className="text-center text-sm text-gray-500 mt-10 max-w-3xl mx-auto"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.3 }}
+      >
+        On-chain, permissionless, audited. Every parameter is set by governance and visible on Basescan.
+      </motion.p>
     </Section>
   );
 };
@@ -1453,7 +1578,7 @@ const Footer = () => (
           <h4 className="font-semibold text-white mb-4">Resources</h4>
           <div className="space-y-2 text-sm">
             <a href="/whitepaper" className="block text-gray-300 hover:text-blue-400">Documentation</a>
-            <a href="https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Smart Contract</a>
+            <a href="https://basescan.org/address/0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1" target="_blank" rel="noopener noreferrer" className="block text-gray-300 hover:text-blue-400">Smart Contract</a>
             <a href="#" className="block text-gray-300 hover:text-blue-400">API (Coming Soon)</a>
             <a href="#" className="block text-gray-300 hover:text-blue-400">Brand Kit</a>
           </div>
@@ -1529,6 +1654,11 @@ export default function ProfessionalLandingDark() {
 
       {/* 3. How It Works + Money Flow */}
       <HowItWorksSection />
+
+      <AnimatedSeparator />
+
+      {/* 3.5 Self-Exit (V4) */}
+      <SelfExitFeatureSection />
 
       <AnimatedSeparator />
 

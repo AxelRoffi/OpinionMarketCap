@@ -169,7 +169,7 @@ const StepsSection = () => {
       title: "Ask a Question",
       subtitle: "Mint it. Own it. Earn from it.",
       copy: "Think of a question people argue about. \"Best CRM for startups?\" \"Most overrated sneaker brand?\" \"Best pizza in New York?\" Mint it on OMC. You just created a market.",
-      detail: "Set your first answer and an initial price (1-100 USDC). The creation fee is 20% of that price. Now you own the question — and you'll earn 3% royalty on every single trade. Forever.",
+      detail: "Set your first answer and an initial price (1-100 USDC). You pay a flat 2 USDC spam fee + lock the initial price as your stake (recoverable if someone flips you, or via Self-Exit). Now you own the question — and you'll earn 3% royalty on every single trade. Forever.",
       example: { label: "You mint:", question: "\"Best CRM for startups?\"", answer: "Your answer: \"HubSpot\"", price: "Starting price: $10 USDC" },
       icon: <Target className="w-8 h-8" />,
       color: "from-blue-500 to-cyan-500",

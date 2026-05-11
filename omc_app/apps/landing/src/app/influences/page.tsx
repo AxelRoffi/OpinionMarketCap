@@ -256,7 +256,7 @@ const PhilosophySection = () => {
     {
       title: "Durex Codex, Sed Codex",
       thinker: "Code is Law",
-      thinkerUrl: "https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726",
+      thinkerUrl: "https://basescan.org/address/0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1",
       color: "emerald",
       description: "\"The Code is Harsh, but it is The Code.\" The rules are encoded in smart contracts, enforced with absolute certainty. Not a promise — a verifiable reality. Transparent, auditable, immutable. Every trade, every fee, every transfer.",
       punchline: "No middlemen. No moderation. No exceptions. The protocol decides.",
@@ -612,9 +612,9 @@ const FutureSection = () => (
         <p className="text-gray-500 text-sm mb-3">Everything is on-chain and verifiable:</p>
         <div className="flex flex-wrap gap-3">
           {[
-            { name: "OpinionCore", url: "https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" },
-            { name: "PoolManager", url: "https://basescan.org/address/0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e" },
-            { name: "FeeManager", url: "https://basescan.org/address/0x31D604765CD76Ff098A283881B2ca57e7F703199" },
+            { name: "OpinionCoreV4", url: "https://basescan.org/address/0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1" },
+            { name: "PoolManagerV2", url: "https://basescan.org/address/0x34537a749F4b16E7542a59e5322338372A6a1E3c" },
+            { name: "FeeManager", url: "https://basescan.org/address/0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA" },
           ].map((c) => (
             <a
               key={c.name}

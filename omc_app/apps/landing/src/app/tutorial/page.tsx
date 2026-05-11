@@ -414,24 +414,26 @@ const MintSection = () => {
       >
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
           <DollarSign className="w-6 h-6 text-emerald-400" />
-          Creation Fee — Skin in the Game
+          Creation Cost — Skin in the Game
         </h3>
         <div className="mb-4">
           <code className="text-emerald-300 bg-emerald-900/30 px-3 py-2 rounded-lg text-lg font-bold">
-            MAX(2 USDC, price × 20%)
+            initial price + 2 USDC spam fee
           </code>
         </div>
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-gray-900/40 rounded-lg p-4">
-            <p className="text-gray-400 text-sm">$10 initial price</p>
-            <p className="text-white font-bold">→ $2 fee <span className="text-gray-500 font-normal">(minimum)</span></p>
+            <p className="text-gray-400 text-sm">Initial price</p>
+            <p className="text-white font-bold">→ <span className="text-emerald-300">locked as your stake</span></p>
+            <p className="text-gray-500 text-xs mt-1">recovered when someone flips you, or via Self-Exit</p>
           </div>
           <div className="bg-gray-900/40 rounded-lg p-4">
-            <p className="text-gray-400 text-sm">$50 initial price</p>
-            <p className="text-white font-bold">→ $10 fee <span className="text-gray-500 font-normal">(20%)</span></p>
+            <p className="text-gray-400 text-sm">Spam fee — flat</p>
+            <p className="text-white font-bold">→ <span className="text-yellow-300">2 USDC</span> <span className="text-gray-500 font-normal">to treasury</span></p>
+            <p className="text-gray-500 text-xs mt-1">deters throwaway questions</p>
           </div>
         </div>
-        <p className="text-gray-500 text-sm mt-4">No spam. No throwaway questions. If you mint it, you mean it.</p>
+        <p className="text-gray-500 text-sm mt-4">If you mint it, you mean it. Your initial price isn't paid — it's <span className="text-emerald-300">locked</span>. You get it back the moment someone else takes the slot, or via Self-Exit after the cooldown.</p>
       </motion.div>
     </Section>
   );
@@ -821,9 +823,9 @@ const ContractsSection = () => {
 
   const contracts = [
     { name: "USDC Token", address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", purpose: "Trading currency", url: "https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
-    { name: "OpinionCore", address: "0x7b5d97fb78fbf41432F34f46a901C6da7754A726", purpose: "Main opinion markets", url: "https://basescan.org/address/0x7b5d97fb78fbf41432F34f46a901C6da7754A726" },
-    { name: "PoolManager", address: "0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e", purpose: "Collaborative pools", url: "https://basescan.org/address/0xF7f8fB9df7CCAa7fe438A921A51aC1e67749Fb5e" },
-    { name: "FeeManager", address: "0x31D604765CD76Ff098A283881B2ca57e7F703199", purpose: "Fee claims & royalties", url: "https://basescan.org/address/0x31D604765CD76Ff098A283881B2ca57e7F703199" },
+    { name: "OpinionCoreV4", address: "0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1", purpose: "Main opinion markets (V4 — self-exit)", url: "https://basescan.org/address/0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1" },
+    { name: "PoolManagerV2", address: "0x34537a749F4b16E7542a59e5322338372A6a1E3c", purpose: "Collaborative pools (V2 — stale-exit dissolution)", url: "https://basescan.org/address/0x34537a749F4b16E7542a59e5322338372A6a1E3c" },
+    { name: "FeeManager", address: "0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA", purpose: "Fee claims & royalties", url: "https://basescan.org/address/0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA" },
   ];
 
   const copyToClipboard = (address: string) => {
