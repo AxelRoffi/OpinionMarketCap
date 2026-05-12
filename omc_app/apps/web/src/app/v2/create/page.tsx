@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -21,6 +21,14 @@ type Step = 0 | 1 | 2 | 3; // 3 = success
 const QUESTION_MAX = 60;
 const ANSWER_MAX = 60;
 
+// V4 OpinionCore mint fee — flat anti-spam fee paid to treasury, in addition
+// to the initialPrice that locks into the contract.
+//   contract: contracts/active/OpinionCoreV4.sol:139,259,285
+//   totalCost = initialPrice + spamFee
+// Admin can update via setSelfExitParameter(8, …); current default = 2 USDC.
+// (V3 used `MAX($1, 20% × initialPrice)` — that path no longer applies.)
+const SPAM_FEE = 2;
+
 const CAT_OPTS: CategoryOption[] = CATEGORIES.map((c) => ({
   key: c.key,
   emoji: c.emoji,
@@ -36,7 +44,7 @@ export default function CreatePage() {
   const [answer, setAnswer] = useState('');
   const [price, setPrice] = useState(25);
 
-  const fee = useMemo(() => Math.max(2, Math.round(price * 0.2 * 100) / 100), [price]);
+  const fee = SPAM_FEE;
   const total = price + fee;
 
   const canAdvance1 = question.trim().length >= 3 && category !== null;
@@ -328,7 +336,7 @@ function Step3({
           <Label>mint fee</Label>
           <MonoNum className="text-[20px] block">{fmtUSD(fee)}</MonoNum>
           <span className="font-display text-[10px] font-extrabold text-ink/50">
-            max(20%, $2)
+            flat · anti-spam
           </span>
         </div>
       </div>
