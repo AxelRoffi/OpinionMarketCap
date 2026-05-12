@@ -10,6 +10,7 @@ import {
 } from '@/components/poster-arcade';
 import { fmtUSD, type MockTake } from '../../../_data/mock-takes';
 import { getNextBidPrice } from '../../../_data/take-detail';
+import { useWatchlist } from '../../../_lib/watchlist';
 
 type SlipTab = 'take' | 'offer' | 'watch';
 
@@ -155,7 +156,8 @@ function MakeOffer({ take }: { take: MockTake }) {
 /* ─────────────────────────── WATCH ─────────────────────────── */
 
 function Watch({ take }: { take: MockTake }) {
-  const [on, setOn] = useState(false);
+  const { hydrated, isWatched, toggle } = useWatchlist();
+  const on = hydrated && isWatched(take.id);
 
   return (
     <div className="text-center py-6">
@@ -166,7 +168,7 @@ function Watch({ take }: { take: MockTake }) {
         Get notified the moment <span className="font-mono font-extrabold">{fmtUSD(take.price)}</span> moves.
       </div>
       <button
-        onClick={() => setOn((v) => !v)}
+        onClick={() => toggle(take.id)}
         className={
           'mt-5 inline-flex items-center gap-2 rounded-pill border-[2.5px] border-ink px-5 py-3 font-display font-black text-[13px] tracking-[0.06em] uppercase transition-all ' +
           (on
@@ -178,6 +180,9 @@ function Watch({ take }: { take: MockTake }) {
         <span aria-hidden>{on ? '★' : '☆'}</span>
         {on ? 'WATCHING' : 'ADD TO WATCHLIST'}
       </button>
+      <div className="font-display text-[10px] font-bold text-ink/55 mt-3">
+        saved in your browser · <a href="/v2/watchlist" className="underline hover:text-ink">see watchlist</a>
+      </div>
     </div>
   );
 }
