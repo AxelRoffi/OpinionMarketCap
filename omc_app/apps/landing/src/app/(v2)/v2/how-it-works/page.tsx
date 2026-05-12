@@ -1,11 +1,15 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import {
   BtnPrimary,
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroLede,
+  HeroTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -115,15 +119,15 @@ export default function HowItWorks() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]">★ HOW IT WORKS ★</div>
-          <h1 className="mt-3 font-display text-[44px] font-black leading-[0.92] tracking-[-0.04em] md:text-[88px]">
+          <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">★ HOW IT WORKS ★</HeroEyebrow>
+          <HeroTitle className="mt-3 font-display text-[44px] font-black leading-[0.92] tracking-[-0.04em] md:text-[88px]">
             Three steps.<br />
             <span className="text-pop">That’s it.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
+          </HeroTitle>
+          <HeroLede className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
             Create a question. Own an answer. Get paid when someone disagrees.{' '}
             <b>No PhD in crypto required.</b>
-          </p>
+          </HeroLede>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a href="#step-1"><BtnPrimary>★ show me ↓</BtnPrimary></a>
             <a href="/v2/tutorial"><BtnSecondary>take the tutorial</BtnSecondary></a>
@@ -184,69 +188,91 @@ export default function HowItWorks() {
               <span className="rounded-full border-2 border-ink bg-canvas px-2 py-0.5 font-extrabold uppercase tracking-wider">{current.label}</span>
             </div>
 
-            <p className="text-xs font-bold opacity-70">{current.action}</p>
-            <h3 className="mt-1 font-display text-xl font-black tracking-[-0.02em]">&ldquo;{current.q}&rdquo;</h3>
+            {/* Stage body — slaps in on each step change */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 14, rotate: -1.5, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0,  rotate: 0,    scale: 1   }}
+                exit   ={{ opacity: 0, y: -14, rotate: 1.5,  scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 22, mass: 0.6 }}
+              >
+                <p className="text-xs font-bold opacity-70">{current.action}</p>
+                <h3 className="mt-1 font-display text-xl font-black tracking-[-0.02em]">&ldquo;{current.q}&rdquo;</h3>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-              <div className="rounded-md border-[2.5px] border-ink bg-canvas px-3 py-2 shadow-sticker-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Current Answer</div>
-                <div className="font-display text-sm font-black tracking-[-0.01em]">{current.a}</div>
-              </div>
-              <div className="rounded-md border-[2.5px] border-ink bg-cool px-3 py-2 shadow-sticker-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Price</div>
-                <div className="font-mono text-sm font-extrabold">${current.price} USDC</div>
-              </div>
-              <div className="rounded-md border-[2.5px] border-ink bg-paper px-3 py-2 shadow-sticker-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Owner</div>
-                <div className="font-mono text-[11px] font-extrabold leading-tight">{current.owner}</div>
-              </div>
-              <div className="rounded-md border-[2.5px] border-ink bg-pop px-3 py-2 text-white shadow-sticker-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">Creator</div>
-                <div className="font-mono text-[11px] font-extrabold leading-tight">{current.creator}</div>
-              </div>
-            </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+                  <div className="rounded-md border-[2.5px] border-ink bg-canvas px-3 py-2 shadow-sticker-sm">
+                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Current Answer</div>
+                    <div className="font-display text-sm font-black tracking-[-0.01em]">{current.a}</div>
+                  </div>
+                  {/* Price card — flashes on change */}
+                  <motion.div
+                    key={`price-${step}`}
+                    initial={{ scale: 1, backgroundColor: '#4DFFE0' }}
+                    animate={{
+                      scale:           [1,        1.08,    1],
+                      backgroundColor: ['#4DFFE0','#FF4D6B','#4DFFE0'],
+                    }}
+                    transition={{ duration: 0.55, ease: 'easeOut', times: [0, 0.35, 1] }}
+                    className="rounded-md border-[2.5px] border-ink px-3 py-2 shadow-sticker-sm"
+                  >
+                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Price</div>
+                    <div className="font-mono text-sm font-extrabold">${current.price} USDC</div>
+                  </motion.div>
+                  <div className="rounded-md border-[2.5px] border-ink bg-paper px-3 py-2 shadow-sticker-sm">
+                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">Owner</div>
+                    <div className="font-mono text-[11px] font-extrabold leading-tight">{current.owner}</div>
+                  </div>
+                  <div className="rounded-md border-[2.5px] border-ink bg-pop px-3 py-2 text-white shadow-sticker-sm">
+                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">Creator</div>
+                    <div className="font-mono text-[11px] font-extrabold leading-tight">{current.creator}</div>
+                  </div>
+                </div>
 
-            {/* Money flow */}
-            {moneyFlow && current.prevOwner && (
-              <div className="mt-4 rounded-md border-[2.5px] border-ink bg-ink p-3 text-canvas shadow-sticker-sm">
-                <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider opacity-90">Money distributed instantly:</div>
-                <ul className="mt-2 space-y-1 font-mono text-xs font-bold">
-                  <li className="flex items-center justify-between gap-3">
-                    <span className="opacity-90">→ Previous Owner <span className="opacity-70">({current.prevOwner})</span></span>
-                    <span className="text-cool">${moneyFlow.owner}</span>
-                  </li>
-                  <li className="flex items-center justify-between gap-3">
-                    <span className="opacity-90">→ Question Creator <span className="opacity-70">({current.creator})</span></span>
-                    <span className="text-pop">${moneyFlow.creator}</span>
-                  </li>
-                  <li className="flex items-center justify-between gap-3">
-                    <span className="opacity-90">→ Platform <span className="opacity-70">(OMC)</span></span>
-                    <span className="opacity-80">${moneyFlow.platform}</span>
-                  </li>
-                </ul>
-              </div>
-            )}
+                {/* Money flow */}
+                {moneyFlow && current.prevOwner && (
+                  <div className="mt-4 rounded-md border-[2.5px] border-ink bg-ink p-3 text-canvas shadow-sticker-sm">
+                    <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider opacity-90">Money distributed instantly:</div>
+                    <ul className="mt-2 space-y-1 font-mono text-xs font-bold">
+                      <li className="flex items-center justify-between gap-3">
+                        <span className="opacity-90">→ Previous Owner <span className="opacity-70">({current.prevOwner})</span></span>
+                        <span className="text-cool">${moneyFlow.owner}</span>
+                      </li>
+                      <li className="flex items-center justify-between gap-3">
+                        <span className="opacity-90">→ Question Creator <span className="opacity-70">({current.creator})</span></span>
+                        <span className="text-pop">${moneyFlow.creator}</span>
+                      </li>
+                      <li className="flex items-center justify-between gap-3">
+                        <span className="opacity-90">→ Platform <span className="opacity-70">(OMC)</span></span>
+                        <span className="opacity-80">${moneyFlow.platform}</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
 
-            {/* Stage 1 — no distribution yet */}
-            {!current.prevOwner && (
-              <div className="mt-4 rounded-md border-[2.5px] border-dashed border-ink bg-canvas/60 p-3 shadow-sticker-sm">
-                <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider opacity-70">Mint event — no distribution yet</div>
-                <p className="mt-1 text-xs font-bold">
-                  Alice locks the $10 initial price as recoverable stake + pays a $2 spam fee.
-                  Money flow starts at the first flip.
-                </p>
-              </div>
-            )}
+                {/* Stage 1 — no distribution yet */}
+                {!current.prevOwner && (
+                  <div className="mt-4 rounded-md border-[2.5px] border-dashed border-ink bg-canvas/60 p-3 shadow-sticker-sm">
+                    <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider opacity-70">Mint event — no distribution yet</div>
+                    <p className="mt-1 text-xs font-bold">
+                      Alice locks the $10 initial price as recoverable stake + pays a $2 spam fee.
+                      Money flow starts at the first flip.
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-            {/* Price bar */}
+            {/* Price bar — animated width */}
             <div className="mt-5">
               <div className="flex justify-between font-mono text-[10px] font-bold opacity-70">
                 <span>$10</span><span>$52</span>
               </div>
-              <div className="mt-1 h-3 rounded-full border-2 border-ink bg-canvas">
-                <div
-                  className="h-full rounded-full border-r-2 border-ink bg-pop transition-all"
-                  style={{ width: `${((current.price - 10) / 42) * 100}%` }}
+              <div className="mt-1 h-3 overflow-hidden rounded-full border-2 border-ink bg-canvas">
+                <motion.div
+                  className="h-full rounded-full border-r-2 border-ink bg-pop"
+                  animate={{ width: `${((current.price - 10) / 42) * 100}%` }}
+                  transition={{ type: 'spring', stiffness: 160, damping: 22 }}
                 />
               </div>
             </div>

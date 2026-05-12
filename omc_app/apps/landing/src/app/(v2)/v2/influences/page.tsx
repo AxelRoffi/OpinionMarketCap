@@ -3,6 +3,9 @@ import {
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroLede,
+  HeroTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -69,9 +72,9 @@ const PIONEERS = [
 ];
 
 const COMPARE = [
-  { label: 'Prediction markets', desc: 'Binary outcomes. Yes/No. Expire when the event ends.',                bg: '#FFFFFF', fg: '#15120D', tilt: -1,   dim: true  },
-  { label: 'Social media',       desc: 'Likes, upvotes, comments. Free. Gameable. Worthless signal.',         bg: '#FFFFFF', fg: '#15120D', tilt:  1,   dim: true  },
-  { label: 'OMC',                desc: 'Perpetual markets. Never expire. Keep growing. Money-backed conviction.', bg: '#FF4D6B', fg: '#FFFFFF', tilt: -1.5, dim: false },
+  { label: 'Prediction markets', desc: 'Binary Yes/No. Resolve once and die. ~500 markets total. Curated by platform. Need an oracle to settle.', bg: '#FFFFFF', fg: '#15120D', tilt: -1,   dim: true  },
+  { label: 'Social media',       desc: 'Likes, upvotes, comments. Free. Gameable. Worthless signal.',                                                 bg: '#FFFFFF', fg: '#15120D', tilt:  1,   dim: true  },
+  { label: 'OMC',                desc: 'Perpetual markets — never expire. 100M+ possible markets. Anyone mints in 60s. The price IS the answer.',     bg: '#FF4D6B', fg: '#FFFFFF', tilt: -1.5, dim: false },
 ];
 
 const DIFFERENTIATORS = [
@@ -105,15 +108,15 @@ export default function Influences() {
       {/* ============================================================ HERO */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]">★ INFLUENCES ★</div>
-          <h1 className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[88px]">
+          <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">★ INFLUENCES ★</HeroEyebrow>
+          <HeroTitle className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[88px]">
             The Genesis<br />
             <span className="text-pop">of an Idea.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
+          </HeroTitle>
+          <HeroLede className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
             From a childhood bet to a new digital economy. The philosophy, influences,
             and on-chain pioneers behind OMC.
-          </p>
+          </HeroLede>
           <div className="mt-8">
             <a href="#spark"><BtnPrimary>★ READ THE STORY ↓</BtnPrimary></a>
           </div>
@@ -284,6 +287,25 @@ export default function Influences() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Scale comparison — prediction markets vs OMC */}
+          <div className="mt-12 rounded-sticker border-[2.5px] border-ink bg-ink p-6 text-canvas shadow-sticker md:p-8">
+            <div className="grid items-center gap-6 md:grid-cols-2">
+              <div>
+                <div className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-70">PREDICTION MARKETS</div>
+                <div className="mt-1 font-mono text-[44px] font-black leading-none md:text-[64px]">~500</div>
+                <p className="mt-2 text-xs font-bold opacity-80">curated markets · binary outcomes · resolve once, then dead</p>
+              </div>
+              <div>
+                <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-pop">OMC</div>
+                <div className="mt-1 font-mono text-[44px] font-black leading-none text-pop md:text-[64px]">100M+</div>
+                <p className="mt-2 text-xs font-bold opacity-80">any question is a market · perpetual · never resolves</p>
+              </div>
+            </div>
+            <p className="mt-6 border-t border-dashed border-canvas/30 pt-4 text-center font-display text-base font-black tracking-[-0.02em] md:text-lg">
+              200,000× the addressable surface. <span className="text-pop">And ours never expire.</span>
+            </p>
           </div>
 
           {/* Differentiators */}

@@ -5,6 +5,10 @@ import {
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroLede,
+  HeroTitle,
+  LivePulse,
   Nav,
   SiteFooter,
   Sticker,
@@ -112,20 +116,20 @@ export default function PosterArcadeLanding() {
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-10 md:px-10 md:py-12">
         <div className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:gap-10">
           <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.18em]">
+            <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">
               ★ OPINIONS ARE FREE. YOURS ISN’T. ★
-            </div>
+            </HeroEyebrow>
 
-            <h1 className="mt-3 font-display text-[44px] font-black leading-[0.92] tracking-[-0.04em] md:text-[80px]">
+            <HeroTitle className="mt-3 font-display text-[44px] font-black leading-[0.92] tracking-[-0.04em] md:text-[80px]">
               OPINION<br />
               <span className="text-pop">MARKET</span><br />
               CAP.
-            </h1>
+            </HeroTitle>
 
-            <p className="mt-4 max-w-[460px] text-base font-semibold md:text-lg">
+            <HeroLede className="mt-4 max-w-[460px] text-base font-semibold md:text-lg">
               Back your opinion with real money on Base.{' '}
               <b>Get paid when someone disagrees.</b>
-            </p>
+            </HeroLede>
 
             {/* Live stats — ticking counters on viewport entry */}
             <div className="mt-5 grid grid-cols-2 gap-2 md:max-w-[480px] md:grid-cols-4">
@@ -392,10 +396,7 @@ export default function PosterArcadeLanding() {
               🔥 LIVE OPINIONS.<br />
               <span className="text-pop">REAL MONEY.</span>
             </h2>
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-3 w-3 animate-pulse rounded-full border-2 border-ink bg-pop" />
-              <span className="font-mono text-xs font-extrabold tracking-widest">LIVE NOW</span>
-            </div>
+            <LivePulse />
           </div>
           <p className="mt-3 max-w-2xl text-base font-semibold">
             These takes are being traded right now.

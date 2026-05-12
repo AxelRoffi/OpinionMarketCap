@@ -3,6 +3,8 @@ import {
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -105,11 +107,11 @@ export default function Whitepaper() {
       {/* ============================================================ HERO */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]">★ WHITEPAPER ★</div>
-          <h1 className="mt-3 font-display text-[36px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">★ WHITEPAPER ★</HeroEyebrow>
+          <HeroTitle className="mt-3 font-display text-[36px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             OpinionMarketCap.<br />
             <span className="text-pop">A Hardened Marketplace<br/>for Opinions.</span>
-          </h1>
+          </HeroTitle>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <CatChip bg="#15120D" fg="#FFE94D">VERSION 3.0</CatChip>
@@ -234,6 +236,32 @@ export default function Whitepaper() {
               ['OMC',    '"Best programming language 2025?"',     '"Python (AI ecosystem)"',     'Market price · 35 USDC', '95% owner · 3% creator · 2% platform'],
             ]}
           />
+
+          <H3>2.1 · OMC is not a prediction market</H3>
+          <P>
+            Prediction markets (Polymarket, Kalshi, Augur) and OMC share one ancestor: pricing
+            information via wagers. But they solve different problems and the surface-area gap is
+            three orders of magnitude wide.
+          </P>
+          <Table
+            headers={['Dimension', 'Prediction markets', 'OMC']}
+            highlight={2}
+            rows={[
+              ['Market size',       '~500 active markets (curated)',                'Unbounded — every question is a market'],
+              ['Market lifespan',   'Resolves ONCE, then dies',                     'Perpetual — never resolves'],
+              ['Outcome type',      'Binary Yes/No (or short enum)',                'Open-text answer; current king is consensus'],
+              ['Resolution',        'External oracle / committee',                  'Market itself (price IS the answer)'],
+              ['Creation',          'Platform-gated',                               'Permissionless — mint in 60s'],
+              ['Addressable scale', '~500 questions you can bet on',                '100M+ keywords on Google Ads alone'],
+            ]}
+          />
+          <P>
+            <b>What that 200,000× gap unlocks:</b> opinion topics that don’t resolve to an event
+            (best CRM, GOAT athlete, best pizza, most overhyped CEO) can have permanent on-chain
+            consensus. Brands can be the answer. Communities can collectively own a take. Creators
+            mint markets and earn royalties forever. None of this works under "binary outcome,
+            expires when the event ends."
+          </P>
         </div>
       </section>
 

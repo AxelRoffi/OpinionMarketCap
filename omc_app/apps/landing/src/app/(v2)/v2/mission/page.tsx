@@ -3,6 +3,9 @@ import {
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroLede,
+  HeroTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -69,16 +72,16 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]">★ THE MISSION ★</div>
-          <h1 className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[78px]">
+          <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">★ THE MISSION ★</HeroEyebrow>
+          <HeroTitle className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[78px]">
             The internet is full<br />
             of opinions.<br />
             <span className="text-pop">None of them cost anything.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base font-semibold md:text-lg">
+          </HeroTitle>
+          <HeroLede className="mx-auto mt-6 max-w-2xl text-base font-semibold md:text-lg">
             Anyone can post &ldquo;Salesforce is the best CRM&rdquo; on Reddit.{' '}
             <b>Zero consequences if they’re wrong. Zero reward if they’re right.</b>
-          </p>
+          </HeroLede>
           <p className="mx-auto mt-3 max-w-2xl font-display text-lg font-black tracking-[-0.02em] md:text-2xl">
             We built OMC to change that. Back it with money — or don’t bother.
           </p>
@@ -196,6 +199,32 @@ export default function Mission() {
             <p className="font-display text-lg font-black tracking-[-0.02em] md:text-2xl">
               Polymarket has ~500 markets. <span className="text-pop">We have a hundred million.</span>
             </p>
+          </div>
+
+          {/* Prediction markets vs OMC comparison */}
+          <div className="mx-auto mt-10 max-w-3xl rounded-sticker border-[2.5px] border-ink bg-paper p-6 shadow-sticker">
+            <div className="grid gap-4 font-mono text-sm md:grid-cols-2">
+              <div className="rounded-md border-[2.5px] border-ink bg-canvas/40 p-4">
+                <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">PREDICTION MARKETS</div>
+                <div className="mt-1 font-display text-2xl font-black tracking-[-0.02em]">~500 markets</div>
+                <ul className="mt-3 space-y-1.5 font-body text-xs font-bold">
+                  <li>✗ Binary Yes/No outcomes</li>
+                  <li>✗ Resolve ONCE — then dead</li>
+                  <li>✗ Need an oracle to settle</li>
+                  <li>✗ Curated by the platform</li>
+                </ul>
+              </div>
+              <div className="rounded-md border-[2.5px] border-ink bg-pop p-4 text-white">
+                <div className="text-[10px] font-bold uppercase tracking-widest opacity-90">OMC</div>
+                <div className="mt-1 font-display text-2xl font-black tracking-[-0.02em]">100M+ possible</div>
+                <ul className="mt-3 space-y-1.5 font-body text-xs font-bold">
+                  <li>✓ Any opinion is a market</li>
+                  <li>✓ <b>Never resolves</b> — keeps trading forever</li>
+                  <li>✓ The price IS the answer (no oracle)</li>
+                  <li>✓ Anyone can mint one in 60 seconds</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 

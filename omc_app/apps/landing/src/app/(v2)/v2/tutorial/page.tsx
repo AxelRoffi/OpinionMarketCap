@@ -6,6 +6,9 @@ import {
   BtnSecondary,
   CatChip,
   Halftone,
+  HeroEyebrow,
+  HeroLede,
+  HeroTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -125,14 +128,14 @@ export default function Tutorial() {
       {/* ============================================================ HERO */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-16 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="text-[11px] font-black uppercase tracking-[0.18em]">★ TUTORIAL ★</div>
-          <h1 className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[80px]">
+          <HeroEyebrow className="text-[11px] font-black uppercase tracking-[0.18em]">★ TUTORIAL ★</HeroEyebrow>
+          <HeroTitle className="mt-3 font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[80px]">
             Your First Trade<br />
             <span className="text-pop">in Under 30 Seconds.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
+          </HeroTitle>
+          <HeroLede className="mx-auto mt-5 max-w-2xl text-base font-semibold md:text-lg">
             No PhD in crypto. No jargon. <b>Just money where your mouth is.</b>
-          </p>
+          </HeroLede>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a href="#setup"><BtnPrimary>★ LET’S GO ↓</BtnPrimary></a>
             <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
