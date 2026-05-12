@@ -7,3 +7,6 @@ export { Wobble } from './Wobble';
 export { Nav } from './Nav';
 export { BottomTabBar } from './BottomTabBar';
 export { StreakRail } from './StreakRail';
+export { CategoryFilter, type CategoryOption } from './CategoryFilter';
+export { SortDropdown, type SortOption } from './SortDropdown';
+export { SearchPill } from './SearchPill';

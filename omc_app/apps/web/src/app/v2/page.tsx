@@ -1,12 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Sticker, Btn, Chip, MonoNum } from '@/components/poster-arcade';
+import { TakeCard } from './_components/TakeCard';
 import { MOCK_TAKES } from './_data/mock-takes';
-
-/* Background rotation for the sticker grid. Index-based, no random. */
-const BG_CYCLE = ['pop', 'canvas', 'cool', 'paper'] as const;
-const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
 
 export default function V2HotWallPage() {
   return (
@@ -45,7 +41,7 @@ export default function V2HotWallPage() {
               <div className="absolute left-[8%] top-[10%]">
                 <Sticker bg="cool" tilt={-3} shadow={5}>
                   <Chip bg="pop">⚡ CRYPTO</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">"Best L2?"</div>
+                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;Best L2?&rdquo;</div>
                   <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">BASE.</div>
                   <div className="mt-2 flex justify-between"><MonoNum>$312</MonoNum><MonoNum className="text-pop">+9.6%</MonoNum></div>
                 </Sticker>
@@ -53,7 +49,7 @@ export default function V2HotWallPage() {
               <div className="absolute right-[6%] top-[2%]">
                 <Sticker bg="pop" tilt={2.5} shadow={5}>
                   <Chip bg="paper">🤖 AI</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">"AGI by 2030?"</div>
+                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;AGI by 2030?&rdquo;</div>
                   <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">PARTIALLY.</div>
                   <div className="mt-2 flex justify-between"><MonoNum>$64</MonoNum><MonoNum>+34%</MonoNum></div>
                 </Sticker>
@@ -61,7 +57,7 @@ export default function V2HotWallPage() {
               <div className="absolute left-[26%] bottom-[2%]">
                 <Sticker bg="canvas" tilt={-1} shadow={6}>
                   <Chip bg="ink">🏀 SPORTS</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">"GOAT?"</div>
+                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;GOAT?&rdquo;</div>
                   <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">JORDAN.</div>
                   <div className="mt-2 flex justify-between"><MonoNum>$142</MonoNum><MonoNum>+18%</MonoNum></div>
                 </Sticker>
@@ -83,41 +79,13 @@ export default function V2HotWallPage() {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {MOCK_TAKES.map((take, i) => {
-            const bg = BG_CYCLE[i % BG_CYCLE.length];
-            const tilt = TILT_CYCLE[i % TILT_CYCLE.length];
-            const chipBg = bg === 'paper' || bg === 'canvas' ? 'ink' : 'paper';
-            const isLoss = take.delta.startsWith('-');
-
-            return (
-              <Link key={take.id} href={`/v2/opinions/${take.id}`} className="block">
-                <Sticker bg={bg} tilt={tilt} tappable>
-                  <div className="flex items-center justify-between">
-                    <Chip bg={chipBg} sm>
-                      {take.category.emoji} {take.category.label}
-                    </Chip>
-                    <span className="font-mono text-[10px] font-extrabold opacity-60">#{take.id}</span>
-                  </div>
-                  <div className="font-display text-[11px] font-bold mt-2 opacity-85 italic">"{take.question}"</div>
-                  <div className="font-display font-black text-[28px] leading-none tracking-tighter mt-1">{take.answer}.</div>
-                  <div className="flex justify-between items-end mt-3">
-                    <div>
-                      <div className="font-display text-[9px] font-extrabold uppercase tracking-[0.12em] opacity-60">held</div>
-                      <div className="font-display text-[11px] font-bold">@{take.heldBy}</div>
-                    </div>
-                    <div className="text-right">
-                      <MonoNum className="text-[15px] block">{take.price}</MonoNum>
-                      <MonoNum className={isLoss ? 'text-pop text-[11px]' : 'text-[11px]'}>{take.delta}</MonoNum>
-                    </div>
-                  </div>
-                </Sticker>
-              </Link>
-            );
-          })}
+          {MOCK_TAKES.slice(0, 8).map((take, i) => (
+            <TakeCard key={take.id} take={take} index={i} />
+          ))}
         </div>
 
         <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/50 text-center mt-12">
-          ★ Phase 1 visual smoke test · live on-chain data lands in Phase 2 ★
+          ★ Mock data · live on-chain wiring lands in a later phase ★
         </p>
       </section>
     </>
