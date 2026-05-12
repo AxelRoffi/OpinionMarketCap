@@ -13,3 +13,6 @@ export { SearchPill } from './SearchPill';
 export { Tabs, type Tab } from './Tabs';
 export { Sparkline } from './Sparkline';
 export { RangeToggle, type RangeKey } from './RangeToggle';
+export { Stepper } from './Stepper';
+export { PriceSlider } from './PriceSlider';
+export { popConfetti, type ConfettiOptions } from './confetti';

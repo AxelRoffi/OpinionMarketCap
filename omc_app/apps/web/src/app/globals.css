@@ -491,6 +491,40 @@ body {
   100% { transform: translate(var(--dx), var(--dy)) rotate(720deg); opacity: 0; }
 }
 
+/* Range slider — used by <PriceSlider /> */
+.pa-slider {
+  outline: none;
+}
+.pa-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--canvas);
+  border: 2.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: grab;
+  transition: transform 100ms ease-out;
+  margin-top: 0;
+}
+.pa-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+.pa-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--canvas);
+  border: 2.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: grab;
+}
+.pa-slider::-moz-range-track {
+  background: transparent;
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .pa-loading,
