@@ -220,7 +220,12 @@ function Step1({
         />
       </div>
 
-      <div className="flex justify-end mt-7">
+      <div className="flex justify-end items-center gap-3 mt-7">
+        {!canAdvance && (
+          <span className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/50">
+            {question.trim().length < 3 ? '· write a question ·' : '· pick a category ·'}
+          </span>
+        )}
         <Btn variant="pop" size="lg" onClick={onNext} disabled={!canAdvance} star>
           continue
         </Btn>
@@ -256,9 +261,11 @@ function Step2({
         <Label>answer</Label>
         <input
           type="text"
+          autoFocus
           value={answer}
           onChange={(e) => setAnswer(e.target.value.slice(0, ANSWER_MAX))}
           placeholder="JORDAN"
+          aria-label="The answer you're proposing"
           className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-3 font-display font-black text-[28px] md:text-[36px] tracking-[-0.02em] text-ink uppercase placeholder:text-ink/40 placeholder:font-extrabold focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
         />
         <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
@@ -266,13 +273,20 @@ function Step2({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-7">
+      <div className="flex items-center justify-between mt-7 gap-3 flex-wrap">
         <Btn variant="ghost" size="md" onClick={onBack}>
           ← back
         </Btn>
-        <Btn variant="pop" size="lg" onClick={onNext} disabled={!canAdvance} star>
-          continue
-        </Btn>
+        <div className="flex items-center gap-3 ml-auto">
+          {!canAdvance && (
+            <span className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/50">
+              · write an answer ·
+            </span>
+          )}
+          <Btn variant="pop" size="lg" onClick={onNext} disabled={!canAdvance} star>
+            continue
+          </Btn>
+        </div>
       </div>
     </div>
   );

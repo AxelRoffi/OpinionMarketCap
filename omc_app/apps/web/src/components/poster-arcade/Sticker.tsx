@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +36,7 @@ type StickerProps = {
 /**
  * Atom of Poster Arcade. 2.5px ink border + hard offset shadow + slight tilt.
  * Slap-in spring on viewport entry, hover lift, optional tap wobble.
+ * Respects prefers-reduced-motion — renders in resting state, no spring/wobble.
  */
 export function Sticker({
   bg = 'pop',
@@ -49,6 +50,7 @@ export function Sticker({
   onClick,
   children,
 }: StickerProps) {
+  const reduceMotion = useReducedMotion();
   const palette = PAL[bg as keyof typeof PAL];
   const background = palette ? palette.bg : bg;
   const color = fg ?? palette?.fg ?? 'var(--ink)';
@@ -62,6 +64,12 @@ export function Sticker({
     visible: { scale: 1,    rotate: tilt,      opacity: 1 },
   };
 
+  // When motion is suppressed, render directly at the resting tilt — no spring,
+  // no hover/tap animation. The static tilt is part of the brand, not motion.
+  const initial = reduceMotion || noAnimate ? false : 'hidden';
+  const animate = reduceMotion ? 'visible' : undefined;
+  const whileInView = reduceMotion || noAnimate ? undefined : 'visible';
+
   return (
     <motion.div
       onClick={onClick}
@@ -70,28 +78,38 @@ export function Sticker({
         tappable && 'cursor-pointer select-none',
         className,
       )}
-      initial={noAnimate ? false : 'hidden'}
-      whileInView={noAnimate ? undefined : 'visible'}
+      initial={initial}
+      animate={animate}
+      whileInView={whileInView}
       viewport={{ once: true, amount: 0.2 }}
       variants={variants}
-      transition={{ type: 'spring', stiffness: 240, damping: 18, mass: 0.6 }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : { type: 'spring', stiffness: 240, damping: 18, mass: 0.6 }
+      }
       whileHover={
-        tappable
-          ? { y: -3, boxShadow: liftShadow }
-          : { y: -2, boxShadow: liftShadow }
+        reduceMotion
+          ? undefined
+          : tappable
+            ? { y: -3, boxShadow: liftShadow }
+            : { y: -2, boxShadow: liftShadow }
       }
       whileTap={
-        tappable
-          ? {
+        reduceMotion || !tappable
+          ? undefined
+          : {
               rotate: [tilt - 2, tilt + 2, tilt - 1, tilt],
               transition: { duration: 0.28, ease: 'easeOut' },
             }
-          : undefined
       }
       style={{
         background,
         color,
         boxShadow: restShadow,
+        // Force resting tilt as a static transform when motion is reduced so the
+        // sticker doesn't appear at rotate(0) until animated in.
+        ...(reduceMotion ? { transform: `rotate(${tilt}deg)` } : {}),
         ...style,
       }}
     >

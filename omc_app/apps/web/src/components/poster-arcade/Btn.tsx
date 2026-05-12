@@ -33,6 +33,7 @@ const SIZES: Record<BtnSize, string> = {
 
 /**
  * Pill button — ink border, hard offset shadow, hover lift, press-down.
+ * disabled buttons are visually dimmed and skip the hover/press motion.
  */
 export const Btn = forwardRef<HTMLButtonElement, BtnProps>(function Btn(
   {
@@ -43,6 +44,7 @@ export const Btn = forwardRef<HTMLButtonElement, BtnProps>(function Btn(
     external,
     className,
     children,
+    disabled,
     ...rest
   },
   ref,
@@ -52,7 +54,8 @@ export const Btn = forwardRef<HTMLButtonElement, BtnProps>(function Btn(
     'rounded-pill border-[2.5px] border-ink',
     'font-display font-black tracking-[0.06em] uppercase',
     'transition-transform transition-shadow duration-100',
-    'active:translate-x-[2px] active:translate-y-[2px]',
+    !disabled && 'active:translate-x-[2px] active:translate-y-[2px]',
+    disabled && 'opacity-50 grayscale cursor-not-allowed',
     VARIANTS[variant],
     SIZES[size],
     className,
@@ -65,7 +68,8 @@ export const Btn = forwardRef<HTMLButtonElement, BtnProps>(function Btn(
     </>
   );
 
-  if (href) {
+  // Render as anchor when href present and not disabled.
+  if (href && !disabled) {
     return (
       <motion.a
         href={href}
@@ -79,11 +83,24 @@ export const Btn = forwardRef<HTMLButtonElement, BtnProps>(function Btn(
     );
   }
 
+  // Disabled-anchor fallback — render as styled span so screen readers
+  // don't treat it as actionable.
+  if (href && disabled) {
+    return (
+      <span className={base} aria-disabled="true" role="link">
+        {content}
+      </span>
+    );
+  }
+
   return (
     <motion.button
       ref={ref}
+      type={rest.type ?? 'button'}
       className={base}
-      whileHover={{ x: -1, y: -1 }}
+      disabled={disabled}
+      aria-disabled={disabled ? true : undefined}
+      whileHover={disabled ? undefined : { x: -1, y: -1 }}
       {...rest}
     >
       {content}

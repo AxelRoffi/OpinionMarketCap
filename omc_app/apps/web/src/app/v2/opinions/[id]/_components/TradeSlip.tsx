@@ -224,9 +224,12 @@ function NumberInput({
       </span>
       <input
         type="number"
+        inputMode="decimal"
         min={min}
+        step="0.01"
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
+        aria-label="Amount in USDC"
         className="w-full bg-canvas border-2 border-ink rounded-lg pl-7 pr-3 py-2 font-mono font-extrabold text-[24px] text-ink focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
       />
     </div>

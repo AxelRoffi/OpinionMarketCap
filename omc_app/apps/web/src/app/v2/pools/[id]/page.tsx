@@ -223,10 +223,13 @@ export default function PoolDetailPage({
                     </span>
                     <input
                       type="number"
+                      inputMode="decimal"
                       min={1}
                       max={remaining}
+                      step="0.01"
                       value={amount}
                       onChange={(e) => setAmount(Number(e.target.value) || 0)}
+                      aria-label="Pledge amount in USDC"
                       className="w-full bg-canvas border-2 border-ink rounded-lg pl-7 pr-3 py-2 font-mono font-extrabold text-[24px] text-ink focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
                     />
                   </div>
