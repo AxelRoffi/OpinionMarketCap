@@ -10,6 +10,7 @@ import {
   HeroEyebrow,
   HeroLede,
   HeroTitle,
+  SectionTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -140,10 +141,10 @@ export default function HowItWorks() {
           ============================================================ */}
       <section id="step-1" className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             HOW IT<br />
             ACTUALLY <span className="text-pop">WORKS.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 space-y-12">
             {STEPS.map((s, i) => (
@@ -177,10 +178,10 @@ export default function HowItWorks() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             WATCH A TRADE<br />
             <span className="text-pop">HAPPEN.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-8 rounded-sticker border-[2.5px] border-ink bg-paper p-6 shadow-sticker md:p-8">
             <div className="mb-4 flex items-center justify-between font-mono text-xs font-bold">
@@ -303,10 +304,10 @@ export default function HowItWorks() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             WHO MAKES<br />
             <span className="text-pop">MONEY?</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-8">
             {ROLES.map((r) => (
@@ -329,10 +330,10 @@ export default function HowItWorks() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             WHY THIS<br />
             <span className="text-pop">WORKS.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             {REASONS.map((r, i) => (
@@ -359,10 +360,10 @@ export default function HowItWorks() {
           ============================================================ */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             Simple<br />
             <span className="text-pop">enough?</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             Create a question. Trade an answer. Get paid when someone disagrees.{' '}
             <b>That’s the whole game.</b>

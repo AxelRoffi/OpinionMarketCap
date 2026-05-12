@@ -9,6 +9,7 @@ import {
   HeroEyebrow,
   HeroLede,
   HeroTitle,
+  SectionTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -148,10 +149,10 @@ export default function Tutorial() {
       {/* ============================================================ SETUP */}
       <section id="setup" className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             THREE THINGS.<br />
             <span className="text-pop">THAT’S IT.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             Wallet. ETH. USDC. You probably have two of these already.
           </p>
@@ -188,10 +189,10 @@ export default function Tutorial() {
       {/* ============================================================ MINT */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             CREATE A MARKET.<br />
             <span className="text-pop">EARN FOREVER.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-3xl text-base font-semibold md:text-lg">
             Mint a question. Every time someone trades an answer, you get{' '}
             <b className="bg-pop px-1.5 py-px text-white">3% royalty</b>. Not for a month. Not for a year. Forever.
@@ -254,10 +255,10 @@ export default function Tutorial() {
       {/* ============================================================ TRADE */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             SEE SOMETHING WRONG?<br />
             FIX IT. <span className="text-pop">GET PAID.</span>
-          </h2>
+          </SectionTitle>
 
           {/* Step selector */}
           <div className="mt-10 grid gap-3 md:grid-cols-4">
@@ -325,10 +326,10 @@ export default function Tutorial() {
       {/* ============================================================ POOLS */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             CAN’T AFFORD IT ALONE?<br />
             <span className="text-pop">TEAM UP.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-3xl text-base font-semibold md:text-lg">
             Pools let you team up with other traders to collectively buy an answer. Split the cost.
             Share the rewards.
@@ -393,9 +394,9 @@ export default function Tutorial() {
       {/* ============================================================ PRO TIPS */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             PLAY <span className="text-pop">SMARTER.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             You know the rules. Now learn how the smart money plays.
           </p>
@@ -422,10 +423,10 @@ export default function Tutorial() {
       {/* ============================================================ CONTRACTS */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             ON-CHAIN. VERIFIED.<br />
             <span className="text-pop">TRANSPARENT.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-3xl text-base font-semibold md:text-lg">
             Every trade, every fee, every pool — it’s all on Base mainnet. Verified on BaseScan. No trust required.
           </p>
@@ -469,10 +470,10 @@ export default function Tutorial() {
       {/* ============================================================ TROUBLESHOOTING */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             SOMETHING<br />
             <span className="text-pop">BROKE?</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             Quick fixes for common issues. If it’s not here, hit us up on Discord.
           </p>
@@ -499,10 +500,10 @@ export default function Tutorial() {
       {/* ============================================================ FINAL CTA */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             STOP READING.<br />
             <span className="text-pop">START TRADING.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             You’ve read the tutorial. You know how it works. Now go put your money where your mouth is.
           </p>

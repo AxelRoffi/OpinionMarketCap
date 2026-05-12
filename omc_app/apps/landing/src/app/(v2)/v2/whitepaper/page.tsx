@@ -5,6 +5,7 @@ import {
   Halftone,
   HeroEyebrow,
   HeroTitle,
+  SectionTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -42,7 +43,7 @@ function Chapter({ n, title, lede }: { n: string; title: string; lede?: string }
   return (
     <div className="mb-6">
       <div className="font-mono text-[11px] font-extrabold uppercase tracking-[0.18em] opacity-70">CHAPTER {n}</div>
-      <h2 className="mt-1 font-display text-[28px] font-black leading-[0.95] tracking-[-0.03em] md:text-[44px]">{title}</h2>
+      <SectionTitle className="mt-1 font-display text-[28px] font-black leading-[0.95] tracking-[-0.03em] md:text-[44px]">{title}</SectionTitle>
       {lede && <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed md:text-lg">{lede}</p>}
     </div>
   );
@@ -756,10 +757,10 @@ export default function Whitepaper() {
       {/* ============================================================ FINAL CTA */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[64px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[64px]">
             DON’T TRUST THE PAPER.<br />
             <span className="text-pop">READ THE CONTRACTS.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             Every claim in this paper is encoded in Solidity on Base mainnet — verified, audited,
             immutable. Verify yourself.

@@ -6,6 +6,7 @@ import {
   HeroEyebrow,
   HeroLede,
   HeroTitle,
+  SectionTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -126,10 +127,10 @@ export default function Influences() {
       {/* ============================================================ SPARK — $20 STORY */}
       <section id="spark" className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             IT STARTED WITH A<br />
             <span className="bg-canvas px-2 ring-[2.5px] ring-ink">$20</span> <span className="text-pop">BILL.</span>
-          </h2>
+          </SectionTitle>
 
           <Sticker bg="#FFFFFF" fg="#15120D" tilt={-0.5} shadow={6} className="mt-10">
             <div className="font-display text-[44px] leading-none opacity-40">&ldquo;</div>
@@ -176,10 +177,10 @@ export default function Influences() {
       {/* ============================================================ PHILOSOPHY — 3 PILLARS */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             THE INTELLECTUAL<br />
             <span className="text-pop">FOUNDATIONS.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             Three ideas that shaped how OMC works — and why it works.
           </p>
@@ -212,10 +213,10 @@ export default function Influences() {
       {/* ============================================================ PIONEERS */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             STANDING ON THE SHOULDERS<br />
             <span className="text-pop">OF GIANTS.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             We studied the on-chain experiments that came before us. Learned their lessons.
             Built on their innovation.
@@ -258,10 +259,10 @@ export default function Influences() {
       {/* ============================================================ CORE INSIGHT */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             A MARKET FOR<br />
             <span className="text-pop">EVERY QUESTION.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-8 md:grid-cols-2">
             <div className="space-y-4 text-base font-semibold leading-relaxed md:text-lg">
@@ -324,10 +325,10 @@ export default function Influences() {
       {/* ============================================================ VISION — OCEAN OF LIBERTY */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             AN OCEAN<br />
             <span className="text-pop">OF LIBERTY.</span>
-          </h2>
+          </SectionTitle>
 
           <Sticker bg="#FFFFFF" fg="#15120D" tilt={-0.5} shadow={6} className="mt-10">
             <p className="text-base font-semibold leading-relaxed md:text-lg">
@@ -358,10 +359,10 @@ export default function Influences() {
       {/* ============================================================ FUTURE */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             FROM OPINIONS<br />
             TO <span className="text-pop">EVERYTHING.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 text-base font-semibold md:text-lg">
             If we can create an efficient market for an opinion, what else can we do?
           </p>
@@ -407,10 +408,10 @@ export default function Influences() {
       {/* ============================================================ FINAL CTA */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             OWN THE NARRATIVE.<br />
             <span className="text-pop">EARN THE PROFIT.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             The future of opinions isn’t free. It’s on-chain, transparent, and yours to own.
           </p>

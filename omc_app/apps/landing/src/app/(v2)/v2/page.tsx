@@ -9,7 +9,9 @@ import {
   HeroEyebrow,
   HeroLede,
   HeroTitle,
+  SectionTitle,
   LivePulse,
+  Marquee,
   Nav,
   SiteFooter,
   Sticker,
@@ -177,10 +179,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             EVERYONE HAS OPINIONS.<br />
             <span className="text-pop">FEW BACK THEM UP.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-12">
             {/* Talk is cheap */}
@@ -217,10 +219,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section id="how-it-works" className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             THREE WAYS<br />
             TO <span className="text-pop">PROFIT.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3 md:gap-8">
             {STEPS.map((s) => (
@@ -263,10 +265,10 @@ export default function PosterArcadeLanding() {
           <div className="inline-block rounded-full border-[2.5px] border-ink bg-ink px-3 py-1 font-mono text-[10px] font-extrabold tracking-[0.18em] text-canvas">
             ✨ NEW · V4
           </div>
-          <h2 className="mt-3 font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="mt-3 font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             YOU CAN ALWAYS<br />
             <span className="text-pop">WALK AWAY.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             Held an answer too long and the wave never came? Self-Exit pulls the trap-door —
             you recover the locked stake floor and the slot opens for the next bidder at half the
@@ -393,10 +395,10 @@ export default function PosterArcadeLanding() {
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-baseline">
-            <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+            <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
               🔥 LIVE OPINIONS.<br />
               <span className="text-pop">REAL MONEY.</span>
-            </h2>
+            </SectionTitle>
             <LivePulse />
           </div>
           <p className="mt-3 max-w-2xl text-base font-semibold">
@@ -415,6 +417,41 @@ export default function PosterArcadeLanding() {
             </a>
           </div>
         </div>
+
+        {/* Live ticker — scrolls left, then a reverse strip below scrolls right */}
+        <div className="mt-12 space-y-2 border-y-[2.5px] border-dashed border-ink bg-ink py-4">
+          <Marquee
+            duration={40}
+            items={[...TRENDING, ...TRENDING].map((t, i) => (
+              <span key={i} className="inline-flex items-center gap-2 rounded-full border-[2.5px] border-canvas bg-canvas px-3 py-1 text-xs font-extrabold">
+                <span className="opacity-70">{t.cat}</span>
+                <span>&ldquo;{t.q}&rdquo;</span>
+                <span className="rounded-full bg-ink px-1.5 py-0.5 font-mono text-canvas">{t.a}</span>
+                <span className="font-mono text-pop">{t.p}</span>
+              </span>
+            ))}
+          />
+          <Marquee
+            duration={45}
+            reverse
+            items={[
+              { cat: '🎵 MUSIC',  q: 'GOAT album?',            a: 'OK COMPUTER', p: '$96'  },
+              { cat: '🍕 FOOD',   q: 'Best pizza?',            a: 'NY SLICE',    p: '$12'  },
+              { cat: '🎬 CINEMA', q: 'Best Tarantino?',        a: 'PULP FICTION', p: '$54' },
+              { cat: '🏀 SPORTS', q: 'GOAT QB?',                a: 'MAHOMES',     p: '$56'  },
+              { cat: '⚡ CRYPTO', q: 'BEST L2?',                a: 'BASE',        p: '$312' },
+              { cat: '🎮 GAMING', q: 'GOAT FPS?',               a: 'COUNTER-STRIKE', p: '$78' },
+              { cat: '🐶 PETS',   q: 'Best dog breed?',         a: 'GOLDEN RETRIEVER', p: '$45' },
+            ].map((t, i) => (
+              <span key={i} className="inline-flex items-center gap-2 rounded-full border-[2.5px] border-pop bg-pop px-3 py-1 text-xs font-extrabold text-white">
+                <span className="opacity-90">{t.cat}</span>
+                <span>&ldquo;{t.q}&rdquo;</span>
+                <span className="rounded-full bg-white px-1.5 py-0.5 font-mono text-ink">{t.a}</span>
+                <span className="font-mono">{t.p}</span>
+              </span>
+            ))}
+          />
+        </div>
       </section>
 
       {/* ============================================================
@@ -422,10 +459,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             WHAT HAPPENS WHEN YOU<br />
             <span className="text-pop">BACK YOUR OPINION.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
@@ -453,10 +490,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             EVERY ARGUMENT IS AN<br />
             <span className="text-pop">OPPORTUNITY.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {CATEGORIES.map((c) => (
@@ -476,10 +513,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             THE MATH<br />
             <span className="text-pop">DOESN’T LIE.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-4 max-w-2xl text-base font-semibold md:text-lg">
             Mint once. Earn 3% royalties. <b>Forever.</b>
           </p>
@@ -532,10 +569,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             HOW A <span className="bg-canvas px-2 ring-[2.5px] ring-ink">$20</span> BET<br />
             STARTED <span className="text-pop">EVERYTHING.</span>
-          </h2>
+          </SectionTitle>
 
           <Sticker bg="#FFFFFF" fg="#15120D" tilt={-0.5} shadow={6} className="mt-10">
             <div className="font-display text-[44px] leading-none opacity-40">&ldquo;</div>
@@ -564,10 +601,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             BATTLE-TESTED.<br />
             <span className="text-pop">COMMUNITY-OWNED.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
             {TRUST_BADGES.map((b) => (
@@ -586,10 +623,10 @@ export default function PosterArcadeLanding() {
           ============================================================ */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             READY TO PUT YOUR MONEY<br />
             <span className="text-pop">WHERE YOUR MOUTH IS?</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             Create a question. Trade an answer. Get paid when someone disagrees.
           </p>

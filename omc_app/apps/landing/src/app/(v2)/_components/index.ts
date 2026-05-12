@@ -10,6 +10,7 @@ export { AnimatedNumber } from './animated-number';
 export { AnimatedBar } from './animated-bar';
 export { RevealHeadline } from './reveal-headline';
 export { LivePulse } from './live-pulse';
-export { HeroTitle, HeroEyebrow, HeroLede } from './hero-title';
+export { HeroTitle, HeroEyebrow, HeroLede, SectionTitle } from './hero-title';
 export { useConfetti, ConfettiTrigger } from './confetti';
 export { ConfettiCTA } from './confetti-cta';
+export { Marquee } from './marquee';

@@ -85,3 +85,40 @@ function splitByBr(children: ReactNode): ReactNode[][] {
   }
   return lines.filter((l) => l.length > 0);
 }
+
+/**
+ * Section H2 with the same line-by-line slap-in as HeroTitle, but
+ * **triggered on scroll into view** (not on page mount). Drop-in
+ * replacement for the big section h2 headings.
+ */
+export function SectionTitle({ className, children }: HeroTitleProps) {
+  const lines = splitByBr(children);
+
+  const lineVariants: Variants = {
+    hidden: { opacity: 0, y: 32, rotate: -2, scale: 0.95 },
+    visible: { opacity: 1, y: 0, rotate: 0, scale: 1 },
+  };
+
+  return (
+    <motion.h2
+      className={className}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.45 }}
+      transition={{ staggerChildren: 0.11, delayChildren: 0.05 }}
+    >
+      {lines.map((line, i) => (
+        <Fragment key={i}>
+          <motion.span
+            className="inline-block"
+            variants={lineVariants}
+            transition={{ type: 'spring', stiffness: 200, damping: 18, mass: 0.7 }}
+          >
+            {line}
+          </motion.span>
+          {i < lines.length - 1 ? <br /> : null}
+        </Fragment>
+      ))}
+    </motion.h2>
+  );
+}

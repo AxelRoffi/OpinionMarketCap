@@ -6,6 +6,7 @@ import {
   HeroEyebrow,
   HeroLede,
   HeroTitle,
+  SectionTitle,
   Nav,
   SiteFooter,
   Sticker,
@@ -99,10 +100,10 @@ export default function Mission() {
           ============================================================ */}
       <section id="the-insight" className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             GOOGLE GUESSES.<br />
             <span className="text-pop">WE PROVE.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3 md:gap-8">
             {PLATFORMS.map((p) => (
@@ -134,10 +135,10 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             EVERYONE<br />
             <span className="text-pop">EATS.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {ROLES.map((r) => (
@@ -177,10 +178,10 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 overflow-hidden border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             100 MILLION MARKETS.<br />
             <span className="text-pop">DAY ONE.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 text-center">
             <div className="inline-block rounded-sticker border-[2.5px] border-ink bg-ink px-8 py-6 text-canvas shadow-sticker">
@@ -250,10 +251,10 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             SEARCH IS BROKEN.<br />
             <span className="text-pop">WE’RE FIXING IT.</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 space-y-6">
             {ERAS.map((e, i) => (
@@ -285,10 +286,10 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 border-b-[2.5px] border-dashed border-ink px-6 py-14 md:px-10 md:py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
+          <SectionTitle className="font-display text-[32px] font-black leading-[0.95] tracking-[-0.03em] md:text-[56px]">
             WHO’S ALREADY<br />
             <span className="text-pop">PLAYING?</span>
-          </h2>
+          </SectionTitle>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-8">
             {PLAYERS.map((p) => (
@@ -307,10 +308,10 @@ export default function Mission() {
           ============================================================ */}
       <section className="relative z-10 px-6 py-14 md:px-10 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
+          <SectionTitle className="font-display text-[40px] font-black leading-[0.95] tracking-[-0.04em] md:text-[72px]">
             STOP TALKING.<br />
             <span className="text-pop">START TRADING.</span>
-          </h2>
+          </SectionTitle>
           <p className="mt-5 text-lg font-semibold md:text-xl">
             Your opinion is worthless until there’s money on it.
           </p>

@@ -39,3 +39,12 @@
   transform: translate(2px, 2px) rotate(var(--tilt, 0deg)) !important;
   box-shadow: 2px 2px 0 #15120D !important;
 }
+
+/* Marquee — infinite horizontal scroll. Items render twice in the consumer. */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="marquee-scroll"] { animation-play-state: paused !important; }
+}
