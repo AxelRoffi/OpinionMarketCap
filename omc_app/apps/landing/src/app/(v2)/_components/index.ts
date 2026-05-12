@@ -11,3 +11,5 @@ export { AnimatedBar } from './animated-bar';
 export { RevealHeadline } from './reveal-headline';
 export { LivePulse } from './live-pulse';
 export { HeroTitle, HeroEyebrow, HeroLede } from './hero-title';
+export { useConfetti, ConfettiTrigger } from './confetti';
+export { ConfettiCTA } from './confetti-cta';

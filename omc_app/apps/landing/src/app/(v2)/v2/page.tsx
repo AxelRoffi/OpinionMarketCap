@@ -4,6 +4,7 @@ import {
   BtnPrimary,
   BtnSecondary,
   CatChip,
+  ConfettiCTA,
   Halftone,
   HeroEyebrow,
   HeroLede,
@@ -147,9 +148,9 @@ export default function PosterArcadeLanding() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
-                <BtnPrimary>★ PUT YOUR MONEY WHERE YOUR MOUTH IS</BtnPrimary>
-              </a>
+              <ConfettiCTA href="https://app.opinionmarketcap.xyz">
+                ★ PUT YOUR MONEY WHERE YOUR MOUTH IS
+              </ConfettiCTA>
               <a href="#how-it-works">
                 <BtnSecondary>see how it works →</BtnSecondary>
               </a>
@@ -593,9 +594,7 @@ export default function PosterArcadeLanding() {
             Create a question. Trade an answer. Get paid when someone disagrees.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="https://app.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
-              <BtnPrimary>★ LAUNCH APP →</BtnPrimary>
-            </a>
+            <ConfettiCTA href="https://app.opinionmarketcap.xyz">★ LAUNCH APP →</ConfettiCTA>
             <a href="https://docs.opinionmarketcap.xyz" target="_blank" rel="noopener noreferrer">
               <BtnSecondary>read the docs</BtnSecondary>
             </a>

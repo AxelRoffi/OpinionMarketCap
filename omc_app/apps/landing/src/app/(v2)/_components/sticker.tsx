@@ -50,7 +50,7 @@ export function Sticker({
     <motion.div
       className={cn(
         'relative rounded-sticker border-[2.5px] border-ink p-[14px_16px]',
-        tappable && 'sticker-tappable cursor-pointer',
+        tappable && 'cursor-pointer',
         className,
       )}
       initial={noAnimate ? false : 'hidden'}
@@ -58,7 +58,15 @@ export function Sticker({
       viewport={{ once: true, amount: 0.2 }}
       variants={variants}
       transition={{ type: 'spring', stiffness: 240, damping: 18, mass: 0.6 }}
-      whileHover={{ y: -3, boxShadow: liftShadow }}
+      whileHover={tappable ? { y: -3, boxShadow: liftShadow } : { y: -2, boxShadow: liftShadow }}
+      whileTap={
+        tappable
+          ? {
+              rotate: [tilt - 2, tilt + 2, tilt - 1, tilt],
+              transition: { duration: 0.28, ease: 'easeOut' },
+            }
+          : undefined
+      }
       style={{
         background: bg,
         color: fg,

@@ -9,6 +9,12 @@
   color: #15120D;
 }
 
+/* Halftone overlay with slow ambient drift. Loop is 24s to be barely perceptible. */
+@keyframes halftone-drift {
+  0%   { background-position:   0px   0px; }
+  100% { background-position:  36px  36px; }
+}
+
 .poster-arcade-halftone::before {
   content: '';
   position: absolute;
@@ -18,6 +24,11 @@
   background-size: 18px 18px;
   pointer-events: none;
   z-index: 0;
+  animation: halftone-drift 24s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster-arcade-halftone::before { animation: none; }
 }
 
 /* Press-down interaction. Used on <Sticker tappable>. */
