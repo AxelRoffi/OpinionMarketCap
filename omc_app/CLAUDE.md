@@ -769,6 +769,44 @@ function validateCategories(string[] memory _categories) external view returns (
 **At the start of every session and before each non-trivial task, scan the installed
 toolset and use whatever fits.** Don't reinvent what a plugin already does.
 
+### Continuous reassessment — not just at start
+
+Tooling selection is **not a one-time gate at session start.** Sessions evolve.
+What was the right plugin in turn 1 (e.g. `brainstorming`) is the wrong one in
+turn 20 (when you should be in `executing-plans` or `systematic-debugging`).
+Reassess **before every non-trivial turn** and explicitly **drop, swap, or add**
+plugins as the work changes.
+
+**Reassess and switch plugins/agents when any of the following happens:**
+
+- **Phase change.** Brainstorm → Plan → Execute → Verify → Ship. Each phase
+  has its own dominant skill — switch deliberately, don't drag the previous
+  one along.
+- **Domain change.** Pivot from frontend (`frontend-design`, `vercel-nextjs`)
+  to smart contracts (`gsd-*`, `Explore`) to AI features (`vercel-ai-sdk`,
+  `claude-api`) — load the matching plugin family, drop the old one.
+- **Output volume creeps up.** If raw Bash output keeps approaching 20 lines,
+  switch to `context-mode` (`ctx_execute`, `ctx_batch_execute`,
+  `ctx_execute_file`). Don't keep tolerating context bloat.
+- **Stuck or going in circles.** Invoke `systematic-debugging` or
+  `context-mode:diagnose`. Forced structure beats unstructured retry.
+- **Scope grows beyond a single change.** Switch from inline edits to
+  `writing-plans` → `executing-plans` to keep state across cycles.
+- **Verification creeps in.** Before declaring success, switch to
+  `verification-before-completion` then optionally `requesting-code-review`.
+- **Hard parallelism appears.** Two+ independent threads → dispatch via
+  `dispatching-parallel-agents`. Don't serialize what could run concurrently.
+- **External knowledge needed.** Pull docs into the knowledge base via
+  `ctx_fetch_and_index` — never `WebFetch`.
+
+**Drop a plugin actively.** If you've been using `brainstorming` and a clear
+plan exists, stop invoking it. Switching costs are zero — the cost of
+mismatching is high-context-low-progress turns.
+
+**Announce the switch.** One short sentence per pivot ("Moving from
+brainstorming to executing-plans now that scope is locked"). Keeps the user
+oriented and proves the toolset is being managed, not auto-piloted.
+
 ### Discovery
 
 - Installed skills appear in the `<system-reminder>` block at session start (and after
