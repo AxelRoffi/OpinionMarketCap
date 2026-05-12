@@ -1,0 +1,30 @@
+/* Poster Arcade — scoped reset + utilities for the (v2) route group only.
+ * Loaded alongside Tailwind base via the (v2) layout. Tailwind base from globals.css
+ * is already imported by the root layout, so this file only adds tokens, not resets.
+ */
+
+/* Halftone texture (used by <Halftone />). Kept here so we don't ship inline styles. */
+.poster-arcade-canvas {
+  background-color: #FFE94D;
+  color: #15120D;
+}
+
+.poster-arcade-halftone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: radial-gradient(#15120D 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Press-down interaction. Used on <Sticker tappable>. */
+.sticker-tappable {
+  transition: transform 100ms ease-out, box-shadow 100ms ease-out;
+}
+.sticker-tappable:active {
+  transform: translate(2px, 2px) rotate(var(--tilt, 0deg)) !important;
+  box-shadow: 2px 2px 0 #15120D !important;
+}
