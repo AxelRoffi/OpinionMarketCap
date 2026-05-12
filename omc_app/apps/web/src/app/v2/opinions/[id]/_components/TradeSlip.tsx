@@ -1,16 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { formatUnits } from 'viem';
 import {
   Btn,
   MonoNum,
   Sticker,
   Tabs,
+  WalletBtn,
+  Wobble,
+  popConfetti,
   type Tab,
 } from '@/components/poster-arcade';
-import { fmtUSD, type MockTake } from '../../../_data/mock-takes';
-import { getNextBidPrice } from '../../../_data/take-detail';
+import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
 import { useWatchlist } from '../../../_lib/watchlist';
+import { useTakeFlow, type TakeFlowPhase } from '../../../_lib/use-take-flow';
 
 type SlipTab = 'take' | 'offer' | 'watch';
 
@@ -20,8 +25,11 @@ const TABS: Tab<SlipTab>[] = [
   { value: 'watch', label: 'Watch' },
 ];
 
+const ANSWER_MAX = 60;
+const DESCRIPTION_MAX = 120;
+
 type TradeSlipProps = {
-  take: MockTake;
+  take: DisplayTake;
 };
 
 export function TradeSlip({ take }: TradeSlipProps) {
@@ -41,62 +49,242 @@ export function TradeSlip({ take }: TradeSlipProps) {
 
 /* ─────────────────────────── TAKE IT ─────────────────────────── */
 
-function TakeIt({ take }: { take: MockTake }) {
-  const defaultBid = useMemo(() => getNextBidPrice(take.price), [take.price]);
-  const [bid, setBid] = useState<number>(defaultBid);
+function TakeIt({ take }: { take: DisplayTake }) {
+  const { phase, balance, approve, submit, reset, error } = useTakeFlow(take.id, take.price);
 
-  // Premium = 12% of bid (locked spec). Royalty = 3% of bid back to creator.
-  const premium = Math.round(bid * 0.12 * 100) / 100;
-  const royaltyOnFlip = Math.round(bid * 0.03 * 100) / 100;
-  const totalCost = Math.round((bid + premium) * 100) / 100;
-  const payoutIfOutbid = Math.round((bid - royaltyOnFlip) * 100) / 100;
+  const [answer, setAnswer] = useState('');
+  const [description, setDescription] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const balanceUsdc = Number(formatUnits(balance, 6));
+  const trimmedAnswer = answer.trim();
+  const isValidAnswer = trimmedAnswer.length >= 2 && trimmedAnswer.length <= ANSWER_MAX;
+  const isSamePosition = trimmedAnswer.toLowerCase() === take.answer.toLowerCase();
+  const canSubmit = phase === 'ready' && isValidAnswer && !isSamePosition;
+
+  // Fire confetti + toast once on success.
+  useEffect(() => {
+    if (phase === 'success') {
+      popConfetti({ count: 90 });
+      toast.success(`you hold the floor on take #${take.id}`, {
+        description: `${trimmedAnswer || take.answer} · ${fmtUSD(take.price)} locked`,
+      });
+    }
+  }, [phase, take.id, take.answer, take.price, trimmedAnswer]);
+
+  // Surface tx errors via toast.
+  useEffect(() => {
+    if (error) {
+      const msg = (error.message || 'transaction failed').split('\n')[0];
+      toast.error('tx failed', { description: msg.slice(0, 180) });
+    }
+  }, [error]);
+
+  /* ─── disconnected ─── */
+  if (phase === 'disconnected') {
+    return (
+      <div className="text-center py-6">
+        <div className="font-display font-black text-[18px] tracking-tight">
+          CONNECT TO TAKE.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/65 mt-1 max-w-[280px] mx-auto">
+          You&apos;ll need a wallet on Base with USDC to dethrone the current king.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <WalletBtn size="md" />
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── wrong chain ─── */
+  if (phase === 'wrong-chain') {
+    return (
+      <div className="text-center py-6">
+        <div className="font-display font-black text-[18px] tracking-tight">
+          WRONG CHAIN.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/65 mt-1 max-w-[280px] mx-auto">
+          Takes live on Base. Switch your wallet to Base mainnet to continue.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <WalletBtn size="md" />
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── success ─── */
+  if (phase === 'success') {
+    return (
+      <div className="text-center py-6">
+        <div className="font-display font-black text-[20px] tracking-tight">
+          ★ YOU HOLD THE FLOOR.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/70 mt-1 max-w-[280px] mx-auto">
+          Take #{take.id} is yours. <span className="font-mono font-extrabold">3%</span> royalty
+          locked in forever, even after the next king takes it.
+        </p>
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <Btn variant="cool" size="md" onClick={reset}>
+            take another →
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── the form ─── */
   return (
     <div>
-      <Label>your bid</Label>
-      <NumberInput
-        value={bid}
-        onChange={setBid}
-        min={defaultBid}
+      <Label>your answer</Label>
+      <input
+        type="text"
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value.slice(0, ANSWER_MAX))}
+        placeholder={take.answer === 'UNANSWERED' ? 'BE FIRST' : 'YOUR NEW TAKE'}
+        aria-label="Your new answer"
+        className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2.5 font-display font-black text-[20px] tracking-tight text-ink uppercase placeholder:text-ink/40 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
       />
-      <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-ink/50 mt-1">
-        min bid · {fmtUSD(defaultBid)} (1.15× floor)
+      <div className="flex items-center justify-between text-[10px] font-mono font-extrabold text-ink/40 mt-1">
+        <span>
+          {isSamePosition
+            ? 'pick a different answer'
+            : !isValidAnswer && answer.length > 0
+              ? 'min 2 chars'
+              : ''}
+        </span>
+        <span>{answer.length}/{ANSWER_MAX}</span>
       </div>
 
+      {/* Advanced — description */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="mt-3 font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/55 hover:text-ink"
+      >
+        {showAdvanced ? '− hide description' : '+ add description (optional)'}
+      </button>
+      {showAdvanced && (
+        <div className="mt-2">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+            rows={2}
+            placeholder="explain your take in one line"
+            className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
+          />
+          <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+            {description.length}/{DESCRIPTION_MAX}
+          </div>
+        </div>
+      )}
+
+      {/* Cost breakdown */}
       <div className="mt-4 border-t-2 border-dashed border-ink/40 pt-3 space-y-1.5">
-        <Row label="bid"             value={fmtUSD(bid)} />
-        <Row label="+ premium (12%)" value={fmtUSD(premium)} muted />
-        <Row label="= total cost"    value={fmtUSD(totalCost)} bold />
+        <Row label="take cost"     value={fmtUSD(take.price)} bold />
+        <Row label="your balance"  value={fmtUSD(balanceUsdc)} muted />
+        <Row label="royalty earn"  value="3% forever" muted />
       </div>
 
-      <div className="mt-3 bg-canvas border-2 border-ink rounded-lg p-3">
-        <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-ink/60">
-          if outbid you receive
-        </div>
-        <div className="font-mono font-extrabold text-[18px] text-ink mt-0.5">
-          {fmtUSD(payoutIfOutbid)}
-        </div>
-        <div className="text-[10px] font-display font-bold text-ink/70 mt-0.5">
-          (bid back minus 3% royalty to creator · forever)
-        </div>
-      </div>
-
+      {/* Action */}
       <div className="mt-4">
-        <Btn variant="pop" size="lg" star className="w-full">
-          TAKE IT · <MonoNum>{fmtUSD(totalCost)}</MonoNum>
-        </Btn>
+        <PrimaryAction
+          phase={phase}
+          canSubmit={canSubmit}
+          cost={take.price}
+          onApprove={approve}
+          onSubmit={() => submit(trimmedAnswer, description.trim())}
+        />
       </div>
 
-      <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
-        wallet wiring lands in a later phase
-      </div>
+      <PhaseHint phase={phase} balanceUsdc={balanceUsdc} cost={take.price} />
     </div>
   );
 }
 
-/* ─────────────────────────── OFFER ─────────────────────────── */
+/**
+ * Phase-driven primary action — same button slot cycles through:
+ *   approve → submit pending → submitting → ready
+ */
+function PrimaryAction({
+  phase,
+  canSubmit,
+  cost,
+  onApprove,
+  onSubmit,
+}: {
+  phase: TakeFlowPhase;
+  canSubmit: boolean;
+  cost: number;
+  onApprove: () => void;
+  onSubmit: () => void;
+}) {
+  if (phase === 'idle') {
+    return (
+      <div className="flex justify-center py-2">
+        <Wobble>checking balance…</Wobble>
+      </div>
+    );
+  }
 
-function MakeOffer({ take }: { take: MockTake }) {
+  if (phase === 'insufficient') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        NEED MORE USDC
+      </Btn>
+    );
+  }
+
+  if (phase === 'needs-approval') {
+    return (
+      <Btn variant="primary" size="lg" star className="w-full" onClick={onApprove}>
+        APPROVE USDC
+      </Btn>
+    );
+  }
+
+  if (phase === 'approving') {
+    return (
+      <Btn variant="primary" size="lg" disabled className="w-full">
+        APPROVING…
+      </Btn>
+    );
+  }
+
+  if (phase === 'submitting') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        TAKING…
+      </Btn>
+    );
+  }
+
+  // ready
+  return (
+    <Btn variant="pop" size="lg" star className="w-full" onClick={onSubmit} disabled={!canSubmit}>
+      TAKE IT · <MonoNum>{fmtUSD(cost)}</MonoNum>
+    </Btn>
+  );
+}
+
+function PhaseHint({ phase, balanceUsdc, cost }: { phase: TakeFlowPhase; balanceUsdc: number; cost: number }) {
+  let hint = '';
+  if (phase === 'insufficient') hint = `balance ${fmtUSD(balanceUsdc)} · need ${fmtUSD(cost)}`;
+  else if (phase === 'needs-approval') hint = 'one-time USDC approval — then take it';
+  else if (phase === 'approving' || phase === 'submitting') hint = 'confirm in your wallet…';
+
+  if (!hint) return null;
+  return (
+    <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
+      {hint}
+    </div>
+  );
+}
+
+/* ─────────────────────────── OFFER (still mock) ─────────────────────────── */
+
+function MakeOffer({ take }: { take: DisplayTake }) {
   const [amount, setAmount] = useState<number>(Math.round(take.price * 0.5));
   const [message, setMessage] = useState('');
   const [expiry, setExpiry] = useState<'24h' | '7d' | 'never'>('7d');
@@ -141,13 +329,13 @@ function MakeOffer({ take }: { take: MockTake }) {
       </div>
 
       <div className="mt-4">
-        <Btn variant="primary" size="lg" star className="w-full">
+        <Btn variant="primary" size="lg" star className="w-full" disabled>
           SEND OFFER · <MonoNum>{fmtUSD(amount)}</MonoNum>
         </Btn>
       </div>
 
       <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
-        offers are a roadmap feature
+        offers are a roadmap feature — not yet on chain
       </div>
     </div>
   );
@@ -155,7 +343,7 @@ function MakeOffer({ take }: { take: MockTake }) {
 
 /* ─────────────────────────── WATCH ─────────────────────────── */
 
-function Watch({ take }: { take: MockTake }) {
+function Watch({ take }: { take: DisplayTake }) {
   const { hydrated, isWatched, toggle } = useWatchlist();
   const on = hydrated && isWatched(take.id);
 
