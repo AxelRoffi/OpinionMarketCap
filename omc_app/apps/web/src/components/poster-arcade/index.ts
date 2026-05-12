@@ -17,3 +17,6 @@ export { Stepper } from './Stepper';
 export { PriceSlider } from './PriceSlider';
 export { popConfetti, type ConfettiOptions } from './confetti';
 export { CopyField } from './CopyField';
+export { ProgressBar } from './ProgressBar';
+export { Countdown } from './Countdown';
+export { AvatarStack } from './AvatarStack';
