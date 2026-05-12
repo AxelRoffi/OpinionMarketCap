@@ -20,3 +20,4 @@ export { CopyField } from './CopyField';
 export { ProgressBar } from './ProgressBar';
 export { Countdown } from './Countdown';
 export { AvatarStack } from './AvatarStack';
+export { WalletBtn } from './WalletBtn';

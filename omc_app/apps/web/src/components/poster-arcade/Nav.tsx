@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Btn } from './Btn';
+import { WalletBtn } from './WalletBtn';
 
 type NavTab = { label: string; href: string };
 
@@ -18,11 +19,17 @@ type NavProps = {
   /** Right-side CTA target. Defaults to /v2/create (mint flow). */
   ctaHref?: string;
   ctaLabel?: string;
-  /** Optional slot rendered between tabs and CTA (e.g. wallet connect). */
+  /**
+   * Replace the default right-side cluster. Defaults to <WalletBtn /> + NEW TAKE.
+   * Pass a node to override completely (e.g. on a page where the user is in a
+   * specific flow and shouldn't be tempted by global CTAs).
+   */
   rightSlot?: React.ReactNode;
+  /** Suppress the NEW TAKE CTA. Used inside the mint flow itself. */
+  hideCta?: boolean;
 };
 
-export function Nav({ ctaHref = '/v2/create', ctaLabel = 'NEW TAKE', rightSlot }: NavProps) {
+export function Nav({ ctaHref = '/v2/create', ctaLabel = 'NEW TAKE', rightSlot, hideCta }: NavProps) {
   const pathname = usePathname() ?? '';
 
   return (
@@ -58,12 +65,14 @@ export function Nav({ ctaHref = '/v2/create', ctaLabel = 'NEW TAKE', rightSlot }
         })}
       </ul>
 
-      {/* Right slot + CTA */}
-      <div className="flex items-center gap-3">
-        {rightSlot}
-        <Btn href={ctaHref} variant="primary" size="sm" star>
-          {ctaLabel}
-        </Btn>
+      {/* Right cluster — wallet button + (optional) NEW TAKE CTA */}
+      <div className="flex items-center gap-2 md:gap-3">
+        {rightSlot ?? <WalletBtn size="sm" />}
+        {!hideCta && (
+          <Btn href={ctaHref} variant="primary" size="sm" star className="hidden sm:inline-flex">
+            {ctaLabel}
+          </Btn>
+        )}
       </div>
     </nav>
   );
