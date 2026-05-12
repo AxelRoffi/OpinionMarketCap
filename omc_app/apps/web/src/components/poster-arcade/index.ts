@@ -10,3 +10,6 @@ export { StreakRail } from './StreakRail';
 export { CategoryFilter, type CategoryOption } from './CategoryFilter';
 export { SortDropdown, type SortOption } from './SortDropdown';
 export { SearchPill } from './SearchPill';
+export { Tabs, type Tab } from './Tabs';
+export { Sparkline } from './Sparkline';
+export { RangeToggle, type RangeKey } from './RangeToggle';
