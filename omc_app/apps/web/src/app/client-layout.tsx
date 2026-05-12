@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 // Dynamic imports to prevent SSR issues with wallet providers
@@ -23,6 +24,10 @@ interface ClientLayoutProps {
 
 export function ClientLayout({ children }: ClientLayoutProps) {
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  // Poster Arcade redesign lives under /v2/* — it brings its own chrome.
+  // Hide legacy navbar/footer/onboarding/admin panel on those routes.
+  const isV2 = pathname?.startsWith('/v2') ?? false;
 
   useEffect(() => {
     setMounted(true);
@@ -45,17 +50,22 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           <AnalyticsProvider>
             <OnboardingProvider>
               <ExtensionErrorSuppressor />
-              <div className="min-h-screen bg-background text-foreground flex flex-col">
-                <GlobalNavbar />
-                <main className="flex-grow">
-                  {children}
-                </main>
-                <Footer />
-                <ModeratedAnswersNotification />
-                <AdminModerationPanel isAdmin={false} />
-              </div>
+              {isV2 ? (
+                /* /v2/* — Poster Arcade chrome owns the page; legacy shell stays out of the way */
+                <>{children}</>
+              ) : (
+                <div className="min-h-screen bg-background text-foreground flex flex-col">
+                  <GlobalNavbar />
+                  <main className="flex-grow">
+                    {children}
+                  </main>
+                  <Footer />
+                  <ModeratedAnswersNotification />
+                  <AdminModerationPanel isAdmin={false} />
+                </div>
+              )}
               <Toaster position="top-right" />
-              <OnboardingWizard />
+              {!isV2 && <OnboardingWizard />}
             </OnboardingProvider>
           </AnalyticsProvider>
         </Providers>
