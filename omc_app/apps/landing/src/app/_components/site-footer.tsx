@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 const PRODUCT = [
-  { label: 'Mission',       href: '/v2/mission' },
-  { label: 'How it Works',  href: '/v2/how-it-works' },
-  { label: 'Tutorial',      href: '/v2/tutorial' },
-  { label: 'Influences',    href: '/v2/influences' },
-  { label: 'Whitepaper',    href: '/v2/whitepaper' },
+  { label: 'Mission',       href: '/mission' },
+  { label: 'How it Works',  href: '/how-it-works' },
+  { label: 'Tutorial',      href: '/tutorial' },
+  { label: 'Influences',    href: '/influences' },
+  { label: 'Whitepaper',    href: '/whitepaper' },
 ];
 
 const COMMUNITY = [
@@ -16,7 +16,7 @@ const COMMUNITY = [
 ];
 
 const RESOURCES = [
-  { label: 'Documentation',  href: '/v2/whitepaper' },
+  { label: 'Documentation',  href: '/whitepaper' },
   { label: 'Smart Contract', href: 'https://basescan.org/address/0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1', external: true },
   { label: 'API (Soon)',     href: '#' },
   { label: 'Brand Kit',      href: '#' },

@@ -1,23 +1,34 @@
 import './globals.css';
+import './poster-arcade.css';
 import type { Metadata } from 'next';
+import { Inter_Tight, JetBrains_Mono } from 'next/font/google';
+
+const interTight = Inter_Tight({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800', '900'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'OpinionMarketCap (OMC) | Opinions Are Free. Yours Isn\'t.',
-  description: 'Put your money where your mouth is. Back your opinion with real money on Base. Get paid when someone disagrees.',
+  title: 'OpinionMarketCap — Take a stand. Get paid for it.',
+  description:
+    'Mint your hot take. Hold the floor. When someone outbids you, they pay you to leave. You keep 3% forever.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="light">
-      <head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      </head>
-      <body>{children}</body>
+      <body className={`${interTight.variable} ${jetbrainsMono.variable} font-body`}>
+        {children}
+      </body>
     </html>
   );
 }

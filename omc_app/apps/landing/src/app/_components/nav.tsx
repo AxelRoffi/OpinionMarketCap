@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 type NavLink = { label: string; href: string };
 
 const LINKS: NavLink[] = [
-  { label: 'Mission',      href: '/v2/mission' },
-  { label: 'How it Works', href: '/v2/how-it-works' },
-  { label: 'Tutorial',     href: '/v2/tutorial' },
-  { label: 'Influences',   href: '/v2/influences' },
-  { label: 'Whitepaper',   href: '/v2/whitepaper' },
+  { label: 'Mission',      href: '/mission' },
+  { label: 'How it Works', href: '/how-it-works' },
+  { label: 'Tutorial',     href: '/tutorial' },
+  { label: 'Influences',   href: '/influences' },
+  { label: 'Whitepaper',   href: '/whitepaper' },
 ];
 
 type NavProps = {
@@ -30,7 +30,7 @@ export function Nav({
       className="relative z-10 flex items-center justify-between border-b-[2.5px] border-dashed border-ink px-6 py-4 md:px-10"
     >
       {/* Logo */}
-      <Link href="/v2" className="flex items-center gap-2.5">
+      <Link href="/" className="flex items-center gap-2.5">
         <span
           className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full border-[2.5px] border-ink bg-pop text-sm font-black text-white shadow-sticker-sm"
           aria-hidden
