@@ -7,11 +7,13 @@ import {
   SearchPill,
   Sticker,
   Btn,
+  Wobble,
   type CategoryOption,
   type SortOption,
 } from '@/components/poster-arcade';
 import { TakeCard } from '../_components/TakeCard';
 import { MOCK_TAKES, CATEGORIES, type CatKey } from '../_data/mock-takes';
+import { useTakes } from '../_lib/chain-adapters';
 
 type SortKey = 'hot' | 'new' | 'gainers' | 'losers' | 'cheap' | 'spicy';
 
@@ -30,9 +32,14 @@ const CAT_OPTS: CategoryOption[] = [
 ];
 
 export default function MarketplacePage() {
+  const { takes, isLoading, isEmpty } = useTakes();
   const [cat, setCat] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('hot');
   const [query, setQuery] = useState('');
+
+  // Live chain data when present; mock fallback when chain is empty/unreachable
+  // so the page is never devoid of content.
+  const source = isEmpty ? MOCK_TAKES : takes;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -42,7 +49,7 @@ export default function MarketplacePage() {
       !q ||
       s.toLowerCase().includes(q);
 
-    let list = MOCK_TAKES.filter(
+    let list = source.filter(
       (t) =>
         inCategory(t.category) &&
         (inSearch(t.question) || inSearch(t.answer) || inSearch(t.heldBy)),
@@ -58,7 +65,7 @@ export default function MarketplacePage() {
       case 'spicy':   list.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)); break;
     }
     return list;
-  }, [cat, sort, query]);
+  }, [source, cat, sort, query]);
 
   const resetFilters = () => {
     setCat('all');
@@ -105,11 +112,22 @@ export default function MarketplacePage() {
 
       {/* ────────────────  RESULTS  ──────────────── */}
       <section className="px-4 md:px-10 pb-16">
-        <div className="font-mono text-[11px] font-extrabold text-ink/60 mb-4">
-          {filtered.length} {filtered.length === 1 ? 'take' : 'takes'}
+        <div className="font-mono text-[11px] font-extrabold text-ink/60 mb-4 flex items-center gap-3">
+          <span>
+            {filtered.length} {filtered.length === 1 ? 'take' : 'takes'}
+          </span>
+          {isEmpty && (
+            <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
+              · sample wall — chain has no opinions yet
+            </span>
+          )}
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Wobble>loading the floor…</Wobble>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex justify-center py-16">
             <Sticker bg="paper" tilt={-1.5} className="max-w-md text-center">
               <div className="font-display font-black text-[22px] tracking-tight">

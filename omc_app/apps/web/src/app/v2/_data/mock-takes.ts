@@ -23,26 +23,40 @@ export const CAT_MAP: Record<CatKey, CatMeta> = Object.fromEntries(
   CATEGORIES.map(c => [c.key, c]),
 ) as Record<CatKey, CatMeta>;
 
-export type MockTake = {
+/**
+ * DisplayTake — what every /v2 component renders. The chain adapter
+ * (apps/web/src/app/v2/_lib/chain-adapters.ts) maps OpinionData → DisplayTake
+ * so the visual layer is chain-agnostic. The mock data below also produces
+ * this shape, used as fallback when the chain has no opinions yet (or in dev
+ * when wallet isn't connected to Base).
+ */
+export type DisplayTake = {
   id: number;
   category: CatKey;
+  /** Optional raw chain category label, preserved for full-fidelity display. */
+  categoryLabel?: string;
   question: string;
   answer: string;
   heldBy: string;
+  /** Optional full 0x address backing `heldBy` (the chain-adapter sets this). */
+  ownerAddress?: string;
   /** USDC price as plain number for sorting. Display via formatter. */
   price: number;
-  /** Percent change in last 24h. Signed (negative = loss). */
+  /** Percent change. Signed (negative = loss). */
   delta: number;
-  /** 24h trade count — used by 'Hot' sort. */
+  /** Trade count — used by 'Hot' sort. */
   trades: number;
   /** Created timestamp (ms) — used by 'New' sort. */
   createdAt: number;
 };
 
+/** @deprecated — use DisplayTake. Kept for one phase to avoid a breaking rename. */
+export type MockTake = DisplayTake;
+
 const day = 24 * 60 * 60 * 1000;
 const now = Date.now();
 
-export const MOCK_TAKES: MockTake[] = [
+export const MOCK_TAKES: DisplayTake[] = [
   { id: 1,  category: 'crypto',  question: 'Best L2 in 2026?',        answer: 'BASE',       heldBy: 'jesse.base',    price: 312,  delta:  9.6,  trades: 184, createdAt: now - 2  * day },
   { id: 2,  category: 'ai',      question: 'AGI by 2030?',            answer: 'PARTIALLY',  heldBy: '0xA1',          price:  64,  delta: 34.2,  trades: 412, createdAt: now - 4  * day },
   { id: 3,  category: 'sport',   question: 'GOAT basketball?',        answer: 'JORDAN',     heldBy: 'vitalik.eth',   price: 142,  delta: 18.0,  trades: 96,  createdAt: now - 7  * day },

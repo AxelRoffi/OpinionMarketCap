@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useMemo, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -9,10 +9,13 @@ import {
   MonoNum,
   Sparkline,
   RangeToggle,
+  Wobble,
   type RangeKey,
 } from '@/components/poster-arcade';
-import { fmtUSD, fmtDelta, CAT_MAP, type CatKey } from '../../_data/mock-takes';
-import { getTakeDetail, getPriceHistory } from '../../_data/take-detail';
+import { useAnswerHistory } from '@/hooks/useAnswerHistory';
+import { fmtUSD, fmtDelta, CAT_MAP, type CatKey, type DisplayTake } from '../../_data/mock-takes';
+import { getTakeDetail, getPriceHistory, type HolderRecord } from '../../_data/take-detail';
+import { useTake, useTakes, usdcToNumber, shortAddress } from '../../_lib/chain-adapters';
 import { TradeSlip } from './_components/TradeSlip';
 import { HolderTimeline } from './_components/HolderTimeline';
 import { RelatedTakesRow } from './_components/RelatedTakesRow';
@@ -29,41 +32,145 @@ const CAT_BG: Record<CatKey, 'pop' | 'cool' | 'canvas' | 'paper'> = {
   founder: 'cool',
 };
 
+const RANGE_WINDOW: Record<RangeKey, number> = {
+  '24h':  24 * 60 * 60,
+  '7d':    7 * 24 * 60 * 60,
+  '30d':  30 * 24 * 60 * 60,
+  all:     Number.MAX_SAFE_INTEGER,
+};
+
 export default function OpinionDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
-  const detail = getTakeDetail(Number(id));
-  if (!detail) notFound();
+  const { id: idStr } = use(params);
+  const id = Number(idStr);
 
-  const { take, holders, related } = detail;
+  // 1) Try chain first.
+  const { take: chainTake, isLoading: chainLoading } = useTake(id);
+
+  // 2) When chain hasn't returned a matching take and it's no longer loading,
+  //    fall back to mock — covers dev (no wagmi) + unknown-id 404 routing.
+  const mockDetail = useMemo(() => getTakeDetail(id), [id]);
+  const isMockFallback = !chainLoading && !chainTake;
+
+  // 3) If neither source yields a take, hand off to Next's notFound boundary.
+  if (isMockFallback && !mockDetail) notFound();
+  if (chainLoading && !chainTake) {
+    return (
+      <div className="flex justify-center py-24">
+        <Wobble>loading take #{id}…</Wobble>
+      </div>
+    );
+  }
+
+  const take: DisplayTake = chainTake ?? mockDetail!.take;
+
+  // Chain-derived price history (V4 stores answer history) — only when on chain.
+  // Mock fallback uses the deterministic synthesizer.
+  return (
+    <DetailBody
+      id={id}
+      take={take}
+      isMockFallback={isMockFallback}
+      mockHolders={mockDetail?.holders ?? []}
+      mockRelated={mockDetail?.related ?? []}
+    />
+  );
+}
+
+function DetailBody({
+  id,
+  take,
+  isMockFallback,
+  mockHolders,
+  mockRelated,
+}: {
+  id: number;
+  take: DisplayTake;
+  isMockFallback: boolean;
+  mockHolders: HolderRecord[];
+  mockRelated: DisplayTake[];
+}) {
   const cat = CAT_MAP[take.category];
   const heroBg = CAT_BG[take.category];
   const chipBg = heroBg === 'paper' || heroBg === 'canvas' ? 'ink' : 'paper';
   const isLoss = take.delta < 0;
 
   const [range, setRange] = useState<RangeKey>('7d');
-  const series = getPriceHistory(take, range as '24h' | '7d' | '30d');
+
+  // Live answer history → series of prices + holder timeline (only when chain take).
+  const { history } = useAnswerHistory(isMockFallback ? 0 : id);
+
+  // Live chain takes — used to find related takes in the same category when on chain.
+  // wagmi's per-key cache means this re-uses the same fetch as useTake() above.
+  const { takes: chainTakes } = useTakes();
+
+  // Build series + holders (chain or mock).
+  const { series, holders, totalTrades } = useMemo(() => {
+    if (!isMockFallback && history.length > 0) {
+      const cutoff = Math.floor(Date.now() / 1000) - RANGE_WINDOW[range];
+      // Filter by selected range, then map to display values.
+      const inRange = history.filter((h) => Number(h.timestamp) >= cutoff);
+      const points = (inRange.length >= 2 ? inRange : history).map((h) => usdcToNumber(h.price));
+      // Append current floor so the latest tick matches the displayed price.
+      const seriesData = points.length ? [...points, take.price] : [take.price * 0.95, take.price];
+
+      const holdersData: HolderRecord[] = history.map((h) => ({
+        addr: h.owner === '0x0000000000000000000000000000000000000000'
+          ? 'vacant'
+          : shortAddress(h.owner),
+        price: usdcToNumber(h.price),
+        date: new Date(Number(h.timestamp) * 1000).toISOString(),
+      }));
+      return { series: seriesData, holders: holdersData, totalTrades: history.length };
+    }
+    // Mock fallback
+    return {
+      series: getPriceHistory(take, range as '24h' | '7d' | '30d'),
+      holders: mockHolders,
+      totalTrades: 18 + id * 3,
+    };
+  }, [isMockFallback, history, range, take, mockHolders, id]);
 
   const minPrice = Math.min(...series);
   const maxPrice = Math.max(...series);
-
-  // Synthesised stats — replaced by chain data later.
-  const totalTrades = 18 + take.id * 3;
   const royaltiesPaid = Math.round(take.price * 0.07 * 100) / 100;
+
+  // Related: when on chain, pick others by mapped category from the live grid.
+  // Mock fallback uses the existing helper.
+  const related = useMemo(() => {
+    if (isMockFallback) return mockRelated;
+    const same = chainTakes.filter((t) => t.category === take.category && t.id !== take.id);
+    // Pad with other categories if not enough same-category takes.
+    if (same.length >= 6) return same.slice(0, 6);
+    const others = chainTakes.filter((t) => t.category !== take.category && t.id !== take.id);
+    return [...same, ...others].slice(0, 6);
+  }, [isMockFallback, mockRelated, chainTakes, take]);
+
+  const ownerDisplay = take.ownerAddress
+    ? `@${shortAddress(take.ownerAddress)}`
+    : `@${take.heldBy}`;
+  const profileHref = take.ownerAddress
+    ? `/v2/profile/${encodeURIComponent(take.ownerAddress)}`
+    : `/v2/profile/${encodeURIComponent(take.heldBy)}`;
 
   return (
     <>
       {/* ────────────────  BREADCRUMB  ──────────────── */}
-      <div className="px-4 md:px-10 pt-4 pb-1">
+      <div className="px-4 md:px-10 pt-4 pb-1 flex items-center justify-between gap-3 flex-wrap">
         <Link
           href="/v2/marketplace"
           className="font-display text-[11px] font-extrabold tracking-[0.12em] uppercase text-ink/60 hover:text-ink"
         >
           ← back to the floor
         </Link>
+        {isMockFallback && (
+          <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
+            · sample take (no on-chain match)
+          </span>
+        )}
       </div>
 
       {/* ────────────────  TWO-COL LAYOUT  ──────────────── */}
@@ -73,13 +180,13 @@ export default function OpinionDetailPage({
           {/* Hero sticker */}
           <Sticker bg={heroBg} tilt={-2} shadow={6} className="p-6 md:p-8">
             <div className="flex items-center justify-between">
-              <Chip bg={chipBg}>{cat.emoji} {cat.label}</Chip>
+              <Chip bg={chipBg}>{cat.emoji} {(take.categoryLabel ?? cat.label).toUpperCase()}</Chip>
               <Chip bg="ink" sm>#{take.id}</Chip>
             </div>
             <div className="font-display text-[13px] md:text-[14px] font-bold italic opacity-85 mt-3">
               &ldquo;{take.question}&rdquo;
             </div>
-            <div className="font-display font-black text-[64px] md:text-[88px] lg:text-[96px] leading-[0.88] tracking-[-0.04em] mt-2">
+            <div className="font-display font-black text-[64px] md:text-[88px] lg:text-[96px] leading-[0.88] tracking-[-0.04em] mt-2 break-words">
               {take.answer}.
             </div>
             <div className="mt-5 grid grid-cols-2 gap-4">
@@ -87,9 +194,12 @@ export default function OpinionDetailPage({
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
                   held by
                 </div>
-                <div className="font-display font-extrabold text-[16px] md:text-[18px] truncate">
-                  @{take.heldBy}
-                </div>
+                <Link
+                  href={profileHref}
+                  className="font-display font-extrabold text-[16px] md:text-[18px] truncate block hover:underline"
+                >
+                  {ownerDisplay}
+                </Link>
               </div>
               <div className="text-right">
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
@@ -124,9 +234,9 @@ export default function OpinionDetailPage({
 
           {/* Stat row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatTile label="floor"        value={fmtUSD(take.price)} />
-            <StatTile label="24h trades"   value={String(take.trades)} />
-            <StatTile label="total trades" value={String(totalTrades)} />
+            <StatTile label="floor"          value={fmtUSD(take.price)} />
+            <StatTile label="next premium"   value={fmtDelta(take.delta)} />
+            <StatTile label="total trades"   value={String(totalTrades)} />
             <StatTile label="royalties paid" value={fmtUSD(royaltiesPaid)} />
           </div>
         </div>

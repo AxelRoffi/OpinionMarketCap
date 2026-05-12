@@ -1,10 +1,25 @@
 'use client';
 
-import { Sticker, Btn, Chip, MonoNum } from '@/components/poster-arcade';
+import { useMemo } from 'react';
+import { Sticker, Btn, Chip, MonoNum, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from './_components/TakeCard';
-import { MOCK_TAKES } from './_data/mock-takes';
+import { MOCK_TAKES, fmtUSD } from './_data/mock-takes';
+import { useTakes } from './_lib/chain-adapters';
 
 export default function V2HotWallPage() {
+  const { takes, isLoading, isEmpty, totalOnChain } = useTakes();
+
+  // Show top 8 by trades; fallback to mock when chain has nothing.
+  const hot = useMemo(() => {
+    if (isEmpty) return MOCK_TAKES.slice(0, 8);
+    return [...takes].sort((a, b) => b.trades - a.trades).slice(0, 8);
+  }, [takes, isEmpty]);
+
+  const totalVolume = takes.reduce((a, t) => a + t.price * Math.max(1, t.trades), 0);
+  const freshCount = takes.length > 0
+    ? takes.filter((t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000).length
+    : 12;
+
   return (
     <>
       {/* ────────────────  HERO  ──────────────── */}
@@ -35,33 +50,23 @@ export default function V2HotWallPage() {
             </div>
           </div>
 
-          {/* Floating sticker stack */}
+          {/* Floating sticker stack — uses real top 3 takes when available */}
           <div className="lg:col-span-5 relative h-[280px] md:h-[340px]">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="absolute left-[8%] top-[10%]">
-                <Sticker bg="cool" tilt={-3} shadow={5}>
-                  <Chip bg="pop">⚡ CRYPTO</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;Best L2?&rdquo;</div>
-                  <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">BASE.</div>
-                  <div className="mt-2 flex justify-between"><MonoNum>$312</MonoNum><MonoNum className="text-pop">+9.6%</MonoNum></div>
-                </Sticker>
-              </div>
-              <div className="absolute right-[6%] top-[2%]">
-                <Sticker bg="pop" tilt={2.5} shadow={5}>
-                  <Chip bg="paper">🤖 AI</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;AGI by 2030?&rdquo;</div>
-                  <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">PARTIALLY.</div>
-                  <div className="mt-2 flex justify-between"><MonoNum>$64</MonoNum><MonoNum>+34%</MonoNum></div>
-                </Sticker>
-              </div>
-              <div className="absolute left-[26%] bottom-[2%]">
-                <Sticker bg="canvas" tilt={-1} shadow={6}>
-                  <Chip bg="ink">🏀 SPORTS</Chip>
-                  <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic">&ldquo;GOAT?&rdquo;</div>
-                  <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter">JORDAN.</div>
-                  <div className="mt-2 flex justify-between"><MonoNum>$142</MonoNum><MonoNum>+18%</MonoNum></div>
-                </Sticker>
-              </div>
+              {hot.slice(0, 3).map((t, i) => (
+                <div
+                  key={`hero-${t.id}`}
+                  className={
+                    i === 0
+                      ? 'absolute left-[8%] top-[10%]'
+                      : i === 1
+                      ? 'absolute right-[6%] top-[2%]'
+                      : 'absolute left-[26%] bottom-[2%]'
+                  }
+                >
+                  <HeroSticker take={t} variant={i as 0 | 1 | 2} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -74,20 +79,67 @@ export default function V2HotWallPage() {
             🔥 HOT WALL · TODAY
           </h2>
           <div className="font-mono font-extrabold text-[12px] md:text-[13px] text-ink/70">
-            <MonoNum>847</MonoNum> takes · <MonoNum>$284k</MonoNum> vol · <MonoNum>12</MonoNum> fresh
+            <MonoNum>{totalOnChain || 847}</MonoNum> takes · <MonoNum>{fmtUSD(Math.round(totalVolume) || 284_000)}</MonoNum> vol · <MonoNum>{freshCount}</MonoNum> fresh
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {MOCK_TAKES.slice(0, 8).map((take, i) => (
-            <TakeCard key={take.id} take={take} index={i} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Wobble>loading the wall…</Wobble>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {hot.map((take, i) => (
+              <TakeCard key={take.id} take={take} index={i} />
+            ))}
+          </div>
+        )}
 
-        <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/50 text-center mt-12">
-          ★ Mock data · live on-chain wiring lands in a later phase ★
-        </p>
+        {isEmpty && !isLoading && (
+          <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/50 text-center mt-6">
+            ★ no on-chain takes yet — showing sample wall ★
+          </p>
+        )}
       </section>
     </>
+  );
+}
+
+/**
+ * HeroSticker — top 3 takes rendered as the iconic floating stack.
+ * Variant fixes the bg/tilt per slot so the visual hierarchy stays consistent
+ * even as data changes.
+ */
+function HeroSticker({
+  take,
+  variant,
+}: {
+  take: { id: number; question: string; answer: string; price: number; delta: number; categoryLabel?: string; category: string };
+  variant: 0 | 1 | 2;
+}) {
+  const config = [
+    { bg: 'cool' as const,   tilt: -3,  shadow: 5 as const, chipBg: 'pop' as const   },
+    { bg: 'pop' as const,    tilt: 2.5, shadow: 5 as const, chipBg: 'paper' as const },
+    { bg: 'canvas' as const, tilt: -1,  shadow: 6 as const, chipBg: 'ink' as const   },
+  ][variant];
+  const cat = (take.categoryLabel ?? take.category ?? '').toUpperCase();
+  const isLoss = take.delta < 0;
+
+  return (
+    <Sticker bg={config.bg} tilt={config.tilt} shadow={config.shadow}>
+      <Chip bg={config.chipBg}>{cat}</Chip>
+      <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic max-w-[160px] truncate">
+        &ldquo;{take.question}&rdquo;
+      </div>
+      <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter max-w-[160px] truncate">
+        {take.answer}.
+      </div>
+      <div className="mt-2 flex justify-between gap-3">
+        <MonoNum>{fmtUSD(take.price)}</MonoNum>
+        <MonoNum className={isLoss ? 'text-pop' : undefined}>
+          {take.delta >= 0 ? '+' : ''}{take.delta.toFixed(1)}%
+        </MonoNum>
+      </div>
+    </Sticker>
   );
 }
