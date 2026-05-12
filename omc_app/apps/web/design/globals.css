@@ -1,0 +1,141 @@
+/**
+ * OMC · Poster Arcade — base styles
+ * Merge into apps/web/src/app/globals.css (after Tailwind directives)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+
+:root {
+  --canvas: #FFE94D;
+  --ink:    #15120D;
+  --pop:    #FF4D6B;
+  --cool:   #4DFFE0;
+  --paper:  #FFFFFF;
+}
+
+html, body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: 'Inter Tight', system-ui, sans-serif;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dotted background overlay — apply to <main> or any page root */
+.pa-dots {
+  position: relative;
+}
+.pa-dots::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--ink) 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+}
+.pa-dots > * { position: relative; z-index: 1; }
+
+/* Sticker card utility */
+.pa-sticker {
+  background: var(--paper);
+  color: var(--ink);
+  border: 2.5px solid var(--ink);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 200ms ease-out;
+}
+.pa-sticker:hover {
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.pa-sticker.tilt-l   { transform: rotate(-1.5deg); }
+.pa-sticker.tilt-l-2 { transform: rotate(-2deg);   }
+.pa-sticker.tilt-r   { transform: rotate(1.5deg);  }
+.pa-sticker.tilt-r-2 { transform: rotate(2deg);    }
+
+/* Pill button base */
+.pa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--ink);
+  color: var(--canvas);
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  box-shadow: 4px 4px 0 var(--pop);
+  cursor: pointer;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.pa-btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--pop); }
+.pa-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--pop); }
+
+.pa-btn.is-pop   { background: var(--pop);   color: var(--paper); box-shadow: 4px 4px 0 var(--ink); }
+.pa-btn.is-cool  { background: var(--cool);  color: var(--ink);   box-shadow: 4px 4px 0 var(--ink); }
+.pa-btn.is-ghost { background: var(--paper); color: var(--ink);   box-shadow: 4px 4px 0 var(--ink); font-weight: 800; }
+
+/* Hatch divider */
+.pa-hatch {
+  border-top: 2px dashed var(--ink);
+  opacity: 0.5;
+}
+
+/* Chip */
+.pa-chip {
+  display: inline-block;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+/* Mono number */
+.pa-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 800;
+}
+
+/* Streak rail (bottom bar) */
+.pa-rail {
+  background: var(--ink);
+  color: var(--canvas);
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Loading wobble */
+@keyframes pa-wobble {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50%      { transform: rotate(1.5deg);  }
+}
+.pa-loading {
+  animation: pa-wobble 1.2s ease-in-out infinite;
+}
+
+/* Confetti particle (use in component for take success) */
+@keyframes pa-confetti {
+  0%   { transform: translate(0, 0) rotate(0deg);     opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(720deg); opacity: 0; }
+}

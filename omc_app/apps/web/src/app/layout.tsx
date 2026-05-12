@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ClientLayout } from "./client-layout";
 import { DEFAULT_META, BASE_URL, PRIMARY_KEYWORDS } from "@/lib/seo";
@@ -7,14 +7,25 @@ import { DEFAULT_META, BASE_URL, PRIMARY_KEYWORDS } from "@/lib/seo";
 // Force dynamic rendering to avoid SSR issues with wallet providers
 export const dynamic = 'force-dynamic';
 
+// Legacy body font — existing components reference --font-geist-sans
 const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
+// Poster Arcade display + body font
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
+  weight: ["500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
+  weight: ["500", "700", "800"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -111,7 +122,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <ClientLayout>
           {children}
