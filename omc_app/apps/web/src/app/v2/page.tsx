@@ -125,13 +125,16 @@ function HeroSticker({
   const cat = (take.categoryLabel ?? take.category ?? '').toUpperCase();
   const isLoss = take.delta < 0;
 
+  // Bigger headline (28px) cuts at ~160px; smaller (22px) lets 12–14 chars per
+  // line wrap cleanly into 2 lines (e.g. "DONALD J. TRUMP", "BEST L2 BASE").
+  // line-clamp-2 keeps the sticker compact while showing the whole take.
   return (
     <Sticker bg={config.bg} tilt={config.tilt} shadow={config.shadow}>
       <Chip bg={config.chipBg}>{cat}</Chip>
-      <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic max-w-[160px] truncate">
+      <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic max-w-[180px] leading-tight line-clamp-2">
         &ldquo;{take.question}&rdquo;
       </div>
-      <div className="mt-1 font-display font-black text-[28px] leading-none tracking-tighter max-w-[160px] truncate">
+      <div className="mt-1 font-display font-black text-[22px] leading-[0.95] tracking-tight max-w-[180px] break-words line-clamp-2">
         {take.answer}.
       </div>
       <div className="mt-2 flex justify-between gap-3">
