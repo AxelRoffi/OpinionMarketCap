@@ -1,8 +1,9 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { formatUnits } from 'viem';
 import { toast } from 'sonner';
 import {
   Sticker,
@@ -12,10 +13,13 @@ import {
   ProgressBar,
   Countdown,
   AvatarStack,
+  WalletBtn,
+  Wobble,
   popConfetti,
 } from '@/components/poster-arcade';
 import { CAT_MAP, MOCK_TAKES, fmtUSD } from '../../_data/mock-takes';
 import { fundingPct, getPool } from '../../_data/pools';
+import { usePoolJoinFlow, type PoolJoinPhase } from '../../_lib/use-pool-join-flow';
 
 const CAT_BG = {
   sport:   'canvas',
@@ -46,12 +50,25 @@ export default function PoolDetailPage({
 
   const [amount, setAmount] = useState<number>(Math.max(5, Math.round(remaining * 0.1)));
 
-  const handleJoin = () => {
-    popConfetti({ count: 60 });
-    toast.success(`+${fmtUSD(amount)} pledged`, {
-      description: `pool #${pool.id} — wallet wiring lands in a later phase`,
-    });
-  };
+  // Real V2 PoolManager.contributeToPool flow.
+  const flow = usePoolJoinFlow(pool.id, amount);
+  const balanceUsdc = Number(formatUnits(flow.balance, 6));
+
+  useEffect(() => {
+    if (flow.phase === 'success') {
+      popConfetti({ count: 70 });
+      toast.success(`+${fmtUSD(amount)} pledged`, {
+        description: `pool #${pool.id} — share of any royalties locked in proportional`,
+      });
+    }
+  }, [flow.phase, amount, pool.id]);
+
+  useEffect(() => {
+    if (flow.error) {
+      const msg = (flow.error.message || 'transaction failed').split('\n')[0];
+      toast.error('pool join failed', { description: msg.slice(0, 180) });
+    }
+  }, [flow.error]);
 
   const targetTake = MOCK_TAKES.find((t) => t.id === pool.targetTakeId);
 
@@ -211,6 +228,20 @@ export default function PoolDetailPage({
                 This pool has hit its target. Waiting for execution. Your share of any future
                 royalties will be proportional to your pledge.
               </p>
+            ) : flow.phase === 'success' ? (
+              <div className="text-center py-4">
+                <div className="font-display font-black text-[18px] tracking-tight mt-2">
+                  ★ YOU&apos;RE IN.
+                </div>
+                <p className="font-display text-[12px] font-semibold text-ink/65 mt-1">
+                  Pledged <span className="font-mono font-extrabold">{fmtUSD(amount)}</span> — share locked in for any royalties.
+                </p>
+                <div className="mt-4">
+                  <Btn variant="cool" size="md" onClick={flow.reset}>
+                    add more →
+                  </Btn>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="mt-4">
@@ -242,29 +273,100 @@ export default function PoolDetailPage({
                   <Row label="your share" value={`${((amount / pool.target) * 100).toFixed(1)}%`} />
                   <Row label="contribution fee" value="$0.00" muted />
                   <Row label="early-exit penalty" value="20%" muted />
+                  <Row label="your balance" value={fmtUSD(balanceUsdc)} muted />
                 </div>
 
                 <div className="mt-4">
-                  <Btn
-                    variant="pop"
-                    size="lg"
-                    star
-                    onClick={handleJoin}
-                    className="w-full"
-                  >
-                    JOIN POOL · <MonoNum>{fmtUSD(amount)}</MonoNum>
-                  </Btn>
+                  <JoinAction
+                    phase={flow.phase}
+                    amount={amount}
+                    onApprove={flow.approve}
+                    onJoin={flow.submit}
+                  />
                 </div>
+                <JoinHint phase={flow.phase} cost={amount} balanceUsdc={balanceUsdc} />
               </>
             )}
-
-            <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
-              wallet wiring lands in a later phase
-            </div>
           </Sticker>
         </div>
       </section>
     </>
+  );
+}
+
+/**
+ * Phase-driven primary action for the join flow.
+ */
+function JoinAction({
+  phase,
+  amount,
+  onApprove,
+  onJoin,
+}: {
+  phase: PoolJoinPhase;
+  amount: number;
+  onApprove: () => void;
+  onJoin: () => void;
+}) {
+  if (phase === 'disconnected' || phase === 'wrong-chain') {
+    return (
+      <div className="flex justify-center">
+        <WalletBtn size="md" />
+      </div>
+    );
+  }
+  if (phase === 'idle') {
+    return (
+      <div className="flex justify-center py-2">
+        <Wobble>checking balance…</Wobble>
+      </div>
+    );
+  }
+  if (phase === 'insufficient') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        NEED MORE USDC
+      </Btn>
+    );
+  }
+  if (phase === 'needs-approval') {
+    return (
+      <Btn variant="primary" size="lg" star onClick={onApprove} className="w-full">
+        APPROVE USDC
+      </Btn>
+    );
+  }
+  if (phase === 'approving') {
+    return (
+      <Btn variant="primary" size="lg" disabled className="w-full">
+        APPROVING…
+      </Btn>
+    );
+  }
+  if (phase === 'submitting') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        JOINING…
+      </Btn>
+    );
+  }
+  return (
+    <Btn variant="pop" size="lg" star onClick={onJoin} className="w-full">
+      JOIN POOL · <MonoNum>{fmtUSD(amount)}</MonoNum>
+    </Btn>
+  );
+}
+
+function JoinHint({ phase, cost, balanceUsdc }: { phase: PoolJoinPhase; cost: number; balanceUsdc: number }) {
+  let hint = '';
+  if (phase === 'insufficient') hint = `balance ${fmtUSD(balanceUsdc)} · need ${fmtUSD(cost)}`;
+  else if (phase === 'needs-approval') hint = 'one-time USDC approval — then join the pool';
+  else if (phase === 'approving' || phase === 'submitting') hint = 'confirm in your wallet…';
+  if (!hint) return null;
+  return (
+    <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
+      {hint}
+    </div>
   );
 }
 
