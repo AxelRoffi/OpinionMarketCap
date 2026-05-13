@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -10,19 +11,29 @@ import {
   ProgressBar,
   Countdown,
   AvatarStack,
+  Wobble,
 } from '@/components/poster-arcade';
 import { SectionTitle } from '../_components/SectionTitle';
 import { CAT_MAP, fmtUSD } from '../_data/mock-takes';
 import { MOCK_POOLS, fundingPct, type Pool } from '../_data/pools';
+import { useChainPools } from '../_lib/use-pools-data';
 
 /* Background rotation for the pool grid. Stable by index. */
 const BG_CYCLE = ['canvas', 'paper', 'cool', 'pop'] as const;
 const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
 
 export default function PoolsIndexPage() {
-  const active = MOCK_POOLS.filter((p) => p.status === 'active');
-  const filled = MOCK_POOLS.filter((p) => p.status === 'filled');
-  const totalRaised = MOCK_POOLS.reduce((a, p) => a + p.raised, 0);
+  const { pools: chainPools, isLoading, isEmpty } = useChainPools();
+
+  // Chain when available; mock fallback so /v2/pools is never blank.
+  const source = isEmpty ? MOCK_POOLS : chainPools;
+
+  const active = useMemo(() => source.filter((p) => p.status === 'active'), [source]);
+  const filled = useMemo(() => source.filter((p) => p.status === 'filled'), [source]);
+  const totalRaised = useMemo(
+    () => source.reduce((a, p) => a + p.raised, 0),
+    [source],
+  );
 
   const openPool = () => {
     toast.message('opening pools soon', {
@@ -47,8 +58,15 @@ export default function PoolsIndexPage() {
 
       {/* ────────────────  ACTIONS  ──────────────── */}
       <section className="px-4 md:px-10 flex flex-wrap items-center justify-between gap-3 pb-6">
-        <div className="font-mono font-extrabold text-[12px] text-ink/70">
-          <MonoNum>{active.length}</MonoNum> open · <MonoNum>{fmtUSD(totalRaised)}</MonoNum> pooled all-time
+        <div className="font-mono font-extrabold text-[12px] text-ink/70 flex items-center gap-2 flex-wrap">
+          <span>
+            <MonoNum>{active.length}</MonoNum> open · <MonoNum>{fmtUSD(totalRaised)}</MonoNum> pooled all-time
+          </span>
+          {isEmpty && (
+            <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
+              · sample pools — chain has no pools yet
+            </span>
+          )}
         </div>
         <Btn variant="pop" size="md" onClick={openPool} star>
           OPEN A POOL
@@ -61,7 +79,11 @@ export default function PoolsIndexPage() {
           🌊 ACTIVE POOLS
         </SectionTitle>
 
-        {active.length === 0 ? (
+        {isLoading && !isEmpty ? (
+          <div className="flex justify-center py-12">
+            <Wobble>loading pools…</Wobble>
+          </div>
+        ) : active.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

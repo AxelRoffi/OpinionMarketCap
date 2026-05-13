@@ -4,18 +4,29 @@ import { useMemo } from 'react';
 import { Btn, Sticker, MonoNum, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from '../_components/TakeCard';
 import { SectionTitle } from '../_components/SectionTitle';
-import { MOCK_TAKES, fmtUSD } from '../_data/mock-takes';
+import { MOCK_TAKES, fmtUSD, type DisplayTake } from '../_data/mock-takes';
 import { useWatchlist } from '../_lib/watchlist';
+import { useTakes } from '../_lib/chain-adapters';
 
 export default function WatchlistPage() {
   const { ids, hydrated, clear } = useWatchlist();
+  const { takes: chainTakes, isLoading: chainLoading } = useTakes();
 
-  const takes = useMemo(
-    () => ids.map((id) => MOCK_TAKES.find((t) => t.id === id)).filter(Boolean) as typeof MOCK_TAKES,
-    [ids],
-  );
+  // Resolve saved ids against chain takes first; fall back to the mock set
+  // for any id that has no chain match (mock-only ids minted during dev).
+  const takes = useMemo<DisplayTake[]>(() => {
+    if (!hydrated) return [];
+    const chainById = new Map(chainTakes.map((t) => [t.id, t]));
+    return ids
+      .map(
+        (id) =>
+          chainById.get(id) ?? MOCK_TAKES.find((t) => t.id === id) ?? null,
+      )
+      .filter((t): t is DisplayTake => Boolean(t));
+  }, [ids, hydrated, chainTakes]);
 
   const totalValue = takes.reduce((a, t) => a + t.price, 0);
+  const showLoader = !hydrated || (chainLoading && takes.length === 0 && ids.length > 0);
 
   return (
     <>
@@ -34,7 +45,7 @@ export default function WatchlistPage() {
 
       {/* ────────────────  CONTENT  ──────────────── */}
       <section className="px-4 md:px-10 pb-16">
-        {!hydrated ? (
+        {showLoader ? (
           <div className="flex justify-center py-16">
             <Wobble>loading watchlist…</Wobble>
           </div>

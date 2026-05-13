@@ -20,6 +20,7 @@ import {
 import { CAT_MAP, MOCK_TAKES, fmtUSD } from '../../_data/mock-takes';
 import { fundingPct, getPool } from '../../_data/pools';
 import { usePoolJoinFlow, type PoolJoinPhase } from '../../_lib/use-pool-join-flow';
+import { useChainPool } from '../../_lib/use-pools-data';
 
 const CAT_BG = {
   sport:   'canvas',
@@ -38,8 +39,17 @@ export default function PoolDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const pool = getPool(Number(id));
-  if (!pool) notFound();
+  const numericId = Number(id);
+
+  // Chain first; fall back to mock data when chain doesn't have a pool with
+  // this id. This lets the existing /v2/pools/1..6 demo URLs render even
+  // before any real pool has been created on chain.
+  const { pool: chainPool, isLoading: chainLoading, notFound: chainMissing } =
+    useChainPool(numericId);
+  const mockPool = getPool(numericId);
+  const isMockFallback = !chainLoading && !chainPool;
+  if (isMockFallback && !mockPool) notFound();
+  const pool = chainPool ?? mockPool!;
 
   const cat = CAT_MAP[pool.category];
   const heroBg = CAT_BG[pool.category];
@@ -75,13 +85,18 @@ export default function PoolDetailPage({
   return (
     <>
       {/* ────────────────  BREADCRUMB  ──────────────── */}
-      <div className="px-4 md:px-10 pt-4 pb-1">
+      <div className="px-4 md:px-10 pt-4 pb-1 flex items-center justify-between gap-3 flex-wrap">
         <Link
           href="/v2/pools"
           className="font-display text-[11px] font-extrabold tracking-[0.12em] uppercase text-ink/60 hover:text-ink"
         >
           ← back to all pools
         </Link>
+        {isMockFallback && (
+          <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
+            · sample pool (no on-chain match)
+          </span>
+        )}
       </div>
 
       {/* ────────────────  TWO-COL LAYOUT  ──────────────── */}
