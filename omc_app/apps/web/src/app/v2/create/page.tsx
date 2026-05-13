@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -11,15 +11,23 @@ import {
   MonoNum,
   PriceSlider,
   CategoryFilter,
+  WalletBtn,
+  Wobble,
   popConfetti,
   type CategoryOption,
 } from '@/components/poster-arcade';
 import { CATEGORIES, CAT_MAP, fmtUSD, type CatKey } from '../_data/mock-takes';
+import {
+  CHAIN_CATEGORY_FOR_CAT,
+  useCreateOpinionFlow,
+  type CreateFlowPhase,
+} from '../_lib/use-create-flow';
 
 type Step = 0 | 1 | 2 | 3; // 3 = success
 
 const QUESTION_MAX = 60;
 const ANSWER_MAX = 60;
+const DESCRIPTION_MAX = 120;
 
 // V4 OpinionCore mint fee — flat anti-spam fee paid to treasury, in addition
 // to the initialPrice that locks into the contract.
@@ -35,6 +43,13 @@ const CAT_OPTS: CategoryOption[] = CATEGORIES.map((c) => ({
   label: c.label,
 }));
 
+/** Trim + ensure the question ends with a "?". V4 validator enforces this. */
+function normalizeQuestion(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.endsWith('?') ? trimmed : `${trimmed}?`;
+}
+
 export default function CreatePage() {
   const [step, setStep] = useState<Step>(0);
 
@@ -42,24 +57,50 @@ export default function CreatePage() {
   const [question, setQuestion] = useState('');
   const [category, setCategory] = useState<CatKey | null>(null);
   const [answer, setAnswer] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState(25);
 
   const fee = SPAM_FEE;
   const total = price + fee;
 
-  const canAdvance1 = question.trim().length >= 3 && category !== null;
-  const canAdvance2 = answer.trim().length >= 1;
+  const canAdvance1 = question.trim().length >= 2 && category !== null;
+  const canAdvance2 = answer.trim().length >= 2;
 
-  const submit = () => {
-    setStep(3);
-    // Fire confetti from roughly where the sticker preview lives.
-    popConfetti({ x: 0.5, y: 0.4, count: 90, spread: 100 });
-    setTimeout(() => popConfetti({ x: 0.2, y: 0.6, count: 40, spread: 70 }), 180);
-    setTimeout(() => popConfetti({ x: 0.8, y: 0.6, count: 40, spread: 70 }), 360);
-    toast.success('your take is on the wall 🔥', {
-      description: 'wallet wiring lands in a later phase',
+  /* ───────────── chain flow ───────────── */
+  const flow = useCreateOpinionFlow(price);
+
+  const handleMint = () => {
+    if (!category) return;
+    const chainCategory = CHAIN_CATEGORY_FOR_CAT[category];
+    flow.submit({
+      question: normalizeQuestion(question),
+      answer: answer.trim(),
+      description: description.trim(),
+      initialPriceUSDC: price,
+      categories: [chainCategory],
     });
   };
+
+  // Success → step 3 (renders the celebration screen) + confetti + toast.
+  useEffect(() => {
+    if (flow.phase === 'success') {
+      setStep(3);
+      popConfetti({ x: 0.5, y: 0.4, count: 90, spread: 100 });
+      setTimeout(() => popConfetti({ x: 0.2, y: 0.6, count: 40, spread: 70 }), 180);
+      setTimeout(() => popConfetti({ x: 0.8, y: 0.6, count: 40, spread: 70 }), 360);
+      toast.success('your take is on the wall 🔥', {
+        description: flow.newOpinionId != null ? `take #${flow.newOpinionId} minted` : undefined,
+      });
+    }
+  }, [flow.phase, flow.newOpinionId]);
+
+  // Surface flow errors as toasts.
+  useEffect(() => {
+    if (flow.error) {
+      const msg = (flow.error.message || 'transaction failed').split('\n')[0];
+      toast.error('mint failed', { description: msg.slice(0, 180) });
+    }
+  }, [flow.error]);
 
   /* ───────── SUCCESS ───────── */
   if (step === 3) {
@@ -71,10 +112,15 @@ export default function CreatePage() {
         <h1 className="font-display font-black tracking-[-0.04em] leading-[0.95] text-[40px] md:text-[64px] mt-2 text-ink">
           Your take is on the wall. <span className="text-pop">🔥</span>
         </h1>
+        {flow.newOpinionId != null && (
+          <p className="font-display text-[12px] font-extrabold tracking-[0.14em] uppercase text-ink/60 mt-2">
+            take #{flow.newOpinionId} · on Base mainnet
+          </p>
+        )}
 
         <div className="mt-8">
           <PreviewSticker
-            question={question}
+            question={normalizeQuestion(question)}
             answer={answer}
             category={category}
             price={price}
@@ -84,17 +130,18 @@ export default function CreatePage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
-          <Btn href="/v2/portfolio" variant="pop" size="lg" star>
+          {flow.newOpinionId != null && (
+            <Btn href={`/v2/opinions/${flow.newOpinionId}`} variant="pop" size="lg" star>
+              view your take →
+            </Btn>
+          )}
+          <Btn href="/v2/portfolio" variant={flow.newOpinionId != null ? 'ghost' : 'pop'} size="lg" star={flow.newOpinionId == null}>
             go to my room
           </Btn>
           <Btn href="/v2/marketplace" variant="ghost" size="lg">
             see it on the floor →
           </Btn>
         </div>
-
-        <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/40 mt-12">
-          ★ mock mint · on-chain wiring lands in a later phase ★
-        </p>
       </section>
     );
   }
@@ -143,6 +190,8 @@ export default function CreatePage() {
             <Step2
               answer={answer}
               setAnswer={setAnswer}
+              description={description}
+              setDescription={setDescription}
               canAdvance={canAdvance2}
               onBack={() => setStep(0)}
               onNext={() => setStep(2)}
@@ -154,8 +203,10 @@ export default function CreatePage() {
               setPrice={setPrice}
               fee={fee}
               total={total}
+              phase={flow.phase}
               onBack={() => setStep(1)}
-              onSubmit={submit}
+              onApprove={() => flow.approve(flow.totalCostWei)}
+              onMint={handleMint}
             />
           )}
         </div>
@@ -198,6 +249,9 @@ function Step1({
   canAdvance: boolean;
   onNext: () => void;
 }) {
+  const trimmed = question.trim();
+  const needsQuestionMark = trimmed.length >= 2 && !trimmed.endsWith('?');
+
   return (
     <div>
       <StepEyebrow>1 · the question</StepEyebrow>
@@ -212,10 +266,14 @@ function Step1({
           onChange={(e) => setQuestion(e.target.value.slice(0, QUESTION_MAX))}
           rows={2}
           placeholder="e.g. GOAT basketball player?"
+          aria-label="The question for your take"
           className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-bold text-[18px] md:text-[20px] text-ink placeholder:text-ink/40 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
         />
-        <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
-          {question.length}/{QUESTION_MAX}
+        <div className="flex items-center justify-between text-[10px] font-mono font-extrabold text-ink/40 mt-1">
+          <span>
+            {needsQuestionMark ? "we'll add the ? for you" : ''}
+          </span>
+          <span>{question.length}/{QUESTION_MAX}</span>
         </div>
       </div>
 
@@ -231,7 +289,7 @@ function Step1({
       <div className="flex justify-end items-center gap-3 mt-7">
         {!canAdvance && (
           <span className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/50">
-            {question.trim().length < 3 ? '· write a question ·' : '· pick a category ·'}
+            {trimmed.length < 2 ? '· write a question ·' : '· pick a category ·'}
           </span>
         )}
         <Btn variant="pop" size="lg" onClick={onNext} disabled={!canAdvance} star>
@@ -245,16 +303,22 @@ function Step1({
 function Step2({
   answer,
   setAnswer,
+  description,
+  setDescription,
   canAdvance,
   onBack,
   onNext,
 }: {
   answer: string;
   setAnswer: (v: string) => void;
+  description: string;
+  setDescription: (v: string) => void;
   canAdvance: boolean;
   onBack: () => void;
   onNext: () => void;
 }) {
+  const [showDescription, setShowDescription] = useState(description.length > 0);
+
   return (
     <div>
       <StepEyebrow>2 · the answer</StepEyebrow>
@@ -281,6 +345,30 @@ function Step2({
         </div>
       </div>
 
+      <button
+        type="button"
+        onClick={() => setShowDescription((v) => !v)}
+        className="mt-4 font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/55 hover:text-ink"
+      >
+        {showDescription ? '− hide description' : '+ add description (optional)'}
+      </button>
+
+      {showDescription && (
+        <div className="mt-2">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+            rows={2}
+            placeholder="defend your take in one line"
+            aria-label="Optional description for your take"
+            className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
+          />
+          <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+            {description.length}/{DESCRIPTION_MAX}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mt-7 gap-3 flex-wrap">
         <Btn variant="ghost" size="md" onClick={onBack}>
           ← back
@@ -288,7 +376,7 @@ function Step2({
         <div className="flex items-center gap-3 ml-auto">
           {!canAdvance && (
             <span className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/50">
-              · write an answer ·
+              · write an answer (min 2 chars) ·
             </span>
           )}
           <Btn variant="pop" size="lg" onClick={onNext} disabled={!canAdvance} star>
@@ -305,15 +393,19 @@ function Step3({
   setPrice,
   fee,
   total,
+  phase,
   onBack,
-  onSubmit,
+  onApprove,
+  onMint,
 }: {
   price: number;
   setPrice: (n: number) => void;
   fee: number;
   total: number;
+  phase: CreateFlowPhase;
   onBack: () => void;
-  onSubmit: () => void;
+  onApprove: () => void;
+  onMint: () => void;
 }) {
   return (
     <div>
@@ -352,13 +444,98 @@ function Step3({
       </div>
 
       <div className="flex items-center justify-between mt-7 gap-3 flex-wrap">
-        <Btn variant="ghost" size="md" onClick={onBack}>
+        <Btn variant="ghost" size="md" onClick={onBack} disabled={phase === 'submitting' || phase === 'approving'}>
           ← back
         </Btn>
-        <Btn variant="pop" size="lg" onClick={onSubmit} star>
-          MINT THIS TAKE · <MonoNum>{fmtUSD(total)}</MonoNum>
-        </Btn>
+        <div className="flex-1 sm:flex-none">
+          <MintAction
+            phase={phase}
+            total={total}
+            onApprove={onApprove}
+            onMint={onMint}
+          />
+        </div>
       </div>
+
+      <MintHint phase={phase} total={total} />
+    </div>
+  );
+}
+
+/**
+ * Phase-driven mint button — same slot cycles through connect / approve /
+ * submit / etc. so the user only ever sees one primary CTA.
+ */
+function MintAction({
+  phase,
+  total,
+  onApprove,
+  onMint,
+}: {
+  phase: CreateFlowPhase;
+  total: number;
+  onApprove: () => void;
+  onMint: () => void;
+}) {
+  if (phase === 'disconnected') {
+    return <WalletBtn size="md" />;
+  }
+  if (phase === 'wrong-chain') {
+    return <WalletBtn size="md" />;
+  }
+  if (phase === 'idle') {
+    return (
+      <div className="flex justify-end py-2">
+        <Wobble>checking balance…</Wobble>
+      </div>
+    );
+  }
+  if (phase === 'insufficient') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        NEED MORE USDC
+      </Btn>
+    );
+  }
+  if (phase === 'needs-approval') {
+    return (
+      <Btn variant="primary" size="lg" star onClick={onApprove} className="w-full">
+        APPROVE USDC
+      </Btn>
+    );
+  }
+  if (phase === 'approving') {
+    return (
+      <Btn variant="primary" size="lg" disabled className="w-full">
+        APPROVING…
+      </Btn>
+    );
+  }
+  if (phase === 'submitting') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        MINTING…
+      </Btn>
+    );
+  }
+  // ready / success
+  return (
+    <Btn variant="pop" size="lg" onClick={onMint} star className="w-full">
+      MINT THIS TAKE · <MonoNum>{fmtUSD(total)}</MonoNum>
+    </Btn>
+  );
+}
+
+function MintHint({ phase, total }: { phase: CreateFlowPhase; total: number }) {
+  let hint = '';
+  if (phase === 'insufficient') hint = `need ${fmtUSD(total)} USDC on Base mainnet`;
+  else if (phase === 'needs-approval') hint = 'one-time USDC approval — then mint it';
+  else if (phase === 'approving' || phase === 'submitting') hint = 'confirm in your wallet…';
+
+  if (!hint) return null;
+  return (
+    <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
+      {hint}
     </div>
   );
 }
