@@ -309,8 +309,14 @@ function PhaseHint({ phase, balanceUsdc, cost }: { phase: TakeFlowPhase; balance
   );
 }
 
-/* ─────────────────────────── OFFER (still mock) ─────────────────────────── */
+/* ─────────────────────────── OFFER (roadmap feature) ─────────────────────────── */
 
+/**
+ * Explainer pattern: lead with WHAT IT IS and HOW IT DIFFERS from Take-it,
+ * then surface the form. V4 doesn't broker offers on chain — the form is
+ * intentionally disabled, but the explainer makes the concept clear so
+ * users aren't left guessing.
+ */
 function MakeOffer({ take }: { take: DisplayTake }) {
   const [amount, setAmount] = useState<number>(Math.round(take.price * 0.5));
   const [message, setMessage] = useState('');
@@ -318,26 +324,49 @@ function MakeOffer({ take }: { take: DisplayTake }) {
 
   return (
     <div>
-      <Label>offer amount</Label>
-      <NumberInput value={amount} onChange={setAmount} min={1} />
-      <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-ink/50 mt-1">
-        current floor · {fmtUSD(take.price)}
+      {/* ── Explainer ── */}
+      <div className="bg-canvas border-2 border-ink rounded-lg p-3.5">
+        <div className="font-display text-[10px] font-extrabold tracking-[0.16em] uppercase text-pop">
+          ★ standing offer
+        </div>
+        <div className="font-display font-black text-[17px] tracking-tight mt-0.5 text-ink">
+          Set a price. Wait for it.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/75 mt-2 leading-snug">
+          <span className="font-extrabold text-ink">Take it</span> pays the live floor right now —
+          full stop. An <span className="font-extrabold text-ink">offer</span> says
+          &ldquo;I&apos;ll take it the moment the floor drops to my price.&rdquo; If the floor
+          hits your number before expiry, your offer fires automatically.
+        </p>
+        <div className="font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/55 mt-2.5">
+          🚧 not yet on chain — V4 doesn&apos;t broker offers. We&apos;ll ship the matching
+          engine in a later upgrade.
+        </div>
       </div>
 
-      <Label className="mt-4">message (optional)</Label>
+      {/* ── The form (visually live, functionally inert) ── */}
+      <div className="mt-4">
+        <Label>your offer</Label>
+        <NumberInput value={amount} onChange={setAmount} min={1} />
+        <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-ink/50 mt-1">
+          fires when floor ≤ {fmtUSD(amount)} · current floor {fmtUSD(take.price)}
+        </div>
+      </div>
+
+      <Label className="mt-4">note to the holder (optional)</Label>
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={2}
         maxLength={140}
-        placeholder="say something cheeky"
+        placeholder="why they should let this take fall to your price"
         className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/50 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
       />
       <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
         {message.length}/140
       </div>
 
-      <Label className="mt-3">expiry</Label>
+      <Label className="mt-3">cancel after</Label>
       <div className="flex gap-2 mt-1">
         {(['24h', '7d', 'never'] as const).map((opt) => (
           <button
@@ -357,12 +386,12 @@ function MakeOffer({ take }: { take: DisplayTake }) {
 
       <div className="mt-4">
         <Btn variant="primary" size="lg" star className="w-full" disabled>
-          SEND OFFER · <MonoNum>{fmtUSD(amount)}</MonoNum>
+          OFFER · <MonoNum>{fmtUSD(amount)}</MonoNum>
         </Btn>
       </div>
 
       <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
-        offers are a roadmap feature — not yet on chain
+        button activates once on-chain offers ship · meanwhile, watch it ⤴
       </div>
     </div>
   );
