@@ -10,6 +10,7 @@ import {
   Sparkline,
   RangeToggle,
   Wobble,
+  Btn,
   type RangeKey,
 } from '@/components/poster-arcade';
 import { useAnswerHistory } from '@/hooks/useAnswerHistory';
@@ -239,6 +240,9 @@ function DetailBody({
             <StatTile label="total trades"   value={String(totalTrades)} />
             <StatTile label="royalties paid" value={fmtUSD(royaltiesPaid)} />
           </div>
+
+          {/* Question Ownership */}
+          <QuestionOwnership take={take} />
         </div>
 
         {/* RIGHT — trade slip */}
@@ -270,6 +274,98 @@ function StatTile({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <MonoNum className="text-[18px] block mt-1">{value}</MonoNum>
+    </div>
+  );
+}
+
+/**
+ * Question Ownership card — surfaces V4's question-marketplace concept.
+ *
+ *   Owners earn 3% of every flip — forever. They can list the question for
+ *   sale at a fixed price (V4 buyQuestion); anyone can buy at that price.
+ *   Buyer offers (i.e. "I'll buy this question for $X if you'll accept")
+ *   are NOT yet on chain — V4 has no offer-matching engine.
+ */
+function QuestionOwnership({ take }: { take: DisplayTake }) {
+  const ownerAddr = take.questionOwnerAddress ?? take.creatorAddress;
+  const ownerLabel = ownerAddr ? shortAddress(ownerAddr) : '—';
+  const listed = (take.salePriceUSDC ?? 0) > 0;
+  const listedPrice = take.salePriceUSDC ?? 0;
+
+  return (
+    <div className="bg-paper border-[2.5px] border-ink rounded-sticker shadow-[4px_4px_0_var(--ink)] p-4 md:p-5">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="font-display font-black text-[15px] tracking-tight">
+          👑 QUESTION OWNERSHIP
+        </div>
+        <span className="font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/55">
+          royalty cut · 3% forever
+        </span>
+      </div>
+
+      <p className="font-display text-[12px] font-semibold text-ink/75 mt-2 leading-snug">
+        The <span className="font-extrabold text-ink">question owner</span> banks{' '}
+        <span className="font-mono font-extrabold">3%</span> of every flip,
+        forever — even if they sell the question itself.
+      </p>
+
+      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-[12px] font-display">
+        <span className="font-semibold text-ink/60">held by</span>
+        {ownerAddr ? (
+          <Link
+            href={`/v2/profile/${encodeURIComponent(ownerAddr)}`}
+            className="font-mono font-extrabold text-ink hover:underline"
+          >
+            @{ownerLabel}
+          </Link>
+        ) : (
+          <span className="font-mono font-extrabold text-ink/45">—</span>
+        )}
+      </div>
+
+      {/* Listed-for-sale state (V4 buyQuestion) */}
+      <div className="mt-3 bg-canvas border-2 border-ink rounded-lg p-3">
+        {listed ? (
+          <>
+            <div className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/60">
+              🏷️ listed for sale
+            </div>
+            <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
+              <MonoNum className="text-[20px]">{fmtUSD(listedPrice)}</MonoNum>
+              <Btn variant="cool" size="sm" disabled>
+                BUY QUESTION
+              </Btn>
+            </div>
+            <div className="font-display text-[10px] font-bold text-ink/60 mt-2">
+              buyQuestion flow wires in a follow-up phase
+            </div>
+          </>
+        ) : (
+          <div className="font-display text-[12px] font-semibold text-ink/65">
+            Not listed for sale.
+            <span className="block text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/45 mt-1">
+              the owner hasn&apos;t set a price · only they can list it
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Make-an-offer (roadmap) */}
+      <div className="mt-3 border-t-2 border-dashed border-ink/30 pt-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="font-display text-[11px] font-extrabold tracking-[0.1em] uppercase text-ink/70">
+              want it but it&apos;s not listed?
+            </div>
+            <div className="font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/45 mt-0.5">
+              🚧 offers on questions ship in a future contract upgrade
+            </div>
+          </div>
+          <Btn variant="ghost" size="sm" disabled>
+            MAKE OFFER
+          </Btn>
+        </div>
+      </div>
     </div>
   );
 }

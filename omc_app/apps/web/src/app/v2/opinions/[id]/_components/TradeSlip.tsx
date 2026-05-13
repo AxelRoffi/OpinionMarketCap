@@ -17,11 +17,15 @@ import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
 import { useWatchlist } from '../../../_lib/watchlist';
 import { useTakeFlow, type TakeFlowPhase } from '../../../_lib/use-take-flow';
 
-type SlipTab = 'take' | 'offer' | 'watch';
+type SlipTab = 'take' | 'watch';
 
+// Offer tab was removed — V4 has no on-chain offer matching for the answer
+// slot, so showing the form would just confuse users. The Take-it path is
+// the only way to dethrone a king today. The /v2/opinions/[id] page
+// surfaces the related concept (offers on QUESTIONS, also roadmap) via
+// the QuestionOwnership card.
 const TABS: Tab<SlipTab>[] = [
   { value: 'take',  label: 'Take it' },
-  { value: 'offer', label: 'Offer' },
   { value: 'watch', label: 'Watch' },
 ];
 
@@ -40,7 +44,6 @@ export function TradeSlip({ take }: TradeSlipProps) {
       <Tabs<SlipTab> tabs={TABS} value={tab} onChange={setTab} className="w-full justify-between flex" />
       <div className="mt-4">
         {tab === 'take'  && <TakeIt take={take} />}
-        {tab === 'offer' && <MakeOffer take={take} />}
         {tab === 'watch' && <Watch take={take} />}
       </div>
     </Sticker>
@@ -309,93 +312,6 @@ function PhaseHint({ phase, balanceUsdc, cost }: { phase: TakeFlowPhase; balance
   );
 }
 
-/* ─────────────────────────── OFFER (roadmap feature) ─────────────────────────── */
-
-/**
- * Explainer pattern: lead with WHAT IT IS and HOW IT DIFFERS from Take-it,
- * then surface the form. V4 doesn't broker offers on chain — the form is
- * intentionally disabled, but the explainer makes the concept clear so
- * users aren't left guessing.
- */
-function MakeOffer({ take }: { take: DisplayTake }) {
-  const [amount, setAmount] = useState<number>(Math.round(take.price * 0.5));
-  const [message, setMessage] = useState('');
-  const [expiry, setExpiry] = useState<'24h' | '7d' | 'never'>('7d');
-
-  return (
-    <div>
-      {/* ── Explainer ── */}
-      <div className="bg-canvas border-2 border-ink rounded-lg p-3.5">
-        <div className="font-display text-[10px] font-extrabold tracking-[0.16em] uppercase text-pop">
-          ★ standing offer
-        </div>
-        <div className="font-display font-black text-[17px] tracking-tight mt-0.5 text-ink">
-          Set a price. Wait for it.
-        </div>
-        <p className="font-display text-[12px] font-semibold text-ink/75 mt-2 leading-snug">
-          <span className="font-extrabold text-ink">Take it</span> pays the live floor right now —
-          full stop. An <span className="font-extrabold text-ink">offer</span> says
-          &ldquo;I&apos;ll take it the moment the floor drops to my price.&rdquo; If the floor
-          hits your number before expiry, your offer fires automatically.
-        </p>
-        <div className="font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/55 mt-2.5">
-          🚧 not yet on chain — V4 doesn&apos;t broker offers. We&apos;ll ship the matching
-          engine in a later upgrade.
-        </div>
-      </div>
-
-      {/* ── The form (visually live, functionally inert) ── */}
-      <div className="mt-4">
-        <Label>your offer</Label>
-        <NumberInput value={amount} onChange={setAmount} min={1} />
-        <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-ink/50 mt-1">
-          fires when floor ≤ {fmtUSD(amount)} · current floor {fmtUSD(take.price)}
-        </div>
-      </div>
-
-      <Label className="mt-4">note to the holder (optional)</Label>
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={2}
-        maxLength={140}
-        placeholder="why they should let this take fall to your price"
-        className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/50 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
-      />
-      <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
-        {message.length}/140
-      </div>
-
-      <Label className="mt-3">cancel after</Label>
-      <div className="flex gap-2 mt-1">
-        {(['24h', '7d', 'never'] as const).map((opt) => (
-          <button
-            key={opt}
-            onClick={() => setExpiry(opt)}
-            className={
-              'flex-1 rounded-pill border-2 border-ink py-1.5 font-display font-extrabold text-[11px] tracking-[0.06em] uppercase ' +
-              (expiry === opt
-                ? 'bg-ink text-canvas shadow-[2px_2px_0_var(--pop)]'
-                : 'bg-paper text-ink')
-            }
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <Btn variant="primary" size="lg" star className="w-full" disabled>
-          OFFER · <MonoNum>{fmtUSD(amount)}</MonoNum>
-        </Btn>
-      </div>
-
-      <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
-        button activates once on-chain offers ship · meanwhile, watch it ⤴
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────────────── WATCH ─────────────────────────── */
 

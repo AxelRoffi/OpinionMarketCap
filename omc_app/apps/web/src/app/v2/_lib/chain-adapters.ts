@@ -104,6 +104,8 @@ export function toDisplayTake(op: ChainOpinion): DisplayTake {
     heldBy: shortAddress(op.currentAnswerOwner),
     ownerAddress: op.currentAnswerOwner,
     creatorAddress: op.creator,
+    questionOwnerAddress: op.questionOwner,
+    salePriceUSDC: Math.round(usdcToNumber(op.salePrice) * 100) / 100,
     price: Math.round(price * 100) / 100,
     delta: Math.round(delta * 10) / 10,
     trades: op.tradesCount ?? 0,
