@@ -54,13 +54,17 @@ function TakeIt({ take }: { take: DisplayTake }) {
 
   const [answer, setAnswer] = useState('');
   const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const balanceUsdc = Number(formatUnits(balance, 6));
   const trimmedAnswer = answer.trim();
+  const trimmedLink = link.trim();
   const isValidAnswer = trimmedAnswer.length >= 2 && trimmedAnswer.length <= ANSWER_MAX;
   const isSamePosition = trimmedAnswer.toLowerCase() === take.answer.toLowerCase();
-  const canSubmit = phase === 'ready' && isValidAnswer && !isSamePosition;
+  // Empty link is allowed; non-empty must look like a URL.
+  const isValidLink = trimmedLink === '' || /^https?:\/\/\S+\.\S+/i.test(trimmedLink);
+  const canSubmit = phase === 'ready' && isValidAnswer && !isSamePosition && isValidLink;
 
   // Fire confetti + toast once on success.
   useEffect(() => {
@@ -157,25 +161,48 @@ function TakeIt({ take }: { take: DisplayTake }) {
         <span>{answer.length}/{ANSWER_MAX}</span>
       </div>
 
-      {/* Advanced — description */}
+      {/* Advanced — description + link, both optional */}
       <button
         type="button"
         onClick={() => setShowAdvanced((v) => !v)}
         className="mt-3 font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/55 hover:text-ink"
       >
-        {showAdvanced ? '− hide description' : '+ add description (optional)'}
+        {showAdvanced
+          ? '− hide description + link'
+          : '+ add description / link (optional)'}
       </button>
       {showAdvanced && (
-        <div className="mt-2">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
-            rows={2}
-            placeholder="explain your take in one line"
-            className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
-          />
-          <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
-            {description.length}/{DESCRIPTION_MAX}
+        <div className="mt-2 space-y-3">
+          <div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+              rows={2}
+              placeholder="explain your take in one line"
+              aria-label="Optional description"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
+            />
+            <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+              {description.length}/{DESCRIPTION_MAX}
+            </div>
+          </div>
+
+          <div>
+            <Label>source link (optional)</Label>
+            <input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://x.com/… or https://…"
+              aria-label="Optional source link backing your take"
+              inputMode="url"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-mono font-semibold text-[12px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
+            />
+            {trimmedLink !== '' && !isValidLink && (
+              <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-pop mt-1">
+                must start with http:// or https://
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -194,7 +221,7 @@ function TakeIt({ take }: { take: DisplayTake }) {
           canSubmit={canSubmit}
           cost={take.price}
           onApprove={approve}
-          onSubmit={() => submit(trimmedAnswer, description.trim())}
+          onSubmit={() => submit(trimmedAnswer, description.trim(), trimmedLink)}
         />
       </div>
 
