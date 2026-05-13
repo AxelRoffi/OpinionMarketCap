@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils';
 type Tab = { label: string; href: string; icon: string; primary?: boolean };
 
 const TABS: Tab[] = [
-  { label: 'HOT',  href: '/v2',            icon: '🔥' },
-  { label: 'ROOM', href: '/v2/portfolio',  icon: '🏠' },
-  { label: 'MINT', href: '/v2/create',     icon: '★',  primary: true },
-  { label: 'HALL', href: '/v2/leaderboard',icon: '🏆' },
-  { label: 'ME',   href: '/v2/profile',    icon: '👤' },
+  { label: 'HOT',  href: '/',             icon: '🔥' },
+  { label: 'ROOM', href: '/portfolio',  icon: '🏠' },
+  { label: 'MINT', href: '/create',     icon: '★',  primary: true },
+  { label: 'HALL', href: '/leaderboard',icon: '🏆' },
+  { label: 'ME',   href: '/profile',    icon: '👤' },
 ];
 
 /**
@@ -27,7 +27,7 @@ export function BottomTabBar() {
     >
       <ul className="flex items-stretch justify-around relative">
         {TABS.map((t) => {
-          const active = pathname === t.href || (t.href !== '/v2' && pathname.startsWith(t.href));
+          const active = pathname === t.href || (t.href !== '/' && pathname.startsWith(t.href));
 
           if (t.primary) {
             return (

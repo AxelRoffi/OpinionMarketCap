@@ -9,14 +9,14 @@ import { WalletBtn } from './WalletBtn';
 type NavTab = { label: string; href: string };
 
 const TABS: NavTab[] = [
-  { label: 'Hot',         href: '/v2' },
-  { label: 'Marketplace', href: '/v2/marketplace' },
-  { label: 'Leaderboard', href: '/v2/leaderboard' },
-  { label: 'Pools',       href: '/v2/pools' },
+  { label: 'Hot',         href: '/' },
+  { label: 'Marketplace', href: '/marketplace' },
+  { label: 'Leaderboard', href: '/leaderboard' },
+  { label: 'Pools',       href: '/pools' },
 ];
 
 type NavProps = {
-  /** Right-side CTA target. Defaults to /v2/create (mint flow). */
+  /** Right-side CTA target. Defaults to /create (mint flow). */
   ctaHref?: string;
   ctaLabel?: string;
   /**
@@ -29,13 +29,13 @@ type NavProps = {
   hideCta?: boolean;
 };
 
-export function Nav({ ctaHref = '/v2/create', ctaLabel = 'NEW TAKE', rightSlot, hideCta }: NavProps) {
+export function Nav({ ctaHref = '/create', ctaLabel = 'NEW TAKE', rightSlot, hideCta }: NavProps) {
   const pathname = usePathname() ?? '';
 
   return (
     <nav className="relative z-20 flex items-center justify-between border-b-[2.5px] border-dashed border-ink bg-canvas px-4 py-3 md:px-6 md:py-4">
       {/* Logo */}
-      <Link href="/v2" className="flex items-center gap-2.5">
+      <Link href="/" className="flex items-center gap-2.5">
         <span
           className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-full border-[2.5px] border-ink bg-pop text-[13px] font-black text-paper shadow-[2px_2px_0_var(--ink)]"
           aria-hidden
@@ -48,7 +48,7 @@ export function Nav({ ctaHref = '/v2/create', ctaLabel = 'NEW TAKE', rightSlot, 
       {/* Tabs — desktop */}
       <ul className="hidden md:flex items-center gap-5">
         {TABS.map((t) => {
-          const active = pathname === t.href || (t.href !== '/v2' && pathname.startsWith(t.href));
+          const active = pathname === t.href || (t.href !== '/' && pathname.startsWith(t.href));
           return (
             <li key={t.label}>
               <Link

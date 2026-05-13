@@ -25,9 +25,15 @@ interface ClientLayoutProps {
 export function ClientLayout({ children }: ClientLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  // Poster Arcade redesign lives under /v2/* — it brings its own chrome.
-  // Hide legacy navbar/footer/onboarding/admin panel on those routes.
-  const isV2 = pathname?.startsWith('/v2') ?? false;
+  // Poster Arcade is now the production dapp at root URLs. Legacy chrome
+  // (GlobalNavbar / Footer / onboarding / moderation panel) is only used
+  // for admin + dev routes that haven't been redesigned.
+  const useLegacyChrome =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/debug') ||
+    pathname === '/simple' ||
+    pathname === '/test-wallet' ||
+    false;
 
   useEffect(() => {
     setMounted(true);
@@ -50,10 +56,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           <AnalyticsProvider>
             <OnboardingProvider>
               <ExtensionErrorSuppressor />
-              {isV2 ? (
-                /* /v2/* — Poster Arcade chrome owns the page; legacy shell stays out of the way */
-                <>{children}</>
-              ) : (
+              {useLegacyChrome ? (
                 <div className="min-h-screen bg-background text-foreground flex flex-col">
                   <GlobalNavbar />
                   <main className="flex-grow">
@@ -63,9 +66,12 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                   <ModeratedAnswersNotification />
                   <AdminModerationPanel isAdmin={false} />
                 </div>
+              ) : (
+                /* Poster Arcade routes — the (poster) layout supplies chrome */
+                <>{children}</>
               )}
               <Toaster position="top-right" />
-              {!isV2 && <OnboardingWizard />}
+              {useLegacyChrome && <OnboardingWizard />}
             </OnboardingProvider>
           </AnalyticsProvider>
         </Providers>
