@@ -40,6 +40,8 @@ export type DisplayTake = {
   heldBy: string;
   /** Optional full 0x address backing `heldBy` (the chain-adapter sets this). */
   ownerAddress?: string;
+  /** Optional full 0x address of the original creator (the chain-adapter sets this). */
+  creatorAddress?: string;
   /** USDC price as plain number for sorting. Display via formatter. */
   price: number;
   /** Percent change. Signed (negative = loss). */

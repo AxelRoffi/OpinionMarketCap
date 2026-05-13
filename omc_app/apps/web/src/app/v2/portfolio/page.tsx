@@ -1,30 +1,95 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Btn, Sticker, MonoNum, popConfetti } from '@/components/poster-arcade';
+import {
+  Btn,
+  Sticker,
+  MonoNum,
+  WalletBtn,
+  Wobble,
+  popConfetti,
+} from '@/components/poster-arcade';
 import { TakeCard } from '../_components/TakeCard';
 import { SectionTitle } from '../_components/SectionTitle';
 import { StatStrip, type StatItem } from '../_components/StatStrip';
 import { EarningRow } from '../_components/EarningRow';
 import { fmtUSD, fmtDelta } from '../_data/mock-takes';
-import { getMyRoom } from '../_data/room';
+import { useUserRoom } from '../_lib/use-user-room';
+import { useClaimFees } from '../_lib/use-claim-fees';
 
 export default function PortfolioPage() {
-  const room = getMyRoom();
+  const { isConnected } = useAccount();
+  const { room, isLoading } = useUserRoom('me');
+  const claim = useClaimFees();
 
+  useEffect(() => {
+    if (claim.phase === 'success' && room) {
+      popConfetti({ count: 60, y: 0.5 });
+      toast.success(`+${fmtUSD(room.royalties)} cashed out`, {
+        description: 'your accumulated royalties are in your wallet',
+      });
+    }
+  }, [claim.phase, room]);
+
+  useEffect(() => {
+    if (claim.error) {
+      const msg = (claim.error.message || 'claim failed').split('\n')[0];
+      toast.error('claim failed', { description: msg.slice(0, 180) });
+    }
+  }, [claim.error]);
+
+  /* ───────── disconnected ───────── */
+  if (!isConnected) {
+    return (
+      <>
+        <section className="px-4 md:px-10 pt-8 md:pt-12 pb-4">
+          <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/70">
+            ★ your kingdom
+          </p>
+          <h1 className="font-display font-black tracking-[-0.04em] leading-[0.95] text-[48px] md:text-[64px] text-ink mt-1">
+            YOUR ROOM.
+          </h1>
+        </section>
+        <section className="px-4 md:px-10 pb-16">
+          <div className="flex justify-center py-12">
+            <Sticker bg="paper" tilt={-1.5} className="max-w-md text-center">
+              <div className="font-display font-black text-[22px] tracking-tight">
+                CONNECT YOUR ROOM.
+              </div>
+              <div className="font-display text-[12px] font-semibold text-ink/65 mt-1">
+                Connect a wallet on Base to see your holdings, royalties, and streak.
+              </div>
+              <div className="mt-5 flex justify-center">
+                <WalletBtn size="md" />
+              </div>
+            </Sticker>
+          </div>
+        </section>
+      </>
+    );
+  }
+
+  /* ───────── loading ───────── */
+  if (isLoading || !room) {
+    return (
+      <div className="flex justify-center py-24">
+        <Wobble>loading your room…</Wobble>
+      </div>
+    );
+  }
+
+  /* ───────── connected + loaded ───────── */
   const stats: StatItem[] = [
     { label: 'bag',       value: fmtUSD(room.bag) },
     { label: '7d',        value: fmtDelta(room.delta7d), tone: room.delta7d >= 0 ? 'gain' : 'loss' },
     { label: 'royalties', value: `+${fmtUSD(room.royalties)}`, tone: 'gain' },
-    { label: 'streak',    value: String(room.streak), glyph: '🔥' },
+    { label: 'streak',    value: room.streak ? String(room.streak) : '—', glyph: room.streak ? '🔥' : undefined },
   ];
 
-  const handleCashOut = () => {
-    popConfetti({ count: 60, y: 0.5 });
-    toast.success(`+${fmtUSD(room.royalties)} cashed out`, {
-      description: 'wallet wiring lands in a later phase',
-    });
-  };
+  const cashOutDisabled =
+    room.royalties <= 0 || claim.phase === 'claiming';
 
   return (
     <>
@@ -89,8 +154,13 @@ export default function PortfolioPage() {
         <Btn href="/v2/create" variant="pop" size="lg" star>
           MINT NEW TAKE
         </Btn>
-        <Btn variant="cool" size="lg" onClick={handleCashOut}>
-          CASH OUT <MonoNum>{fmtUSD(room.royalties)}</MonoNum>
+        <Btn
+          variant="cool"
+          size="lg"
+          onClick={claim.claim}
+          disabled={cashOutDisabled}
+        >
+          {claim.phase === 'claiming' ? 'CASHING OUT…' : <>CASH OUT <MonoNum>{fmtUSD(room.royalties)}</MonoNum></>}
         </Btn>
       </section>
     </>

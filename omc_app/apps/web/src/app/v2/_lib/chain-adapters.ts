@@ -103,6 +103,7 @@ export function toDisplayTake(op: ChainOpinion): DisplayTake {
     answer: (op.currentAnswer || '').toUpperCase() || 'UNANSWERED',
     heldBy: shortAddress(op.currentAnswerOwner),
     ownerAddress: op.currentAnswerOwner,
+    creatorAddress: op.creator,
     price: Math.round(price * 100) / 100,
     delta: Math.round(delta * 10) / 10,
     trades: op.tradesCount ?? 0,
