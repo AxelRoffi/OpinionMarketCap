@@ -396,6 +396,48 @@ export const POOL_MANAGER_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'opinionId', type: 'uint256' },
+      { internalType: 'string',  name: 'proposedAnswer', type: 'string' },
+      { internalType: 'uint256', name: 'deadline', type: 'uint256' },
+      { internalType: 'uint256', name: 'initialContribution', type: 'uint256' },
+      { internalType: 'string',  name: 'name', type: 'string' },
+      { internalType: 'string',  name: 'ipfsHash', type: 'string' },
+    ],
+    name: 'createPool',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'poolCreationFee',
+    outputs: [{ internalType: 'uint96', name: '', type: 'uint96' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'minPoolDuration',
+    outputs: [{ internalType: 'uint32', name: '', type: 'uint32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'maxPoolDuration',
+    outputs: [{ internalType: 'uint32', name: '', type: 'uint32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'poolCount',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 // ReferralManager ABI for referral operations

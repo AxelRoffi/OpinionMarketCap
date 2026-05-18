@@ -35,12 +35,6 @@ export default function PoolsIndexPage() {
     [source],
   );
 
-  const openPool = () => {
-    toast.message('opening pools soon', {
-      description: 'a take + an answer + a target — wired in a later phase',
-    });
-  };
-
   return (
     <>
       {/* ────────────────  HEADER  ──────────────── */}
@@ -68,7 +62,7 @@ export default function PoolsIndexPage() {
             </span>
           )}
         </div>
-        <Btn variant="pop" size="md" onClick={openPool} star>
+        <Btn variant="pop" size="md" href="/pools/new" star>
           OPEN A POOL
         </Btn>
       </section>
