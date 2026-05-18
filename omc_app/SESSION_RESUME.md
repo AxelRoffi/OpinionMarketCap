@@ -1,161 +1,173 @@
-# Session Resume — Post-Phase-E
+# Session Resume — Post-Parity-Round
 
-**Last session ended:** May 13, 2026 — context limit reached after Phase E swap.
-**Status:** Poster Arcade redesign is now the production dapp at root URLs. `tsc` clean. **Untested in browser / on real wallet.**
-
----
-
-## What shipped (recap of this session's commits)
-
-```
-21b408e  feat(web): Phase E — swap Poster Arcade to root URLs            ← THE SWAP
-db4611c  fix(web): remove Offer tab; add QuestionOwnership card
-135fc65  fix(web): Offer tab — explain what it is, before showing the form  (superseded by db4611c)
-8f16f6f  fix(web): TradeSlip — add link field, wire to submitAnswer's 4th arg
-6689446  fix(web): /v2 hero stickers — don't truncate, wrap to 2 lines instead
-56c94e7  docs(web): Phase E swap plan
-bb5aabe  feat(web): Phase 9C-2 + 9C-3 — pools + watchlist on chain
-a36fcd9  feat(web): Phase 9C-1 — /v2/portfolio + /v2/profile/[address] on chain
-2371ede  feat(web): Phase 9B-4 — /v2/pools/[id] JOIN POOL wired to PoolManager
-a949ca6  feat(web): Phase 9B-3 — /v2/create wired to createOpinion
-3245393  feat(web): Phase 9B-2 — TradeSlip Take-it wired to submitAnswer
-38ea62a  feat(web): Phase 9B-1 — Poster Arcade wallet connect in Nav
-1c15c0f  feat(web): Phase 9A — wire /v2 to live on-chain data (read-only)
-b5b1634  fix(web): /v2/create mint fee — V4 is flat $2 spamFee, not V3's 20%
-b71cf2d  fix(web): Phase D polish — a11y, reduced-motion, mobile keyboards, disabled UX
-9c157a5  feat(web): Phase 8  — /v2/pools + /v2/pools/[id]
-25fc0a3  feat(web): Phase 7  — /v2/referrals invite loop
-fde4bee  feat(web): Phase 6  — /v2/leaderboard + /v2/watchlist
-63d0f76  feat(web): Phase 5  — /v2/portfolio + /v2/profile/[address]
-9292c64  feat(web): Phase 4  — /v2/create 3-step mint wizard
-49c1a2e  feat(web): Phase 3  — /v2/opinions/[id] + trade slip
-3ff52e1  feat(web): Phase 2  — /v2/marketplace with filters/sort/search
-5aa9bc0  feat(web): Phase 1  — Poster Arcade primitives + /v2 Hot Wall
-22c58c0  feat(web): Phase 0  — Poster Arcade foundation
-```
+**Last session ended:** May 18, 2026 — explicit user wrap.
+**Status:** 13 commits shipped to `main` over one session, all auto-deployed via Vercel. **`tsc` clean. Untested with a real wallet on prod.** The Poster Arcade redesign is now the production dapp with no remaining mock data on live surfaces and the V4 contract fully wired (mint · take · reclaim · selfExit · pool create + join · list/buy/cancel questions · claim fees).
 
 ---
 
-## Where the URLs landed (Post-E)
+## What shipped (this session's commits)
 
-Phase E `/v2/foo` → `/foo`. The `/v2/*` URLs return **HTTP 301 → root** via `middleware.ts`.
+```
+9b3039f  feat(web): claim-fees panel on /profile/[address] (self view)
+3c1aef3  feat(web): /tutorial — Poster Arcade tutorial + nav tab
+2c4bf3f  fix(web): strip mock data from every live surface
+bae85e0  feat(web): /listings page + LISTINGS nav tab
+34cac2e  feat(web): question marketplace — list / buy / cancel
+3d98cf8  feat(web): /pools/new — create-pool flow wired to V2 PoolManager
+e2bddfc  fix(web): /create category picker uses the chain whitelist
+c66c0c9  feat(web): show + link every 0x address across the app
+c8e8fc4  feat(web): KingPanel — V4 self-exit UI for the current owner
+1acf8a2  feat(web): wire /leaderboard to on-chain data
+8b0e30a  fix(web): restore /mint → /create permanent redirect
+2cb1832  feat(web): on-chain category labels + canonical slug URL
+9f740eb  feat(web): wire V4 reclaimVacantSlot into TradeSlip
+17735e1  feat(web): Poster Arcade chrome + palette on every route
+```
 
-| Live URL | What |
+### What each commit did
+
+| Commit | Subject |
 |---|---|
-| `/` | Hot Wall (was `/v2`) — chain-backed top takes + hero stickers |
-| `/marketplace` | The Floor — filter / sort / search over all chain takes |
-| `/opinions/[id]` | Opinion detail + Take-it slip + Question Ownership card |
-| `/create` | MINT wizard wired to `createOpinion(question,answer,description,price,categories[])` |
-| `/portfolio` | Your Room — chain holdings, earning royalties, CASH OUT button (`claimAccumulatedFees`) |
-| `/profile` | Redirects to `/profile/me` |
-| `/profile/[address]` | Public profile, `"me"` sentinel resolves to connected wallet |
-| `/leaderboard` | Hall of Takes (mock — `useLeaderboardData` wiring is the natural 9D job) |
-| `/watchlist` | Saved ids resolve against chain takes |
-| `/referrals` | Mock (no on-chain referral data on V4) |
-| `/pools` | Chain-backed `useChainPools()` over `getPoolDetails(0..poolCount-1)` |
-| `/pools/[id]` | Chain pool + JOIN wired to `contributeToPool` |
-| `/admin/*` | **Unchanged legacy chrome** (GlobalNavbar/Footer). Inverted guard in `client-layout.tsx`. |
-| `/debug*`, `/simple`, `/test-wallet` | Legacy dev routes, untouched |
-| `/v2`, `/v2/*` | 301 → root equivalent via `middleware.ts` |
-
-Archived: `apps/web/src/app/_legacy/` holds every legacy route (folders + `home-page.tsx` + `PriceHistoryChart.tsx`). Underscore-prefixed → excluded from Next routing + from tsc (`tsconfig.json` exclude).
+| `17735e1` | Moved `/admin` + dev routes into `(poster)/` group; color-mapped admin to Poster palette; stripped legacy `GlobalNavbar`/`Footer` chrome from `client-layout.tsx` |
+| `9f740eb` | Wired `useReclaimSlot` into `TradeSlip` — vacant slots now route through `reclaimVacantSlot()` instead of reverting `submitAnswer` with `SlotIsVacant()` |
+| `2cb1832` | TakeCard chip + opinion-detail "OTHER TAKES IN" heading + pool chips now render `take.categoryLabel` (raw on-chain string) instead of the 8-bucket fallback. Opinion route moved to optional catch-all `/opinions/[id]/[[...slug]]` with new `slugifyTake` + `takeHref` helpers; all 8 internal hrefs now generate canonical slug URLs |
+| `8b0e30a` | `/mint` → `/create` permanent 308 redirect via `next.config.ts` |
+| `1acf8a2` | `/leaderboard` reads `useLeaderboardData` (chain) instead of mock `getLeaderboard`. Adapter maps `LeaderboardUser` → `LeaderboardRow`, best-take pulled from `useTakes`, profile-link href uses full 0x not handle. Period tabs decorative ("showing all-time" note) — proper period filter still needs event-log scanning |
+| `c8e8fc4` | `KingPanel` component on opinion detail. Visible only when caller is `opinion.currentAnswerOwner`; shows locked stake, cooldown countdown, "EXIT MY SLOT · RECOVER 80%" button calling V4 `selfExit()`. Uses `useSelfExit` + `useOpinionLockStatus` hooks (already existed, unwired) |
+| `c66c0c9` | Every 0x address in the UI is now a Link to `/profile/[address]`. New shared `AddressLink` component. TakeCard restructured so address strip lives outside the detail-page Link (no nested `<a>`). Opinion hero gets a "minted by" column. HolderTimeline rows link. Pool detail link uses real 0x via new `pool.creatorAddress` field on `Pool` type |
+| `e2bddfc` | `/create` category picker reads `OpinionExtensions.getAvailableCategories()` (40 chain categories) via new `useChainCategories` hook. Submits raw chain string (no reverse-mapping). Likely root cause of mint reverts — the previous hardcoded 8 mappings could drift from the chain whitelist |
+| `3d98cf8` | `/pools/new` full page wired to V2 `PoolManager.createPool`. Form gates on `nextPrice ≥ 100 USDC`, deadline 2–60 days, min 1 USDC contribution. Adds `createPool` / `poolCount` / `poolCreationFee` / `minPoolDuration` / `maxPoolDuration` to `POOL_MANAGER_ABI`. New `useCreatePool` hook handles approve→submit. `/pools` "OPEN A POOL" toast → real href |
+| `34cac2e` | V4 question marketplace: `listQuestionForSale` / `buyQuestion` / `cancelQuestionSale`. New `useQuestionListing` hook. `QuestionOwnership` card now renders the right CTA per viewer (owner-not-listed → list input; owner-listed → cancel; non-owner-listed → buy with approve fallback). Contract splits 10% platform / 90% seller via `FeeManager.accumulateFee` — claimable on portfolio |
+| `bae85e0` | `/listings` page — every chain take with `salePriceUSDC > 0`, sorted cheapest first. New "Listings" tab in nav between Marketplace and Leaderboard. ListingCard links to `/opinions/[id]/[slug]` where the actual buy flow lives |
+| `2c4bf3f` | Stripped all `MOCK_TAKES` / `MOCK_POOLS` / `getTakeDetail` / `getPriceHistory` / `getReferralData` fallbacks from every user-visible surface. Each empty state replaced with a Poster Arcade sticker + CTA. `/referrals` rewritten as "🚧 NOT WIRED YET" (V4 has no on-chain referral registry). StreakRail with hardcoded "🔥 4-day streak · 12 takes · $1,247 bag" removed |
+| `3c1aef3` | `/tutorial` page — distilled from the legacy 522-line landing tutorial. 8 sections: hero · 3-thing setup · trade loop · fee split (95/3/2) · mint fields · pools · question sale · CTA. "Tutorial" tab added to nav. Numbers sourced from CLAUDE.md V4 config so they stay in sync |
+| `9b3039f` | Big cyan **CLAIM FEES** panel on `/profile/[address]` — only visible when connected wallet matches the profile address. Uses existing `useClaimFees` hook. Resolves the discoverability gap (claim only existed on `/portfolio` before) |
 
 ---
 
-## ⚠️ Pre-deploy verification — DO NOT MERGE without these
+## Live URL map (unchanged from previous session)
 
-1. **Boot the dev server** locally:
-   ```
-   cd apps/web
-   npm run dev
-   open http://localhost:3000
-   ```
-   Expect: Poster Arcade Hot Wall, NOT the legacy dark-theme home.
-2. **Smoke every URL in the table above.** No 404, no white screen, no infinite Wobble.
-3. **Real-wallet flows** on a Base mainnet wallet with USDC:
-   - `/opinions/[id]` Take-it (approve + submitAnswer)
-   - `/create` (approve + createOpinion)
-   - `/pools/[id]` JOIN POOL (approve + contributeToPool)
-   - `/portfolio` CASH OUT (claimAccumulatedFees, only if you have royalties)
-4. **`/v2/*` → root 301** verify:
-   ```
-   curl -I http://localhost:3000/v2/marketplace
-   # → HTTP/1.1 301
-   # → Location: /marketplace
-   ```
-5. **`/admin/*` should look like legacy** (dark-theme GlobalNavbar/Footer, NOT Poster Arcade).
-6. **Run `npx next lint`** before pushing.
+| URL | Status |
+|---|---|
+| `/` | Hot Wall — chain-backed, empty state when 0 takes |
+| `/marketplace` | The Floor — filter/sort/search over chain takes |
+| `/listings` | **NEW** — questions currently listed for sale |
+| `/opinions/[id]/[[...slug]]` | Detail + TradeSlip + KingPanel + QuestionOwnership |
+| `/create` | MINT wizard — pulls 40 categories from chain |
+| `/pools` | Active + filled pools, "OPEN A POOL" → `/pools/new` |
+| `/pools/new` | **NEW** — create-pool form (5 steps) |
+| `/pools/[id]` | Pool detail + JOIN |
+| `/portfolio` | Your Room — chain holdings + CASH OUT footer |
+| `/profile/me` → `/profile/<addr>` | Public profile + **new claim panel** when self |
+| `/leaderboard` | Hall of Takes — chain-backed (was mock) |
+| `/watchlist` | Saved ids resolved against chain takes |
+| `/referrals` | 🚧 NOT WIRED YET placeholder (was mock data) |
+| `/tutorial` | **NEW** — quick guide |
+| `/admin/*` | Poster Arcade chrome (legacy GlobalNavbar gone) |
+| `/v2`, `/v2/*` | 301 → root via `middleware.ts` |
+| `/mint` | 308 → `/create` via `next.config.ts` |
 
 ---
 
-## What's left to do (priorities for next session)
+## ⚠️ Pre-merge verification — NOT DONE, only YOU can do this
 
-### High priority — finish what's stubbed
+Everything in this session was code-level + headless smoke. **No real-wallet test happened.** Each of these flows needs a Base mainnet wallet with USDC to confirm:
 
-| # | What | Why | Where |
-|---|---|---|---|
-| 1 | Wire `BUY QUESTION` button on `/opinions/[id]` Question Ownership card | V4 `buyQuestion(opinionId)` exists; UI shows the listed price but button is disabled | Add `useBuyQuestion` hook mirroring use-take-flow pattern; spender = OPINION_CORE |
-| 2 | Real chain reads for `/leaderboard` | Today fully mock; `useLeaderboardData` hook exists | Adapt existing hook into chain-adapters pattern |
-| 3 | Open-a-pool flow | `/pools` "OPEN A POOL" CTA toasts "coming soon" | New wizard at `/pools/new` — pick take, propose answer, set target/deadline |
-| 4 | `/v2/profile` route still exists in (poster) but should be `/profile` | After swap, the redirect target was `/profile/me` — verify it still works | Browser test |
-| 5 | Production deploy preview | Vercel preview to validate the swap with a real wallet before main | `vercel --prod` after merging Phase E |
+1. **MINT** (`/create`) — pick a chain category, set price, mint. Confirms the category-fix is real and prior mint reverts are gone.
+2. **TAKE** (`/opinions/<filled>/[slug]`) — submit a new answer on a take with a current owner. Confirms `submitAnswer` still works.
+3. **RECLAIM** (`/opinions/<vacant>/[slug]`) — take over a vacant slot. Confirms `reclaimVacantSlot` + the V4 feature flag are both correct.
+4. **SELF-EXIT** (`/opinions/<one you own>/[slug]`) — exit your own slot once cooldown elapses. Confirms KingPanel renders + `selfExit` works.
+5. **CREATE POOL** (`/pools/new`) — open a pool on any take with floor ≥ $100. Confirms `useCreatePool` approve→submit.
+6. **JOIN POOL** (`/pools/<id>`) — contribute USDC to an active pool.
+7. **LIST QUESTION** (`/opinions/<one you minted>/[slug]`) — list the question for sale at a price, then check `/listings` to confirm it shows up.
+8. **BUY QUESTION** (from a different wallet) — `/listings` → click VIEW & BUY → approve + buy. Confirm ownership transfers + sale proceeds appear in seller's accumulated fees.
+9. **CLAIM** (`/profile/<your address>` OR `/portfolio`) — CASH OUT. Confirm USDC lands in wallet.
 
-### Medium priority — chain accuracy
+If any revert, paste the error to next session.
 
-- **Category mapping is heuristic** (8 visual cats from 40 on-chain). Long term: surface the actual chain category in TakeCard tooltips/details.
-- **Delta math** = `(nextPrice - lastPrice) / lastPrice * 100`. That's the "take premium," not 24h change. Real 24h needs event-log scanning.
-- **`useTake(id)` fetches ALL opinions to find one** — wasteful. Add a `useSingleTake(id)` calling `getOpinionDetails(id)` directly.
-- **streak / memberSince on /portfolio + /profile** still "—" — no on-chain source. Either drop the stats or add event-log enumeration.
-- **referrals are mock** — no on-chain referral data on V4.
+---
 
-### Low priority — polish
+## Known gaps still on the table (medium priority — none blocking)
 
-- Replace `pino-pretty` warnings (cosmetic, from wagmi's pino dep).
-- Mobile sanity pass in a real browser at 375px.
-- `Sparkline` mobile aspect ratio (slight squish).
-- Empty hero stack when chain has fewer than 3 takes — fallback to mocks works but a curated fallback set might look better.
+- **Price chart** on opinion detail — currently Sparkline from answer-history. Legacy had a richer `OpinionChart`. Not critical.
+- **Activity feed** on opinion detail — currently HolderTimeline. Legacy had `OpinionActivity` with more event detail.
+- **Detailed trading history** + **advanced position management** on profile/portfolio — legacy had both.
+- **Pool share modal** — legacy had it, new build doesn't.
+- **Leaderboard period filter** (24h/week/month) — currently decorative; chain data is all-time. Needs event-log scanning to implement properly.
+- **ENS resolution** — `/profile/vitalik.eth` shows "EMPTY ROOM" sticker. Wire `wagmi`'s `useEnsAddress` to resolve handles.
+- **`useTake(id)` performance** — still fetches all opinions then `.find`s one. Add a `useSingleTake(id)` calling `getOpinionDetails(id)` directly.
+- **`useCreateOpinionFlow` race** — captures `newOpinionId` from `nextOpinionId` BEFORE submit; concurrent mints could land the deep-link on the wrong take. Switch to parsing `OpinionCreated` from the receipt.
+- **StreakRail** — removed (was hardcoded fake stats). Reintroduce wired to real `useUserRoom` data once we have a `streak` field on chain (event-log derived).
+- **MAKE OFFER on questions** — currently disabled, marked roadmap. V4 has no offer-matching engine.
 
-### Cleanup that should happen eventually
+### Cleanup tasks (no urgency)
 
-- Delete `apps/web/src/app/_legacy/` after a deploy cycle where nothing imports from it. Git history preserves it.
-- The chain-adapter's `useTakes()` returns ALL takes — paginate once volume grows.
-- `useCreateOpinionFlow` captures `newOpinionId` from `nextOpinionId` BEFORE submit — if two users mint concurrently the deep-link could land on the wrong take. Switch to parsing the `OpinionCreated` event from the receipt.
+- Delete `apps/web/src/app/_legacy/` once a full deploy cycle has passed without regression.
+- Delete the orphaned `_data/*` mock helpers now that no live surface imports them:
+  - `MOCK_TAKES` array (keep types + `CAT_MAP` + `fmtUSD` + `fmtDelta`)
+  - `MOCK_POOLS` + `getPool` (keep `Pool` type + `fundingPct`)
+  - All of `_data/leaderboard.ts`, `_data/referrals.ts`, `_data/take-detail.ts` synthesizers
+  - `getProfileRoom` + `getBestTakeId` from `_data/room.ts` (keep types)
+- `next lint` shows pre-existing warnings in legacy hooks (`src/hooks/use*.ts`, `src/lib/wagmi-*.ts`) — `Unexpected any`, unused vars. Build passes (`eslint.ignoreDuringBuilds: true`). Worth a cleanup pass when those legacy files become reachable again or before turning lint blocking.
+- Drop wagmi/pino-pretty deprecation warnings (cosmetic, from wagmi's pino dep).
 
 ---
 
 ## Repo state at session end
 
 ```
-git log --oneline -1
-21b408e feat(web): Phase E — swap Poster Arcade to root URLs
+git log --oneline -3
+9b3039f feat(web): claim-fees panel on /profile/[address] (self view)
+3c1aef3 feat(web): /tutorial — Poster Arcade tutorial + nav tab
+2c4bf3f fix(web): strip mock data from every live surface
 
 git status
 clean (post-commit)
 
-tsc --noEmit  → exit 0
-next lint     → not re-run this session, last run clean
-dev server    → NOT RUNNING (port 3000 was killed mid-Phase-E and not restarted)
-deploy        → main is on Vercel; Phase E swap is NOT pushed remote yet
+local vs origin/main
+0 ahead, 0 behind
+
+tsc --noEmit       → exit 0
+next lint          → not re-run this session (pre-existing warnings stable)
+dev server         → still running on :3000 (lsof -ti:3000 | xargs kill to stop)
+deploy             → main is on Vercel; every commit auto-deployed
 ```
 
 ---
 
-## How to resume
+## V4 feature flag state (per admin screenshot in-session)
 
-1. Open this file in a new session.
-2. `cd /Users/axelroffi/Desktop/OpinionMarketCap/OpinionMarkeCap-ALL/OpinionMarketCap_V1/opinionmarketcap_app/omc_app/`
-3. `git log --oneline | head -25` — confirm you're at `21b408e` or beyond.
-4. Run the **pre-deploy verification checklist** above before pushing or merging.
-5. If verification passes → push to remote → preview deploy → real-wallet test → merge.
-6. If verification fails → tell next-session-me the exact symptom and the URL.
+All three V4 self-exit flags were **ON** as of last admin visit:
+- `selfExitEnabled` = ON (king can call `selfExit` after cooldown)
+- `reclaimVacantSlotEnabled` = ON (anyone can `reclaimVacantSlot` on a vacant slot)
+- `stalePoolExitEnabled` = ON
+
+If you need to disable a feature for prod (e.g. emergency), the admin UI is at `/admin/page.tsx` → Self-Exit (V4) tab → toggle.
 
 ---
 
-## Things I'd say to the next-session model
+## How to resume next session
 
-- The swap is mechanically complete and tsc-clean, but **I never ran the dev server after the swap.** Browser smoke is the first thing to do.
-- The `(poster)/` route group is the new home for everything Poster Arcade. Don't add files to `app/v2/` — that folder doesn't exist anymore.
-- The `_legacy/` folder is **excluded from tsc** via `tsconfig.json`. If you need to reference something from there, copy it to a normal location first.
-- The `middleware.ts` matcher is scoped to `/v2` only — touching it could break the 301 path.
-- The user flagged two specific UI issues mid-session that we already fixed: hero stickers truncation (commit `6689446`) and the unwanted Offer tab (commit `db4611c`). Don't accidentally re-introduce those.
-- The user's priorities ordered: **make it work** (real-wallet smoke), **then polish** (BUY QUESTION wiring, leaderboard chain, pool create flow), **then expand** (anything not on the current roadmap).
+1. Open this file.
+2. `cd /Users/axelroffi/Desktop/OpinionMarketCap/OpinionMarkeCap-ALL/OpinionMarketCap_V1/opinionmarketcap_app/omc_app/`
+3. `git log --oneline | head -15` — confirm you're at `9b3039f` or beyond.
+4. **First thing: do the real-wallet smoke pass** above. Anything that reverts gets a hot-fix.
+5. After smoke passes: pick from the "Known gaps" list based on priority — the biggest visible-to-users items are price chart, activity feed, and detailed trading history. Or wait for user feedback on what they hit during real use.
+
+---
+
+## Notes for the next-session model
+
+- The user is **decisive** — when given option A/B/C, they pick fast and expect you to plow through. Don't over-deliberate. Make the proposal short, get the green light, execute.
+- The user **wants commits pushed individually**, not batched at the end. They explicitly want Vercel deploys to fire per commit so they see progress.
+- **Mock data is forbidden on live surfaces.** When chain has nothing, render an empty state with a CTA, never fabricate. The user called this out explicitly.
+- **Categories on chain are 40 entries via `OpinionExtensions.getAvailableCategories()`.** Never hardcode the list — the chain whitelist can be updated by admin and the UI must follow.
+- **Every address must be clickable** to `/profile/[address]`. The new `AddressLink` component centralizes this. Don't introduce raw `@0xabc…def` strings.
+- **Question owner ≠ creator** in V4. Creator is fixed at mint; question owner can change via `buyQuestion`. The question-marketplace flow (this session) is now active.
+- **Don't delete `_legacy/`** until at least one deploy cycle confirms nothing regressed. Same for the orphan `_data/*` mock helpers.
+- **V4 splits the take-it path by vacancy** — `submitAnswer` reverts on vacant slots with `SlotIsVacant()`, vacant must go through `reclaimVacantSlot`. The TradeSlip already branches on `take.heldBy === 'vacant'`.
+- The user's admin/owner address is `0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C` — when testing as "self" on profile/portfolio, that's the wallet.
+- **`useReadContract` hooks must be called unconditionally** — the pool detail page hit this pitfall when introducing early-returns for the loading state. Always call all hooks first, then branch on render.
+- The Vercel CLI in this environment isn't logged in. The deploy verification happens by polling the prod URL for a known marker — `pa-root` class works as a freshness signal. CLI status checks require `vercel login` first.
+- The user's wallet flow expectations: USDC approve → tx submit, with a "needs approve" / "approving…" / "submitting…" / "success" state machine. Pattern is consistent across `useTakeFlow` / `useReclaimSlot` / `useCreatePool` / `useQuestionListing`. Follow it.
+- **Tutorial copy follows CLAUDE.md V4 numbers** — flat $2 spam fee, 95/3/2 split, $100 min pool floor, 2–60 day pool duration, 20% early-exit penalty, 1 USDC min pool contribution. If any of those change on chain, the tutorial must update.
