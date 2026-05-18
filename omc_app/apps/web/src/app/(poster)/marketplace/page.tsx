@@ -12,7 +12,7 @@ import {
   type SortOption,
 } from '@/components/poster-arcade';
 import { TakeCard } from '../_components/TakeCard';
-import { MOCK_TAKES, CATEGORIES, type CatKey } from '../_data/mock-takes';
+import { CATEGORIES, type CatKey } from '../_data/mock-takes';
 import { useTakes } from '../_lib/chain-adapters';
 
 type SortKey = 'hot' | 'new' | 'gainers' | 'losers' | 'cheap' | 'spicy';
@@ -37,10 +37,7 @@ export default function MarketplacePage() {
   const [sort, setSort] = useState<SortKey>('hot');
   const [query, setQuery] = useState('');
 
-  // Live chain data when present; mock fallback when chain is empty/unreachable
-  // so the page is never devoid of content.
-  const source = isEmpty ? MOCK_TAKES : takes;
-
+  // Live chain only — no mock fallback.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -49,7 +46,7 @@ export default function MarketplacePage() {
       !q ||
       s.toLowerCase().includes(q);
 
-    let list = source.filter(
+    let list = takes.filter(
       (t) =>
         inCategory(t.category) &&
         (inSearch(t.question) || inSearch(t.answer) || inSearch(t.heldBy)),
@@ -65,7 +62,7 @@ export default function MarketplacePage() {
       case 'spicy':   list.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)); break;
     }
     return list;
-  }, [source, cat, sort, query]);
+  }, [takes, cat, sort, query]);
 
   const resetFilters = () => {
     setCat('all');
@@ -112,20 +109,29 @@ export default function MarketplacePage() {
 
       {/* ────────────────  RESULTS  ──────────────── */}
       <section className="px-4 md:px-10 pb-16">
-        <div className="font-mono text-[11px] font-extrabold text-ink/60 mb-4 flex items-center gap-3">
-          <span>
-            {filtered.length} {filtered.length === 1 ? 'take' : 'takes'}
-          </span>
-          {isEmpty && (
-            <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
-              · sample wall — chain has no opinions yet
-            </span>
-          )}
+        <div className="font-mono text-[11px] font-extrabold text-ink/60 mb-4">
+          {filtered.length} {filtered.length === 1 ? 'take' : 'takes'}
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Wobble>loading the floor…</Wobble>
+          </div>
+        ) : isEmpty ? (
+          <div className="flex justify-center py-16">
+            <Sticker bg="paper" tilt={-1.5} className="max-w-md text-center">
+              <div className="font-display font-black text-[22px] tracking-tight">
+                THE FLOOR IS EMPTY.
+              </div>
+              <div className="font-display text-[12px] font-semibold text-ink/70 mt-1">
+                No takes have been minted yet. Be the first.
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Btn href="/create" variant="pop" size="sm" star>
+                  MINT THE FIRST
+                </Btn>
+              </div>
+            </Sticker>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex justify-center py-16">

@@ -3,22 +3,23 @@
 import { useMemo } from 'react';
 import { Sticker, Btn, Chip, MonoNum, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from './_components/TakeCard';
-import { MOCK_TAKES, fmtUSD } from './_data/mock-takes';
+import { fmtUSD } from './_data/mock-takes';
 import { useTakes } from './_lib/chain-adapters';
 
 export default function V2HotWallPage() {
   const { takes, isLoading, isEmpty, totalOnChain } = useTakes();
 
-  // Show top 8 by trades; fallback to mock when chain has nothing.
-  const hot = useMemo(() => {
-    if (isEmpty) return MOCK_TAKES.slice(0, 8);
-    return [...takes].sort((a, b) => b.trades - a.trades).slice(0, 8);
-  }, [takes, isEmpty]);
+  // Top 8 by trade count. Empty array when chain has nothing — the hero
+  // hides the sticker stack in that case (see `hot.length > 0` below).
+  const hot = useMemo(
+    () => [...takes].sort((a, b) => b.trades - a.trades).slice(0, 8),
+    [takes],
+  );
 
   const totalVolume = takes.reduce((a, t) => a + t.price * Math.max(1, t.trades), 0);
-  const freshCount = takes.length > 0
-    ? takes.filter((t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000).length
-    : 12;
+  const freshCount = takes.filter(
+    (t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000,
+  ).length;
 
   return (
     <>
@@ -79,7 +80,7 @@ export default function V2HotWallPage() {
             🔥 HOT WALL · TODAY
           </h2>
           <div className="font-mono font-extrabold text-[12px] md:text-[13px] text-ink/70">
-            <MonoNum>{totalOnChain || 847}</MonoNum> takes · <MonoNum>{fmtUSD(Math.round(totalVolume) || 284_000)}</MonoNum> vol · <MonoNum>{freshCount}</MonoNum> fresh
+            <MonoNum>{totalOnChain}</MonoNum> takes · <MonoNum>{fmtUSD(Math.round(totalVolume))}</MonoNum> vol · <MonoNum>{freshCount}</MonoNum> fresh
           </div>
         </header>
 
@@ -87,18 +88,28 @@ export default function V2HotWallPage() {
           <div className="flex justify-center py-16">
             <Wobble>loading the wall…</Wobble>
           </div>
+        ) : isEmpty ? (
+          <div className="flex justify-center py-16">
+            <Sticker bg="paper" tilt={-1.5} className="max-w-md text-center">
+              <div className="font-display font-black text-[22px] tracking-tight">
+                NOTHING ON THE WALL YET.
+              </div>
+              <div className="font-display text-[12px] font-semibold text-ink/70 mt-1">
+                Be the first to mint a take.
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Btn href="/create" variant="pop" size="sm" star>
+                  MINT THE FIRST
+                </Btn>
+              </div>
+            </Sticker>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {hot.map((take, i) => (
               <TakeCard key={take.id} take={take} index={i} />
             ))}
           </div>
-        )}
-
-        {isEmpty && !isLoading && (
-          <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/50 text-center mt-6">
-            ★ no on-chain takes yet — showing sample wall ★
-          </p>
         )}
       </section>
     </>

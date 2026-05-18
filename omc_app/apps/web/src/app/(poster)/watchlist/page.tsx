@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Btn, Sticker, MonoNum, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from '../_components/TakeCard';
 import { SectionTitle } from '../_components/SectionTitle';
-import { MOCK_TAKES, fmtUSD, type DisplayTake } from '../_data/mock-takes';
+import { fmtUSD, type DisplayTake } from '../_data/mock-takes';
 import { useWatchlist } from '../_lib/watchlist';
 import { useTakes } from '../_lib/chain-adapters';
 
@@ -12,16 +12,13 @@ export default function WatchlistPage() {
   const { ids, hydrated, clear } = useWatchlist();
   const { takes: chainTakes, isLoading: chainLoading } = useTakes();
 
-  // Resolve saved ids against chain takes first; fall back to the mock set
-  // for any id that has no chain match (mock-only ids minted during dev).
+  // Resolve saved ids against on-chain takes only. Stale ids (takes that
+  // were burned or never existed) silently drop out of the list.
   const takes = useMemo<DisplayTake[]>(() => {
     if (!hydrated) return [];
     const chainById = new Map(chainTakes.map((t) => [t.id, t]));
     return ids
-      .map(
-        (id) =>
-          chainById.get(id) ?? MOCK_TAKES.find((t) => t.id === id) ?? null,
-      )
+      .map((id) => chainById.get(id) ?? null)
       .filter((t): t is DisplayTake => Boolean(t));
   }, [ids, hydrated, chainTakes]);
 

@@ -18,10 +18,11 @@ import {
   Wobble,
   popConfetti,
 } from '@/components/poster-arcade';
-import { CAT_MAP, MOCK_TAKES, fmtUSD } from '../../_data/mock-takes';
-import { fundingPct, getPool } from '../../_data/pools';
+import { CAT_MAP, fmtUSD } from '../../_data/mock-takes';
+import { fundingPct } from '../../_data/pools';
 import { usePoolJoinFlow, type PoolJoinPhase } from '../../_lib/use-pool-join-flow';
 import { useChainPool } from '../../_lib/use-pools-data';
+import { useTake } from '../../_lib/chain-adapters';
 
 const CAT_BG = {
   sport:   'canvas',
@@ -42,37 +43,26 @@ export default function PoolDetailPage({
   const { id } = use(params);
   const numericId = Number(id);
 
-  // Chain first; fall back to mock data when chain doesn't have a pool with
-  // this id. This lets the existing /pools/1..6 demo URLs render even
-  // before any real pool has been created on chain.
+  // All hooks unconditionally so render order is stable. Conditional
+  // notFound / loading rendering happens after all hook calls.
   const { pool: chainPool, isLoading: chainLoading, notFound: chainMissing } =
     useChainPool(numericId);
-  const mockPool = getPool(numericId);
-  const isMockFallback = !chainLoading && !chainPool;
-  if (isMockFallback && !mockPool) notFound();
-  const pool = chainPool ?? mockPool!;
 
-  const cat = CAT_MAP[pool.category];
-  const heroBg = CAT_BG[pool.category];
-  const chipBg = heroBg === 'paper' || heroBg === 'canvas' ? 'ink' : 'paper';
-  const pct = fundingPct(pool);
-  const isFilled = pool.status === 'filled';
-  const remaining = Math.max(0, pool.target - pool.raised);
+  const [amount, setAmount] = useState<number>(5);
 
-  const [amount, setAmount] = useState<number>(Math.max(5, Math.round(remaining * 0.1)));
-
-  // Real V2 PoolManager.contributeToPool flow.
-  const flow = usePoolJoinFlow(pool.id, amount);
-  const balanceUsdc = Number(formatUnits(flow.balance, 6));
+  const flow = usePoolJoinFlow(chainPool?.id ?? 0, amount);
+  const { take: targetTake } = useTake(chainPool?.targetTakeId);
 
   useEffect(() => {
     if (flow.phase === 'success') {
       popConfetti({ count: 70 });
       toast.success(`+${fmtUSD(amount)} pledged`, {
-        description: `pool #${pool.id} — share of any royalties locked in proportional`,
+        description: chainPool
+          ? `pool #${chainPool.id} — share of any royalties locked in proportional`
+          : undefined,
       });
     }
-  }, [flow.phase, amount, pool.id]);
+  }, [flow.phase, amount, chainPool]);
 
   useEffect(() => {
     if (flow.error) {
@@ -81,7 +71,23 @@ export default function PoolDetailPage({
     }
   }, [flow.error]);
 
-  const targetTake = MOCK_TAKES.find((t) => t.id === pool.targetTakeId);
+  if (chainMissing) notFound();
+  if (chainLoading || !chainPool) {
+    return (
+      <section className="px-4 md:px-10 py-20 flex justify-center">
+        <Wobble>loading pool…</Wobble>
+      </section>
+    );
+  }
+
+  const pool = chainPool;
+  const cat = CAT_MAP[pool.category];
+  const heroBg = CAT_BG[pool.category];
+  const chipBg = heroBg === 'paper' || heroBg === 'canvas' ? 'ink' : 'paper';
+  const pct = fundingPct(pool);
+  const isFilled = pool.status === 'filled';
+  const remaining = Math.max(0, pool.target - pool.raised);
+  const balanceUsdc = Number(formatUnits(flow.balance, 6));
 
   return (
     <>
@@ -93,11 +99,6 @@ export default function PoolDetailPage({
         >
           ← back to all pools
         </Link>
-        {isMockFallback && (
-          <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
-            · sample pool (no on-chain match)
-          </span>
-        )}
       </div>
 
       {/* ────────────────  TWO-COL LAYOUT  ──────────────── */}

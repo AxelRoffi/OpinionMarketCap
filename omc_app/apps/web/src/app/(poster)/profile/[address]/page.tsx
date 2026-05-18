@@ -15,8 +15,8 @@ import { takeHref } from '../../_lib/slug';
 import { SectionTitle } from '../../_components/SectionTitle';
 import { StatStrip, type StatItem } from '../../_components/StatStrip';
 import { EarningRow } from '../../_components/EarningRow';
-import { fmtUSD, fmtDelta, CAT_MAP, MOCK_TAKES, type DisplayTake } from '../../_data/mock-takes';
-import { getProfileRoom, getBestTakeId } from '../../_data/room';
+import { fmtUSD, fmtDelta, CAT_MAP, type DisplayTake } from '../../_data/mock-takes';
+import { getBestTakeId } from '../../_data/room';
 import { useUserRoom } from '../../_lib/use-user-room';
 import { shortAddress } from '../../_lib/chain-adapters';
 
@@ -40,11 +40,9 @@ export default function ProfilePage({
   const decoded = decodeURIComponent(address);
   const isMe = decoded === 'me';
 
-  // Chain attempt first; fall back to deterministic mock for ENS-style handles.
-  const { room: chainRoom, isLoading, resolvedAddress, isHandleOnly } =
-    useUserRoom(decoded);
-  const fallbackRoom = useMemo(() => getProfileRoom(decoded), [decoded]);
-  const room = chainRoom ?? (isHandleOnly ? fallbackRoom : null);
+  // Chain-only. Handle-style addresses ("vitalik.eth") show an empty room
+  // until we have ENS resolution wired up.
+  const { room, isLoading, resolvedAddress } = useUserRoom(decoded);
 
   // "me" sentinel + not connected → connect prompt.
   if (isMe && !resolvedAddress && !isLoading) {
@@ -244,10 +242,9 @@ function Header({
  * most-active holding. Accepts a DisplayTake directly (chain or mock).
  */
 function BestTakeCard({ take }: { take: DisplayTake }) {
-  // Some takes may have been adapted from chain — they have categoryLabel set.
-  // Mock takes use only category. Fall back to MOCK_TAKES lookup for any older
-  // ref (defensive — both paths now pass full DisplayTake).
-  const real = MOCK_TAKES.find((t) => t.id === take.id) ?? take;
+  // Chain takes already arrive as full DisplayTake; this alias keeps the
+  // existing variable name in the surrounding JSX without further changes.
+  const real = take;
   const cat = CAT_MAP[real.category];
   const bg = CAT_BG[real.category];
   const chipBg = bg === 'paper' || bg === 'canvas' ? 'ink' : 'paper';

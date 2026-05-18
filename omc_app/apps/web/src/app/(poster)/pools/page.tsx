@@ -15,7 +15,7 @@ import {
 } from '@/components/poster-arcade';
 import { SectionTitle } from '../_components/SectionTitle';
 import { CAT_MAP, fmtUSD } from '../_data/mock-takes';
-import { MOCK_POOLS, fundingPct, type Pool } from '../_data/pools';
+import { fundingPct, type Pool } from '../_data/pools';
 import { useChainPools } from '../_lib/use-pools-data';
 
 /* Background rotation for the pool grid. Stable by index. */
@@ -23,16 +23,13 @@ const BG_CYCLE = ['canvas', 'paper', 'cool', 'pop'] as const;
 const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
 
 export default function PoolsIndexPage() {
-  const { pools: chainPools, isLoading, isEmpty } = useChainPools();
+  const { pools, isLoading, isEmpty } = useChainPools();
 
-  // Chain when available; mock fallback so /pools is never blank.
-  const source = isEmpty ? MOCK_POOLS : chainPools;
-
-  const active = useMemo(() => source.filter((p) => p.status === 'active'), [source]);
-  const filled = useMemo(() => source.filter((p) => p.status === 'filled'), [source]);
+  const active = useMemo(() => pools.filter((p) => p.status === 'active'), [pools]);
+  const filled = useMemo(() => pools.filter((p) => p.status === 'filled'), [pools]);
   const totalRaised = useMemo(
-    () => source.reduce((a, p) => a + p.raised, 0),
-    [source],
+    () => pools.reduce((a, p) => a + p.raised, 0),
+    [pools],
   );
 
   return (
@@ -56,11 +53,6 @@ export default function PoolsIndexPage() {
           <span>
             <MonoNum>{active.length}</MonoNum> open · <MonoNum>{fmtUSD(totalRaised)}</MonoNum> pooled all-time
           </span>
-          {isEmpty && (
-            <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
-              · sample pools — chain has no pools yet
-            </span>
-          )}
         </div>
         <Btn variant="pop" size="md" href="/pools/new" star>
           OPEN A POOL

@@ -16,7 +16,7 @@ import {
 } from '@/components/poster-arcade';
 import { useAnswerHistory } from '@/hooks/useAnswerHistory';
 import { fmtUSD, fmtDelta, CAT_MAP, type CatKey, type DisplayTake } from '../../../_data/mock-takes';
-import { getTakeDetail, getPriceHistory, type HolderRecord } from '../../../_data/take-detail';
+import type { HolderRecord } from '../../../_data/take-detail';
 import { useTake, useTakes, usdcToNumber, shortAddress } from '../../../_lib/chain-adapters';
 import { TradeSlip } from '../_components/TradeSlip';
 import { HolderTimeline } from '../_components/HolderTimeline';
@@ -54,16 +54,9 @@ export default function OpinionDetailPage({
   const { id: idStr } = use(params);
   const id = Number(idStr);
 
-  // 1) Try chain first.
+  // Chain-only — no mock fallback.
   const { take: chainTake, isLoading: chainLoading } = useTake(id);
 
-  // 2) When chain hasn't returned a matching take and it's no longer loading,
-  //    fall back to mock — covers dev (no wagmi) + unknown-id 404 routing.
-  const mockDetail = useMemo(() => getTakeDetail(id), [id]);
-  const isMockFallback = !chainLoading && !chainTake;
-
-  // 3) If neither source yields a take, hand off to Next's notFound boundary.
-  if (isMockFallback && !mockDetail) notFound();
   if (chainLoading && !chainTake) {
     return (
       <div className="flex justify-center py-24">
@@ -71,34 +64,17 @@ export default function OpinionDetailPage({
       </div>
     );
   }
+  if (!chainTake) notFound();
 
-  const take: DisplayTake = chainTake ?? mockDetail!.take;
-
-  // Chain-derived price history (V4 stores answer history) — only when on chain.
-  // Mock fallback uses the deterministic synthesizer.
-  return (
-    <DetailBody
-      id={id}
-      take={take}
-      isMockFallback={isMockFallback}
-      mockHolders={mockDetail?.holders ?? []}
-      mockRelated={mockDetail?.related ?? []}
-    />
-  );
+  return <DetailBody id={id} take={chainTake} />;
 }
 
 function DetailBody({
   id,
   take,
-  isMockFallback,
-  mockHolders,
-  mockRelated,
 }: {
   id: number;
   take: DisplayTake;
-  isMockFallback: boolean;
-  mockHolders: HolderRecord[];
-  mockRelated: DisplayTake[];
 }) {
   const cat = CAT_MAP[take.category];
   const heroBg = CAT_BG[take.category];
@@ -107,57 +83,52 @@ function DetailBody({
 
   const [range, setRange] = useState<RangeKey>('7d');
 
-  // Live answer history → series of prices + holder timeline (only when chain take).
-  const { history } = useAnswerHistory(isMockFallback ? 0 : id);
+  // Live answer history → series of prices + holder timeline.
+  const { history } = useAnswerHistory(id);
 
-  // Live chain takes — used to find related takes in the same category when on chain.
+  // Live chain takes — used to find related takes in the same category.
   // wagmi's per-key cache means this re-uses the same fetch as useTake() above.
   const { takes: chainTakes } = useTakes();
 
-  // Build series + holders (chain or mock).
+  // Build series + holders from chain answer-history events.
   const { series, holders, totalTrades } = useMemo(() => {
-    if (!isMockFallback && history.length > 0) {
-      const cutoff = Math.floor(Date.now() / 1000) - RANGE_WINDOW[range];
-      // Filter by selected range, then map to display values.
-      const inRange = history.filter((h) => Number(h.timestamp) >= cutoff);
-      const points = (inRange.length >= 2 ? inRange : history).map((h) => usdcToNumber(h.price));
-      // Append current floor so the latest tick matches the displayed price.
-      const seriesData = points.length ? [...points, take.price] : [take.price * 0.95, take.price];
-
-      const holdersData: HolderRecord[] = history.map((h) => ({
-        addr: h.owner === '0x0000000000000000000000000000000000000000'
-          ? 'vacant'
-          : shortAddress(h.owner),
-        ownerAddress: h.owner === '0x0000000000000000000000000000000000000000'
-          ? undefined
-          : h.owner,
-        price: usdcToNumber(h.price),
-        date: new Date(Number(h.timestamp) * 1000).toISOString(),
-      }));
-      return { series: seriesData, holders: holdersData, totalTrades: history.length };
+    if (history.length === 0) {
+      // No trade history yet — fall back to a flat sparkline so the chart
+      // panel doesn't collapse.
+      return {
+        series: [take.price * 0.95, take.price],
+        holders: [] as HolderRecord[],
+        totalTrades: 0,
+      };
     }
-    // Mock fallback
-    return {
-      series: getPriceHistory(take, range as '24h' | '7d' | '30d'),
-      holders: mockHolders,
-      totalTrades: 18 + id * 3,
-    };
-  }, [isMockFallback, history, range, take, mockHolders, id]);
+    const cutoff = Math.floor(Date.now() / 1000) - RANGE_WINDOW[range];
+    const inRange = history.filter((h) => Number(h.timestamp) >= cutoff);
+    const points = (inRange.length >= 2 ? inRange : history).map((h) => usdcToNumber(h.price));
+    const seriesData = points.length ? [...points, take.price] : [take.price * 0.95, take.price];
+    const holdersData: HolderRecord[] = history.map((h) => ({
+      addr: h.owner === '0x0000000000000000000000000000000000000000'
+        ? 'vacant'
+        : shortAddress(h.owner),
+      ownerAddress: h.owner === '0x0000000000000000000000000000000000000000'
+        ? undefined
+        : h.owner,
+      price: usdcToNumber(h.price),
+      date: new Date(Number(h.timestamp) * 1000).toISOString(),
+    }));
+    return { series: seriesData, holders: holdersData, totalTrades: history.length };
+  }, [history, range, take]);
 
   const minPrice = Math.min(...series);
   const maxPrice = Math.max(...series);
   const royaltiesPaid = Math.round(take.price * 0.07 * 100) / 100;
 
-  // Related: when on chain, pick others by mapped category from the live grid.
-  // Mock fallback uses the existing helper.
+  // Related: pick others by mapped category from the live grid.
   const related = useMemo(() => {
-    if (isMockFallback) return mockRelated;
     const same = chainTakes.filter((t) => t.category === take.category && t.id !== take.id);
-    // Pad with other categories if not enough same-category takes.
     if (same.length >= 6) return same.slice(0, 6);
     const others = chainTakes.filter((t) => t.category !== take.category && t.id !== take.id);
     return [...same, ...others].slice(0, 6);
-  }, [isMockFallback, mockRelated, chainTakes, take]);
+  }, [chainTakes, take]);
 
   const ownerDisplay = take.ownerAddress
     ? `@${shortAddress(take.ownerAddress)}`
@@ -176,11 +147,6 @@ function DetailBody({
         >
           ← back to the floor
         </Link>
-        {isMockFallback && (
-          <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/40">
-            · sample take (no on-chain match)
-          </span>
-        )}
       </div>
 
       {/* ────────────────  TWO-COL LAYOUT  ──────────────── */}
