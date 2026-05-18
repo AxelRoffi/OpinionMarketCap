@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -16,13 +16,14 @@ import {
   popConfetti,
   type CategoryOption,
 } from '@/components/poster-arcade';
-import { CATEGORIES, CAT_MAP, fmtUSD, type CatKey } from '../_data/mock-takes';
+import { CAT_MAP, fmtUSD, type CatKey } from '../_data/mock-takes';
 import { takeHref } from '../_lib/slug';
 import {
-  CHAIN_CATEGORY_FOR_CAT,
   useCreateOpinionFlow,
   type CreateFlowPhase,
 } from '../_lib/use-create-flow';
+import { useChainCategories } from '../_lib/use-chain-categories';
+import { mapChainCategoryToCat } from '../_lib/chain-adapters';
 
 type Step = 0 | 1 | 2 | 3; // 3 = success
 
@@ -38,12 +39,6 @@ const DESCRIPTION_MAX = 120;
 // (V3 used `MAX($1, 20% × initialPrice)` — that path no longer applies.)
 const SPAM_FEE = 2;
 
-const CAT_OPTS: CategoryOption[] = CATEGORIES.map((c) => ({
-  key: c.key,
-  emoji: c.emoji,
-  label: c.label,
-}));
-
 /** Trim + ensure the question ends with a "?". V4 validator enforces this. */
 function normalizeQuestion(raw: string): string {
   const trimmed = raw.trim();
@@ -54,9 +49,10 @@ function normalizeQuestion(raw: string): string {
 export default function CreatePage() {
   const [step, setStep] = useState<Step>(0);
 
-  // form state
+  // form state — category is the raw chain string (e.g. "Crypto & Web3"),
+  // not the 8-bucket visual key. Chain enforces a 40-entry whitelist.
   const [question, setQuestion] = useState('');
-  const [category, setCategory] = useState<CatKey | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(25);
@@ -67,18 +63,27 @@ export default function CreatePage() {
   const canAdvance1 = question.trim().length >= 2 && category !== null;
   const canAdvance2 = answer.trim().length >= 2;
 
+  /* ───────────── chain category whitelist ───────────── */
+  const { categories: chainCategories, isLoading: catsLoading } = useChainCategories();
+  const catOptions = useMemo<CategoryOption[]>(
+    () => chainCategories.map((c) => ({ key: c.key, emoji: c.emoji, label: c.label })),
+    [chainCategories],
+  );
+
   /* ───────────── chain flow ───────────── */
   const flow = useCreateOpinionFlow(price);
 
   const handleMint = () => {
     if (!category) return;
-    const chainCategory = CHAIN_CATEGORY_FOR_CAT[category];
+    // Submit the raw chain string — chain enforces it must match one of the
+    // 40 whitelisted categories. No reverse-mapping needed; the picker only
+    // surfaces chain-valid options.
     flow.submit({
       question: normalizeQuestion(question),
       answer: answer.trim(),
       description: description.trim(),
       initialPriceUSDC: price,
-      categories: [chainCategory],
+      categories: [category],
     });
   };
 
@@ -183,6 +188,8 @@ export default function CreatePage() {
               setQuestion={setQuestion}
               category={category}
               setCategory={setCategory}
+              catOptions={catOptions}
+              catsLoading={catsLoading}
               canAdvance={canAdvance1}
               onNext={() => setStep(1)}
             />
@@ -240,13 +247,17 @@ function Step1({
   setQuestion,
   category,
   setCategory,
+  catOptions,
+  catsLoading,
   canAdvance,
   onNext,
 }: {
   question: string;
   setQuestion: (v: string) => void;
-  category: CatKey | null;
-  setCategory: (k: CatKey) => void;
+  category: string | null;
+  setCategory: (k: string) => void;
+  catOptions: CategoryOption[];
+  catsLoading: boolean;
   canAdvance: boolean;
   onNext: () => void;
 }) {
@@ -280,11 +291,21 @@ function Step1({
 
       <div className="mt-5">
         <Label>category</Label>
-        <CategoryFilter
-          options={CAT_OPTS}
-          value={category ?? ''}
-          onChange={(k) => setCategory(k as CatKey)}
-        />
+        {catsLoading && catOptions.length === 0 ? (
+          <div className="font-display text-[11px] font-bold text-ink/55">
+            loading chain categories…
+          </div>
+        ) : catOptions.length === 0 ? (
+          <div className="font-display text-[11px] font-bold text-pop">
+            couldn&apos;t load categories from chain — try refreshing
+          </div>
+        ) : (
+          <CategoryFilter
+            options={catOptions}
+            value={category ?? ''}
+            onChange={(k) => setCategory(k)}
+          />
+        )}
       </div>
 
       <div className="flex justify-end items-center gap-3 mt-7">
@@ -553,29 +574,34 @@ function PreviewSticker({
 }: {
   question: string;
   answer: string;
-  category: CatKey | null;
+  /** Raw chain category string (e.g. "Crypto & Web3") or null. */
+  category: string | null;
   price: number;
   tilt?: number;
   big?: boolean;
 }) {
-  const cat = category ? CAT_MAP[category] : null;
-  const heroBg =
-    category === 'crypto'  ? 'cool'
-  : category === 'ai'      ? 'pop'
-  : category === 'sport'   ? 'canvas'
-  : category === 'cinema'  ? 'paper'
-  : category === 'food'    ? 'paper'
-  : category === 'life'    ? 'canvas'
-  : category === 'music'   ? 'pop'
-  : category === 'founder' ? 'cool'
+  // Derive the visual bucket from the chain string so colors / emojis stay
+  // consistent with how the same category renders on /marketplace, etc.
+  const bucket: CatKey | null = category ? mapChainCategoryToCat(category) : null;
+  const bucketMeta = bucket ? CAT_MAP[bucket] : null;
+  const chipLabel = category ? category.toUpperCase() : '';
+  const heroBg: 'cool' | 'pop' | 'canvas' | 'paper' =
+    bucket === 'crypto'  ? 'cool'
+  : bucket === 'ai'      ? 'pop'
+  : bucket === 'sport'   ? 'canvas'
+  : bucket === 'cinema'  ? 'paper'
+  : bucket === 'food'    ? 'paper'
+  : bucket === 'life'    ? 'canvas'
+  : bucket === 'music'   ? 'pop'
+  : bucket === 'founder' ? 'cool'
   : 'paper';
   const chipBg = heroBg === 'paper' || heroBg === 'canvas' ? 'ink' : 'paper';
 
   return (
     <Sticker bg={heroBg} tilt={tilt} shadow={6} className={big ? 'p-6 md:p-8 max-w-md mx-auto' : 'p-5'}>
       <div className="flex items-center justify-between">
-        {cat ? (
-          <Chip bg={chipBg}>{cat.emoji} {cat.label}</Chip>
+        {bucketMeta ? (
+          <Chip bg={chipBg}>{bucketMeta.emoji} {chipLabel}</Chip>
         ) : (
           <span className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase opacity-50">
             no category yet
