@@ -11,6 +11,7 @@ type NavTab = { label: string; href: string };
 const TABS: NavTab[] = [
   { label: 'Hot',         href: '/' },
   { label: 'Marketplace', href: '/marketplace' },
+  { label: 'Listings',    href: '/listings' },
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Pools',       href: '/pools' },
 ];
