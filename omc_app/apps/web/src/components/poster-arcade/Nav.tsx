@@ -14,6 +14,7 @@ const TABS: NavTab[] = [
   { label: 'Listings',    href: '/listings' },
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Pools',       href: '/pools' },
+  { label: 'Tutorial',    href: '/tutorial' },
 ];
 
 type NavProps = {
