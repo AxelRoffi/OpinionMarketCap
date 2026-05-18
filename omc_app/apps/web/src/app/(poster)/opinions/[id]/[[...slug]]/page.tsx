@@ -20,6 +20,7 @@ import { useTake, useTakes, usdcToNumber, shortAddress } from '../../../_lib/cha
 import { TradeSlip } from '../_components/TradeSlip';
 import { HolderTimeline } from '../_components/HolderTimeline';
 import { RelatedTakesRow } from '../_components/RelatedTakesRow';
+import { KingPanel } from '../_components/KingPanel';
 
 /** Category → hero sticker background. Picked once per category for memorability. */
 const CAT_BG: Record<CatKey, 'pop' | 'cool' | 'canvas' | 'paper'> = {
@@ -247,8 +248,9 @@ function DetailBody({
           <QuestionOwnership take={take} />
         </div>
 
-        {/* RIGHT — trade slip */}
+        {/* RIGHT — king panel (only shown to current owner) + trade slip */}
         <div className="lg:col-span-2 lg:sticky lg:top-[80px]">
+          <KingPanel take={take} />
           <TradeSlip take={take} />
         </div>
       </section>
