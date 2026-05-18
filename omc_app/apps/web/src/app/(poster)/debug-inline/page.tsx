@@ -23,11 +23,11 @@ export default function DebugInline() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-canvas text-ink p-8">
       <h1 className="text-3xl font-bold mb-8">DEBUG PAGE</h1>
       
       <div className="space-y-6">
-        <div className="bg-gray-900 p-4 rounded">
+        <div className="bg-canvas p-4 rounded">
           <h2 className="text-xl font-bold mb-2">Connection Info</h2>
           <p>Connected: {isConnected ? 'YES' : 'NO'}</p>
           <p>Address: {address || 'None'}</p>
@@ -36,7 +36,7 @@ export default function DebugInline() {
           <p>Network Match: {chainId === 84532 ? 'YES' : 'NO - WRONG NETWORK!'}</p>
         </div>
 
-        <div className="bg-gray-900 p-4 rounded">
+        <div className="bg-canvas p-4 rounded">
           <h2 className="text-xl font-bold mb-2">nextOpinionId() Test</h2>
           <p>Loading: {nextLoading ? 'YES' : 'NO'}</p>
           <p>Data: {nextOpinionId?.toString() || 'None'}</p>
@@ -44,7 +44,7 @@ export default function DebugInline() {
           <p>Expected: Should be 6</p>
         </div>
 
-        <div className="bg-gray-900 p-4 rounded">
+        <div className="bg-canvas p-4 rounded">
           <h2 className="text-xl font-bold mb-2">opinions(1) Test</h2>
           <p>Loading: {op1Loading ? 'YES' : 'NO'}</p>
           <p>Error: {op1Error?.message || 'None'}</p>

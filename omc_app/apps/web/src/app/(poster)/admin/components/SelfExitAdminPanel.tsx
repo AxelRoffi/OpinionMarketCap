@@ -100,13 +100,13 @@ export function SelfExitAdminPanel() {
 
 function FeatureFlagsCard() {
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className="bg-paper border-ink/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
+        <CardTitle className="flex items-center gap-2 text-ink">
           <Power className="w-5 h-5 text-purple-400" />
           Feature Flags
         </CardTitle>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-ink/60 mt-1">
           Master switches for V4 self-exit. Each flag is checked at call-time, so
           flipping it off instantly disables the feature for all opinions / pools.
         </p>
@@ -154,15 +154,15 @@ function FlagRow({
   const busy = isPending || isLoading;
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-ink/30 bg-canvas/40 px-4 py-3">
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-white font-medium">{label}</span>
-          <Badge className={enabled ? 'bg-emerald-600' : 'bg-gray-600'}>
+          <span className="text-ink font-medium">{label}</span>
+          <Badge className={enabled ? 'bg-emerald-600' : 'bg-ink/10'}>
             {enabled ? 'ON' : 'OFF'}
           </Badge>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">{hint}</p>
+        <p className="text-xs text-ink/60 mt-0.5">{hint}</p>
       </div>
       <Button
         size="sm"
@@ -205,15 +205,15 @@ function StalePoolFlagRow() {
   const busy = isPending || isLoading;
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-ink/30 bg-canvas/40 px-4 py-3">
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-white font-medium">Stale Pool Exit</span>
-          <Badge className={enabled ? 'bg-emerald-600' : 'bg-gray-600'}>
+          <span className="text-ink font-medium">Stale Pool Exit</span>
+          <Badge className={enabled ? 'bg-emerald-600' : 'bg-ink/10'}>
             {enabled ? 'ON' : 'OFF'}
           </Badge>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-xs text-ink/60 mt-0.5">
           Allows large holders / contributors to dissolve a stale pool after the
           appropriate cooldown.
         </p>
@@ -240,13 +240,13 @@ function StalePoolFlagRow() {
 
 function ParametersCard() {
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className="bg-paper border-ink/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
+        <CardTitle className="flex items-center gap-2 text-ink">
           <Settings2 className="w-5 h-5 text-amber-400" />
           Self-Exit Parameters
         </CardTitle>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-ink/60 mt-1">
           Tune the V4 economics. Each row reads the live on-chain value; submit
           to fire <code className="text-amber-300 text-xs">setSelfExitParameter()</code>.
         </p>
@@ -296,20 +296,20 @@ function ParamRow({ def }: { def: (typeof PARAM_DEFS)[number] }) {
   const busy = isPending || isLoading;
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3 space-y-2">
+    <div className="rounded-lg border border-ink/30 bg-canvas/40 px-4 py-3 space-y-2">
       <div className="flex items-center justify-between">
         <div>
-          <Label className="text-white font-medium">{def.label}</Label>
-          <p className="text-xs text-gray-400 mt-0.5">{def.hint}</p>
-          <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wide">
+          <Label className="text-ink font-medium">{def.label}</Label>
+          <p className="text-xs text-ink/60 mt-0.5">{def.hint}</p>
+          <p className="text-[10px] text-ink/60 mt-0.5 uppercase tracking-wide">
             Bounds: {def.bounds}
           </p>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-400">Current</div>
-          <div className="text-white font-mono text-sm">
+          <div className="text-xs text-ink/60">Current</div>
+          <div className="text-ink font-mono text-sm">
             {formatRaw(current, def.unit)}
-            <span className="text-gray-500 text-xs ml-1">{def.unit}</span>
+            <span className="text-ink/60 text-xs ml-1">{def.unit}</span>
           </div>
           <div className="text-[10px] text-emerald-400">{formatHuman(current, def.unit)}</div>
         </div>
@@ -321,7 +321,7 @@ function ParamRow({ def }: { def: (typeof PARAM_DEFS)[number] }) {
           placeholder={`new value (${def.unit})`}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          className="bg-gray-800 border-gray-700 text-white"
+          className="bg-paper border-ink/30 text-ink"
         />
         <Button
           size="sm"

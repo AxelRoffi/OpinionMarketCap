@@ -6,10 +6,10 @@ import DebugTest from '../debug-test';
 
 export default function DebugPage() {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-canvas">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Contract Debug</h1>
+          <h1 className="text-3xl font-bold text-ink">Contract Debug</h1>
           <ConnectButton />
         </div>
         

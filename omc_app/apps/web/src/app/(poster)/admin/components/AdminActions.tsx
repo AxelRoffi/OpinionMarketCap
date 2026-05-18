@@ -208,9 +208,9 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
   return (
     <div className="space-y-6">
       {/* Contract Controls */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-paper border-ink/30">
         <CardHeader>
-          <CardTitle className="text-white">Quick Actions</CardTitle>
+          <CardTitle className="text-ink">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -237,9 +237,9 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
       </Card>
 
       {/* Content Moderation */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-paper border-ink/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-ink flex items-center gap-2">
             <Ban className="w-5 h-5 text-red-500" />
             Content Moderation
           </CardTitle>
@@ -247,7 +247,7 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink/70 mb-2">
                 Opinion ID to Moderate
               </label>
               <Input
@@ -255,7 +255,7 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
                 value={moderationForm.opinionId}
                 onChange={(e) => setModerationForm({ ...moderationForm, opinionId: e.target.value })}
                 placeholder="Enter opinion ID"
-                className={`bg-gray-700 border-gray-600 text-white ${
+                className={`bg-paper border-ink/30 text-ink ${
                   moderationForm.opinionId && opinionData && !canModerate ? 'border-red-500' : ''
                 }`}
                 disabled={isPending || isConfirming}
@@ -273,24 +273,24 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
                       </p>
                     </div>
                   )}
-                  <p className="text-gray-400 text-xs mt-1">
+                  <p className="text-ink/60 text-xs mt-1">
                     Question: {opinionData.question}
                   </p>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-ink/60 text-xs">
                     Current Answer: {opinionData.currentAnswer}
                   </p>
                 </div>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink/70 mb-2">
                 Moderation Reason
               </label>
               <Input
                 value={moderationForm.reason}
                 onChange={(e) => setModerationForm({ ...moderationForm, reason: e.target.value })}
                 placeholder="e.g., Inappropriate content"
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-paper border-ink/30 text-ink"
                 disabled={isPending || isConfirming}
               />
             </div>
@@ -298,7 +298,7 @@ export function AdminActions({ contractStats, onStatsUpdate }: AdminActionsProps
           <Button 
             onClick={handleModerateAnswer}
             disabled={!moderationForm.opinionId || !moderationForm.reason || isPending || isConfirming || isLoading === 'Moderate Answer'}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-ink"
           >
             <Ban className="w-4 h-4 mr-2" />
             {isLoading === 'Moderate Answer' ? 'Moderating...' : 'Moderate Answer'}

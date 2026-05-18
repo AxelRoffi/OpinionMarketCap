@@ -100,7 +100,7 @@ export default function SimplePage() {
   console.log('Final processed opinions:', allOpinions);
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-canvas text-ink p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Simple Debug Page</h1>
@@ -108,14 +108,14 @@ export default function SimplePage() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-gray-900 p-6 rounded-lg">
+          <div className="bg-canvas p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Connection Status</h2>
             <p>Address: {address || 'Not connected'}</p>
             <p>Connected: {isConnected ? '✅ Yes' : '❌ No'}</p>
             <p>Contract: {CONTRACTS.OPINION_CORE}</p>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-lg">
+          <div className="bg-canvas p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Contract Data</h2>
             <div className="space-y-2">
               <p>Next Opinion ID: {nextOpinionId?.toString() || 'Loading...'}</p>
@@ -125,11 +125,11 @@ export default function SimplePage() {
             </div>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-lg">
+          <div className="bg-canvas p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Individual Opinions</h2>
             
             <div className="space-y-4">
-              <div className="border border-gray-700 p-4 rounded">
+              <div className="border border-ink/30 p-4 rounded">
                 <h3 className="font-semibold">Opinion 1</h3>
                 <p>Loading: {opinion1Loading ? 'Yes' : 'No'}</p>
                 <p>Error: {opinion1Error?.message || 'None'}</p>
@@ -143,7 +143,7 @@ export default function SimplePage() {
                 )}
               </div>
 
-              <div className="border border-gray-700 p-4 rounded">
+              <div className="border border-ink/30 p-4 rounded">
                 <h3 className="font-semibold">Opinion 2</h3>
                 <p>Loading: {opinion2Loading ? 'Yes' : 'No'}</p>
                 <p>Error: {opinion2Error?.message || 'None'}</p>
@@ -157,7 +157,7 @@ export default function SimplePage() {
                 )}
               </div>
 
-              <div className="border border-gray-700 p-4 rounded">
+              <div className="border border-ink/30 p-4 rounded">
                 <h3 className="font-semibold">Opinion 3</h3>
                 <p>Loading: {opinion3Loading ? 'Yes' : 'No'}</p>
                 <p>Error: {opinion3Error?.message || 'None'}</p>
@@ -173,7 +173,7 @@ export default function SimplePage() {
             </div>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-lg">
+          <div className="bg-canvas p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Final Results</h2>
             <p className="text-2xl font-bold">Processed Opinions: {allOpinions.length}</p>
             

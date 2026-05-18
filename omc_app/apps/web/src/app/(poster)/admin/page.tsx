@@ -524,10 +524,10 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 text-emerald-500 mx-auto animate-spin mb-4" />
-          <p className="text-white">Checking admin access...</p>
+          <p className="text-ink">Checking admin access...</p>
         </div>
       </div>
     )
@@ -535,11 +535,11 @@ export default function AdminDashboard() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <Card className="bg-paper border-ink/30 p-8 text-center">
           <Shield className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">Admin Access Required</h1>
-          <p className="text-gray-400 mb-6">Please connect your wallet to access the admin dashboard</p>
+          <h1 className="text-2xl font-bold text-ink mb-4">Admin Access Required</h1>
+          <p className="text-ink/60 mb-6">Please connect your wallet to access the admin dashboard</p>
           <Button onClick={() => router.push('/')} className="bg-emerald-600 hover:bg-emerald-700">
             Go to Home
           </Button>
@@ -550,13 +550,13 @@ export default function AdminDashboard() {
 
   if (!isAdmin && !isModerator) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Card className="bg-gray-800 border-gray-700 p-8 text-center">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <Card className="bg-paper border-ink/30 p-8 text-center">
           <Ban className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-400 mb-2">This dashboard is restricted to contract administrators.</p>
-          <p className="text-gray-500 text-sm mb-4">Connected as: {address}</p>
-          <p className="text-gray-500 text-xs mb-6">
+          <h1 className="text-2xl font-bold text-ink mb-4">Access Denied</h1>
+          <p className="text-ink/60 mb-2">This dashboard is restricted to contract administrators.</p>
+          <p className="text-ink/60 text-sm mb-4">Connected as: {address}</p>
+          <p className="text-ink/60 text-xs mb-6">
             Debug Info:<br/>
             Admin Role: {hasAdminRole ? 'Yes' : 'No'}<br/>
             Moderator Role: {hasModeratorRole ? 'Yes' : 'No'}<br/>
@@ -1023,24 +1023,24 @@ export default function AdminDashboard() {
   return (
     <>
       <ExtensionErrorSuppressor />
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-canvas text-ink">
         <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Shield className="w-8 h-8 text-emerald-500" />
             <div>
-              <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-gray-400">OpinionMarketCap Contract Management</p>
+              <h1 className="text-3xl font-bold text-ink">Admin Dashboard</h1>
+              <p className="text-ink/60">OpinionMarketCap Contract Management</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            {isAdmin && <Badge className="bg-red-600 text-white">ADMIN</Badge>}
-            {isModerator && <Badge className="bg-yellow-600 text-white">MODERATOR</Badge>}
+            {isAdmin && <Badge className="bg-red-600 text-ink">ADMIN</Badge>}
+            {isModerator && <Badge className="bg-yellow-600 text-ink">MODERATOR</Badge>}
             <div className="text-right">
-              <p className="text-sm text-gray-400">Connected as:</p>
-              <p className="text-sm text-white font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</p>
+              <p className="text-sm text-ink/60">Connected as:</p>
+              <p className="text-sm text-ink font-mono">{address?.slice(0, 6)}...{address?.slice(-4)}</p>
             </div>
           </div>
         </div>
@@ -1052,47 +1052,47 @@ export default function AdminDashboard() {
 
         {/* Contract Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-paper border-ink/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Total Opinions</p>
-                  <p className="text-2xl font-bold text-white">{contractStats.totalOpinions}</p>
+                  <p className="text-ink/60 text-sm">Total Opinions</p>
+                  <p className="text-2xl font-bold text-ink">{contractStats.totalOpinions}</p>
                 </div>
                 <Users className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-paper border-ink/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Active Opinions</p>
-                  <p className="text-2xl font-bold text-white">{contractStats.activeOpinions}</p>
+                  <p className="text-ink/60 text-sm">Active Opinions</p>
+                  <p className="text-2xl font-bold text-ink">{contractStats.activeOpinions}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-paper border-ink/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Total Volume</p>
-                  <p className="text-2xl font-bold text-white">${contractStats.totalVolume}</p>
+                  <p className="text-ink/60 text-sm">Total Volume</p>
+                  <p className="text-2xl font-bold text-ink">${contractStats.totalVolume}</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-emerald-500" />
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-paper border-ink/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Contract Status</p>
+                  <p className="text-ink/60 text-sm">Contract Status</p>
                   <p className={`text-lg font-bold ${contractStats.isPaused ? 'text-red-400' : 'text-green-400'}`}>
                     {contractStats.isPaused ? 'Paused' : 'Active'}
                   </p>
@@ -1108,7 +1108,7 @@ export default function AdminDashboard() {
 
         {/* Admin Functions */}
         <Tabs defaultValue="moderation" className="space-y-6">
-          <TabsList className="bg-gray-800 border border-gray-700">
+          <TabsList className="bg-paper border border-ink/30">
             <TabsTrigger value="moderation" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Moderation
@@ -1155,7 +1155,7 @@ export default function AdminDashboard() {
           <TabsContent value="settings" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Contract Controls */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="w-5 h-5 text-blue-500" />
@@ -1183,7 +1183,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Price Settings */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-green-500" />
@@ -1192,36 +1192,36 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Minimum Price (USDC)
                     </label>
                     <Input
                       value={priceForm.minPrice}
                       onChange={(e) => setPriceForm({ ...priceForm, minPrice: e.target.value })}
                       placeholder="1.00"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Creation Fee (USDC)
                     </label>
                     <Input
                       value={priceForm.creationFee}
                       onChange={(e) => setPriceForm({ ...priceForm, creationFee: e.target.value })}
                       placeholder="1.00"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Max Price Change (%)
                     </label>
                     <Input
                       value={priceForm.maxChange}
                       onChange={(e) => setPriceForm({ ...priceForm, maxChange: e.target.value })}
                       placeholder="200"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <Button onClick={handleUpdatePrices} className="w-full bg-emerald-600 hover:bg-emerald-700">
@@ -1231,7 +1231,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Text Length Settings */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="w-5 h-5 text-purple-500" />
@@ -1239,14 +1239,14 @@ export default function AdminDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-sm text-gray-300 mb-4">
+                  <div className="text-sm text-ink/70 mb-4">
                     <p className="text-green-400 mb-2">✅ Now Configurable!</p>
-                    <p className="text-xs text-gray-400">Update these settings to control text limits across the platform.</p>
+                    <p className="text-xs text-ink/60">Update these settings to control text limits across the platform.</p>
                   </div>
                   
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max Question Length (Current: {Number(maxQuestionLength) || 52})
                       </label>
                       <Input
@@ -1254,12 +1254,12 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxQuestionLength}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxQuestionLength: e.target.value })}
                         placeholder="52"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max Answer Length (Current: {Number(maxAnswerLength) || 52})
                       </label>
                       <Input
@@ -1267,12 +1267,12 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxAnswerLength}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxAnswerLength: e.target.value })}
                         placeholder="52"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max Description Length (Current: {Number(maxDescriptionLength) || 120})
                       </label>
                       <Input
@@ -1280,12 +1280,12 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxDescriptionLength}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxDescriptionLength: e.target.value })}
                         placeholder="120"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max Link Length (Current: {Number(maxLinkLength) || 260})
                       </label>
                       <Input
@@ -1293,12 +1293,12 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxLinkLength}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxLinkLength: e.target.value })}
                         placeholder="260"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max IPFS Hash Length (Current: {Number(maxIpfsHashLength) || 68})
                       </label>
                       <Input
@@ -1306,12 +1306,12 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxIpfsHashLength}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxIpfsHashLength: e.target.value })}
                         placeholder="68"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-ink/70 mb-1">
                         Max Categories per Opinion (Current: {Number(maxCategoriesPerOpinion) || 3})
                       </label>
                       <Input
@@ -1319,7 +1319,7 @@ export default function AdminDashboard() {
                         value={textSettingsForm.maxCategoriesPerOpinion}
                         onChange={(e) => setTextSettingsForm({ ...textSettingsForm, maxCategoriesPerOpinion: e.target.value })}
                         placeholder="3"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-paper border-ink/30 text-ink"
                       />
                     </div>
                   </div>
@@ -1334,7 +1334,7 @@ export default function AdminDashboard() {
 
           {/* Roles Tab */}
           <TabsContent value="roles" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-paper border-ink/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-purple-500" />
@@ -1344,24 +1344,24 @@ export default function AdminDashboard() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       User Address
                     </label>
                     <Input
                       value={roleForm.address}
                       onChange={(e) => setRoleForm({ ...roleForm, address: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Role Type
                     </label>
                     <select 
                       value={roleForm.role}
                       onChange={(e) => setRoleForm({ ...roleForm, role: e.target.value })}
-                      className="w-full bg-gray-700 border border-gray-600 text-white rounded-md px-3 py-2"
+                      className="w-full bg-paper border border-ink/30 text-ink rounded-md px-3 py-2"
                     >
                       <option value="moderator">Moderator</option>
                       <option value="admin">Admin</option>
@@ -1380,7 +1380,7 @@ export default function AdminDashboard() {
                     onClick={() => handleRoleManagement('revoke')}
                     disabled={!roleForm.address}
                     variant="outline"
-                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-ink"
                   >
                     Revoke Role
                   </Button>
@@ -1391,7 +1391,7 @@ export default function AdminDashboard() {
 
           {/* Categories Tab */}
           <TabsContent value="categories" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-paper border-ink/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5 text-orange-500" />
@@ -1400,7 +1400,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-ink/70 mb-2">
                     Add Single Category
                   </label>
                   <div className="flex gap-2">
@@ -1408,7 +1408,7 @@ export default function AdminDashboard() {
                       value={categoryForm.newCategory}
                       onChange={(e) => setCategoryForm({ ...categoryForm, newCategory: e.target.value })}
                       placeholder="New category name"
-                      className="bg-gray-700 border-gray-600 text-white flex-1"
+                      className="bg-paper border-ink/30 text-ink flex-1"
                     />
                     <Button 
                       onClick={() => handleAddCategory(false)}
@@ -1421,14 +1421,14 @@ export default function AdminDashboard() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-ink/70 mb-2">
                     Add Multiple Categories (comma separated)
                   </label>
                   <Textarea
                     value={categoryForm.multipleCategories}
                     onChange={(e) => setCategoryForm({ ...categoryForm, multipleCategories: e.target.value })}
                     placeholder="Category1, Category2, Category3"
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-paper border-ink/30 text-ink"
                     rows={3}
                   />
                   <Button 
@@ -1445,7 +1445,7 @@ export default function AdminDashboard() {
 
           {/* Contracts Tab */}
           <TabsContent value="contracts" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-paper border-ink/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ExternalLink className="w-5 h-5 text-cyan-500" />
@@ -1454,36 +1454,36 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-ink/70 mb-2">
                     Fee Manager Address
                   </label>
                   <Input
                     value={contractForm.feeManagerAddress}
                     onChange={(e) => setContractForm({ ...contractForm, feeManagerAddress: e.target.value })}
                     placeholder="0x..."
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-paper border-ink/30 text-ink"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-ink/70 mb-2">
                     Pool Manager Address
                   </label>
                   <Input
                     value={contractForm.poolManagerAddress}
                     onChange={(e) => setContractForm({ ...contractForm, poolManagerAddress: e.target.value })}
                     placeholder="0x..."
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-paper border-ink/30 text-ink"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-ink/70 mb-2">
                     Treasury Address
                   </label>
                   <Input
                     value={contractForm.treasuryAddress}
                     onChange={(e) => setContractForm({ ...contractForm, treasuryAddress: e.target.value })}
                     placeholder="0x..."
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-paper border-ink/30 text-ink"
                   />
                 </div>
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
@@ -1497,7 +1497,7 @@ export default function AdminDashboard() {
           <TabsContent value="timelock" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Schedule Contract Upgrade */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <RefreshCw className="w-5 h-5 text-purple-500" />
@@ -1506,25 +1506,25 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       New Implementation Address
                     </label>
                     <Input
                       value={upgradeForm.newImplementation}
                       onChange={(e) => setUpgradeForm({ ...upgradeForm, newImplementation: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Upgrade Description
                     </label>
                     <Textarea
                       value={upgradeForm.description}
                       onChange={(e) => setUpgradeForm({ ...upgradeForm, description: e.target.value })}
                       placeholder="Describe the upgrade changes..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                       rows={3}
                     />
                   </div>
@@ -1540,7 +1540,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Schedule Parameter Change */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="w-5 h-5 text-orange-500" />
@@ -1549,36 +1549,36 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Function Selector (hex)
                     </label>
                     <Input
                       value={parameterForm.functionName}
                       onChange={(e) => setParameterForm({ ...parameterForm, functionName: e.target.value })}
                       placeholder="0x12345678"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Encoded Parameters (hex)
                     </label>
                     <Input
                       value={parameterForm.parameters}
                       onChange={(e) => setParameterForm({ ...parameterForm, parameters: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Change Description
                     </label>
                     <Textarea
                       value={parameterForm.description}
                       onChange={(e) => setParameterForm({ ...parameterForm, description: e.target.value })}
                       placeholder="Describe the parameter changes..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                       rows={2}
                     />
                   </div>
@@ -1594,7 +1594,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Execute Actions */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1603,14 +1603,14 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Action ID (bytes32)
                     </label>
                     <Input
                       value={timelockForm.actionId}
                       onChange={(e) => setTimelockForm({ ...timelockForm, actionId: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1633,7 +1633,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Cancel Actions */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <XCircle className="w-5 h-5 text-red-500" />
@@ -1642,25 +1642,25 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Action ID to Cancel
                     </label>
                     <Input
                       value={timelockForm.actionId}
                       onChange={(e) => setTimelockForm({ ...timelockForm, actionId: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Cancellation Reason
                     </label>
                     <Textarea
                       value={timelockForm.reason}
                       onChange={(e) => setTimelockForm({ ...timelockForm, reason: e.target.value })}
                       placeholder="Reason for cancellation..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                       rows={2}
                     />
                   </div>
@@ -1677,7 +1677,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Pending Actions Display */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-paper border-ink/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-yellow-500" />
@@ -1686,18 +1686,18 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 {pendingActions.length === 0 ? (
-                  <p className="text-gray-400 text-center py-4">No pending actions</p>
+                  <p className="text-ink/60 text-center py-4">No pending actions</p>
                 ) : (
                   <div className="space-y-2">
                     {pendingActions.map((action, index) => (
-                      <div key={index} className="bg-gray-700 p-3 rounded-lg flex justify-between items-center">
+                      <div key={index} className="bg-paper p-3 rounded-lg flex justify-between items-center">
                         <div>
-                          <p className="text-white font-medium">{action.type}</p>
-                          <p className="text-gray-400 text-sm">{action.description}</p>
+                          <p className="text-ink font-medium">{action.type}</p>
+                          <p className="text-ink/60 text-sm">{action.description}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-yellow-400 text-sm">Executes in</p>
-                          <p className="text-white text-sm">{Math.max(0, Math.ceil((action.executeTime - Date.now()) / (1000 * 60 * 60)))}h</p>
+                          <p className="text-ink text-sm">{Math.max(0, Math.ceil((action.executeTime - Date.now()) / (1000 * 60 * 60)))}h</p>
                         </div>
                       </div>
                     ))}
@@ -1711,7 +1711,7 @@ export default function AdminDashboard() {
           <TabsContent value="treasury" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Set Treasury */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-emerald-500" />
@@ -1720,14 +1720,14 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       New Treasury Address
                     </label>
                     <Input
                       value={treasuryForm.newTreasuryAddress}
                       onChange={(e) => setTreasuryForm({ newTreasuryAddress: e.target.value })}
                       placeholder="0x..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
                   </div>
                   <Button 
@@ -1739,7 +1739,7 @@ export default function AdminDashboard() {
                     Schedule Treasury Change (48h delay)
                   </Button>
                   
-                  <div className="border-t border-gray-600 pt-4 mt-4">
+                  <div className="border-t border-ink/30 pt-4 mt-4">
                     <Button 
                       onClick={handleConfirmTreasuryChange}
                       className="w-full bg-green-600 hover:bg-green-700"
@@ -1752,7 +1752,7 @@ export default function AdminDashboard() {
               </Card>
 
               {/* Rate Limiting Settings */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-paper border-ink/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="w-5 h-5 text-blue-500" />
@@ -1761,7 +1761,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-ink/70 mb-2">
                       Max Trades Per Block
                     </label>
                     <Input
@@ -1769,9 +1769,9 @@ export default function AdminDashboard() {
                       value={priceForm.maxTradesPerBlock}
                       onChange={(e) => setPriceForm({ ...priceForm, maxTradesPerBlock: e.target.value })}
                       placeholder="0 = unlimited"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-paper border-ink/30 text-ink"
                     />
-                    <p className="text-gray-400 text-xs mt-1">Current: {currentSettings.maxTradesPerBlock} (0 = disabled)</p>
+                    <p className="text-ink/60 text-xs mt-1">Current: {currentSettings.maxTradesPerBlock} (0 = disabled)</p>
                   </div>
                   <Button 
                     onClick={handleSetMaxTradesPerBlock}
@@ -1786,7 +1786,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Treasury Status */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-paper border-ink/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-yellow-500" />
@@ -1796,12 +1796,12 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-gray-400 text-sm">Current Treasury</p>
-                    <p className="text-white font-mono text-sm break-all">{currentSettings.treasury || 'Loading...'}</p>
+                    <p className="text-ink/60 text-sm">Current Treasury</p>
+                    <p className="text-ink font-mono text-sm break-all">{currentSettings.treasury || 'Loading...'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">Pending Treasury</p>
-                    <p className="text-white font-mono text-sm break-all">
+                    <p className="text-ink/60 text-sm">Pending Treasury</p>
+                    <p className="text-ink font-mono text-sm break-all">
                       {currentSettings.pendingTreasury ? currentSettings.pendingTreasury : 'None'}
                     </p>
                   </div>

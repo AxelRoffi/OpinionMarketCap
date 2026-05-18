@@ -44,33 +44,33 @@ export function AdminAccessChecker() {
 
   if (!isConnected || !address) {
     return (
-      <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-white mb-2">Admin Access Debug</h3>
+      <div className="bg-paper border border-ink/30 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-ink mb-2">Admin Access Debug</h3>
         <p className="text-red-400">Not connected to wallet</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-2">Admin Access Debug</h3>
+    <div className="bg-paper border border-ink/30 rounded-lg p-4">
+      <h3 className="text-lg font-semibold text-ink mb-2">Admin Access Debug</h3>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-400">Address:</span>
-          <span className="text-white font-mono">{address}</span>
+          <span className="text-ink/60">Address:</span>
+          <span className="text-ink font-mono">{address}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">Contract:</span>
-          <span className="text-white font-mono">{CURRENT_CONTRACTS.OPINION_CORE}</span>
+          <span className="text-ink/60">Contract:</span>
+          <span className="text-ink font-mono">{CURRENT_CONTRACTS.OPINION_CORE}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">Admin Role:</span>
+          <span className="text-ink/60">Admin Role:</span>
           <span className={`font-semibold ${hasAdminRole ? 'text-green-400' : 'text-red-400'}`}>
             {hasAdminRole ? 'YES' : 'NO'}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">Moderator Role:</span>
+          <span className="text-ink/60">Moderator Role:</span>
           <span className={`font-semibold ${hasModeratorRole ? 'text-green-400' : 'text-red-400'}`}>
             {hasModeratorRole ? 'YES' : 'NO'}
           </span>

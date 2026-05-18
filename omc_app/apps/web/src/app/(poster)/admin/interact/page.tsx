@@ -100,8 +100,8 @@ export default function ContractInteractPage() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-8">OpinionCore Contract Interface</h1>
-      <p className="text-gray-600 mb-4">Contract: {CONTRACTS.OPINION_CORE}</p>
-      <p className="text-gray-600 mb-8">Network: Base Mainnet</p>
+      <p className="text-ink/70 mb-4">Contract: {CONTRACTS.OPINION_CORE}</p>
+      <p className="text-ink/70 mb-8">Network: Base Mainnet</p>
 
       {/* Read Functions */}
       <div className="mb-12">
@@ -110,11 +110,11 @@ export default function ContractInteractPage() {
           {readFunctions.map((func) => (
             <div key={func.name} className="bg-white p-4 rounded-lg shadow border">
               <h3 className="font-semibold text-lg">{func.name}()</h3>
-              <p className="text-gray-600 mt-2">
+              <p className="text-ink/70 mt-2">
                 {func.value !== undefined ? (
-                  <span className="font-mono bg-gray-100 px-2 py-1 rounded">{func.value}</span>
+                  <span className="font-mono bg-paper px-2 py-1 rounded">{func.value}</span>
                 ) : (
-                  <span className="text-gray-400">Loading...</span>
+                  <span className="text-ink/60">Loading...</span>
                 )}
               </p>
             </div>
@@ -134,10 +134,10 @@ export default function ContractInteractPage() {
                 <div className="space-y-2 mb-4">
                   {func.params.map((param) => (
                     <div key={param}>
-                      <label className="block text-sm font-medium text-gray-700">{param}</label>
+                      <label className="block text-sm font-medium text-ink/80">{param}</label>
                       <input
                         type="text"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-ink/30 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         onChange={(e) => setInputValues({
                           ...inputValues,
                           [param.split(' ')[0]]: e.target.value
@@ -151,7 +151,7 @@ export default function ContractInteractPage() {
               <button
                 onClick={func.action}
                 disabled={isPending || isConfirming}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                className="bg-blue-500 hover:bg-blue-700 text-ink font-bold py-2 px-4 rounded disabled:opacity-50"
               >
                 {isPending ? 'Confirming...' : isConfirming ? 'Processing...' : 'Execute'}
               </button>
@@ -177,7 +177,7 @@ export default function ContractInteractPage() {
       )}
 
       {/* Parameter Reference */}
-      <div className="mt-12 p-6 bg-gray-50 rounded-lg">
+      <div className="mt-12 p-6 bg-canvas rounded-lg">
         <h3 className="font-semibold text-lg mb-3">📋 Parameter Types for setParameter()</h3>
         <div className="font-mono text-sm space-y-1">
           <p>0 = minimumPrice</p>

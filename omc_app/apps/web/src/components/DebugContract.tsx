@@ -54,7 +54,7 @@ export default function DebugContract() {
   });
 
   return (
-    <div className="p-6 bg-gray-900 text-white">
+    <div className="p-6 bg-canvas text-ink">
       <h2 className="text-xl font-bold mb-4">🔍 Contract Debug Info</h2>
       
       <div className="space-y-4">
