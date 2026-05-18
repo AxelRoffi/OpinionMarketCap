@@ -1,8 +1,9 @@
 'use client';
 
-import { use, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import {
   Sticker,
   Chip,
@@ -22,6 +23,7 @@ import { HolderTimeline } from '../_components/HolderTimeline';
 import { RelatedTakesRow } from '../_components/RelatedTakesRow';
 import { KingPanel } from '../_components/KingPanel';
 import { AddressLink } from '../../../_components/AddressLink';
+import { useQuestionListing } from '@/hooks/useQuestionListing';
 
 /** Category → hero sticker background. Picked once per category for memorability. */
 const CAT_BG: Record<CatKey, 'pop' | 'cool' | 'canvas' | 'paper'> = {
@@ -312,9 +314,37 @@ function StatTile({ label, value }: { label: string; value: string }) {
  */
 function QuestionOwnership({ take }: { take: DisplayTake }) {
   const ownerAddr = take.questionOwnerAddress ?? take.creatorAddress;
-  const ownerLabel = ownerAddr ? shortAddress(ownerAddr) : '—';
-  const listed = (take.salePriceUSDC ?? 0) > 0;
   const listedPrice = take.salePriceUSDC ?? 0;
+
+  const listing = useQuestionListing(take.id, ownerAddr, listedPrice);
+
+  const [listInput, setListInput] = useState<number>(listedPrice > 0 ? listedPrice : 25);
+
+  // Toast success / error.
+  useEffect(() => {
+    if (listing.step === 'success') {
+      toast.success('done · refresh to see chain state', {
+        description: listing.isOwner
+          ? 'your question marketplace state updated'
+          : 'you own this question now — royalties accrue to you',
+      });
+      // Auto-reset so the card can take a new action without a refresh.
+      const t = setTimeout(() => listing.reset(), 2_000);
+      return () => clearTimeout(t);
+    }
+  }, [listing.step, listing.isOwner, listing]);
+  useEffect(() => {
+    if (listing.error) {
+      const msg = (listing.error.message || 'transaction failed').split('\n')[0];
+      toast.error('tx failed', { description: msg.slice(0, 180) });
+    }
+  }, [listing.error]);
+
+  const busy =
+    listing.step === 'listing' ||
+    listing.step === 'cancelling' ||
+    listing.step === 'approving' ||
+    listing.step === 'buying';
 
   return (
     <div className="bg-paper border-[2.5px] border-ink rounded-sticker shadow-[4px_4px_0_var(--ink)] p-4 md:p-5">
@@ -336,32 +366,93 @@ function QuestionOwnership({ take }: { take: DisplayTake }) {
       <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-[12px] font-display">
         <span className="font-semibold text-ink/60">held by</span>
         {ownerAddr ? (
-          <Link
-            href={`/profile/${encodeURIComponent(ownerAddr)}`}
-            className="font-mono font-extrabold text-ink hover:underline"
-          >
-            @{ownerLabel}
-          </Link>
+          <AddressLink
+            address={ownerAddr}
+            className="font-mono font-extrabold text-ink"
+          />
         ) : (
           <span className="font-mono font-extrabold text-ink/45">—</span>
         )}
       </div>
 
-      {/* Listed-for-sale state (V4 buyQuestion) */}
+      {/* Listed / not-listed state */}
       <div className="mt-3 bg-canvas border-2 border-ink rounded-lg p-3">
-        {listed ? (
+        {listing.isListed ? (
           <>
             <div className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/60">
               🏷️ listed for sale
             </div>
             <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
               <MonoNum className="text-[20px]">{fmtUSD(listedPrice)}</MonoNum>
-              <Btn variant="cool" size="sm" disabled>
-                BUY QUESTION
+              {listing.isOwner ? (
+                <Btn
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => listing.cancel()}
+                >
+                  {listing.step === 'cancelling' ? 'CANCELLING…' : 'CANCEL LISTING'}
+                </Btn>
+              ) : !listing.buyerHasBalance ? (
+                <Btn variant="cool" size="sm" disabled>
+                  NEED {fmtUSD(listedPrice)} USDC
+                </Btn>
+              ) : (
+                <Btn
+                  variant="cool"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => listing.buy()}
+                >
+                  {listing.step === 'approving'
+                    ? 'APPROVING…'
+                    : listing.step === 'buying'
+                      ? 'BUYING…'
+                      : listing.buyerNeedsApproval
+                        ? `APPROVE + BUY · ${fmtUSD(listedPrice)}`
+                        : `BUY QUESTION · ${fmtUSD(listedPrice)}`}
+                </Btn>
+              )}
+            </div>
+            <div className="font-display text-[10px] font-bold text-ink/60 mt-2">
+              {listing.isOwner
+                ? 'you can cancel anytime to take it off the market'
+                : 'seller receives 90% (10% platform fee). royalty stream transfers to buyer.'}
+            </div>
+          </>
+        ) : listing.isOwner ? (
+          <>
+            <div className="font-display text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink/60">
+              🏷️ list your question for sale
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="relative flex-1">
+                <span className="absolute inset-y-0 left-3 inline-flex items-center font-mono font-extrabold text-ink/70 text-[16px]">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0.01}
+                  step="0.01"
+                  value={listInput}
+                  onChange={(e) => setListInput(Number(e.target.value) || 0)}
+                  aria-label="Sale price in USDC"
+                  className="w-full bg-paper border-2 border-ink rounded-lg pl-7 pr-3 py-2 font-mono font-extrabold text-[18px] text-ink focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
+                />
+              </div>
+              <Btn
+                variant="pop"
+                size="sm"
+                disabled={busy || listInput <= 0}
+                onClick={() => listing.list(listInput)}
+              >
+                {listing.step === 'listing' ? 'LISTING…' : 'LIST FOR SALE'}
               </Btn>
             </div>
             <div className="font-display text-[10px] font-bold text-ink/60 mt-2">
-              buyQuestion flow wires in a follow-up phase
+              Buyers pay this price in USDC; you keep 90% (10% platform fee).
+              Your royalty stream transfers with the question.
             </div>
           </>
         ) : (
