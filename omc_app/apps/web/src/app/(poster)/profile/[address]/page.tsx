@@ -1,7 +1,9 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import { use, useEffect } from 'react';
 import Link from 'next/link';
+import { useAccount } from 'wagmi';
+import { toast } from 'sonner';
 import {
   Sticker,
   Chip,
@@ -9,6 +11,7 @@ import {
   Btn,
   WalletBtn,
   Wobble,
+  popConfetti,
 } from '@/components/poster-arcade';
 import { TakeCard } from '../../_components/TakeCard';
 import { takeHref } from '../../_lib/slug';
@@ -18,6 +21,7 @@ import { EarningRow } from '../../_components/EarningRow';
 import { fmtUSD, fmtDelta, CAT_MAP, type DisplayTake } from '../../_data/mock-takes';
 import { getBestTakeId } from '../../_data/room';
 import { useUserRoom } from '../../_lib/use-user-room';
+import { useClaimFees } from '../../_lib/use-claim-fees';
 import { shortAddress } from '../../_lib/chain-adapters';
 
 const CAT_BG = {
@@ -43,6 +47,32 @@ export default function ProfilePage({
   // Chain-only. Handle-style addresses ("vitalik.eth") show an empty room
   // until we have ENS resolution wired up.
   const { room, isLoading, resolvedAddress } = useUserRoom(decoded);
+
+  // Claim fees flow — only relevant when caller is the profile owner. The
+  // hook is called unconditionally to keep React hook order stable across
+  // renders; the CLAIM panel is gated on `isViewerOwner` below.
+  const { address: connectedAddress } = useAccount();
+  const claim = useClaimFees();
+  const isViewerOwner =
+    !!connectedAddress &&
+    !!resolvedAddress &&
+    connectedAddress.toLowerCase() === resolvedAddress.toLowerCase();
+
+  useEffect(() => {
+    if (claim.phase === 'success' && room) {
+      popConfetti({ count: 60, y: 0.4 });
+      toast.success(`+${fmtUSD(room.royalties)} cashed out`, {
+        description: 'your accumulated royalties are in your wallet',
+      });
+    }
+  }, [claim.phase, room]);
+
+  useEffect(() => {
+    if (claim.error) {
+      const msg = (claim.error.message || 'claim failed').split('\n')[0];
+      toast.error('claim failed', { description: msg.slice(0, 180) });
+    }
+  }, [claim.error]);
 
   // "me" sentinel + not connected → connect prompt.
   if (isMe && !resolvedAddress && !isLoading) {
@@ -142,6 +172,17 @@ export default function ProfilePage({
         <StatStrip items={stats} />
       </section>
 
+      {/* Claim panel — only when viewer IS the profile owner. */}
+      {isViewerOwner && (
+        <section className="px-4 md:px-10 pt-6">
+          <ClaimFeesCard
+            royalties={room.royalties}
+            phase={claim.phase}
+            onClaim={() => claim.claim()}
+          />
+        </section>
+      )}
+
       {best && (
         <section className="px-4 md:px-10 pt-10">
           <SectionTitle meta={<MonoNum>{fmtDelta(best.delta)}</MonoNum>}>
@@ -202,6 +243,62 @@ export default function ProfilePage({
         )}
       </section>
     </>
+  );
+}
+
+/**
+ * Claim-fees panel shown on the profile page when the connected wallet IS
+ * the profile owner. Royalties accumulate inside FeeManager — they don't
+ * stream to the user's wallet automatically. This button calls
+ * claimAccumulatedFees() to sweep the entire balance in one tx.
+ */
+function ClaimFeesCard({
+  royalties,
+  phase,
+  onClaim,
+}: {
+  royalties: number;
+  phase: 'idle' | 'disconnected' | 'wrong-chain' | 'claiming' | 'success';
+  onClaim: () => void;
+}) {
+  const hasFees = royalties > 0;
+  const isClaiming = phase === 'claiming';
+
+  return (
+    <Sticker bg="cool" tilt={-1.5} shadow={6} className="max-w-2xl">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <Chip bg="ink" sm>💰 CLAIMABLE</Chip>
+          <div className="font-display text-[11px] font-extrabold tracking-[0.14em] uppercase text-ink/70 mt-2">
+            royalties locked in the contract
+          </div>
+          <div className="font-display font-black text-[48px] md:text-[64px] tracking-[-0.04em] leading-none mt-1">
+            +{fmtUSD(royalties)}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Btn
+            variant="pop"
+            size="lg"
+            star
+            onClick={onClaim}
+            disabled={!hasFees || isClaiming}
+          >
+            {isClaiming ? 'CASHING OUT…' : <>CASH OUT <MonoNum>{fmtUSD(royalties)}</MonoNum></>}
+          </Btn>
+          {!hasFees && (
+            <span className="font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/45">
+              nothing to claim yet
+            </span>
+          )}
+        </div>
+      </div>
+      <p className="font-display text-[12px] font-semibold text-ink/75 mt-4 max-w-xl">
+        Creator royalties (3% of every flip) and question-sale proceeds
+        (90% of the listed price) accumulate inside FeeManager. They only
+        move to your wallet when you cash out.
+      </p>
+    </Sticker>
   );
 }
 
