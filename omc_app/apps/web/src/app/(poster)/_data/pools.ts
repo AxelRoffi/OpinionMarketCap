@@ -28,8 +28,10 @@ export type Pool = {
   target: number;
   /** USDC pledged so far. */
   raised: number;
-  /** Pool creator handle. */
+  /** Pool creator handle (short address or ENS for display). */
   creator: string;
+  /** Full 0x address of the pool creator — used for /profile/[address] links. */
+  creatorAddress?: string;
   /** Pool deadline (ms). */
   deadlineMs: number;
   contributors: PoolContrib[];

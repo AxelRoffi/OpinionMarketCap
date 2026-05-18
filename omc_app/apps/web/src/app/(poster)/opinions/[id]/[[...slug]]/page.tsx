@@ -21,6 +21,7 @@ import { TradeSlip } from '../_components/TradeSlip';
 import { HolderTimeline } from '../_components/HolderTimeline';
 import { RelatedTakesRow } from '../_components/RelatedTakesRow';
 import { KingPanel } from '../_components/KingPanel';
+import { AddressLink } from '../../../_components/AddressLink';
 
 /** Category → hero sticker background. Picked once per category for memorability. */
 const CAT_BG: Record<CatKey, 'pop' | 'cool' | 'canvas' | 'paper'> = {
@@ -125,6 +126,9 @@ function DetailBody({
         addr: h.owner === '0x0000000000000000000000000000000000000000'
           ? 'vacant'
           : shortAddress(h.owner),
+        ownerAddress: h.owner === '0x0000000000000000000000000000000000000000'
+          ? undefined
+          : h.owner,
         price: usdcToNumber(h.price),
         date: new Date(Number(h.timestamp) * 1000).toISOString(),
       }));
@@ -157,8 +161,8 @@ function DetailBody({
     ? `@${shortAddress(take.ownerAddress)}`
     : `@${take.heldBy}`;
   const profileHref = take.ownerAddress
-    ? `/profile/${encodeURIComponent(take.ownerAddress)}`
-    : `/profile/${encodeURIComponent(take.heldBy)}`;
+    ? `/profile/${take.ownerAddress}`
+    : `/profile/${take.heldBy}`;
 
   return (
     <>
@@ -193,19 +197,35 @@ function DetailBody({
             <div className="font-display font-black text-[64px] md:text-[88px] lg:text-[96px] leading-[0.88] tracking-[-0.04em] mt-2 break-words">
               {take.answer}.
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-4">
-              <div>
+            <div className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="min-w-0">
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
                   held by
                 </div>
                 <Link
                   href={profileHref}
-                  className="font-display font-extrabold text-[16px] md:text-[18px] truncate block hover:underline"
+                  className="font-mono font-extrabold text-[14px] md:text-[15px] truncate block hover:underline"
+                  title={take.ownerAddress ?? take.heldBy}
                 >
                   {ownerDisplay}
                 </Link>
               </div>
-              <div className="text-right">
+              <div className="min-w-0">
+                <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
+                  minted by
+                </div>
+                {take.creatorAddress ? (
+                  <AddressLink
+                    address={take.creatorAddress}
+                    className="font-mono font-extrabold text-[14px] md:text-[15px] truncate block"
+                  />
+                ) : (
+                  <span className="font-mono font-extrabold text-[14px] md:text-[15px] truncate block opacity-50">
+                    —
+                  </span>
+                )}
+              </div>
+              <div className="text-right col-span-2 md:col-span-1">
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
                   floor
                 </div>

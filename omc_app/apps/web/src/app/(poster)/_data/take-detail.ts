@@ -7,7 +7,10 @@
 import { MOCK_TAKES, type MockTake } from './mock-takes';
 
 export type HolderRecord = {
+  /** Short address or ENS-style handle for display. */
   addr: string;
+  /** Full 0x address — used for /profile/[address] links. Absent for mock data. */
+  ownerAddress?: string;
   price: number;
   /** ISO date. */
   date: string;

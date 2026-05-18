@@ -123,7 +123,7 @@ export default function PoolDetailPage({
               <span className="font-display text-[12px] font-extrabold tracking-[0.06em] uppercase opacity-75">
                 started by{' '}
                 <Link
-                  href={`/profile/${encodeURIComponent(pool.creator)}`}
+                  href={`/profile/${pool.creatorAddress ?? pool.creator}`}
                   className="underline hover:opacity-100 opacity-90"
                 >
                   @{pool.creator}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Sticker, Chip, MonoNum } from '@/components/poster-arcade';
 import { CAT_MAP, fmtUSD, fmtDelta, type MockTake } from '../_data/mock-takes';
 import { takeHref } from '../_lib/slug';
+import { AddressLink } from './AddressLink';
 
 const BG_CYCLE = ['pop', 'canvas', 'cool', 'paper'] as const;
 const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
@@ -29,9 +30,13 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
   // Prefer the raw on-chain category string when available — falls back to
   // the visual bucket label for mock data (which has no chain string).
   const chipText = (take.categoryLabel ?? cat.label).toUpperCase();
+  const detailHref = takeHref(take.id, take.question);
 
-  const inner = (
-    <Sticker bg={cardBg} tilt={cardTilt} tappable>
+  // The "navigation" area covers chip / question / answer / price+delta.
+  // Address strip is a SIBLING inside the same Sticker so address Links
+  // can live outside the detail-page Link without nesting <a> tags.
+  const navContent = (
+    <>
       <div className="flex items-center justify-between">
         <Chip bg={chipBg} sm>
           {cat.emoji} {chipText}
@@ -45,14 +50,9 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
         {take.answer}.
       </div>
       <div className="flex justify-between items-end mt-3">
-        <div>
-          <div className="font-display text-[9px] font-extrabold uppercase tracking-[0.12em] opacity-60">
-            held
-          </div>
-          <div className="font-display text-[11px] font-bold truncate max-w-[110px]">
-            @{take.heldBy}
-          </div>
-        </div>
+        <span className="font-display text-[9px] font-extrabold uppercase tracking-[0.12em] opacity-60">
+          floor
+        </span>
         <div className="text-right">
           <MonoNum className="text-[15px] block">{fmtUSD(take.price)}</MonoNum>
           <MonoNum className={isLoss ? 'text-pop text-[11px]' : 'text-[11px]'}>
@@ -60,14 +60,55 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
           </MonoNum>
         </div>
       </div>
-    </Sticker>
+    </>
   );
 
-  if (!asLink) return inner;
+  const nav = asLink ? (
+    <Link href={detailHref} className="block">
+      {navContent}
+    </Link>
+  ) : (
+    navContent
+  );
+
+  // Address strip — held by + minted by, both clickable to /profile/[address].
+  // Falls back to the legacy "@heldBy" string for mock takes that don't carry
+  // a full 0x address.
+  const addressStrip = (
+    <div className="mt-3 pt-2 border-t-2 border-dashed border-ink/20 flex justify-between gap-2 text-[10px] font-display font-extrabold tracking-[0.08em] uppercase">
+      <div className="min-w-0">
+        <div className="text-ink/55">held by</div>
+        {take.ownerAddress ? (
+          <AddressLink
+            address={take.ownerAddress}
+            className="block truncate font-mono normal-case text-[11px] text-ink"
+          />
+        ) : (
+          <span className="block truncate font-mono normal-case text-[11px] text-ink">
+            @{take.heldBy}
+          </span>
+        )}
+      </div>
+      <div className="min-w-0 text-right">
+        <div className="text-ink/55">minted by</div>
+        {take.creatorAddress ? (
+          <AddressLink
+            address={take.creatorAddress}
+            className="block truncate font-mono normal-case text-[11px] text-ink"
+          />
+        ) : (
+          <span className="block truncate font-mono normal-case text-[11px] text-ink/40">
+            —
+          </span>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <Link href={takeHref(take.id, take.question)} className="block">
-      {inner}
-    </Link>
+    <Sticker bg={cardBg} tilt={cardTilt} tappable={asLink}>
+      {nav}
+      {addressStrip}
+    </Sticker>
   );
 }

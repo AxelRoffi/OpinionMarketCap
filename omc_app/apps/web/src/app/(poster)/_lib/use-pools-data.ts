@@ -112,6 +112,7 @@ function toDisplayPool(
     target,
     raised,
     creator: shortAddress(info.creator),
+    creatorAddress: info.creator,
     deadlineMs: Number(info.deadline) * 1000,
     contributors: [], // per-pool contributor list requires a separate read; deferred
     status: STATUS_MAP[info.status] ?? 'active',

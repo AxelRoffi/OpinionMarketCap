@@ -1,6 +1,7 @@
 import { MonoNum } from '@/components/poster-arcade';
 import { fmtUSD } from '../../../_data/mock-takes';
 import { fmtSinceISO, type HolderRecord } from '../../../_data/take-detail';
+import { AddressLink } from '../../../_components/AddressLink';
 
 type HolderTimelineProps = {
   holders: HolderRecord[];
@@ -35,7 +36,11 @@ export function HolderTimeline({ holders, currentIndex }: HolderTimelineProps) {
               />
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div className="font-display font-extrabold text-[13px]">
-                  @{h.addr}
+                  {h.ownerAddress ? (
+                    <AddressLink address={h.ownerAddress} className="font-mono text-ink" />
+                  ) : (
+                    <span className={h.addr === 'vacant' ? 'text-ink/45' : ''}>@{h.addr}</span>
+                  )}
                   {isCurrent && (
                     <span className="ml-2 inline-block bg-pop text-paper border-2 border-ink rounded-pill px-1.5 py-[1px] font-display text-[9px] tracking-[0.08em]">
                       FLOOR
