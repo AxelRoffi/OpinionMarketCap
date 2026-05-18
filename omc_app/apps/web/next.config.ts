@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      // Legacy URL — /mint was the V1 name for the create flow. Permanent
+      // redirect so external bookmarks survive the rename to /create.
+      { source: '/mint', destination: '/create', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
