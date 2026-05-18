@@ -22,6 +22,8 @@ export type Pool = {
   /** Answer the pool is proposing to swap in. */
   proposedAnswer: string;
   category: CatKey;
+  /** Raw on-chain category string from the linked opinion (preferred for display). */
+  categoryLabel?: string;
   /** USDC needed to flip the take. */
   target: number;
   /** USDC pledged so far. */

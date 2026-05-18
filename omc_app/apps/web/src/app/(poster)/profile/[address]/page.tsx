@@ -11,6 +11,7 @@ import {
   Wobble,
 } from '@/components/poster-arcade';
 import { TakeCard } from '../../_components/TakeCard';
+import { takeHref } from '../../_lib/slug';
 import { SectionTitle } from '../../_components/SectionTitle';
 import { StatStrip, type StatItem } from '../../_components/StatStrip';
 import { EarningRow } from '../../_components/EarningRow';
@@ -253,7 +254,7 @@ function BestTakeCard({ take }: { take: DisplayTake }) {
   const isLoss = real.delta < 0;
 
   return (
-    <Link href={`/opinions/${real.id}`} className="block">
+    <Link href={takeHref(real.id, real.question)} className="block">
       <Sticker bg={bg} tilt={-2} shadow={6} tappable className="p-6 md:p-8 max-w-2xl">
         <div className="flex items-center justify-between">
           <Chip bg={chipBg}>{cat.emoji} {(real.categoryLabel ?? cat.label).toUpperCase()}</Chip>

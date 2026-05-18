@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
 import { toast } from 'sonner';
+import { takeHref } from '../../_lib/slug';
 import {
   Sticker,
   Chip,
@@ -106,7 +107,7 @@ export default function PoolDetailPage({
           {/* Hero sticker */}
           <Sticker bg={heroBg} tilt={-2} shadow={6} className="p-6 md:p-8">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <Chip bg={chipBg}>{cat.emoji} {cat.label}</Chip>
+              <Chip bg={chipBg}>{cat.emoji} {(pool.categoryLabel ?? cat.label).toUpperCase()}</Chip>
               <div className="flex items-center gap-1.5">
                 <Chip bg="ink" sm>POOL #{pool.id}</Chip>
                 {isFilled && <Chip bg="cool" sm>✓ FILLED</Chip>}
@@ -130,7 +131,7 @@ export default function PoolDetailPage({
               </span>
               {targetTake && (
                 <Link
-                  href={`/opinions/${targetTake.id}`}
+                  href={takeHref(targetTake.id, targetTake.question)}
                   className="font-display text-[11px] font-extrabold tracking-[0.08em] uppercase underline hover:opacity-100 opacity-80"
                 >
                   current floor → {fmtUSD(targetTake.price)}

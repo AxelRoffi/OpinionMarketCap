@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MonoNum } from '@/components/poster-arcade';
 import { CAT_MAP, fmtUSD } from '../_data/mock-takes';
 import type { EarningRecord } from '../_data/room';
+import { takeHref } from '../_lib/slug';
 
 type EarningRowProps = {
   rec: EarningRecord;
@@ -13,7 +14,7 @@ export function EarningRow({ rec, showRoyalty = true }: EarningRowProps) {
   const cat = CAT_MAP[rec.category];
   return (
     <Link
-      href={`/opinions/${rec.takeId}`}
+      href={takeHref(rec.takeId, rec.question)}
       className="block bg-paper border-2 border-ink rounded-lg shadow-[3px_3px_0_var(--ink)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0_var(--ink)] transition-all"
     >
       <div className="flex items-center gap-3 p-3 md:p-4">

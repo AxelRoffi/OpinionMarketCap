@@ -5,6 +5,7 @@ import { Btn, Sticker, MonoNum, Chip, CopyField } from '@/components/poster-arca
 import { SectionTitle } from '../_components/SectionTitle';
 import { StatStrip, type StatItem } from '../_components/StatStrip';
 import { MOCK_TAKES, CAT_MAP, fmtUSD } from '../_data/mock-takes';
+import { takeHref } from '../_lib/slug';
 import { getReferralData, fmtDate, type ReferralFriend, type ReferralActivity } from '../_data/referrals';
 
 export default function ReferralsPage() {
@@ -150,7 +151,7 @@ function ActivityLine({ a }: { a: ReferralActivity }) {
 
   return (
     <Link
-      href={`/opinions/${a.takeId}`}
+      href={takeHref(a.takeId, take?.question)}
       className="flex items-center gap-2 justify-between text-[12px] hover:underline"
     >
       <span className="flex items-center gap-2 min-w-0">

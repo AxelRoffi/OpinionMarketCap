@@ -125,7 +125,7 @@ function PoolCard({ pool, index }: { pool: Pool; index: number }) {
     <Link href={`/pools/${pool.id}`} className="block">
       <Sticker bg={bg} tilt={tilt} shadow={5} tappable className="p-5">
         <div className="flex items-center justify-between">
-          <Chip bg={chipBg} sm>{cat.emoji} {cat.label}</Chip>
+          <Chip bg={chipBg} sm>{cat.emoji} {(pool.categoryLabel ?? cat.label).toUpperCase()}</Chip>
           {isFilled ? (
             <Chip bg="cool" sm>✓ FILLED</Chip>
           ) : (

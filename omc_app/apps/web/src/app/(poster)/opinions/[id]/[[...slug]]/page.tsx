@@ -14,12 +14,12 @@ import {
   type RangeKey,
 } from '@/components/poster-arcade';
 import { useAnswerHistory } from '@/hooks/useAnswerHistory';
-import { fmtUSD, fmtDelta, CAT_MAP, type CatKey, type DisplayTake } from '../../_data/mock-takes';
-import { getTakeDetail, getPriceHistory, type HolderRecord } from '../../_data/take-detail';
-import { useTake, useTakes, usdcToNumber, shortAddress } from '../../_lib/chain-adapters';
-import { TradeSlip } from './_components/TradeSlip';
-import { HolderTimeline } from './_components/HolderTimeline';
-import { RelatedTakesRow } from './_components/RelatedTakesRow';
+import { fmtUSD, fmtDelta, CAT_MAP, type CatKey, type DisplayTake } from '../../../_data/mock-takes';
+import { getTakeDetail, getPriceHistory, type HolderRecord } from '../../../_data/take-detail';
+import { useTake, useTakes, usdcToNumber, shortAddress } from '../../../_lib/chain-adapters';
+import { TradeSlip } from '../_components/TradeSlip';
+import { HolderTimeline } from '../_components/HolderTimeline';
+import { RelatedTakesRow } from '../_components/RelatedTakesRow';
 
 /** Category → hero sticker background. Picked once per category for memorability. */
 const CAT_BG: Record<CatKey, 'pop' | 'cool' | 'canvas' | 'paper'> = {
@@ -43,7 +43,9 @@ const RANGE_WINDOW: Record<RangeKey, number> = {
 export default function OpinionDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  // Optional catch-all route /opinions/[id]/[[...slug]] — slug is decorative
+  // (helps shares + SEO), so we ignore it and only resolve by id.
+  params: Promise<{ id: string; slug?: string[] }>;
 }) {
   const { id: idStr } = use(params);
   const id = Number(idStr);
@@ -259,7 +261,7 @@ function DetailBody({
       {/* ────────────────  RELATED  ──────────────── */}
       <section className="px-4 md:px-10 pb-16">
         <RelatedTakesRow
-          title={`OTHER TAKES IN ${cat.emoji} ${cat.label}`}
+          title={`OTHER TAKES IN ${cat.emoji} ${(take.categoryLabel ?? cat.label).toUpperCase()}`}
           takes={related}
         />
       </section>

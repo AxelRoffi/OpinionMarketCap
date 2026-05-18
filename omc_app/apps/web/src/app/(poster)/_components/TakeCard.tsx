@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Sticker, Chip, MonoNum } from '@/components/poster-arcade';
 import { CAT_MAP, fmtUSD, fmtDelta, type MockTake } from '../_data/mock-takes';
+import { takeHref } from '../_lib/slug';
 
 const BG_CYCLE = ['pop', 'canvas', 'cool', 'paper'] as const;
 const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
@@ -25,12 +26,15 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
   const chipBg = cardBg === 'paper' || cardBg === 'canvas' ? 'ink' : 'paper';
   const cat = CAT_MAP[take.category];
   const isLoss = take.delta < 0;
+  // Prefer the raw on-chain category string when available — falls back to
+  // the visual bucket label for mock data (which has no chain string).
+  const chipText = (take.categoryLabel ?? cat.label).toUpperCase();
 
   const inner = (
     <Sticker bg={cardBg} tilt={cardTilt} tappable>
       <div className="flex items-center justify-between">
         <Chip bg={chipBg} sm>
-          {cat.emoji} {cat.label}
+          {cat.emoji} {chipText}
         </Chip>
         <span className="font-mono text-[10px] font-extrabold opacity-60">#{take.id}</span>
       </div>
@@ -62,7 +66,7 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
   if (!asLink) return inner;
 
   return (
-    <Link href={`/opinions/${take.id}`} className="block">
+    <Link href={takeHref(take.id, take.question)} className="block">
       {inner}
     </Link>
   );

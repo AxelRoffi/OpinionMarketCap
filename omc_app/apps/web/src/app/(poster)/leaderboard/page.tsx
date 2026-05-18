@@ -10,6 +10,7 @@ import {
   type Tab,
 } from '@/components/poster-arcade';
 import { SectionTitle } from '../_components/SectionTitle';
+import { takeHref } from '../_lib/slug';
 import {
   getLeaderboard,
   getLeaderboardSummary,
@@ -153,7 +154,7 @@ function PodiumCard({ row, place }: { row: LeaderboardRow; place: number }) {
       </div>
       {take && (
         <Link
-          href={`/opinions/${take.id}`}
+          href={takeHref(take.id, take.question)}
           className="block mt-4 border-t-2 border-dashed border-ink/40 pt-3 hover:opacity-80"
         >
           <div className="font-display text-[9px] font-extrabold tracking-[0.14em] uppercase opacity-70">
@@ -201,7 +202,7 @@ function Row({ row, striped }: { row: LeaderboardRow; striped: boolean }) {
       <Td>
         {take ? (
           <Link
-            href={`/opinions/${take.id}`}
+            href={takeHref(take.id, take.question)}
             className="font-display font-extrabold text-[12px] hover:underline tracking-tight"
           >
             {take.answer}.

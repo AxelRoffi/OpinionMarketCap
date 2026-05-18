@@ -94,7 +94,7 @@ const usdc = (v: bigint) => Number(v) / Number(USDC);
  */
 function toDisplayPool(
   bundle: ChainPoolBundle,
-  takesById: Map<number, { question: string; category: CatKey }>,
+  takesById: Map<number, { question: string; category: CatKey; categoryLabel?: string }>,
 ): Pool {
   const info = bundle.info;
   const opinionId = Number(info.opinionId);
@@ -108,6 +108,7 @@ function toDisplayPool(
     question: linked?.question ?? `Take #${opinionId}`,
     proposedAnswer: info.proposedAnswer || 'PENDING',
     category: linked?.category ?? 'life',
+    categoryLabel: linked?.categoryLabel,
     target,
     raised,
     creator: shortAddress(info.creator),
@@ -159,7 +160,7 @@ export function useChainPools(): PoolsQuery {
   const pools = useMemo<Pool[]>(() => {
     if (!detailResults) return [];
     const takesById = new Map(
-      takes.map((t) => [t.id, { question: t.question, category: t.category }]),
+      takes.map((t) => [t.id, { question: t.question, category: t.category, categoryLabel: t.categoryLabel }]),
     );
     const out: Pool[] = [];
     for (const r of detailResults) {
@@ -211,7 +212,7 @@ export function useChainPool(id: number): PoolQuery {
   const pool = useMemo<Pool | null>(() => {
     if (!data || !inRange) return null;
     const takesById = new Map(
-      takes.map((t) => [t.id, { question: t.question, category: t.category }]),
+      takes.map((t) => [t.id, { question: t.question, category: t.category, categoryLabel: t.categoryLabel }]),
     );
     return toDisplayPool(data as unknown as ChainPoolBundle, takesById);
   }, [data, inRange, takes]);

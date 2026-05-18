@@ -17,6 +17,7 @@ import {
   type CategoryOption,
 } from '@/components/poster-arcade';
 import { CATEGORIES, CAT_MAP, fmtUSD, type CatKey } from '../_data/mock-takes';
+import { takeHref } from '../_lib/slug';
 import {
   CHAIN_CATEGORY_FOR_CAT,
   useCreateOpinionFlow,
@@ -131,7 +132,7 @@ export default function CreatePage() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
           {flow.newOpinionId != null && (
-            <Btn href={`/opinions/${flow.newOpinionId}`} variant="pop" size="lg" star>
+            <Btn href={takeHref(flow.newOpinionId, normalizeQuestion(question))} variant="pop" size="lg" star>
               view your take →
             </Btn>
           )}
