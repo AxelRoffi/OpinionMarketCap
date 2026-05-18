@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import {
   Btn,
   MonoNum,
@@ -16,6 +16,7 @@ import {
 import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
 import { useWatchlist } from '../../../_lib/watchlist';
 import { useTakeFlow, type TakeFlowPhase } from '../../../_lib/use-take-flow';
+import { useReclaimSlot } from '@/hooks/useReclaimSlot';
 
 type SlipTab = 'take' | 'watch';
 
@@ -39,11 +40,16 @@ type TradeSlipProps = {
 export function TradeSlip({ take }: TradeSlipProps) {
   const [tab, setTab] = useState<SlipTab>('take');
 
+  // V4: when the slot is vacant (previous king ran selfExit, or pool stale
+  // exit zeroed the owner), submitAnswer() reverts with SlotIsVacant().
+  // Route those takes through reclaimVacantSlot() instead.
+  const isVacant = take.heldBy === 'vacant';
+
   return (
     <Sticker bg="paper" tilt={-1} shadow={5} className="w-full">
       <Tabs<SlipTab> tabs={TABS} value={tab} onChange={setTab} className="w-full justify-between flex" />
       <div className="mt-4">
-        {tab === 'take'  && <TakeIt take={take} />}
+        {tab === 'take' && (isVacant ? <ReclaimIt take={take} /> : <TakeIt take={take} />)}
         {tab === 'watch' && <Watch take={take} />}
       </div>
     </Sticker>
@@ -304,6 +310,264 @@ function PhaseHint({ phase, balanceUsdc, cost }: { phase: TakeFlowPhase; balance
   else if (phase === 'needs-approval') hint = 'one-time USDC approval — then take it';
   else if (phase === 'approving' || phase === 'submitting') hint = 'confirm in your wallet…';
 
+  if (!hint) return null;
+  return (
+    <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
+      {hint}
+    </div>
+  );
+}
+
+
+/* ─────────────────────────── RECLAIM IT ─────────────────────────── */
+
+/**
+ * Vacant-slot variant of the take action. Calls V4 `reclaimVacantSlot()`
+ * instead of `submitAnswer()` — the latter reverts with `SlotIsVacant()`
+ * when `currentAnswerOwner == 0x0`. The price (`take.price`) is the chain
+ * `nextPrice`, which V4 sets to the discounted reclaim price during
+ * `selfExit` / `processPoolStaleExit`.
+ */
+function ReclaimIt({ take }: { take: DisplayTake }) {
+  // Convert displayed USDC price → 6-decimal bigint for the hook.
+  const reclaimPriceWei = parseUnits(take.price.toFixed(6), 6);
+  const {
+    step,
+    error,
+    needsApproval,
+    hasBalance,
+    feature,
+    reclaim,
+    reset,
+  } = useReclaimSlot(take.id, reclaimPriceWei);
+
+  const [answer, setAnswer] = useState('');
+  const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const trimmedAnswer = answer.trim();
+  const trimmedLink = link.trim();
+  const isValidAnswer = trimmedAnswer.length >= 2 && trimmedAnswer.length <= ANSWER_MAX;
+  const isValidLink = trimmedLink === '' || /^https?:\/\/\S+\.\S+/i.test(trimmedLink);
+  const canSubmit =
+    feature.enabled &&
+    !feature.loading &&
+    hasBalance &&
+    isValidAnswer &&
+    isValidLink &&
+    (step === 'idle' || step === 'error');
+
+  // Fire confetti + toast once on success.
+  useEffect(() => {
+    if (step === 'success') {
+      popConfetti({ count: 90 });
+      toast.success(`you reclaimed take #${take.id}`, {
+        description: `${trimmedAnswer} · ${fmtUSD(take.price)} locked`,
+      });
+    }
+  }, [step, take.id, take.price, trimmedAnswer]);
+
+  // Surface tx errors via toast.
+  useEffect(() => {
+    if (error) {
+      const msg = (error.message || 'transaction failed').split('\n')[0];
+      toast.error('reclaim failed', { description: msg.slice(0, 180) });
+    }
+  }, [error]);
+
+  /* ─── feature disabled by admin ─── */
+  if (!feature.loading && !feature.enabled) {
+    return (
+      <div className="text-center py-6">
+        <div className="font-display font-black text-[18px] tracking-tight">
+          RECLAIM IS DISABLED.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/65 mt-1 max-w-[280px] mx-auto">
+          The admin has the vacant-slot reclaim feature switched off. Slot
+          stays vacant until it&apos;s re-enabled.
+        </p>
+      </div>
+    );
+  }
+
+  /* ─── success ─── */
+  if (step === 'success') {
+    return (
+      <div className="text-center py-6">
+        <div className="font-display font-black text-[20px] tracking-tight">
+          ★ YOU HOLD THE FLOOR.
+        </div>
+        <p className="font-display text-[12px] font-semibold text-ink/70 mt-1 max-w-[280px] mx-auto">
+          Take #{take.id} is yours at the discounted reclaim price.{' '}
+          <span className="font-mono font-extrabold">3%</span> royalty locked
+          in forever.
+        </p>
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <Btn variant="cool" size="md" onClick={reset}>
+            take another →
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── the form ─── */
+  return (
+    <div>
+      <div className="mb-3 flex items-start gap-2 rounded-lg border-2 border-ink/20 bg-canvas/40 px-3 py-2">
+        <span className="font-display font-black text-[13px] tracking-tight">
+          ⚑ VACANT SLOT
+        </span>
+        <span className="font-display text-[11px] font-semibold text-ink/70">
+          the previous king exited — reclaim it at the discounted price
+        </span>
+      </div>
+
+      <Label>your answer</Label>
+      <input
+        type="text"
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value.slice(0, ANSWER_MAX))}
+        placeholder="YOUR TAKE"
+        aria-label="Your new answer"
+        className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2.5 font-display font-black text-[20px] tracking-tight text-ink uppercase placeholder:text-ink/40 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
+      />
+      <div className="flex items-center justify-between text-[10px] font-mono font-extrabold text-ink/40 mt-1">
+        <span>
+          {!isValidAnswer && answer.length > 0 ? 'min 2 chars' : ''}
+        </span>
+        <span>{answer.length}/{ANSWER_MAX}</span>
+      </div>
+
+      {/* Advanced — description + link, both optional */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="mt-3 font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/55 hover:text-ink"
+      >
+        {showAdvanced
+          ? '− hide description + link'
+          : '+ add description / link (optional)'}
+      </button>
+      {showAdvanced && (
+        <div className="mt-2 space-y-3">
+          <div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+              rows={2}
+              placeholder="explain your take in one line"
+              aria-label="Optional description"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
+            />
+            <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+              {description.length}/{DESCRIPTION_MAX}
+            </div>
+          </div>
+
+          <div>
+            <Label>source link (optional)</Label>
+            <input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://x.com/… or https://…"
+              aria-label="Optional source link backing your take"
+              inputMode="url"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-mono font-semibold text-[12px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
+            />
+            {trimmedLink !== '' && !isValidLink && (
+              <div className="text-[10px] font-display font-extrabold tracking-[0.1em] uppercase text-pop mt-1">
+                must start with http:// or https://
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cost breakdown */}
+      <div className="mt-4 border-t-2 border-dashed border-ink/40 pt-3 space-y-1.5">
+        <Row label="reclaim price" value={fmtUSD(take.price)} bold />
+        <Row label="royalty earn"  value="3% forever" muted />
+      </div>
+
+      {/* Action */}
+      <div className="mt-4">
+        <ReclaimAction
+          step={step}
+          canSubmit={canSubmit}
+          needsApproval={needsApproval}
+          hasBalance={hasBalance}
+          cost={take.price}
+          onSubmit={() => reclaim(trimmedAnswer, description.trim(), trimmedLink)}
+        />
+      </div>
+
+      <ReclaimHint step={step} hasBalance={hasBalance} needsApproval={needsApproval} cost={take.price} />
+    </div>
+  );
+}
+
+function ReclaimAction({
+  step,
+  canSubmit,
+  needsApproval,
+  hasBalance,
+  cost,
+  onSubmit,
+}: {
+  step: 'idle' | 'approve' | 'submit' | 'success' | 'error';
+  canSubmit: boolean;
+  needsApproval: boolean;
+  hasBalance: boolean;
+  cost: number;
+  onSubmit: () => void;
+}) {
+  if (!hasBalance) {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        NEED MORE USDC
+      </Btn>
+    );
+  }
+  if (step === 'approve') {
+    return (
+      <Btn variant="primary" size="lg" disabled className="w-full">
+        APPROVING…
+      </Btn>
+    );
+  }
+  if (step === 'submit') {
+    return (
+      <Btn variant="pop" size="lg" disabled className="w-full">
+        RECLAIMING…
+      </Btn>
+    );
+  }
+  const label = needsApproval ? 'APPROVE + RECLAIM' : 'RECLAIM SLOT';
+  return (
+    <Btn variant="pop" size="lg" star className="w-full" onClick={onSubmit} disabled={!canSubmit}>
+      {label} · <MonoNum>{fmtUSD(cost)}</MonoNum>
+    </Btn>
+  );
+}
+
+function ReclaimHint({
+  step,
+  hasBalance,
+  needsApproval,
+  cost,
+}: {
+  step: 'idle' | 'approve' | 'submit' | 'success' | 'error';
+  hasBalance: boolean;
+  needsApproval: boolean;
+  cost: number;
+}) {
+  let hint = '';
+  if (!hasBalance) hint = `need ${fmtUSD(cost)} USDC`;
+  else if (needsApproval && step === 'idle') hint = 'one-time USDC approval, then reclaim';
+  else if (step === 'approve' || step === 'submit') hint = 'confirm in your wallet…';
   if (!hint) return null;
   return (
     <div className="text-[10px] font-display font-bold text-ink/60 mt-3 text-center">
