@@ -17,6 +17,11 @@ import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
 import { useWatchlist } from '../../../_lib/watchlist';
 import { useTakeFlow, type TakeFlowPhase } from '../../../_lib/use-take-flow';
 import { useReclaimSlot } from '@/hooks/useReclaimSlot';
+import {
+  useAnswerHistory,
+  formatHistoryPrice,
+  type RankedAnswer,
+} from '@/hooks/useAnswerHistory';
 
 type SlipTab = 'take' | 'watch';
 
@@ -65,6 +70,24 @@ function TakeIt({ take }: { take: DisplayTake }) {
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // One-click answer revival: pull deduped past answers, drop the current king,
+  // expose the top 5 by frequency × peak price × recency.
+  const { rankedAnswers, isLoading: isLoadingHistory } = useAnswerHistory(take.id);
+  const revivalOptions: RankedAnswer[] = rankedAnswers
+    .filter(
+      (entry) =>
+        entry.answer.toLowerCase().trim() !==
+        take.answer.toLowerCase().trim(),
+    )
+    .slice(0, 5);
+
+  const reviveAnswer = (entry: RankedAnswer) => {
+    const next = entry.answer.slice(0, ANSWER_MAX);
+    setAnswer(next);
+    setDescription((entry.description || '').slice(0, DESCRIPTION_MAX));
+    if (entry.description) setShowAdvanced(true);
+  };
 
   const balanceUsdc = Number(formatUnits(balance, 6));
   const trimmedAnswer = answer.trim();
@@ -150,6 +173,47 @@ function TakeIt({ take }: { take: DisplayTake }) {
   /* ─── the form ─── */
   return (
     <div>
+      {/* Answer revival — one-click reuse of a past answer (description editable) */}
+      {!isLoadingHistory && revivalOptions.length > 0 && (
+        <div className="mb-4">
+          <Label>revive a past answer</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {revivalOptions.map((entry) => {
+              const isActive =
+                trimmedAnswer.toLowerCase() ===
+                entry.answer.toLowerCase().trim();
+              return (
+                <button
+                  key={entry.answer}
+                  type="button"
+                  onClick={() => reviveAnswer(entry)}
+                  aria-label={`Revive answer ${entry.answer}`}
+                  title={
+                    entry.description
+                      ? `${entry.answer} — ${entry.description}`
+                      : entry.answer
+                  }
+                  className={
+                    'inline-flex items-center gap-1.5 border-2 border-ink rounded-pill px-2.5 py-1 font-display text-[11px] font-extrabold uppercase tracking-tight transition-all ' +
+                    (isActive
+                      ? 'bg-cool text-ink shadow-[2px_2px_0_var(--ink)] -translate-x-[1px] -translate-y-[1px]'
+                      : 'bg-paper text-ink hover:bg-cool/40 hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[2px_2px_0_var(--ink)]')
+                  }
+                >
+                  <span className="max-w-[140px] truncate">{entry.answer}</span>
+                  <MonoNum className="text-[10px] text-ink/65">
+                    {formatHistoryPrice(entry.peakPrice)}
+                  </MonoNum>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-1 font-display text-[10px] font-extrabold tracking-[0.1em] uppercase text-ink/45">
+            tap to pre-fill — description &amp; link stay editable
+          </div>
+        </div>
+      )}
+
       <Label>your answer</Label>
       <input
         type="text"
