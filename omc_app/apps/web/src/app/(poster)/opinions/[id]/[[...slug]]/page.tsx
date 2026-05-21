@@ -22,6 +22,7 @@ import { TradeSlip } from '../_components/TradeSlip';
 import { HolderTimeline } from '../_components/HolderTimeline';
 import { RelatedTakesRow } from '../_components/RelatedTakesRow';
 import { KingPanel } from '../_components/KingPanel';
+import { ShareTake } from '../_components/ShareTake';
 import { AddressLink } from '../../../_components/AddressLink';
 import { useQuestionListing } from '@/hooks/useQuestionListing';
 
@@ -155,9 +156,12 @@ function DetailBody({
         <div className="lg:col-span-3 space-y-5">
           {/* Hero sticker */}
           <Sticker bg={heroBg} tilt={-2} shadow={6} className="p-6 md:p-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <Chip bg={chipBg}>{cat.emoji} {(take.categoryLabel ?? cat.label).toUpperCase()}</Chip>
-              <Chip bg="ink" sm>#{take.id}</Chip>
+              <div className="flex items-center gap-2">
+                <ShareTake take={take} size="sm" />
+                <Chip bg="ink" sm>#{take.id}</Chip>
+              </div>
             </div>
             <div className="font-display text-[13px] md:text-[14px] font-bold italic opacity-85 mt-3">
               &ldquo;{take.question}&rdquo;

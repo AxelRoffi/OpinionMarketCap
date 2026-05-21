@@ -135,7 +135,11 @@ export default function ProfilePage({
 
   const bestId = getBestTakeId(room);
   const best = bestId ? room.holding.find((t) => t.id === bestId) ?? null : null;
-  const otherHoldings = best ? room.holding.filter((t) => t.id !== best.id) : room.holding;
+  // STILL HOLDING shows the full roster, including the BEST TAKE highlight.
+  // De-duping made the section read "EMPTY ROOM" when the user held exactly
+  // one take that had already been promoted to BEST — contradicting the
+  // "N takes" counter shown next to the title.
+  const allHoldings = room.holding;
 
   const displayHandle = isMe
     ? 'you'
@@ -196,7 +200,7 @@ export default function ProfilePage({
         <SectionTitle meta={<><MonoNum>{room.holding.length}</MonoNum> takes</>}>
           🏠 STILL HOLDING
         </SectionTitle>
-        {otherHoldings.length === 0 ? (
+        {allHoldings.length === 0 ? (
           <Sticker bg="paper" tilt={-1.5} className="text-center max-w-md mx-auto">
             <div className="font-display font-black text-[18px] tracking-tight">EMPTY ROOM.</div>
             <div className="font-display text-[12px] font-semibold text-ink/65 mt-1">
@@ -205,7 +209,7 @@ export default function ProfilePage({
           </Sticker>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {otherHoldings.map((take, i) => (
+            {allHoldings.map((take, i) => (
               <TakeCard key={take.id} take={take} index={i} />
             ))}
           </div>

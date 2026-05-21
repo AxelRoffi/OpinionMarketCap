@@ -5,6 +5,7 @@ import { Sticker, Chip, MonoNum } from '@/components/poster-arcade';
 import { CAT_MAP, fmtUSD, fmtDelta, type MockTake } from '../_data/mock-takes';
 import { takeHref } from '../_lib/slug';
 import { AddressLink } from './AddressLink';
+import { ShareTake } from '../opinions/[id]/_components/ShareTake';
 
 const BG_CYCLE = ['pop', 'canvas', 'cool', 'paper'] as const;
 const TILT_CYCLE = [-2, 1.5, -1.5, 2] as const;
@@ -37,11 +38,13 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
   // can live outside the detail-page Link without nesting <a> tags.
   const navContent = (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Chip bg={chipBg} sm>
           {cat.emoji} {chipText}
         </Chip>
-        <span className="font-mono text-[10px] font-extrabold opacity-60">#{take.id}</span>
+        {/* Right corner is occupied by the absolute ShareTake row — leave a
+            spacer so the chip text never collides with the share buttons. */}
+        <span aria-hidden className="w-[112px] shrink-0" />
       </div>
       <div className="font-display text-[11px] font-bold mt-2 opacity-85 italic">
         &ldquo;{take.question}&rdquo;
@@ -105,8 +108,19 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
     </div>
   );
 
+  // Share row floats in the top-right corner. It's a sibling of the Link
+  // (not nested inside it), so clicking a share button never triggers
+  // navigation. `stopPropagation` is belt-and-braces in case Sticker ever
+  // grows a click handler.
+  const shareRow = (
+    <div className="absolute top-2 right-2 z-10">
+      <ShareTake take={take} size="sm" stopPropagation />
+    </div>
+  );
+
   return (
-    <Sticker bg={cardBg} tilt={cardTilt} tappable={asLink}>
+    <Sticker bg={cardBg} tilt={cardTilt} tappable={asLink} className="relative">
+      {shareRow}
       {nav}
       {addressStrip}
     </Sticker>

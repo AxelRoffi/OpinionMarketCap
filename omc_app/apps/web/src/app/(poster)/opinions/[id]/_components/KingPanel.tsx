@@ -7,6 +7,7 @@ import { Btn, MonoNum, Sticker } from '@/components/poster-arcade';
 import { useSelfExit } from '@/hooks/useSelfExit';
 import { useOpinionLockStatus } from '@/hooks/useOpinionLockStatus';
 import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
+import { ShareTake } from './ShareTake';
 
 interface KingPanelProps {
   take: DisplayTake;
@@ -69,6 +70,14 @@ export function KingPanel({ take }: KingPanelProps) {
         Exit recovers <span className="font-mono font-extrabold">80%</span> of your locked
         stake. The remaining 20% becomes the discounted reclaim price for the next holder.
       </p>
+
+      {/* Brag row — owner-only "come dethrone me" share buttons. */}
+      <div className="mt-3 flex items-center justify-between gap-3 border-t-2 border-dashed border-ink/40 pt-3">
+        <span className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/65">
+          brag about it
+        </span>
+        <ShareTake take={take} variant="king" size="sm" />
+      </div>
 
       {!status.selfExitFeatureEnabled && (
         <div className="mt-3 font-display text-[11px] font-bold text-pop">
