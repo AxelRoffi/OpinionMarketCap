@@ -5,7 +5,7 @@ import { WagmiProvider, type State } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from '@/lib/wagmi-simple';
-import { suppressExtensionErrors } from '@/lib/wagmi-conflict-free';
+import { suppressExtensionErrors } from '@/lib/suppress-extension-errors';
 import '@rainbow-me/rainbowkit/styles.css';
 
 export default function Providers({
