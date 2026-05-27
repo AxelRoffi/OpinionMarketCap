@@ -19,7 +19,8 @@ export interface OpinionLockStatus {
   // Raw chain reads
   lockedStake: bigint            // 0 for legacy
   lastTradeTimestamp: number     // unix seconds; 0 if never traded under V4
-  soloCooldown: number           // seconds, configurable on V4 (default 14d)
+  soloCooldown: number           // seconds, configurable on V4
+  exitPenaltyBps: number         // 2000 = 20% (refund = 10000 - exitPenaltyBps)
 
   // Derived flags
   isLegacy: boolean              // lockedStake == 0 (no rescue available)
@@ -75,6 +76,13 @@ export function useOpinionLockStatus(
     query: { enabled }
   })
 
+  const { data: exitPenaltyBps, isLoading: penaltyLoading } = useReadContract({
+    address: CONTRACTS.OPINION_CORE,
+    abi: OPINION_CORE_V4_ABI,
+    functionName: 'exitPenaltyBps',
+    query: { enabled }
+  })
+
   // Tick once per second so countdowns advance without refetching chain state.
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
   useEffect(() => {
@@ -86,6 +94,7 @@ export function useOpinionLockStatus(
   const ts = Number((lastTradeTimestamp as bigint | undefined) ?? 0)
   const cd = Number((soloCooldown as bigint | undefined) ?? 0)
   const featureOn = Boolean(selfExitFlag)
+  const penaltyBps = Number((exitPenaltyBps as bigint | undefined) ?? 2000n)
 
   const cooldownEnd = ts + cd
   const secondsUntilExit = cooldownEnd - now
@@ -98,6 +107,7 @@ export function useOpinionLockStatus(
     lockedStake: stake,
     lastTradeTimestamp: ts,
     soloCooldown: cd,
+    exitPenaltyBps: penaltyBps,
     isLegacy: stake === ZERO,
     isRescueEnabled: stake > ZERO,
     selfExitFeatureEnabled: featureOn,
@@ -105,6 +115,6 @@ export function useOpinionLockStatus(
     secondsUntilExit,
     canSelfExitNow:
       featureOn && stake > ZERO && isCallerKing && secondsUntilExit <= 0,
-    isLoading: stakeLoading || tsLoading || cdLoading || flagLoading,
+    isLoading: stakeLoading || tsLoading || cdLoading || flagLoading || penaltyLoading,
   }
 }

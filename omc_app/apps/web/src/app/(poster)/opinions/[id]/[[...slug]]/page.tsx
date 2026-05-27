@@ -23,6 +23,7 @@ import { HolderTimeline } from '../_components/HolderTimeline';
 import { RelatedTakesRow } from '../_components/RelatedTakesRow';
 import { KingPanel } from '../_components/KingPanel';
 import { ShareTake } from '../_components/ShareTake';
+import { SelfExitInfoChip } from '../_components/SelfExitInfoChip';
 import { AddressLink } from '../../../_components/AddressLink';
 import { useQuestionListing } from '@/hooks/useQuestionListing';
 
@@ -205,6 +206,14 @@ function DetailBody({
               </div>
             </div>
           </Sticker>
+
+          {/* Self-exit visibility chip — read-only, visible to all viewers.
+              Values stream from chain via useOpinionLockStatus, so admin
+              tuning of soloCooldown / exitPenaltyBps shows up instantly. */}
+          <SelfExitInfoChip
+            opinionId={take.id}
+            currentAnswerOwner={take.ownerAddress}
+          />
 
           {/* Sparkline panel */}
           <div className="bg-paper border-[2.5px] border-ink rounded-sticker shadow-[4px_4px_0_var(--ink)] p-4 md:p-5">

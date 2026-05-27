@@ -430,8 +430,9 @@ export default function Whitepaper() {
 
           <H3>5.1 · Self-Exit (for the current king)</H3>
           <P>
-            After the configurable cooldown (default <b>14 days</b> solo · 21 days pools · 35 days
-            extended pools), the answer owner can call{' '}
+            After the configurable cooldown (production setting:{' '}
+            <b>60 seconds solo · 24 hours pools · 72 hours extended pools</b>), the answer owner can
+            call{' '}
             <code className="rounded bg-ink px-1.5 py-0.5 font-mono text-canvas">selfExit(opinionId)</code>{' '}
             to walk away. Refund = <b>80% of the locked stake</b>; penalty 20% splits 50/50 between
             creator and platform.
@@ -461,17 +462,17 @@ export default function Whitepaper() {
           <H3>5.3 · Pool stale-exit dissolution (V2)</H3>
           <P>
             PoolManagerV2 mirrors the same logic at the pool level. Large holders (≥10% contribution)
-            can trigger a pool exit after 21 days; any contributor can trigger after 35 days. Pool
-            funds redistribute proportionally with the same 20% penalty.
+            can trigger a pool exit after <b>24 hours</b>; any contributor can trigger after{' '}
+            <b>72 hours</b>. Pool funds redistribute proportionally with the same 20% penalty.
           </P>
 
           <H3>5.4 · Parameter table</H3>
           <Table
-            headers={['Parameter', 'Default', 'Bounds']}
+            headers={['Parameter', 'Production', 'Bounds']}
             rows={[
-              ['soloCooldown',           '14 days',     '60s — 90 days (admin-tunable)'],
-              ['poolCooldown',           '21 days',     '60s — 90 days'],
-              ['poolExtendedCooldown',   '35 days',     '≥ poolCooldown · ≤ 90 days'],
+              ['soloCooldown',           '60 s',        '60s — 90 days (admin-tunable)'],
+              ['poolCooldown',           '24 h',        '60s — 90 days'],
+              ['poolExtendedCooldown',   '72 h',        '≥ poolCooldown · ≤ 90 days'],
               ['exitPenaltyBps',         '2000 (20%)',  '500 — 5000'],
               ['penaltyCreatorShareBps', '5000 (50/50)','0 — 10000'],
               ['reclaimDiscountBps',     '5000 (50%)',  '1000 — 9000'],
@@ -481,8 +482,11 @@ export default function Whitepaper() {
             ]}
           />
           <P className="mt-3">
-            <b>MIN_COOLDOWN = 60 seconds (constant)</b>, so admins can lower cooldowns for live
-            testing without waiting weeks. Restore production cooldowns after testing.
+            <b>MIN_COOLDOWN = 60 seconds (constant)</b> is the contract floor — production runs at
+            that floor for solo exits so the 20% penalty (not a multi-day wait) is the anti-grief
+            lever. Pool cooldowns escalate (large-holder window then public window) because pools
+            are a commitment device — a single contributor shouldn&apos;t be able to instantly
+            torpedo the rest.
           </P>
         </div>
       </section>
