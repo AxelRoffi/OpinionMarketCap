@@ -23,6 +23,8 @@ import { fundingPct } from '../../_data/pools';
 import { usePoolJoinFlow, type PoolJoinPhase } from '../../_lib/use-pool-join-flow';
 import { useChainPool } from '../../_lib/use-pools-data';
 import { useTake } from '../../_lib/chain-adapters';
+import { PoolStaleExitPanel } from './_components/PoolStaleExitPanel';
+import { PoolExitInfoChip } from './_components/PoolExitInfoChip';
 
 const CAT_BG = {
   sport:   'canvas',
@@ -141,6 +143,10 @@ export default function PoolDetailPage({
             </div>
           </Sticker>
 
+          {/* Stale-pool exit visibility chip — read-only, all viewers.
+              Values stream from chain so admin re-tuning surfaces instantly. */}
+          <PoolExitInfoChip />
+
           {/* Funding panel */}
           <div className="bg-paper border-[2.5px] border-ink rounded-sticker shadow-[4px_4px_0_var(--ink)] p-5 md:p-6">
             <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
@@ -232,6 +238,14 @@ export default function PoolDetailPage({
 
         {/* RIGHT — join the pool */}
         <div className="lg:col-span-2 lg:sticky lg:top-[80px]">
+          {/* Stale-pool dissolution + refund-claim — only renders when the
+              pool has executed (became king) or has already been dissolved. */}
+          <PoolStaleExitPanel
+            poolId={pool.id}
+            opinionId={pool.targetTakeId}
+            poolStatusString={pool.status}
+            poolTotalAmountUsdc={pool.raised}
+          />
           <Sticker bg="paper" tilt={-1} shadow={5}>
             <div className="font-display text-[10px] font-extrabold tracking-[0.18em] uppercase text-pop">
               ★ pool in
