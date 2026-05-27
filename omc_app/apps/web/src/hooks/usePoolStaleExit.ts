@@ -40,9 +40,9 @@ export interface UsePoolStaleExitReturn {
   pendingRefund: bigint
   /** True iff caller meets the >threshold rule for triggerLargePoolExit */
   callerIsLargeHolder: boolean
-  /** Seconds until 21-day window opens (negative = open) */
+  /** Seconds until poolCooldown window opens for large holders (negative = open) */
   secondsUntilLargeWindow: number
-  /** Seconds until 35-day window opens for any contributor (negative = open) */
+  /** Seconds until poolExtendedCooldown window opens for any contributor (negative = open) */
   secondsUntilAnyoneWindow: number
 
   // Actions
