@@ -74,14 +74,17 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Twitter Card
+  // Twitter Card. We deliberately omit `images` here so that nested layouts
+  // with their own opengraph-image.tsx (e.g. /opinions/[id]) can auto-wire
+  // twitter:image to the dynamic per-page card. The homepage gets twitter:image
+  // automatically from openGraph.images below (X falls back to og:image when
+  // twitter:image is absent).
   twitter: {
     card: 'summary_large_image',
     site: DEFAULT_META.twitterHandle,
     creator: DEFAULT_META.twitterHandle,
     title: DEFAULT_META.title,
     description: DEFAULT_META.description,
-    images: ['/og-image.png'],
   },
 
   // Robots
