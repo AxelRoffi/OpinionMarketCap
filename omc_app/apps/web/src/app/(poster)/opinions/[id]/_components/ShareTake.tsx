@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+import { createSlug } from '@/lib/seo';
 import { fmtUSD, type DisplayTake } from '../../../_data/mock-takes';
 
 /**
@@ -40,7 +41,14 @@ export function ShareTake({
   stopPropagation = false,
   className,
 }: ShareTakeProps) {
-  const shareUrl = url ?? `${APP_URL}/opinions/${take.id}`;
+  // Include the question slug in the default share URL. Two wins:
+  //  - Matches the canonical URL the metadata layout already sets, so SEO
+  //    consolidates correctly.
+  //  - X/Twitter caches OG metadata per-URL. Re-shares with the slug are a
+  //    *new* URL X has never scraped, so they pick up the latest metadata
+  //    even if a prior bare /opinions/[id] is stuck on a stale cache entry.
+  const shareUrl =
+    url ?? `${APP_URL}/opinions/${take.id}/${createSlug(take.question)}`;
 
   // Crafted to be short, opinionated, screen-readable. Twitter caps at 280 incl
   // URL (URL counts as 23). We keep the body well under ~250 chars.

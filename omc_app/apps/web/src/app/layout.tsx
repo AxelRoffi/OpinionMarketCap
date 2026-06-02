@@ -56,7 +56,11 @@ export const metadata: Metadata = {
     canonical: '/',
   },
 
-  // Open Graph
+  // Open Graph. We deliberately omit `images` here — `/og-image.png` was
+  // referenced for years but the file doesn't actually exist (returns 404),
+  // which is why X showed a broken-icon placeholder for shares with stale
+  // cache entries. Nested routes provide their own dynamic opengraph-image.tsx;
+  // a homepage opengraph-image.tsx can be added later if needed.
   openGraph: {
     type: 'website',
     locale: DEFAULT_META.locale,
@@ -64,14 +68,6 @@ export const metadata: Metadata = {
     siteName: DEFAULT_META.siteName,
     title: DEFAULT_META.title,
     description: DEFAULT_META.description,
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'OpinionMarketCap - Trade Opinions on Base Blockchain',
-      },
-    ],
   },
 
   // Twitter Card. We deliberately omit `images` here so that nested layouts
