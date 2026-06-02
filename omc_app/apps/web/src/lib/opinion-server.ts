@@ -28,8 +28,10 @@ export interface OpinionData {
   categories: string[];
 }
 
-// V4 `getOpinionDetails(uint256)` — single source of truth for opinion reads.
-// Categories ship in the same tuple, so no second hop to OpinionExtensions.
+// V4 `getOpinionDetails(uint256)` — opinion data. The ABI defines a
+// `categories` field in the returned tuple, but in practice V4 returns
+// it empty (categories are stored on OpinionExtensionsV2, not core).
+// So we call getOpinionCategories separately and merge.
 const GET_OPINION_DETAILS_ABI = [
   {
     inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
@@ -57,6 +59,18 @@ const GET_OPINION_DETAILS_ABI = [
         type: 'tuple',
       },
     ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// OpinionExtensionsV2 `getOpinionCategories(uint256)` — the actual home of
+// per-opinion category strings. Called in parallel with getOpinionDetails.
+const GET_OPINION_CATEGORIES_ABI = [
+  {
+    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
+    name: 'getOpinionCategories',
+    outputs: [{ internalType: 'string[]', name: '', type: 'string[]' }],
     stateMutability: 'view',
     type: 'function',
   },
@@ -93,30 +107,45 @@ function getClient() {
 export async function getOpinionForMeta(opinionId: number): Promise<OpinionData | null> {
   try {
     const client = getClient();
-    const result = await client.readContract({
-      address: CONTRACTS.OPINION_CORE,
-      abi: GET_OPINION_DETAILS_ABI,
-      functionName: 'getOpinionDetails',
-      args: [BigInt(opinionId)],
-    });
+    // Fetch opinion data + categories in parallel. Categories live on
+    // OpinionExtensionsV2 — V4's getOpinionDetails struct exposes a
+    // categories field for ABI compatibility but always returns it empty.
+    const [opinionResult, categoriesResult] = await Promise.all([
+      client.readContract({
+        address: CONTRACTS.OPINION_CORE,
+        abi: GET_OPINION_DETAILS_ABI,
+        functionName: 'getOpinionDetails',
+        args: [BigInt(opinionId)],
+      }),
+      client
+        .readContract({
+          address: CONTRACTS.OPINION_EXTENSIONS,
+          abi: GET_OPINION_CATEGORIES_ABI,
+          functionName: 'getOpinionCategories',
+          args: [BigInt(opinionId)],
+        })
+        // If the extension contract reverts (e.g. opinion id past the end),
+        // we still want the opinion data — empty categories is acceptable.
+        .catch(() => [] as readonly string[]),
+    ]);
 
     // Empty question means the opinion id is past the end of the array
     // (V4 returns a zeroed struct rather than reverting in that case).
-    if (!result.question) return null;
+    if (!opinionResult.question) return null;
 
     return {
       id: opinionId,
-      question: result.question,
-      currentAnswer: result.currentAnswer,
-      creator: result.creator,
-      questionOwner: result.questionOwner,
-      currentAnswerOwner: result.currentAnswerOwner,
-      nextPrice: result.nextPrice,
-      lastPrice: result.lastPrice,
-      totalVolume: result.totalVolume,
-      isActive: result.isActive,
-      salePrice: result.salePrice,
-      categories: [...result.categories],
+      question: opinionResult.question,
+      currentAnswer: opinionResult.currentAnswer,
+      creator: opinionResult.creator,
+      questionOwner: opinionResult.questionOwner,
+      currentAnswerOwner: opinionResult.currentAnswerOwner,
+      nextPrice: opinionResult.nextPrice,
+      lastPrice: opinionResult.lastPrice,
+      totalVolume: opinionResult.totalVolume,
+      isActive: opinionResult.isActive,
+      salePrice: opinionResult.salePrice,
+      categories: [...categoriesResult],
     };
   } catch (error) {
     console.error(`Error fetching opinion ${opinionId} for metadata:`, error);
