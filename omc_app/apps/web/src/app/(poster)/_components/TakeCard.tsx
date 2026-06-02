@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Sticker, Chip, MonoNum } from '@/components/poster-arcade';
-import { CAT_MAP, fmtUSD, fmtDelta, type MockTake } from '../_data/mock-takes';
+import { Sticker, CategoryLink, MonoNum } from '@/components/poster-arcade';
+import { fmtUSD, fmtDelta, type MockTake } from '../_data/mock-takes';
 import { takeHref } from '../_lib/slug';
 import { AddressLink } from './AddressLink';
 import { ShareTake } from '../opinions/[id]/_components/ShareTake';
@@ -25,27 +25,30 @@ type TakeCardProps = {
 export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps) {
   const cardBg = bg ?? BG_CYCLE[index % BG_CYCLE.length];
   const cardTilt = tilt ?? TILT_CYCLE[index % TILT_CYCLE.length];
-  const chipBg = cardBg === 'paper' || cardBg === 'canvas' ? 'ink' : 'paper';
-  const cat = CAT_MAP[take.category];
   const isLoss = take.delta < 0;
-  // Prefer the raw on-chain category string when available — falls back to
-  // the visual bucket label for mock data (which has no chain string).
-  const chipText = (take.categoryLabel ?? cat.label).toUpperCase();
   const detailHref = takeHref(take.id, take.question);
 
-  // The "navigation" area covers chip / question / answer / price+delta.
-  // Address strip is a SIBLING inside the same Sticker so address Links
-  // can live outside the detail-page Link without nesting <a> tags.
+  // Show every chain category this opinion is tagged with (up to 3). Each
+  // chip is itself a Link to /category/[slug] — kept outside the
+  // detail-page <Link> below to avoid nested-anchor invalid HTML.
+  const categoryChips = (take.categories ?? []).slice(0, 3);
+  const chipRow = (
+    <div className="flex items-center flex-wrap gap-1.5 pr-[112px]">
+      {categoryChips.length > 0 ? (
+        categoryChips.map((c) => (
+          <CategoryLink key={c} name={c} sm stopPropagation />
+        ))
+      ) : take.categoryLabel ? (
+        <CategoryLink name={take.categoryLabel} sm stopPropagation />
+      ) : null}
+    </div>
+  );
+
+  // The "navigation" area covers only the question / answer / floor block.
+  // Categories + address strip + share row are SIBLINGS inside the same
+  // Sticker so their interactive elements live outside the navigation Link.
   const navContent = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <Chip bg={chipBg} sm>
-          {cat.emoji} {chipText}
-        </Chip>
-        {/* Right corner is occupied by the absolute ShareTake row — leave a
-            spacer so the chip text never collides with the share buttons. */}
-        <span aria-hidden className="w-[112px] shrink-0" />
-      </div>
       <div className="font-display text-[11px] font-bold mt-2 opacity-85 italic">
         &ldquo;{take.question}&rdquo;
       </div>
@@ -121,6 +124,7 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
   return (
     <Sticker bg={cardBg} tilt={cardTilt} tappable={asLink} className="relative">
       {shareRow}
+      {chipRow}
       {nav}
       {addressStrip}
     </Sticker>

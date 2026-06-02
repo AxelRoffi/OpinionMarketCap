@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import {
   Sticker,
   Chip,
+  CategoryLink,
   Btn,
   MonoNum,
   ProgressBar,
@@ -107,18 +108,24 @@ function PoolCard({ pool, index }: { pool: Pool; index: number }) {
   const pct = fundingPct(pool);
   const isFilled = pool.status === 'filled';
 
+  // Lifted out of the navigation Link so the category chip can be a Link to
+  // /category/[slug] without nesting <a> tags.
   return (
-    <Link href={`/pools/${pool.id}`} className="block">
-      <Sticker bg={bg} tilt={tilt} shadow={5} tappable className="p-5">
-        <div className="flex items-center justify-between">
-          <Chip bg={chipBg} sm>{cat.emoji} {(pool.categoryLabel ?? cat.label).toUpperCase()}</Chip>
-          {isFilled ? (
-            <Chip bg="cool" sm>✓ FILLED</Chip>
-          ) : (
-            <Chip bg="ink" sm>#{pool.id}</Chip>
-          )}
-        </div>
+    <Sticker bg={bg} tilt={tilt} shadow={5} tappable className="p-5">
+      <div className="flex items-center justify-between">
+        {pool.categoryLabel ? (
+          <CategoryLink name={pool.categoryLabel} sm />
+        ) : (
+          <Chip bg={chipBg} sm>{cat.emoji} {cat.label.toUpperCase()}</Chip>
+        )}
+        {isFilled ? (
+          <Chip bg="cool" sm>✓ FILLED</Chip>
+        ) : (
+          <Chip bg="ink" sm>#{pool.id}</Chip>
+        )}
+      </div>
 
+      <Link href={`/pools/${pool.id}`} className="block">
         <div className="font-display text-[11px] font-bold italic opacity-85 mt-3">
           &ldquo;{pool.question}&rdquo;
         </div>
@@ -154,8 +161,8 @@ function PoolCard({ pool, index }: { pool: Pool; index: number }) {
             <Countdown deadlineMs={pool.deadlineMs} compact />
           </div>
         </div>
-      </Sticker>
-    </Link>
+      </Link>
+    </Sticker>
   );
 }
 

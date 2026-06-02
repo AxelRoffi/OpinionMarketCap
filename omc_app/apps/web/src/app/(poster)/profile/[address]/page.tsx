@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   Sticker,
   Chip,
+  CategoryLink,
   MonoNum,
   Btn,
   WalletBtn,
@@ -351,13 +352,23 @@ function BestTakeCard({ take }: { take: DisplayTake }) {
   const chipBg = bg === 'paper' || bg === 'canvas' ? 'ink' : 'paper';
   const isLoss = real.delta < 0;
 
+  // Chip row lifted out of the outer Link so category links don't nest <a>s.
+  const categoryChips = (real.categories ?? []).slice(0, 3);
   return (
-    <Link href={takeHref(real.id, real.question)} className="block">
-      <Sticker bg={bg} tilt={-2} shadow={6} tappable className="p-6 md:p-8 max-w-2xl">
-        <div className="flex items-center justify-between">
-          <Chip bg={chipBg}>{cat.emoji} {(real.categoryLabel ?? cat.label).toUpperCase()}</Chip>
-          <Chip bg="ink" sm>BEST TAKE</Chip>
+    <Sticker bg={bg} tilt={-2} shadow={6} tappable className="p-6 md:p-8 max-w-2xl">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center flex-wrap gap-1.5">
+          {categoryChips.length > 0 ? (
+            categoryChips.map((c) => <CategoryLink key={c} name={c} />)
+          ) : real.categoryLabel ? (
+            <CategoryLink name={real.categoryLabel} />
+          ) : (
+            <Chip bg={chipBg}>{cat.emoji} {cat.label.toUpperCase()}</Chip>
+          )}
         </div>
+        <Chip bg="ink" sm>BEST TAKE</Chip>
+      </div>
+      <Link href={takeHref(real.id, real.question)} className="block">
         <div className="font-display text-[12px] md:text-[13px] font-bold italic opacity-85 mt-3">
           &ldquo;{real.question}&rdquo;
         </div>
@@ -370,7 +381,7 @@ function BestTakeCard({ take }: { take: DisplayTake }) {
             {fmtDelta(real.delta)}
           </MonoNum>
         </div>
-      </Sticker>
-    </Link>
+      </Link>
+    </Sticker>
   );
 }

@@ -35,6 +35,8 @@ export type DisplayTake = {
   category: CatKey;
   /** Optional raw chain category label, preserved for full-fidelity display. */
   categoryLabel?: string;
+  /** All chain category names this opinion is tagged with (1–3). */
+  categories?: string[];
   question: string;
   answer: string;
   heldBy: string;

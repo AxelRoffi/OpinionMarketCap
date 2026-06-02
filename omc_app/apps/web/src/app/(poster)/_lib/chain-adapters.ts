@@ -99,6 +99,7 @@ export function toDisplayTake(op: ChainOpinion): DisplayTake {
     id: op.id,
     category: cat,
     categoryLabel: chainCat || undefined,
+    categories: op.categories ?? [],
     question: op.question,
     answer: (op.currentAnswer || '').toUpperCase() || 'UNANSWERED',
     heldBy: shortAddress(op.currentAnswerOwner),

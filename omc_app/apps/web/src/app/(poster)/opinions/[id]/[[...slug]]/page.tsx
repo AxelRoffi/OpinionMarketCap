@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   Sticker,
   Chip,
+  CategoryLink,
   MonoNum,
   Sparkline,
   RangeToggle,
@@ -157,8 +158,17 @@ function DetailBody({
         <div className="lg:col-span-3 space-y-5">
           {/* Hero sticker */}
           <Sticker bg={heroBg} tilt={-2} shadow={6} className="p-6 md:p-8">
-            <div className="flex items-center justify-between gap-3">
-              <Chip bg={chipBg}>{cat.emoji} {(take.categoryLabel ?? cat.label).toUpperCase()}</Chip>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center flex-wrap gap-1.5">
+                {(take.categories && take.categories.length > 0
+                  ? take.categories
+                  : take.categoryLabel
+                    ? [take.categoryLabel]
+                    : []
+                ).map((c) => (
+                  <CategoryLink key={c} name={c} />
+                ))}
+              </div>
               <div className="flex items-center gap-2">
                 <ShareTake take={take} size="sm" />
                 <Chip bg="ink" sm>#{take.id}</Chip>

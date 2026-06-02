@@ -9,6 +9,7 @@ import { takeHref } from '../../_lib/slug';
 import {
   Sticker,
   Chip,
+  CategoryLink,
   Btn,
   MonoNum,
   ProgressBar,
@@ -110,7 +111,11 @@ export default function PoolDetailPage({
           {/* Hero sticker */}
           <Sticker bg={heroBg} tilt={-2} shadow={6} className="p-6 md:p-8">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <Chip bg={chipBg}>{cat.emoji} {(pool.categoryLabel ?? cat.label).toUpperCase()}</Chip>
+              {pool.categoryLabel ? (
+                <CategoryLink name={pool.categoryLabel} />
+              ) : (
+                <Chip bg={chipBg}>{cat.emoji} {cat.label.toUpperCase()}</Chip>
+              )}
               <div className="flex items-center gap-1.5">
                 <Chip bg="ink" sm>POOL #{pool.id}</Chip>
                 {isFilled && <Chip bg="cool" sm>✓ FILLED</Chip>}

@@ -1,6 +1,7 @@
 export { Sticker } from './Sticker';
 export { Btn } from './Btn';
 export { Chip } from './Chip';
+export { CategoryLink } from './CategoryLink';
 export { MonoNum } from './MonoNum';
 export { Halftone } from './Halftone';
 export { Wobble } from './Wobble';
