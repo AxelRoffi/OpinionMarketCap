@@ -230,10 +230,16 @@ export default async function OpenGraphImage({ params }: ImageProps) {
           &ldquo;{question}&rdquo;
         </div>
 
-        {/* Answer — the hero element */}
+        {/* Answer — the hero element. Three-step font-size auto-fit keeps
+            long answers like "DONALD J. TRUMP" from wrapping into the
+            bottom divider. Numbers are tuned so the longest realistic
+            answer (~28 chars) still fits on two lines without overflow. */}
         <div
           style={{
-            fontSize: answer.length > 18 ? 116 : 156,
+            fontSize:
+              answer.length > 22 ? 84 :
+              answer.length > 14 ? 116 :
+              156,
             fontWeight: 900,
             letterSpacing: -4,
             marginTop: 10,
@@ -241,6 +247,7 @@ export default async function OpenGraphImage({ params }: ImageProps) {
             maxWidth: 1060,
             display: 'flex',
             color: INK,
+            wordBreak: 'break-word',
           }}
         >
           {answer}.
