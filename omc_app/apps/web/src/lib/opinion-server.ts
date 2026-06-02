@@ -101,54 +101,90 @@ function getClient() {
 }
 
 /**
+ * Module-level in-memory cache. Vercel reuses Function instances across
+ * invocations, so successful chain reads stick. This is critical because
+ * Vercel's egress IPs hit public-RPC rate limits more aggressively than
+ * residential, and a transient RPC failure would otherwise cause the OG
+ * route to render its splash fallback — Vercel's CDN then caches that
+ * splash as `immutable, max-age=1y`, locking the URL onto the wrong
+ * image until the route's build hash changes.
+ *
+ * `expires` is checked but stale entries are *also* served on RPC error
+ * (graceful degradation: stale data beats the splash).
+ */
+type CacheEntry = { data: OpinionData; expires: number };
+const opinionCache = new Map<number, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min — same cadence as `revalidate`
+
+async function fetchOpinionFromChain(opinionId: number): Promise<OpinionData | null> {
+  const client = getClient();
+  // Fetch opinion data + categories in parallel. Categories live on
+  // OpinionExtensionsV2 — V4's getOpinionDetails struct exposes a
+  // categories field for ABI compatibility but always returns it empty.
+  const [opinionResult, categoriesResult] = await Promise.all([
+    client.readContract({
+      address: CONTRACTS.OPINION_CORE,
+      abi: GET_OPINION_DETAILS_ABI,
+      functionName: 'getOpinionDetails',
+      args: [BigInt(opinionId)],
+    }),
+    client
+      .readContract({
+        address: CONTRACTS.OPINION_EXTENSIONS,
+        abi: GET_OPINION_CATEGORIES_ABI,
+        functionName: 'getOpinionCategories',
+        args: [BigInt(opinionId)],
+      })
+      // If the extension contract reverts (e.g. opinion id past the end),
+      // we still want the opinion data — empty categories is acceptable.
+      .catch(() => [] as readonly string[]),
+  ]);
+
+  if (!opinionResult.question) return null;
+
+  return {
+    id: opinionId,
+    question: opinionResult.question,
+    currentAnswer: opinionResult.currentAnswer,
+    creator: opinionResult.creator,
+    questionOwner: opinionResult.questionOwner,
+    currentAnswerOwner: opinionResult.currentAnswerOwner,
+    nextPrice: opinionResult.nextPrice,
+    lastPrice: opinionResult.lastPrice,
+    totalVolume: opinionResult.totalVolume,
+    isActive: opinionResult.isActive,
+    salePrice: opinionResult.salePrice,
+    categories: [...categoriesResult],
+  };
+}
+
+/**
  * Fetch opinion data server-side for metadata + OG image generation.
- * Returns null when the opinion doesn't exist or the chain call fails.
+ *
+ *  - Returns cached fresh data when available (no RPC hit).
+ *  - On RPC failure, returns stale cached data if any (graceful degrade).
+ *  - Only returns null if the opinion has never been successfully fetched
+ *    AND the chain call fails. Callers should treat null as "render the
+ *    splash AND set a short cache TTL on it".
  */
 export async function getOpinionForMeta(opinionId: number): Promise<OpinionData | null> {
+  const cached = opinionCache.get(opinionId);
+  const now = Date.now();
+  if (cached && cached.expires > now) return cached.data;
+
   try {
-    const client = getClient();
-    // Fetch opinion data + categories in parallel. Categories live on
-    // OpinionExtensionsV2 — V4's getOpinionDetails struct exposes a
-    // categories field for ABI compatibility but always returns it empty.
-    const [opinionResult, categoriesResult] = await Promise.all([
-      client.readContract({
-        address: CONTRACTS.OPINION_CORE,
-        abi: GET_OPINION_DETAILS_ABI,
-        functionName: 'getOpinionDetails',
-        args: [BigInt(opinionId)],
-      }),
-      client
-        .readContract({
-          address: CONTRACTS.OPINION_EXTENSIONS,
-          abi: GET_OPINION_CATEGORIES_ABI,
-          functionName: 'getOpinionCategories',
-          args: [BigInt(opinionId)],
-        })
-        // If the extension contract reverts (e.g. opinion id past the end),
-        // we still want the opinion data — empty categories is acceptable.
-        .catch(() => [] as readonly string[]),
-    ]);
-
-    // Empty question means the opinion id is past the end of the array
-    // (V4 returns a zeroed struct rather than reverting in that case).
-    if (!opinionResult.question) return null;
-
-    return {
-      id: opinionId,
-      question: opinionResult.question,
-      currentAnswer: opinionResult.currentAnswer,
-      creator: opinionResult.creator,
-      questionOwner: opinionResult.questionOwner,
-      currentAnswerOwner: opinionResult.currentAnswerOwner,
-      nextPrice: opinionResult.nextPrice,
-      lastPrice: opinionResult.lastPrice,
-      totalVolume: opinionResult.totalVolume,
-      isActive: opinionResult.isActive,
-      salePrice: opinionResult.salePrice,
-      categories: [...categoriesResult],
-    };
+    const fresh = await fetchOpinionFromChain(opinionId);
+    if (fresh) {
+      opinionCache.set(opinionId, { data: fresh, expires: now + CACHE_TTL_MS });
+      return fresh;
+    }
+    // Confirmed non-existent on chain (empty question) — clear any stale.
+    opinionCache.delete(opinionId);
+    return null;
   } catch (error) {
     console.error(`Error fetching opinion ${opinionId} for metadata:`, error);
+    // Serve stale data when chain read fails — far better than splash.
+    if (cached) return cached.data;
     return null;
   }
 }

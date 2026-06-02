@@ -5,7 +5,9 @@ import { categoryDisplay, type CategoryColor } from '@/lib/categories';
 
 export const runtime = 'nodejs';
 // Revalidate every 5 minutes — opinions move fast, but rendering on every
-// share unfurl would hammer the RPC.
+// share unfurl would hammer the RPC. Bumping this comment also bumps the
+// route's build hash so Vercel CDN drops any stale image that was rendered
+// during a prior RPC-failure window (rev: 2026-06-02 v3 — categories fix).
 export const revalidate = 300;
 
 export const size = { width: 1200, height: 630 };
@@ -80,7 +82,11 @@ export default async function OpenGraphImage({ params }: ImageProps) {
     ? await getOpinionForMeta(opinionId)
     : null;
 
-  // Fallback splash for invalid / non-existent ids.
+  // Fallback splash for invalid / non-existent ids OR transient RPC failures.
+  // Short cache (60s) so a single failed chain read doesn't poison Vercel's
+  // CDN for a year — the next scrape gets a fresh attempt. Without this,
+  // ImageResponse defaults to `immutable, max-age=31536000`, which would
+  // lock the URL onto the splash even after the chain becomes reachable.
   if (!opinion) {
     return new ImageResponse(
       (
@@ -109,7 +115,10 @@ export default async function OpenGraphImage({ params }: ImageProps) {
           </div>
         </div>
       ),
-      size,
+      {
+        ...size,
+        headers: { 'Cache-Control': 'public, max-age=60, must-revalidate' },
+      },
     );
   }
 
