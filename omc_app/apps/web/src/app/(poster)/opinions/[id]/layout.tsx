@@ -39,6 +39,17 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   const title = `"${opinion.question}" → ${answer}`;
   const description = `Floor: $${price.toFixed(2)} USDC · Trade the take on OpinionMarketCap. Pay the next price to overwrite the answer and become king.`;
 
+  // Force the dynamic per-opinion OG image into BOTH og:image and twitter:image.
+  // Next.js auto-discovery of opengraph-image.tsx only wires og:image; without
+  // an explicit twitter.images here, the parent root layout's static
+  // /og-image.png leaks through (Twitter prefers twitter:image when present).
+  const ogImage = {
+    url: `${BASE_URL}/opinions/${opinionId}/opengraph-image`,
+    width: 1200,
+    height: 630,
+    alt: `${opinion.question} → ${answer}`,
+  };
+
   return {
     title,
     description,
@@ -51,12 +62,14 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       url: canonicalUrl,
       siteName: DEFAULT_META.siteName,
       tags: opinion.categories,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       site: DEFAULT_META.twitterHandle,
       title,
       description,
+      images: [ogImage.url],
     },
     robots: {
       index: opinion.isActive,

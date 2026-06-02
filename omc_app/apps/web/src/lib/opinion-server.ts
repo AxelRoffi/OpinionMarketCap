@@ -1,142 +1,122 @@
 /**
- * Server-side opinion data fetching for SEO metadata
- * This module runs only on the server and doesn't use React hooks
+ * Server-side opinion data fetching for SEO metadata and dynamic OG image
+ * generation. Runs on Vercel Functions only — no React hooks, no wagmi.
+ *
+ * Talks directly to OpinionCoreV4 via getOpinionDetails (single call, returns
+ * the full tuple including categories — no second hop to OpinionExtensions
+ * needed). Previous version called the V3 `getOpinion(uint256)` which
+ * reverts on V4 — every share-unfurl returned the "Opinion not found"
+ * fallback and the root OG/Twitter tags leaked through.
  */
 
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, fallback, http } from 'viem';
 import { base } from 'viem/chains';
 import { CONTRACTS } from './contracts';
 
-// Opinion type for server-side use
 export interface OpinionData {
   id: number;
   question: string;
   currentAnswer: string;
-  currentAnswerDescription: string;
   creator: string;
   questionOwner: string;
   currentAnswerOwner: string;
   nextPrice: bigint;
   lastPrice: bigint;
   totalVolume: bigint;
-  createdAt: bigint;
-  lastActivityAt: bigint;
   isActive: boolean;
   salePrice: bigint;
   categories: string[];
 }
 
-// ABI for getOpinion
-const GET_OPINION_ABI = [
+// V4 `getOpinionDetails(uint256)` — single source of truth for opinion reads.
+// Categories ship in the same tuple, so no second hop to OpinionExtensions.
+const GET_OPINION_DETAILS_ABI = [
   {
     inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
-    name: 'getOpinion',
+    name: 'getOpinionDetails',
     outputs: [
       {
         components: [
-          { name: 'question', type: 'string' },
-          { name: 'currentAnswer', type: 'string' },
-          { name: 'currentAnswerDescription', type: 'string' },
-          { name: 'creator', type: 'address' },
-          { name: 'questionOwner', type: 'address' },
-          { name: 'currentAnswerOwner', type: 'address' },
-          { name: 'nextPrice', type: 'uint96' },
-          { name: 'lastPrice', type: 'uint96' },
-          { name: 'totalVolume', type: 'uint96' },
-          { name: 'createdAt', type: 'uint64' },
-          { name: 'lastActivityAt', type: 'uint64' },
-          { name: 'isActive', type: 'bool' },
-          { name: 'salePrice', type: 'uint96' },
+          { internalType: 'uint96', name: 'lastPrice',                type: 'uint96' },
+          { internalType: 'uint96', name: 'nextPrice',                type: 'uint96' },
+          { internalType: 'uint96', name: 'totalVolume',              type: 'uint96' },
+          { internalType: 'uint96', name: 'salePrice',                type: 'uint96' },
+          { internalType: 'address', name: 'creator',                 type: 'address' },
+          { internalType: 'address', name: 'questionOwner',           type: 'address' },
+          { internalType: 'address', name: 'currentAnswerOwner',      type: 'address' },
+          { internalType: 'bool',    name: 'isActive',                type: 'bool' },
+          { internalType: 'string',  name: 'question',                type: 'string' },
+          { internalType: 'string',  name: 'currentAnswer',           type: 'string' },
+          { internalType: 'string',  name: 'currentAnswerDescription',type: 'string' },
+          { internalType: 'string',  name: 'ipfsHash',                type: 'string' },
+          { internalType: 'string',  name: 'link',                    type: 'string' },
+          { internalType: 'string[]',name: 'categories',              type: 'string[]' },
         ],
+        internalType: 'struct OpinionStructs.Opinion',
         name: '',
-        type: 'tuple'
-      }
+        type: 'tuple',
+      },
     ],
     stateMutability: 'view',
-    type: 'function'
-  }
+    type: 'function',
+  },
 ] as const;
 
-// ABI for getOpinionCategories from OpinionExtensions
-const GET_CATEGORIES_ABI = [
+const NEXT_OPINION_ID_ABI = [
   {
-    inputs: [{ internalType: 'uint256', name: 'opinionId', type: 'uint256' }],
-    name: 'getOpinionCategories',
-    outputs: [{ internalType: 'string[]', name: '', type: 'string[]' }],
+    inputs: [],
+    name: 'nextOpinionId',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     stateMutability: 'view',
-    type: 'function'
-  }
+    type: 'function',
+  },
 ] as const;
 
-// Create a singleton client for server-side use
-const getClient = () => {
+// Multiple public RPCs in a fallback chain — mainnet.base.org sometimes
+// 403s non-browser callers, publicnode is the most permissive we've seen.
+// Vercel server-side egress isn't browser-like, so the order matters.
+function getClient() {
   return createPublicClient({
     chain: base,
-    transport: http('https://mainnet.base.org'),
+    transport: fallback([
+      http('https://base-rpc.publicnode.com'),
+      http('https://base.llamarpc.com'),
+      http('https://mainnet.base.org'),
+    ]),
   });
-};
+}
 
 /**
- * Fetch opinion data server-side for metadata generation
- * Uses caching with revalidation for performance
+ * Fetch opinion data server-side for metadata + OG image generation.
+ * Returns null when the opinion doesn't exist or the chain call fails.
  */
 export async function getOpinionForMeta(opinionId: number): Promise<OpinionData | null> {
   try {
     const client = getClient();
+    const result = await client.readContract({
+      address: CONTRACTS.OPINION_CORE,
+      abi: GET_OPINION_DETAILS_ABI,
+      functionName: 'getOpinionDetails',
+      args: [BigInt(opinionId)],
+    });
 
-    // Fetch opinion data and categories in parallel
-    const [opinionResult, categoriesResult] = await Promise.all([
-      client.readContract({
-        address: CONTRACTS.OPINION_CORE,
-        abi: GET_OPINION_ABI,
-        functionName: 'getOpinion',
-        args: [BigInt(opinionId)],
-      }),
-      client.readContract({
-        address: CONTRACTS.OPINION_EXTENSIONS,
-        abi: GET_CATEGORIES_ABI,
-        functionName: 'getOpinionCategories',
-        args: [BigInt(opinionId)],
-      }).catch(() => [] as string[]), // Fallback if categories fail
-    ]);
-
-    const opinion = opinionResult as {
-      question: string;
-      currentAnswer: string;
-      currentAnswerDescription: string;
-      creator: string;
-      questionOwner: string;
-      currentAnswerOwner: string;
-      nextPrice: bigint;
-      lastPrice: bigint;
-      totalVolume: bigint;
-      createdAt: bigint;
-      lastActivityAt: bigint;
-      isActive: boolean;
-      salePrice: bigint;
-    };
-
-    // Check if opinion exists (question shouldn't be empty)
-    if (!opinion.question) {
-      return null;
-    }
+    // Empty question means the opinion id is past the end of the array
+    // (V4 returns a zeroed struct rather than reverting in that case).
+    if (!result.question) return null;
 
     return {
       id: opinionId,
-      question: opinion.question,
-      currentAnswer: opinion.currentAnswer,
-      currentAnswerDescription: opinion.currentAnswerDescription,
-      creator: opinion.creator,
-      questionOwner: opinion.questionOwner,
-      currentAnswerOwner: opinion.currentAnswerOwner,
-      nextPrice: opinion.nextPrice,
-      lastPrice: opinion.lastPrice,
-      totalVolume: opinion.totalVolume,
-      createdAt: opinion.createdAt,
-      lastActivityAt: opinion.lastActivityAt,
-      isActive: opinion.isActive,
-      salePrice: opinion.salePrice,
-      categories: categoriesResult as string[],
+      question: result.question,
+      currentAnswer: result.currentAnswer,
+      creator: result.creator,
+      questionOwner: result.questionOwner,
+      currentAnswerOwner: result.currentAnswerOwner,
+      nextPrice: result.nextPrice,
+      lastPrice: result.lastPrice,
+      totalVolume: result.totalVolume,
+      isActive: result.isActive,
+      salePrice: result.salePrice,
+      categories: [...result.categories],
     };
   } catch (error) {
     console.error(`Error fetching opinion ${opinionId} for metadata:`, error);
@@ -145,25 +125,16 @@ export async function getOpinionForMeta(opinionId: number): Promise<OpinionData 
 }
 
 /**
- * Get total number of opinions (for sitemap)
+ * Total opinion count for sitemap generation.
  */
 export async function getTotalOpinions(): Promise<number> {
   try {
     const client = getClient();
-    const nextOpinionId = await client.readContract({
+    const nextOpinionId = (await client.readContract({
       address: CONTRACTS.OPINION_CORE,
-      abi: [
-        {
-          inputs: [],
-          name: 'nextOpinionId',
-          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-      ],
+      abi: NEXT_OPINION_ID_ABI,
       functionName: 'nextOpinionId',
-    }) as bigint;
-
+    })) as bigint;
     return Number(nextOpinionId) - 1;
   } catch (error) {
     console.error('Error fetching opinion count:', error);
