@@ -42,10 +42,10 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   const description = `Floor: $${price.toFixed(2)} USDC · Trade the take on OpinionMarketCap. Pay the next price to overwrite the answer and become king.`;
 
   // Stable OG image URL. Doesn't change across deploys, so X/FB/etc. can
-  // cache it indefinitely — code changes to the renderer at /api/og/opinion/[id]
+  // cache it indefinitely — code changes to the renderer at /api/share/[id]
   // are picked up via stale-while-revalidate without rotating the URL.
   const ogImage = {
-    url: `${BASE_URL}/api/og/opinion/${opinionId}`,
+    url: `${BASE_URL}/api/share/${opinionId}`,
     width: 1200,
     height: 630,
     alt: `${opinion.question} → ${answer}`,
