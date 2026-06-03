@@ -9,9 +9,11 @@ type LayoutProps = {
 
 /**
  * Server-side metadata for /opinions/[id]/* — drives X/Twitter cards, Farcaster
- * frame unfurls, and search-engine previews. The actual OG image is rendered
- * by the colocated `opengraph-image.tsx` route, which Next.js auto-discovers
- * and wires into both `og:image` and `twitter:image` for every child route.
+ * frame unfurls, and search-engine previews. The OG image lives at the stable
+ * URL `/api/og/opinion/[id]` (NOT a colocated opengraph-image.tsx). The auto-
+ * discovered route generates a hashed URL that changes every deploy, which
+ * silently invalidated X's cached image. A stable explicit URL lets X cache
+ * indefinitely while we still ship code changes to the image renderer.
  */
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const { id } = await params;
@@ -39,12 +41,17 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   const title = `"${opinion.question}" → ${answer}`;
   const description = `Floor: $${price.toFixed(2)} USDC · Trade the take on OpinionMarketCap. Pay the next price to overwrite the answer and become king.`;
 
-  // Both og:image and twitter:image are wired automatically by Next.js from
-  // the colocated opengraph-image.tsx file (with a stable build-hash suffix).
-  // We deliberately do NOT set `openGraph.images` or `twitter.images` here —
-  // an explicit string would override the auto-discovered URL with a path
-  // that doesn't actually serve a PNG. The root layout's static twitter
-  // images override is also removed in this PR to stop it leaking through.
+  // Stable OG image URL. Doesn't change across deploys, so X/FB/etc. can
+  // cache it indefinitely — code changes to the renderer at /api/og/opinion/[id]
+  // are picked up via stale-while-revalidate without rotating the URL.
+  const ogImage = {
+    url: `${BASE_URL}/api/og/opinion/${opinionId}`,
+    width: 1200,
+    height: 630,
+    alt: `${opinion.question} → ${answer}`,
+    type: 'image/png',
+  };
+
   return {
     title,
     description,
@@ -57,12 +64,14 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       url: canonicalUrl,
       siteName: DEFAULT_META.siteName,
       tags: opinion.categories,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       site: DEFAULT_META.twitterHandle,
       title,
       description,
+      images: [ogImage.url],
     },
     robots: {
       index: opinion.isActive,
