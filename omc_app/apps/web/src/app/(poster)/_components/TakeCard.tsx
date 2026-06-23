@@ -53,7 +53,7 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
         &ldquo;{take.question}&rdquo;
       </div>
       <div className="font-display font-black text-[28px] leading-none tracking-tighter mt-1">
-        {take.answer}.
+        {take.answer}
       </div>
       <div className="flex justify-between items-end mt-3">
         <span className="font-display text-[9px] font-extrabold uppercase tracking-[0.12em] opacity-60">

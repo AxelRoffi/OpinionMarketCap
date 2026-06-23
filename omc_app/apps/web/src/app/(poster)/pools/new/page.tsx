@@ -211,7 +211,7 @@ export default function NewPoolPage() {
                 &ldquo;{selectedTake.question}&rdquo;
               </div>
               <div className="font-black text-[18px] mt-0.5">
-                Current: {selectedTake.answer}.
+                Current: {selectedTake.answer}
               </div>
             </div>
           )}

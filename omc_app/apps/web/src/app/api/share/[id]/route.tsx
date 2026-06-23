@@ -227,7 +227,7 @@ export async function GET(
               wordBreak: 'break-word',
             }}
           >
-            {answer}.
+            {answer}
           </div>
           <div
             style={{

@@ -102,7 +102,7 @@ function ListingCard({ take, index }: { take: DisplayTake; index: number }) {
           &ldquo;{take.question}&rdquo;
         </div>
         <div className="font-display font-black text-[24px] leading-none tracking-tighter mt-1 line-clamp-2 break-words">
-          {take.answer}.
+          {take.answer}
         </div>
       </Link>
 

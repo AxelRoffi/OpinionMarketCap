@@ -270,7 +270,7 @@ function PodiumCard({
             best take
           </div>
           <div className="font-display font-black text-[15px] tracking-tight mt-0.5 truncate">
-            {take.answer}.
+            {take.answer}
           </div>
         </Link>
       )}
@@ -322,7 +322,7 @@ function Row({
             href={takeHref(take.id, take.question)}
             className="font-display font-extrabold text-[12px] hover:underline tracking-tight"
           >
-            {take.answer}.
+            {take.answer}
           </Link>
         ) : (
           <span className="text-ink/40">—</span>

@@ -178,7 +178,7 @@ function DetailBody({
               &ldquo;{take.question}&rdquo;
             </div>
             <div className="font-display font-black text-[64px] md:text-[88px] lg:text-[96px] leading-[0.88] tracking-[-0.04em] mt-2 break-words">
-              {take.answer}.
+              {take.answer}
             </div>
             <div className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="min-w-0">

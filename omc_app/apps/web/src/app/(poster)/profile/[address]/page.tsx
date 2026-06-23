@@ -373,7 +373,7 @@ function BestTakeCard({ take }: { take: DisplayTake }) {
           &ldquo;{real.question}&rdquo;
         </div>
         <div className="font-display font-black text-[48px] md:text-[72px] leading-[0.9] tracking-[-0.04em] mt-1">
-          {real.answer}.
+          {real.answer}
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <MonoNum className="text-[20px] md:text-[24px]">{fmtUSD(real.price)}</MonoNum>

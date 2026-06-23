@@ -146,7 +146,7 @@ function HeroSticker({
         &ldquo;{take.question}&rdquo;
       </div>
       <div className="mt-1 font-display font-black text-[22px] leading-[0.95] tracking-tight max-w-[180px] break-words line-clamp-2">
-        {take.answer}.
+        {take.answer}
       </div>
       <div className="mt-2 flex justify-between gap-3">
         <MonoNum>{fmtUSD(take.price)}</MonoNum>

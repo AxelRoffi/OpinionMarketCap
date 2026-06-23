@@ -32,7 +32,7 @@ export function EarningRow({ rec, showRoyalty = true }: EarningRowProps) {
             &ldquo;{rec.question}&rdquo;
           </div>
           <div className="font-display text-[14px] md:text-[15px] font-extrabold text-ink truncate">
-            <span className="uppercase tracking-tight">{rec.answer}.</span>
+            <span className="uppercase tracking-tight">{rec.answer}</span>
             <span className="text-ink/40 font-bold"> taken by </span>
             <span className="text-ink">@{rec.takenBy}</span>
           </div>
