@@ -348,9 +348,9 @@ function Step2({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const [showDescription, setShowDescription] = useState(
-    description.length > 0 || link.length > 0,
-  );
+  // Default OPEN so description + link are visible immediately at mint time.
+  // Toggle still lets the user collapse them (both are optional).
+  const [showDescription, setShowDescription] = useState(true);
 
   return (
     <div>
