@@ -161,6 +161,7 @@ export const OPINION_CORE_ABI = [
       { internalType: 'string', name: 'question', type: 'string' },
       { internalType: 'string', name: 'answer', type: 'string' },
       { internalType: 'string', name: 'description', type: 'string' },
+      { internalType: 'string', name: 'link', type: 'string' },
       { internalType: 'uint96', name: 'initialPrice', type: 'uint96' },
       { internalType: 'string[]', name: 'opinionCategories', type: 'string[]' }
     ],

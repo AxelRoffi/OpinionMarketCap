@@ -30,6 +30,7 @@ type Step = 0 | 1 | 2 | 3; // 3 = success
 const QUESTION_MAX = 60;
 const ANSWER_MAX = 60;
 const DESCRIPTION_MAX = 120;
+const LINK_MAX = 260;
 
 // V4 OpinionCore mint fee — flat anti-spam fee paid to treasury, in addition
 // to the initialPrice that locks into the contract.
@@ -55,6 +56,7 @@ export default function CreatePage() {
   const [category, setCategory] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
   const [price, setPrice] = useState(25);
 
   const fee = SPAM_FEE;
@@ -82,6 +84,7 @@ export default function CreatePage() {
       question: normalizeQuestion(question),
       answer: answer.trim(),
       description: description.trim(),
+      link: link.trim(),
       initialPriceUSDC: price,
       categories: [category],
     });
@@ -200,6 +203,8 @@ export default function CreatePage() {
               setAnswer={setAnswer}
               description={description}
               setDescription={setDescription}
+              link={link}
+              setLink={setLink}
               canAdvance={canAdvance2}
               onBack={() => setStep(0)}
               onNext={() => setStep(2)}
@@ -327,6 +332,8 @@ function Step2({
   setAnswer,
   description,
   setDescription,
+  link,
+  setLink,
   canAdvance,
   onBack,
   onNext,
@@ -335,11 +342,15 @@ function Step2({
   setAnswer: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
+  link: string;
+  setLink: (v: string) => void;
   canAdvance: boolean;
   onBack: () => void;
   onNext: () => void;
 }) {
-  const [showDescription, setShowDescription] = useState(description.length > 0);
+  const [showDescription, setShowDescription] = useState(
+    description.length > 0 || link.length > 0,
+  );
 
   return (
     <div>
@@ -372,21 +383,36 @@ function Step2({
         onClick={() => setShowDescription((v) => !v)}
         className="mt-4 font-display text-[10px] font-extrabold tracking-[0.12em] uppercase text-ink/55 hover:text-ink"
       >
-        {showDescription ? '− hide description' : '+ add description (optional)'}
+        {showDescription ? '− hide description / link' : '+ add description / link (optional)'}
       </button>
 
       {showDescription && (
-        <div className="mt-2">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
-            rows={2}
-            placeholder="defend your take in one line"
-            aria-label="Optional description for your take"
-            className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
-          />
-          <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
-            {description.length}/{DESCRIPTION_MAX}
+        <div className="mt-2 space-y-3">
+          <div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+              rows={2}
+              placeholder="defend your take in one line"
+              aria-label="Optional description for your take"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-display font-semibold text-[13px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all resize-none"
+            />
+            <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+              {description.length}/{DESCRIPTION_MAX}
+            </div>
+          </div>
+          <div>
+            <input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value.slice(0, LINK_MAX))}
+              placeholder="https://x.com/… or https://… (optional source)"
+              aria-label="Optional source link backing your take"
+              className="w-full bg-canvas border-2 border-ink rounded-lg px-3 py-2 font-mono font-semibold text-[12px] text-ink placeholder:text-ink/45 focus:outline-none focus:shadow-[3px_3px_0_var(--ink)] focus:-translate-x-[1px] focus:-translate-y-[1px] transition-all"
+            />
+            <div className="text-[10px] font-mono font-extrabold text-ink/40 text-right mt-1">
+              {link.length}/{LINK_MAX}
+            </div>
           </div>
         </div>
       )}
