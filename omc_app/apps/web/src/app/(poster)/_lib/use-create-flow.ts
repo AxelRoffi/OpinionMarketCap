@@ -3,9 +3,10 @@
 /**
  * Linear state machine for /create's MINT flow.
  *
- * The V4 contract's createOpinion(...) needs:
+ * The V5 contract's createOpinion(...) needs:
  *   question, answer, description (≤120 chars per the deployed validator),
- *   initialPrice (1–100 USDC), categories[] (1–3, must match chain whitelist)
+ *   link (optional source URL, ≤260 chars), initialPrice (1–100 USDC),
+ *   categories[] (1–3, must match chain whitelist)
  * and pulls `initialPrice + spamFee` (=2 USDC) from the caller via
  * pre-approved USDC allowance against OPINION_CORE.
  *
@@ -39,6 +40,8 @@ export type CreateArgs = {
   question: string;
   answer: string;
   description: string;
+  /** Optional source URL backing the answer (≤260 chars). Empty string = none. */
+  link: string;
   /** Initial floor in USDC (1–100). */
   initialPriceUSDC: number;
   /** 1–3 chain category strings (must match whitelist). */
@@ -192,7 +195,8 @@ export function useCreateOpinionFlow(currentPriceUSDC: number): CreateFlow {
       address: CONTRACTS.OPINION_CORE,
       abi: OPINION_CORE_ABI,
       functionName: 'createOpinion',
-      args: [args.question, args.answer, args.description, priceWei, args.categories],
+      // V5 signature: question, answer, description, link, initialPrice, categories.
+      args: [args.question, args.answer, args.description, args.link, priceWei, args.categories],
     });
   };
 
