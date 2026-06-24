@@ -67,8 +67,19 @@ export function Nav({ ctaHref = '/create', ctaLabel = 'NEW TAKE', rightSlot, hid
         })}
       </ul>
 
-      {/* Right cluster — wallet button + (optional) NEW TAKE CTA */}
+      {/* Right cluster — profile + wallet button + (optional) NEW TAKE CTA */}
       <div className="flex items-center gap-2 md:gap-3">
+        <Link
+          href="/profile"
+          aria-label="Your profile"
+          title="Your profile — holdings, royalties & cash out"
+          className={cn(
+            'inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border-[2.5px] border-ink bg-canvas text-[15px] shadow-[2px_2px_0_var(--ink)] transition-transform hover:-translate-x-[1px] hover:-translate-y-[1px]',
+            pathname.startsWith('/profile') && 'bg-pop text-paper',
+          )}
+        >
+          <span aria-hidden>👤</span>
+        </Link>
         {rightSlot ?? <WalletBtn size="sm" />}
         {!hideCta && (
           <Btn href={ctaHref} variant="primary" size="sm" star className="hidden sm:inline-flex">
