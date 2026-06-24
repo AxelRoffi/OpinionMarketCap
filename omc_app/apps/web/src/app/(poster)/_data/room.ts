@@ -11,6 +11,8 @@ export type EarningRecord = {
   answer: string;
   category: CatKey;
   takenBy: string;
+  /** Full 0x address (or ENS-like handle) behind `takenBy`, for profile links. */
+  takenByAddress?: string;
   /** Royalty already paid out to the original creator (USDC). */
   royalty: number;
 };
@@ -105,6 +107,7 @@ function buildEarning(takeId: number, takenBy: string, royalty: number): Earning
     answer: t.answer,
     category: t.category,
     takenBy,
+    takenByAddress: t.ownerAddress ?? takenBy,
     royalty,
   };
 }

@@ -106,6 +106,7 @@ export function useUserRoom(handle: string): UserRoomQuery {
         answer: t.answer,
         category: t.category,
         takenBy: t.heldBy,
+        takenByAddress: t.ownerAddress,
         royalty: Math.round(t.price * 0.03 * 100) / 100,
       }));
 

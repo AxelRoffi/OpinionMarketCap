@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MonoNum } from '@/components/poster-arcade';
+import { ClickableAddress } from '@/components/ui/clickable-address';
 import { CAT_MAP, fmtUSD } from '../_data/mock-takes';
 import type { EarningRecord } from '../_data/room';
 import { takeHref } from '../_lib/slug';
@@ -34,7 +35,16 @@ export function EarningRow({ rec, showRoyalty = true }: EarningRowProps) {
           <div className="font-display text-[14px] md:text-[15px] font-extrabold text-ink truncate">
             <span className="uppercase tracking-tight">{rec.answer}</span>
             <span className="text-ink/40 font-bold"> taken by </span>
-            <span className="text-ink">@{rec.takenBy}</span>
+            {rec.takenByAddress ? (
+              <ClickableAddress
+                address={rec.takenByAddress}
+                className="text-ink font-extrabold hover:text-ink hover:underline"
+              >
+                @{rec.takenBy}
+              </ClickableAddress>
+            ) : (
+              <span className="text-ink">@{rec.takenBy}</span>
+            )}
           </div>
         </div>
 
