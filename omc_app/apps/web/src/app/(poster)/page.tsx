@@ -7,6 +7,7 @@ import { MarketToolbar, type SortMode, type CategoryOption } from './_components
 import { CAT_MAP, fmtUSD } from './_data/mock-takes';
 import { useTakes } from './_lib/chain-adapters';
 import { useInfiniteRender } from './_lib/use-infinite-render';
+import { useMarketStats } from '@/hooks/useMarketStats';
 
 export default function V2HotWallPage() {
   const { takes, isLoading, isEmpty, totalOnChain } = useTakes();
@@ -49,7 +50,7 @@ export default function V2HotWallPage() {
     `${sort}|${activeCat}`,
   );
 
-  const totalVolume = takes.reduce((a, t) => a + t.price * Math.max(1, t.trades), 0);
+  const stats = useMarketStats();
   const freshCount = takes.filter((t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000).length;
 
   return (
@@ -96,7 +97,7 @@ export default function V2HotWallPage() {
             🔥 THE FLOOR
           </h2>
           <div className="font-mono font-extrabold text-[12px] md:text-[13px] text-ink/70">
-            <MonoNum>{totalOnChain}</MonoNum> takes · <MonoNum>{fmtUSD(Math.round(totalVolume))}</MonoNum> vol · <MonoNum>{freshCount}</MonoNum> fresh
+            <MonoNum>{totalOnChain}</MonoNum> takes · <MonoNum>{fmtUSD(stats.totalVolume)}</MonoNum> vol · <MonoNum>{stats.uniqueUsers}</MonoNum> traders · <MonoNum>{freshCount}</MonoNum> fresh
           </div>
         </header>
 
