@@ -1,83 +1,99 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Sticker, Btn, Chip, MonoNum, Wobble } from '@/components/poster-arcade';
+import { useMemo, useState } from 'react';
+import { Sticker, Btn, MonoNum, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from './_components/TakeCard';
-import { fmtUSD } from './_data/mock-takes';
+import { MarketToolbar, type SortMode, type CategoryOption } from './_components/MarketToolbar';
+import { CAT_MAP, fmtUSD } from './_data/mock-takes';
 import { useTakes } from './_lib/chain-adapters';
+import { useInfiniteRender } from './_lib/use-infinite-render';
 
 export default function V2HotWallPage() {
   const { takes, isLoading, isEmpty, totalOnChain } = useTakes();
 
-  // Top 8 by trade count. Empty array when chain has nothing — the hero
-  // hides the sticker stack in that case (see `hot.length > 0` below).
-  const hot = useMemo(
-    () => [...takes].sort((a, b) => b.trades - a.trades).slice(0, 8),
-    [takes],
+  const [sort, setSort] = useState<SortMode>('hot');
+  const [activeCat, setActiveCat] = useState<string>('all');
+
+  // Category chips — only categories actually present in the data.
+  const categories = useMemo<CategoryOption[]>(() => {
+    const seen = new Map<string, CategoryOption>();
+    for (const t of takes) {
+      if (!seen.has(t.category)) {
+        const meta = CAT_MAP[t.category];
+        seen.set(t.category, {
+          key: t.category,
+          label: meta?.label ?? t.category,
+          emoji: meta?.emoji ?? '•',
+        });
+      }
+    }
+    return [...seen.values()];
+  }, [takes]);
+
+  // filter → sort pipeline.
+  const sortedTakes = useMemo(() => {
+    const filtered = activeCat === 'all' ? takes : takes.filter((t) => t.category === activeCat);
+    const out = [...filtered];
+    switch (sort) {
+      case 'hot':        out.sort((a, b) => b.trades - a.trades); break;
+      case 'new':        out.sort((a, b) => b.createdAt - a.createdAt); break;
+      case 'price-desc': out.sort((a, b) => b.price - a.price); break;
+      case 'price-asc':  out.sort((a, b) => a.price - b.price); break;
+    }
+    return out;
+  }, [takes, activeCat, sort]);
+
+  const { visibleItems, total, sentinelRef, hasMore } = useInfiniteRender(
+    sortedTakes,
+    12,
+    `${sort}|${activeCat}`,
   );
 
   const totalVolume = takes.reduce((a, t) => a + t.price * Math.max(1, t.trades), 0);
-  const freshCount = takes.filter(
-    (t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000,
-  ).length;
+  const freshCount = takes.filter((t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000).length;
 
   return (
     <>
-      {/* ────────────────  HERO  ──────────────── */}
-      <section className="relative px-4 py-10 md:px-10 md:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Hero copy */}
-          <div className="lg:col-span-7">
-            <p className="font-display text-[11px] font-extrabold tracking-[0.18em] uppercase text-ink/70">
+      {/* ──────────  COMPACT HERO  ────────── */}
+      <section className="px-4 md:px-10 pt-6 pb-4 md:pt-8 md:pb-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="font-display text-[10px] font-extrabold tracking-[0.18em] uppercase text-ink/70">
               ★ Take a stand
             </p>
-            <h1 className="font-display font-black tracking-[-0.04em] leading-[0.92] text-[44px] md:text-[64px] lg:text-[78px] mt-2 text-ink">
-              Take a stand.
-              <br />
-              <span className="text-pop">Get paid</span> for it.
+            <h1 className="font-display font-black tracking-[-0.04em] leading-[0.95] text-[30px] md:text-[42px] mt-1 text-ink">
+              Take a stand. <span className="text-pop">Get paid</span> for it.
             </h1>
-            <p className="font-display font-semibold text-[14px] md:text-[16px] text-ink/75 mt-4 max-w-xl">
-              Pick the answer. Pay the price. Take the floor.
-              You keep <span className="font-mono font-extrabold">3%</span> of every flip — forever. Even after they take it from you.
+            <p className="font-display font-semibold text-[12px] md:text-[13px] text-ink/70 mt-1 max-w-xl">
+              Pick the answer. Pay the price. Keep <span className="font-mono font-extrabold">3%</span> of every flip — forever.
             </p>
-
-            <div className="flex flex-wrap items-center gap-3 mt-7">
-              <Btn href="/create" variant="pop" size="lg" star>
-                Mint your first take
-              </Btn>
-              <Btn href="/marketplace" variant="ghost" size="lg">
-                Browse the floor →
-              </Btn>
-            </div>
           </div>
-
-          {/* Floating sticker stack — uses real top 3 takes when available */}
-          <div className="lg:col-span-5 relative h-[280px] md:h-[340px]">
-            <div className="absolute inset-0 flex items-center justify-center">
-              {hot.slice(0, 3).map((t, i) => (
-                <div
-                  key={`hero-${t.id}`}
-                  className={
-                    i === 0
-                      ? 'absolute left-[8%] top-[10%]'
-                      : i === 1
-                      ? 'absolute right-[6%] top-[2%]'
-                      : 'absolute left-[26%] bottom-[2%]'
-                  }
-                >
-                  <HeroSticker take={t} variant={i as 0 | 1 | 2} />
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Btn href="/create" variant="pop" size="md" star>
+              Mint a take
+            </Btn>
+            <Btn href="/marketplace" variant="ghost" size="md">
+              Browse →
+            </Btn>
           </div>
         </div>
       </section>
 
-      {/* ────────────────  HOT WALL  ──────────────── */}
+      {/* ──────────  MARKET  ────────── */}
       <section className="px-4 md:px-10 pb-16">
+        {!isEmpty && !isLoading && (
+          <MarketToolbar
+            sort={sort}
+            onSort={setSort}
+            categories={categories}
+            activeCategory={activeCat}
+            onCategory={setActiveCat}
+          />
+        )}
+
         <header className="flex items-end justify-between flex-wrap gap-2 mb-5">
-          <h2 className="font-display font-black text-[24px] md:text-[32px] tracking-[-0.03em] text-ink">
-            🔥 HOT WALL · TODAY
+          <h2 className="font-display font-black text-[22px] md:text-[28px] tracking-[-0.03em] text-ink">
+            🔥 THE FLOOR
           </h2>
           <div className="font-mono font-extrabold text-[12px] md:text-[13px] text-ink/70">
             <MonoNum>{totalOnChain}</MonoNum> takes · <MonoNum>{fmtUSD(Math.round(totalVolume))}</MonoNum> vol · <MonoNum>{freshCount}</MonoNum> fresh
@@ -104,56 +120,37 @@ export default function V2HotWallPage() {
               </div>
             </Sticker>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {hot.map((take, i) => (
-              <TakeCard key={take.id} take={take} index={i} />
-            ))}
+        ) : sortedTakes.length === 0 ? (
+          <div className="flex justify-center py-12">
+            <Sticker bg="paper" tilt={-1} className="max-w-sm text-center">
+              <div className="font-display font-black text-[16px] tracking-tight">
+                NO TAKES IN THIS CATEGORY.
+              </div>
+            </Sticker>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {visibleItems.map((take, i) => (
+                <TakeCard key={take.id} take={take} index={i} />
+              ))}
+            </div>
+
+            {/* Infinite-scroll sentinel + end marker */}
+            {hasMore ? (
+              <div ref={sentinelRef} className="flex justify-center py-8">
+                <Wobble>loading more…</Wobble>
+              </div>
+            ) : (
+              total > 12 && (
+                <div className="text-center py-8 font-display text-[11px] font-extrabold tracking-[0.12em] uppercase text-ink/45">
+                  · all {total} takes shown ·
+                </div>
+              )
+            )}
+          </>
         )}
       </section>
     </>
-  );
-}
-
-/**
- * HeroSticker — top 3 takes rendered as the iconic floating stack.
- * Variant fixes the bg/tilt per slot so the visual hierarchy stays consistent
- * even as data changes.
- */
-function HeroSticker({
-  take,
-  variant,
-}: {
-  take: { id: number; question: string; answer: string; price: number; delta: number; categoryLabel?: string; category: string };
-  variant: 0 | 1 | 2;
-}) {
-  const config = [
-    { bg: 'cool' as const,   tilt: -3,  shadow: 5 as const, chipBg: 'pop' as const   },
-    { bg: 'pop' as const,    tilt: 2.5, shadow: 5 as const, chipBg: 'paper' as const },
-    { bg: 'canvas' as const, tilt: -1,  shadow: 6 as const, chipBg: 'ink' as const   },
-  ][variant];
-  const cat = (take.categoryLabel ?? take.category ?? '').toUpperCase();
-  const isLoss = take.delta < 0;
-
-  // Bigger headline (28px) cuts at ~160px; smaller (22px) lets 12–14 chars per
-  // line wrap cleanly into 2 lines (e.g. "DONALD J. TRUMP", "BEST L2 BASE").
-  // line-clamp-2 keeps the sticker compact while showing the whole take.
-  return (
-    <Sticker bg={config.bg} tilt={config.tilt} shadow={config.shadow}>
-      <Chip bg={config.chipBg}>{cat}</Chip>
-      <div className="mt-2 font-display text-[11px] font-bold opacity-85 italic max-w-[180px] leading-tight line-clamp-2">
-        &ldquo;{take.question}&rdquo;
-      </div>
-      <div className="mt-1 font-display font-black text-[22px] leading-[0.95] tracking-tight max-w-[180px] break-words line-clamp-2">
-        {take.answer}
-      </div>
-      <div className="mt-2 flex justify-between gap-3">
-        <MonoNum>{fmtUSD(take.price)}</MonoNum>
-        <MonoNum className={isLoss ? 'text-pop' : undefined}>
-          {take.delta >= 0 ? '+' : ''}{take.delta.toFixed(1)}%
-        </MonoNum>
-      </div>
-    </Sticker>
   );
 }
