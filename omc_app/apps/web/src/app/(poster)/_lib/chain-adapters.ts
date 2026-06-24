@@ -95,13 +95,21 @@ export function toDisplayTake(op: ChainOpinion): DisplayTake {
   const chainCat = op.categories[0] ?? '';
   const cat = mapChainCategoryToCat(chainCat);
 
+  // Vacant = no current owner (e.g. after a solo king selfExit). The slot keeps
+  // its last answer in storage, but it must NOT surface — the slot is empty and
+  // reclaimable, so every card shows "VACANT SLOT" instead of the stale name.
+  const isVacant =
+    !op.currentAnswerOwner ||
+    op.currentAnswerOwner.toLowerCase() === '0x0000000000000000000000000000000000000000';
+
   return {
     id: op.id,
     category: cat,
     categoryLabel: chainCat || undefined,
     categories: op.categories ?? [],
     question: op.question,
-    answer: (op.currentAnswer || '').toUpperCase() || 'UNANSWERED',
+    answer: isVacant ? 'VACANT SLOT' : (op.currentAnswer || '').toUpperCase() || 'UNANSWERED',
+    isVacant,
     heldBy: shortAddress(op.currentAnswerOwner),
     ownerAddress: op.currentAnswerOwner,
     creatorAddress: op.creator,

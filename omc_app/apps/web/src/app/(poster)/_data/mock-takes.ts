@@ -56,6 +56,9 @@ export type DisplayTake = {
   trades: number;
   /** Created timestamp (ms) — used by 'New' sort. */
   createdAt: number;
+  /** True when the answer slot is empty (current owner = 0x0, e.g. post self-exit).
+   *  When true, `answer` is forced to "VACANT SLOT" and the stale name is hidden. */
+  isVacant?: boolean;
 };
 
 /** @deprecated — use DisplayTake. Kept for one phase to avoid a breaking rename. */
