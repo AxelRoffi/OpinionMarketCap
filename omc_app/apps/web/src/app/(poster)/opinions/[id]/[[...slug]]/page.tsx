@@ -94,7 +94,7 @@ function DetailBody({
   const { takes: chainTakes } = useTakes();
 
   // Build series + holders from chain answer-history events.
-  const { series, holders, totalTrades } = useMemo(() => {
+  const { series, holders, totalTrades, volume } = useMemo(() => {
     if (history.length === 0) {
       // No trade history yet — fall back to a flat sparkline so the chart
       // panel doesn't collapse.
@@ -102,6 +102,7 @@ function DetailBody({
         series: [take.price * 0.95, take.price],
         holders: [] as HolderRecord[],
         totalTrades: 0,
+        volume: 0,
       };
     }
     const cutoff = Math.floor(Date.now() / 1000) - RANGE_WINDOW[range];
@@ -119,7 +120,9 @@ function DetailBody({
       price: usdcToNumber(h.price),
       date: new Date(Number(h.timestamp) * 1000).toISOString(),
     }));
-    return { series: seriesData, holders: holdersData, totalTrades: history.length };
+    // Question volume = sum of every price ever proposed (creation + each flip).
+    const vol = history.reduce((a, h) => a + usdcToNumber(h.price), 0);
+    return { series: seriesData, holders: holdersData, totalTrades: history.length, volume: vol };
   }, [history, range, take]);
 
   const minPrice = Math.min(...series);
@@ -181,7 +184,7 @@ function DetailBody({
             <div className="font-display font-black text-[64px] md:text-[88px] lg:text-[96px] leading-[0.88] tracking-[-0.04em] mt-2 break-words">
               {take.answer}
             </div>
-            <div className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="min-w-0">
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
                   held by
@@ -209,11 +212,17 @@ function DetailBody({
                   </span>
                 )}
               </div>
-              <div className="text-right col-span-2 md:col-span-1">
+              <div className="text-right md:text-left">
                 <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
                   floor
                 </div>
                 <MonoNum className="text-[22px] md:text-[28px] block">{fmtUSD(take.price)}</MonoNum>
+              </div>
+              <div className="text-right">
+                <div className="font-display text-[10px] font-extrabold tracking-[0.12em] uppercase opacity-70">
+                  volume
+                </div>
+                <MonoNum className="text-[22px] md:text-[28px] block">{fmtUSD(volume)}</MonoNum>
               </div>
             </div>
           </Sticker>

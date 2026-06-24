@@ -57,7 +57,7 @@ export function TakeCard({ take, index, bg, tilt, asLink = true }: TakeCardProps
       </div>
       <div className="flex justify-between items-end mt-3">
         <span className="font-display text-[9px] font-extrabold uppercase tracking-[0.12em] opacity-60">
-          floor
+          floor · <span className="font-mono">#{take.id}</span>
         </span>
         <div className="text-right">
           <MonoNum className="text-[15px] block">{fmtUSD(take.price)}</MonoNum>
