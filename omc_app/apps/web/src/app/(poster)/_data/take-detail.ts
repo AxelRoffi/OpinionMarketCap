@@ -11,6 +11,8 @@ export type HolderRecord = {
   addr: string;
   /** Full 0x address — used for /profile/[address] links. Absent for mock data. */
   ownerAddress?: string;
+  /** The answer this holder set when they took the slot. */
+  answer?: string;
   price: number;
   /** ISO date. */
   date: string;
@@ -74,6 +76,7 @@ function generateHolders(take: MockTake): HolderRecord[] {
     const daysAgo = (count - i) * (3 + (take.id % 4));
     out.push({
       addr: ADDRS[(take.id + i) % ADDRS.length],
+      answer: take.answer,
       price,
       date: new Date(now - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
     });
@@ -81,6 +84,7 @@ function generateHolders(take: MockTake): HolderRecord[] {
   // Final holder = current owner (take.heldBy).
   out.push({
     addr: take.heldBy,
+    answer: take.answer,
     price: take.price,
     date: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(),
   });

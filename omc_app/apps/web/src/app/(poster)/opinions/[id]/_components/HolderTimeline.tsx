@@ -54,6 +54,11 @@ export function HolderTimeline({ holders, currentIndex }: HolderTimelineProps) {
                   </span>
                 </div>
               </div>
+              {h.answer && (
+                <div className="mt-0.5 font-display text-[12px] font-extrabold uppercase tracking-tight text-ink/75">
+                  → {h.answer}
+                </div>
+              )}
             </li>
           );
         })}

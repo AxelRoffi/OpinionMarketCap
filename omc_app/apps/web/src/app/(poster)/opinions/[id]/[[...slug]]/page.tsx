@@ -115,6 +115,7 @@ function DetailBody({
       ownerAddress: h.owner === '0x0000000000000000000000000000000000000000'
         ? undefined
         : h.owner,
+      answer: h.answer,
       price: usdcToNumber(h.price),
       date: new Date(Number(h.timestamp) * 1000).toISOString(),
     }));
