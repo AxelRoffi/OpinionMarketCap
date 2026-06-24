@@ -1,0 +1,10 @@
+{
+  "network": "base-mainnet",
+  "chainId": "8453",
+  "upgradedAt": "2026-06-24T11:58:34.510Z",
+  "proxyAddress": "0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1",
+  "oldImplementation": "0x3c110b7572e3ad8eaac4dab078a23d09ab2ca906",
+  "newImplementation": "0x3c110b7572e3ad8eaac4dab078a23d09ab2ca906",
+  "version": "V6",
+  "change": "restore SameOwner guard in submitAnswer (anti self-rebuy)"
+}

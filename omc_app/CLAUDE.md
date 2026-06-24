@@ -1,22 +1,31 @@
 # Claude Code Session Memory - OpinionMarketCap Base Mainnet Deployment
 
-## Current Status: V4 + V2 FRESH DEPLOY ON BASE MAINNET (May 6, 2026)
+## Current Status: OpinionCore **V6** + V2 ON BASE MAINNET (June 24, 2026)
 
-The V4/V2 stack is the active production target. The V3 stack (Jan 2025)
-is still on-chain but no longer referenced by the frontend.
+The OpinionCore proxy has been upgraded V4 → V5 → V6 (same proxy address; UUPS,
+storage-safe each time). V6 is the active production implementation. The V3
+stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
 
-## ✅ CURRENT (V4 + V2) — Base Mainnet
+- **V5** (June 24, 2026): `createOpinion` gains an optional `link` (source URL)
+  on the creator's bootstrap answer — parity with `submitAnswer`.
+- **V6** (June 24, 2026): restores the `SameOwner` guard in `submitAnswer` — the
+  current answer owner can no longer re-buy their own slot (anti wash-trading).
+  This guard existed in the original monolithic contract but was accidentally
+  dropped in the modular V2 rewrite. A genuine A→B→A bidding war between
+  distinct addresses is still allowed.
 
-### Proxy Addresses (use these in frontend)
+## ✅ CURRENT (OpinionCore V6 + V2) — Base Mainnet
+
+### Proxy Addresses (use these in frontend — UNCHANGED across V4/V5/V6)
 | Contract | Address |
 |----------|---------|
-| **OpinionCoreV4** | `0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1` |
+| **OpinionCore** (impl = V6) | `0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1` |
 | **PoolManagerV2** | `0x34537a749F4b16E7542a59e5322338372A6a1E3c` |
 | FeeManager | `0x5dc8502Db4ed7Fb3689703F5B8D4fa1F2bD305AA` |
 | OpinionAdmin | `0x202Bc4E3aB50147212bee0506bF5f2B544333b5D` |
 | OpinionExtensionsV2 | `0x2eD0DC454043A768cB3FA7e480c41Be7b8954394` |
 
-### Libraries (linked into OpinionCoreV4)
+### Libraries (linked into OpinionCore V4/V5/V6 — unchanged)
 | Library | Address |
 |---------|---------|
 | ValidationLibrary | `0x95a60C951BCB6E77644081f0501c9d2dDDfDb681` |
@@ -30,7 +39,16 @@ is still on-chain but no longer referenced by the frontend.
 | PoolManagerV2 | `0x2cb3b0b143d9155db3b007d90b20cecc1af69cdf` |
 | OpinionAdmin | `0x297a71b4e4d5dcc0d8d69995091b50359ca08fb7` |
 | OpinionExtensionsV2 | `0xd20C3d839C40A27327936224eE8912398b19A9C4` |
-| OpinionCoreV4 | `0xa5a47efc129ba25ec9066b6439684daa3e3df1e5` |
+| **OpinionCore (V6 — CURRENT)** | `0x03acF44031189CD71dC68864902eD153561Eaa99` |
+| OpinionCore (V5 — superseded) | `0x3c110B7572e3ad8EAAC4DaB078A23D09AB2Ca906` |
+| OpinionCore (V4 — superseded) | `0xa5a47efc129ba25ec9066b6439684daa3e3df1e5` |
+
+**OpinionCore source files:** `contracts/active/OpinionCoreV6.sol` is the live
+source. Upgrade scripts: `contracts/scripts/upgrade_to_v5.js`,
+`upgrade_to_v6.js`. Storage-layout preflight: `validate_v6_storage.js`. The
+post-upgrade verification reads the impl slot + bytecode length (V5=24423,
+V6=24448 bytes) because the RPC impl-slot read lags right after the tx — the
+upgrade scripts' "old==new" print is a stale read, not a failed upgrade.
 
 ### V4 Feature Flags (currently FALSE — admin must enable manually)
 | Flag | Default | What it gates |
@@ -90,6 +108,9 @@ after testing: `setSelfExitParameter(0, 1209600)` (14 days).
 | OpinionCore | Jan 12, 2025 | V2 | Fixed fee transfer bug, added pause/unpause |
 | OpinionExtensions | Jan 14, 2025 | V2 | Fixed empty categories validation bug |
 | OpinionCore | Jan 15, 2025 | **V3** | Dynamic pricing with PriceCalculator ✅ |
+| OpinionCore | (V4 deploy) | **V4** | Self-exit + vacant-slot reclaim + locked stake ✅ |
+| OpinionCore | Jun 24, 2026 | **V5** | `createOpinion` gains optional `link` ✅ |
+| OpinionCore | Jun 24, 2026 | **V6** | Restore `SameOwner` guard (no self-rebuy) ✅ |
 
 ## Architecture: Modular (5 Contracts + Library)
 

@@ -1,0 +1,16 @@
+{
+  "network": "base-mainnet",
+  "chainId": "8453",
+  "upgradedAt": "2026-06-23T12:17:41.352Z",
+  "proxyAddress": "0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1",
+  "oldImplementation": "0xa5a47efc129ba25ec9066b6439684daa3e3df1e5",
+  "newImplementation": "0xa5a47efc129ba25ec9066b6439684daa3e3df1e5",
+  "validationLibrary": "0x95a60C951BCB6E77644081f0501c9d2dDDfDb681",
+  "priceCalculatorLibrary": "0xb6cEB6F62e929aC99068255AA3E380F01Ed69cB7",
+  "selfExitLibrary": "0x30c465f5772dc86555d37fE1376218Cbf79a4D93",
+  "version": "V5",
+  "change": "createOpinion now accepts optional `link` (source URL)",
+  "statePreserved": {
+    "nextOpinionId": "4"
+  }
+}
