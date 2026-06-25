@@ -3,24 +3,34 @@ import { useReadContract, useReadContracts } from 'wagmi';
 import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 
 const ZERO = '0x0000000000000000000000000000000000000000';
+const DAY = 86_400;
+/** Creator royalty rate charged on every flip (3%). Source: FeeManager. */
+const CREATOR_FEE_BPS = 300n;
 
 export type MarketStats = {
-  /** USDC that flowed through the contract = sum of every answer-history price
-   *  (each creation + each flip). */
+  /** USDC that flowed through the contract = sum of every answer-history price. */
   totalVolume: number;
-  /** Distinct wallets that created or held a take (from answer history). NOT a
-   *  full "any interaction" count — pure question-buyers / fee-claimers /
-   *  pool-only wallets aren't in answer history. Good proxy, on-chain-cheap. */
+  /** Distinct wallets that created or held a take (from answer history). */
   uniqueUsers: number;
   /** Total answer-history entries across all opinions (creations + flips). */
   totalTrades: number;
+  /** Volume in the last 24h (by answer-history timestamp). */
+  volume24h: number;
+  /** Creator royalties distributed = 3% of every flip (creations excluded). */
+  royaltiesPaid: number;
+  /** Most-flipped opinion (longest answer history). */
+  hottest: { id: number; flips: number } | null;
+  /** Largest single price ever paid in one flip. */
+  biggestFlip: number;
   isLoading: boolean;
 };
 
+type HistEntry = { owner: string; price: bigint; timestamp: number | bigint };
+
 /**
  * Accurate market-wide stats. Reads getAnswerHistory for every opinion via a
- * single multicall, then aggregates volume + unique participants. Replaces the
- * old `price × tradeCount` approximation on the homepage.
+ * single multicall, then aggregates volume, participants, 24h activity,
+ * royalties distributed, the hottest take, and the biggest single flip.
  */
 export function useMarketStats(): MarketStats {
   const { data: nextOpinionId, isLoading: loadingCount } = useReadContract({
@@ -52,27 +62,43 @@ export function useMarketStats(): MarketStats {
   const isLoading = loadingCount || (contracts.length > 0 && loadingHistory);
 
   return useMemo<MarketStats>(() => {
-    if (!data) return { totalVolume: 0, uniqueUsers: 0, totalTrades: 0, isLoading };
+    const base: MarketStats = {
+      totalVolume: 0, uniqueUsers: 0, totalTrades: 0, volume24h: 0,
+      royaltiesPaid: 0, hottest: null, biggestFlip: 0, isLoading,
+    };
+    if (!data) return base;
 
     const users = new Set<string>();
-    let volumeMicro = 0n;
-    let trades = 0;
+    let volMicro = 0n, vol24Micro = 0n, royaltyMicro = 0n, biggest = 0n, trades = 0;
+    let hottest: { id: number; flips: number } | null = null;
+    const cutoff = BigInt(Math.floor(Date.now() / 1000) - DAY);
 
-    for (const res of data) {
-      if (res.status !== 'success' || !res.result) continue;
-      const hist = res.result as readonly { owner: string; price: bigint }[];
-      for (const h of hist) {
+    data.forEach((res, index) => {
+      if (res.status !== 'success' || !res.result) return;
+      const hist = res.result as readonly HistEntry[];
+      if (!hottest || hist.length > hottest.flips) hottest = { id: index + 1, flips: hist.length };
+
+      hist.forEach((h, i) => {
         trades++;
-        volumeMicro += BigInt(h.price);
+        const price = BigInt(h.price);
+        volMicro += price;
+        if (price > biggest) biggest = price;
+        if (BigInt(h.timestamp) >= cutoff) vol24Micro += price;
+        if (i > 0) royaltyMicro += (price * CREATOR_FEE_BPS) / 10_000n; // flips only
         const owner = String(h.owner).toLowerCase();
         if (owner !== ZERO) users.add(owner);
-      }
-    }
+      });
+    });
 
+    const usd = (m: bigint) => Number(m) / 1_000_000;
     return {
-      totalVolume: Number(volumeMicro) / 1_000_000,
+      totalVolume: usd(volMicro),
       uniqueUsers: users.size,
       totalTrades: trades,
+      volume24h: usd(vol24Micro),
+      royaltiesPaid: usd(royaltyMicro),
+      hottest,
+      biggestFlip: usd(biggest),
       isLoading,
     };
   }, [data, isLoading]);

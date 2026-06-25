@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Sticker, Btn, MonoNum, Wobble } from '@/components/poster-arcade';
+import { Sticker, Btn, Wobble } from '@/components/poster-arcade';
 import { TakeCard } from './_components/TakeCard';
 import { MarketToolbar, type SortMode, type CategoryOption } from './_components/MarketToolbar';
-import { CAT_MAP, fmtUSD } from './_data/mock-takes';
+import { MarketStatsBand } from './_components/MarketStatsBand';
+import { CAT_MAP } from './_data/mock-takes';
 import { useTakes } from './_lib/chain-adapters';
 import { useInfiniteRender } from './_lib/use-infinite-render';
 import { useMarketStats } from '@/hooks/useMarketStats';
@@ -51,7 +52,7 @@ export default function V2HotWallPage() {
   );
 
   const stats = useMarketStats();
-  const freshCount = takes.filter((t) => Date.now() - t.createdAt < 7 * 24 * 60 * 60 * 1000).length;
+  const vacantSlots = useMemo(() => takes.filter((t) => t.isVacant).length, [takes]);
 
   return (
     <>
@@ -83,6 +84,12 @@ export default function V2HotWallPage() {
       {/* ──────────  MARKET  ────────── */}
       <section className="px-4 md:px-10 pb-16">
         {!isEmpty && !isLoading && (
+          <div className="mb-5">
+            <MarketStatsBand stats={stats} takesCount={totalOnChain} vacantSlots={vacantSlots} />
+          </div>
+        )}
+
+        {!isEmpty && !isLoading && (
           <MarketToolbar
             sort={sort}
             onSort={setSort}
@@ -92,13 +99,10 @@ export default function V2HotWallPage() {
           />
         )}
 
-        <header className="flex items-end justify-between flex-wrap gap-2 mb-5">
+        <header className="mb-5">
           <h2 className="font-display font-black text-[22px] md:text-[28px] tracking-[-0.03em] text-ink">
             🔥 THE FLOOR
           </h2>
-          <div className="font-mono font-extrabold text-[12px] md:text-[13px] text-ink/70">
-            <MonoNum>{totalOnChain}</MonoNum> takes · <MonoNum>{fmtUSD(stats.totalVolume)}</MonoNum> vol · <MonoNum>{stats.uniqueUsers}</MonoNum> traders · <MonoNum>{freshCount}</MonoNum> fresh
-          </div>
         </header>
 
         {isLoading ? (
