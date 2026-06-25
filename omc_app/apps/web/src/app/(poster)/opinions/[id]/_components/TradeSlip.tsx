@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
 import { formatUnits, parseUnits } from 'viem';
 import {
@@ -44,20 +45,62 @@ type TradeSlipProps = {
 
 export function TradeSlip({ take }: TradeSlipProps) {
   const [tab, setTab] = useState<SlipTab>('take');
+  const { address } = useAccount();
 
   // V4: when the slot is vacant (previous king ran selfExit, or pool stale
   // exit zeroed the owner), submitAnswer() reverts with SlotIsVacant().
   // Route those takes through reclaimVacantSlot() instead.
   const isVacant = take.heldBy === 'vacant';
 
+  // V6: the current owner can't re-take their own slot (submitAnswer reverts
+  // SameOwner). Show a clear "you already hold this" state instead of a Take
+  // form that would fail on-chain and waste gas.
+  const isMine =
+    !isVacant &&
+    !!address &&
+    !!take.ownerAddress &&
+    address.toLowerCase() === take.ownerAddress.toLowerCase();
+
   return (
     <Sticker bg="paper" tilt={-1} shadow={5} className="w-full">
       <Tabs<SlipTab> tabs={TABS} value={tab} onChange={setTab} className="w-full justify-between flex" />
       <div className="mt-4">
-        {tab === 'take' && (isVacant ? <ReclaimIt take={take} /> : <TakeIt take={take} />)}
+        {tab === 'take' &&
+          (isVacant ? (
+            <ReclaimIt take={take} />
+          ) : isMine ? (
+            <YouHoldThis take={take} />
+          ) : (
+            <TakeIt take={take} />
+          ))}
         {tab === 'watch' && <Watch take={take} />}
       </div>
     </Sticker>
+  );
+}
+
+/* ─────────────────────────── YOU HOLD THIS ─────────────────────────── */
+
+/**
+ * Shown when the connected wallet IS the current answer owner. submitAnswer
+ * would revert SameOwner (V6), so we block it client-side and explain why,
+ * pointing to the real options: hold, or (after cooldown) self-exit.
+ */
+function YouHoldThis({ take }: { take: DisplayTake }) {
+  return (
+    <div className="text-center py-2">
+      <div className="font-display font-black text-[18px] tracking-tight text-ink">
+        👑 YOU HOLD THIS SLOT
+      </div>
+      <div className="font-display text-[13px] font-semibold text-ink/70 mt-2 max-w-sm mx-auto">
+        Your answer <span className="font-black uppercase">{take.answer}</span> is on the floor at{' '}
+        <span className="font-mono font-extrabold">{fmtUSD(take.price)}</span>. You can&apos;t re-take
+        a slot you already own — you keep it until someone else takes it from you.
+      </div>
+      <div className="font-display text-[11px] font-bold text-ink/50 mt-3">
+        You earn 3% every time it flips. To exit your position, use self-exit once the cooldown passes.
+      </div>
+    </div>
   );
 }
 
