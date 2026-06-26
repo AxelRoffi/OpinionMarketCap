@@ -14,6 +14,23 @@ stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
   dropped in the modular V2 rewrite. A genuine A→B→A bidding war between
   distinct addresses is still allowed.
 
+### Design decisions (deliberate — do NOT "fix" by accident)
+
+- **Self-rebuy: BLOCKED** (V6 `SameOwner`). The current answer owner cannot
+  re-take their own slot via `submitAnswer`.
+- **Self-reclaim: ALLOWED** (decided June 25, 2026). The address that ran
+  `selfExit` on a slot **may** reclaim that same (now-vacant) slot via
+  `reclaimVacantSlot`. There is intentionally **no guard** in
+  `SelfExitLib.processVacantReclaim` against the previous exiter — the 20% exit
+  penalty (`exitPenaltyBps`) is considered enough friction. Do not add a
+  last-exiter guard unless the policy changes.
+- **Take action rules** (enforced on-chain, mirrored in the FE `TradeSlip` so no
+  failing tx is ever sent):
+  - slot held by someone else → `submitAnswer` (normal take) ✅
+  - slot you already hold → blocked (`SameOwner`); FE shows "you hold this slot"
+  - vacant slot → must use `reclaimVacantSlot` (FE routes to the Reclaim flow);
+    `submitAnswer` on a vacant slot reverts `SlotIsVacant`
+
 ## ✅ CURRENT (OpinionCore V6 + V2) — Base Mainnet
 
 ### Proxy Addresses (use these in frontend — UNCHANGED across V4/V5/V6)
