@@ -149,10 +149,11 @@ export default function ProfilePage({
       : room.handle;
 
   const stats: StatItem[] = [
-    { label: 'bag',       value: fmtUSD(room.bag),                tone: 'default', hidden: !room.publicBag && !isMe },
-    { label: '7d',        value: fmtDelta(room.delta7d),          tone: room.delta7d >= 0 ? 'gain' : 'loss' },
-    { label: 'royalties', value: `+${fmtUSD(room.royalties)}`,    tone: 'gain' },
-    { label: 'streak',    value: room.streak ? String(room.streak) : '—', glyph: room.streak ? '🔥' : undefined },
+    { label: 'bag',            value: fmtUSD(room.bag),                tone: 'default', hidden: !room.publicBag && !isMe },
+    { label: '7d',             value: fmtDelta(room.delta7d),          tone: room.delta7d >= 0 ? 'gain' : 'loss' },
+    { label: 'earned all-time', value: `+${fmtUSD(room.lifetimeRoyalties ?? 0)}`, tone: 'gain' },
+    { label: 'claimable',      value: `+${fmtUSD(room.royalties)}`,    tone: 'gain' },
+    { label: 'streak',         value: room.streak ? String(room.streak) : '—', glyph: room.streak ? '🔥' : undefined },
   ];
 
   return (

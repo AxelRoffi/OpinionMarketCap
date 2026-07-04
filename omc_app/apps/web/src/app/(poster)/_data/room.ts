@@ -13,8 +13,10 @@ export type EarningRecord = {
   takenBy: string;
   /** Full 0x address (or ENS-like handle) behind `takenBy`, for profile links. */
   takenByAddress?: string;
-  /** Royalty already paid out to the original creator (USDC). */
+  /** Instantaneous royalty: what the NEXT flip pays the creator (3% of floor). */
   royalty: number;
+  /** Lifetime royalties this question has earned its creator (3% of every flip). */
+  lifetimeRoyalty?: number;
 };
 
 export type RoomData = {
@@ -26,8 +28,10 @@ export type RoomData = {
   bag: number;
   /** 7-day performance (signed percent). */
   delta7d: number;
-  /** Royalties earned and claimable (USDC). */
+  /** Royalties earned and claimable NOW (resets after each cash-out). */
   royalties: number;
+  /** Lifetime royalties earned across all questions this user created (USDC). */
+  lifetimeRoyalties?: number;
   /** Daily activity streak. */
   streak: number;
   /** Member-since label. */

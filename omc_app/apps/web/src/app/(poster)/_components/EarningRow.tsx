@@ -48,13 +48,18 @@ export function EarningRow({ rec, showRoyalty = true }: EarningRowProps) {
           </div>
         </div>
 
-        {/* Royalty */}
+        {/* Royalty — lifetime earned is the headline; next-flip payout is the hint. */}
         {showRoyalty && (
           <div className="text-right shrink-0">
             <div className="font-display text-[9px] font-extrabold tracking-[0.14em] uppercase text-ink/50">
-              your share
+              earned so far
             </div>
-            <MonoNum className="text-[16px] text-gain block">+{fmtUSD(rec.royalty)}</MonoNum>
+            <MonoNum className="text-[16px] text-gain block">
+              +{fmtUSD(rec.lifetimeRoyalty ?? 0)}
+            </MonoNum>
+            <div className="font-mono text-[10px] font-extrabold text-ink/45">
+              next flip +{fmtUSD(rec.royalty)}
+            </div>
           </div>
         )}
       </div>

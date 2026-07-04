@@ -14,8 +14,8 @@
  */
 
 import { useMemo } from 'react';
-import { useAccount, useReadContract } from 'wagmi';
-import { CONTRACTS } from '@/lib/contracts';
+import { useAccount, useReadContract, useReadContracts } from 'wagmi';
+import { CONTRACTS, OPINION_CORE_ABI } from '@/lib/contracts';
 import type { DisplayTake } from '../_data/mock-takes';
 import type { EarningRecord, RoomData } from '../_data/room';
 import { useTakes } from './chain-adapters';
@@ -79,6 +79,45 @@ export function useUserRoom(handle: string): UserRoomQuery {
     query: { enabled: !!resolvedAddress, refetchInterval: 30_000 },
   });
 
+  // Lifetime royalties = 3% of every flip on every question this user created.
+  // Creations pay no creator fee (initial price is locked stake), so entry 0
+  // of each answer history is excluded. One multicall over the created ids.
+  const createdIds = useMemo(
+    () =>
+      resolvedAddress
+        ? takes.filter((t) => eqAddr(t.creatorAddress, resolvedAddress)).map((t) => t.id)
+        : [],
+    [takes, resolvedAddress],
+  );
+
+  const { data: histData } = useReadContracts({
+    contracts: createdIds.map(
+      (id) =>
+        ({
+          address: CONTRACTS.OPINION_CORE,
+          abi: OPINION_CORE_ABI,
+          functionName: 'getAnswerHistory',
+          args: [BigInt(id)],
+        }) as const,
+    ),
+    query: { enabled: createdIds.length > 0, staleTime: 30_000, gcTime: 60_000 },
+  });
+
+  const lifetimeById = useMemo(() => {
+    const m = new Map<number, number>();
+    if (!histData) return m;
+    histData.forEach((res, i) => {
+      if (res.status !== 'success' || !res.result) return;
+      const hist = res.result as readonly { price: bigint }[];
+      let flipVol = 0n;
+      hist.forEach((h, j) => {
+        if (j > 0) flipVol += BigInt(h.price);
+      });
+      m.set(createdIds[i], Number((flipVol * 3n) / 100n) / 1_000_000);
+    });
+    return m;
+  }, [histData, createdIds]);
+
   const room = useMemo<RoomData | null>(() => {
     if (!resolvedAddress) return null;
     if (takesLoading) return null;
@@ -90,9 +129,8 @@ export function useUserRoom(handle: string): UserRoomQuery {
 
     // Earning = takes where the original creator is this address AND somebody
     // else holds the floor right now (you can't earn royalties from yourself).
-    // The displayed "royalty" is an instantaneous 3% of nextPrice — lifetime
-    // royalties paid out require event-log enumeration. The *claimable*
-    // total surfaces separately via getAccumulatedFees() at the top of the page.
+    // `royalty` = what the NEXT flip pays (3% of floor); `lifetimeRoyalty` =
+    // 3% of every flip so far, from the question's answer history.
     const earning: EarningRecord[] = takes
       .filter(
         (t) =>
@@ -108,10 +146,13 @@ export function useUserRoom(handle: string): UserRoomQuery {
         takenBy: t.heldBy,
         takenByAddress: t.ownerAddress,
         royalty: Math.round(t.price * 0.03 * 100) / 100,
+        lifetimeRoyalty: lifetimeById.get(t.id),
       }));
 
     const bag = holding.reduce((a, t) => a + t.price, 0);
     const royalties = feesRaw ? Number(feesRaw) / 1_000_000 : 0;
+    // Total over ALL created questions (incl. self-held or vacant ones).
+    const lifetimeRoyalties = [...lifetimeById.values()].reduce((a, v) => a + v, 0);
     const delta7d = holding.length
       ? holding.reduce((a, t) => a + t.delta, 0) / holding.length
       : 0;
@@ -122,13 +163,14 @@ export function useUserRoom(handle: string): UserRoomQuery {
       bag,
       delta7d,
       royalties,
+      lifetimeRoyalties,
       streak: 0,
       memberSince: '—',
       publicBag: true,
       holding,
       earning,
     };
-  }, [resolvedAddress, takes, takesLoading, feesRaw, handle]);
+  }, [resolvedAddress, takes, takesLoading, feesRaw, handle, lifetimeById]);
 
   return {
     room,
