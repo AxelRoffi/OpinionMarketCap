@@ -38,6 +38,7 @@ import { AdminAccessChecker } from '@/components/AdminAccessChecker'
 import { ExtensionErrorSuppressor } from '@/components/ExtensionErrorSuppressor'
 import { AdminActions } from './components/AdminActions'
 import { SelfExitAdminPanel } from './components/SelfExitAdminPanel'
+import { PlatformFeesPanel } from './components/PlatformFeesPanel'
 
 // Contract configuration - Updated to use environment-aware addresses
 import { CURRENT_CONTRACTS } from '@/lib/environment'
@@ -1709,6 +1710,7 @@ export default function AdminDashboard() {
 
           {/* Treasury Tab */}
           <TabsContent value="treasury" className="space-y-6">
+            <PlatformFeesPanel />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Set Treasury */}
               <Card className="bg-paper border-ink/30">
