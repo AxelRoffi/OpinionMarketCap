@@ -45,7 +45,7 @@ export default function V2HotWallPage() {
     return out;
   }, [takes, activeCat, sort]);
 
-  const { visibleItems, total, sentinelRef, hasMore } = useInfiniteRender(
+  const { visibleItems, total, visible, sentinelRef, loadMore, hasMore } = useInfiniteRender(
     sortedTakes,
     12,
     `${sort}|${activeCat}`,
@@ -141,10 +141,16 @@ export default function V2HotWallPage() {
               ))}
             </div>
 
-            {/* Infinite-scroll sentinel + end marker */}
+            {/* Infinite-scroll sentinel — also a manual "load more" fallback. */}
             {hasMore ? (
               <div ref={sentinelRef} className="flex justify-center py-8">
-                <Wobble>loading more…</Wobble>
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="font-display text-[12px] font-extrabold tracking-[0.12em] uppercase border-2 border-ink rounded-pill px-4 py-2 bg-paper text-ink shadow-[3px_3px_0_var(--ink)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all"
+                >
+                  ↓ load more · {visible}/{total}
+                </button>
               </div>
             ) : (
               total > 12 && (

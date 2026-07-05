@@ -150,10 +150,17 @@ export function useTakes(): TakesQuery {
       .map((o) => toDisplayTake(o as ChainOpinion));
   }, [opinions]);
 
+  // Empty ONLY when the chain confirmed there are no opinions. If the counter
+  // says N>0 but the detail reads came back empty (public-RPC rate limiting),
+  // that's a fetch failure — report it as still loading, never as an empty
+  // floor, so the UI doesn't flash "nothing on the wall" over real data.
+  const chainSaysEmpty = (totalOpinions ?? 0) === 0;
+  const fetchFellShort = !chainSaysEmpty && takes.length === 0;
+
   return {
     takes,
-    isLoading,
-    isEmpty: !isLoading && takes.length === 0,
+    isLoading: isLoading || fetchFellShort,
+    isEmpty: !isLoading && chainSaysEmpty,
     error: (error as Error | null) ?? null,
     totalOnChain: totalOpinions ?? 0,
   };
