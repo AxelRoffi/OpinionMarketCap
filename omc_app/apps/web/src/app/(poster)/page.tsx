@@ -11,7 +11,7 @@ import { useInfiniteRender } from './_lib/use-infinite-render';
 import { useMarketStats } from '@/hooks/useMarketStats';
 
 export default function V2HotWallPage() {
-  const { takes, isLoading, isEmpty, totalOnChain } = useTakes();
+  const { takes, isLoading, isEmpty } = useTakes();
 
   const [sort, setSort] = useState<SortMode>('hot');
   const [activeCat, setActiveCat] = useState<string>('all');
@@ -33,9 +33,37 @@ export default function V2HotWallPage() {
   }, [takes]);
 
   // filter → sort pipeline.
+  const [query, setQuery] = useState('');
+
   const sortedTakes = useMemo(() => {
-    const filtered = activeCat === 'all' ? takes : takes.filter((t) => t.category === activeCat);
-    const out = [...filtered];
+    const catFiltered = activeCat === 'all' ? takes : takes.filter((t) => t.category === activeCat);
+
+    // Keyword search: relevance-ranked across question > answer > category >
+    // holder. While a query is active, relevance order replaces the sort mode
+    // (trades break ties so "hot" matches still float up).
+    const q = query.trim().toLowerCase();
+    if (q) {
+      const score = (t: (typeof takes)[number]) => {
+        const question = t.question.toLowerCase();
+        const answer = t.answer.toLowerCase();
+        const cat = (t.categoryLabel ?? t.category).toLowerCase();
+        const holder = t.heldBy.toLowerCase();
+        if (question.startsWith(q)) return 100;
+        if (question.includes(q)) return 60;
+        if (answer.startsWith(q)) return 40;
+        if (answer.includes(q)) return 30;
+        if (cat.includes(q)) return 15;
+        if (holder.includes(q)) return 5;
+        return 0;
+      };
+      return catFiltered
+        .map((t) => ({ t, s: score(t) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s || b.t.trades - a.t.trades)
+        .map((x) => x.t);
+    }
+
+    const out = [...catFiltered];
     switch (sort) {
       case 'hot':        out.sort((a, b) => b.trades - a.trades); break;
       case 'new':        out.sort((a, b) => b.createdAt - a.createdAt); break;
@@ -43,12 +71,12 @@ export default function V2HotWallPage() {
       case 'price-asc':  out.sort((a, b) => a.price - b.price); break;
     }
     return out;
-  }, [takes, activeCat, sort]);
+  }, [takes, activeCat, sort, query]);
 
   const { visibleItems, total, visible, sentinelRef, loadMore, hasMore } = useInfiniteRender(
     sortedTakes,
     12,
-    `${sort}|${activeCat}`,
+    `${sort}|${activeCat}|${query.trim().toLowerCase()}`,
   );
 
   const stats = useMarketStats();
@@ -85,7 +113,8 @@ export default function V2HotWallPage() {
       <section className="px-4 md:px-10 pb-16">
         {!isEmpty && !isLoading && (
           <div className="mb-5">
-            <MarketStatsBand stats={stats} takesCount={totalOnChain} vacantSlots={vacantSlots} />
+            {/* takes.length = active, deduped list — deactivated/moderated ids stay out of the stats */}
+            <MarketStatsBand stats={stats} takesCount={takes.length} vacantSlots={vacantSlots} />
           </div>
         )}
 
@@ -96,6 +125,9 @@ export default function V2HotWallPage() {
             categories={categories}
             activeCategory={activeCat}
             onCategory={setActiveCat}
+            query={query}
+            onQuery={setQuery}
+            resultCount={sortedTakes.length}
           />
         )}
 

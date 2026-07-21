@@ -136,18 +136,41 @@ export type TakesQuery = {
   totalOnChain: number;
 };
 
+/** Case/whitespace/punctuation-insensitive key for duplicate detection. */
+const questionKey = (q: string) =>
+  q.trim().toLowerCase().replace(/\s+/g, " ").replace(/[?!.]+$/, "");
+
+/**
+ * The chain allows the same question to be minted several times. Surface only
+ * one card per question text: the one with the most volume (ties → oldest id).
+ */
+function dedupeByQuestion<T extends { question: string; totalVolume: bigint; id: number }>(
+  list: T[],
+): T[] {
+  const best = new Map<string, T>();
+  for (const o of list) {
+    const k = questionKey(o.question);
+    const cur = best.get(k);
+    if (!cur || o.totalVolume > cur.totalVolume || (o.totalVolume === cur.totalVolume && o.id < cur.id)) {
+      best.set(k, o);
+    }
+  }
+  return list.filter((o) => best.get(questionKey(o.question)) === o);
+}
+
 /**
  * Live read of every opinion on chain, mapped to DisplayTake. Filters to
- * active opinions so deactivated ones don't surface on /v2.
+ * active opinions so deactivated ones don't surface on /v2, and hides
+ * duplicate mints of the same question (keeps the most-traded one).
  */
 export function useTakes(): TakesQuery {
   const { opinions, isLoading, error, totalOpinions } = useAllOpinions();
 
   const takes = useMemo<DisplayTake[]>(() => {
     if (!opinions || opinions.length === 0) return [];
-    return opinions
-      .filter((o) => o.isActive)
-      .map((o) => toDisplayTake(o as ChainOpinion));
+    return dedupeByQuestion(opinions.filter((o) => o.isActive)).map((o) =>
+      toDisplayTake(o as ChainOpinion),
+    );
   }, [opinions]);
 
   // Empty ONLY when the chain confirmed there are no opinions. If the counter

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAllOpinions } from '@/hooks/useAllOpinions'
 import { motion } from 'framer-motion'
 import { parseUnits, formatUnits } from 'viem'
 import { toast } from 'sonner'
@@ -416,6 +417,13 @@ export default function AdminDashboard() {
     abi: OPINION_CORE_ABI,
     functionName: 'nextOpinionId',
   })
+
+  // Real active count (excludes moderated/deactivated opinions) — the raw
+  // nextOpinionId counter includes them, so the two tiles differ on purpose.
+  const { opinions: allOpinionsForStats } = useAllOpinions()
+  const activeOpinionsCount = allOpinionsForStats?.length
+    ? allOpinionsForStats.filter((o) => o.isActive).length
+    : null
 
   // Text settings read hooks
   const { data: maxQuestionLength } = useReadContract({
@@ -1070,7 +1078,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-ink/60 text-sm">Active Opinions</p>
-                  <p className="text-2xl font-bold text-ink">{contractStats.activeOpinions}</p>
+                  <p className="text-2xl font-bold text-ink">{activeOpinionsCount ?? '…'}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
