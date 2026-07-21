@@ -1,10 +1,10 @@
 # Claude Code Session Memory - OpinionMarketCap Base Mainnet Deployment
 
-## Current Status: OpinionCore **V6** + V2 ON BASE MAINNET (June 24, 2026)
+## Current Status: OpinionCore **V7** + V2 ON BASE MAINNET (July 2026)
 
-The OpinionCore proxy has been upgraded V4 → V5 → V6 (same proxy address; UUPS,
-storage-safe each time). V6 is the active production implementation. The V3
-stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
+The OpinionCore proxy has been upgraded V4 → V5 → V6 → V7 (same proxy address;
+UUPS, storage-safe each time). V7 is the active production implementation. The
+V3 stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
 
 - **V5** (June 24, 2026): `createOpinion` gains an optional `link` (source URL)
   on the creator's bootstrap answer — parity with `submitAnswer`.
@@ -13,6 +13,22 @@ stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
   This guard existed in the original monolithic contract but was accidentally
   dropped in the modular V2 rewrite. A genuine A→B→A bidding war between
   distinct addresses is still allowed.
+- **V7** (July 9, 2026): real moderation. The core was ~128 bytes under the
+  24KB size limit, so instead of a new function (~160B, doesn't fit) V7 adds
+  ONE bit-packed branch (~70B) to `setSelfExitParameter` (ADMIN_ROLE):
+  - `setSelfExitParameter(9, opinionId * 2)` → **deactivate** opinion
+  - `setSelfExitParameter(9, opinionId * 2 + 1)` → **reactivate** opinion
+  Deactivated opinions can't trade (every entrypoint reverts
+  `OpinionNotActive`) and vanish from the frontend (filters on `isActive`).
+  No event, no existence check (size budget); verify by reading
+  `getOpinionDetails(id).isActive` — NOT `isOpinionActive()`, which is
+  `onlyLinkedContracts` and reverts for EOAs. Replaces the OpinionAdmin
+  `deactivateOpinion`/`moderateAnswer` stubs (which only emit events).
+  Used July 9, 2026 to deactivate 19 duplicate test mints (kept first mint of
+  each group): dropped 17, 25, 27, 35, 41, 28, 36, 42, 29, 37, 44, 34, 39, 40,
+  38, 45, 43, 46, 47 — script `contracts/scripts/deactivate_duplicates.js`.
+  The frontend additionally dedupes identical question texts client-side in
+  `useTakes()` (`apps/web/src/app/(poster)/_lib/chain-adapters.ts`).
 
 ### Design decisions (deliberate — do NOT "fix" by accident)
 
@@ -56,16 +72,19 @@ stack (Jan 2025) is still on-chain but no longer referenced by the frontend.
 | PoolManagerV2 | `0x2cb3b0b143d9155db3b007d90b20cecc1af69cdf` |
 | OpinionAdmin | `0x297a71b4e4d5dcc0d8d69995091b50359ca08fb7` |
 | OpinionExtensionsV2 | `0xd20C3d839C40A27327936224eE8912398b19A9C4` |
-| **OpinionCore (V6 — CURRENT)** | `0x03acF44031189CD71dC68864902eD153561Eaa99` |
+| **OpinionCore (V7 — CURRENT)** | `0x3583fb63ae987a1cbc33e2442e61b4262d431d91` |
+| OpinionCore (V6 — superseded) | `0x03acF44031189CD71dC68864902eD153561Eaa99` |
 | OpinionCore (V5 — superseded) | `0x3c110B7572e3ad8EAAC4DaB078A23D09AB2Ca906` |
 | OpinionCore (V4 — superseded) | `0xa5a47efc129ba25ec9066b6439684daa3e3df1e5` |
 
-**OpinionCore source files:** `contracts/active/OpinionCoreV6.sol` is the live
+**OpinionCore source files:** `contracts/active/OpinionCoreV7.sol` is the live
 source. Upgrade scripts: `contracts/scripts/upgrade_to_v5.js`,
-`upgrade_to_v6.js`. Storage-layout preflight: `validate_v6_storage.js`. The
-post-upgrade verification reads the impl slot + bytecode length (V5=24423,
-V6=24448 bytes) because the RPC impl-slot read lags right after the tx — the
-upgrade scripts' "old==new" print is a stale read, not a failed upgrade.
+`upgrade_to_v6.js`, `upgrade_to_v7.js`. Storage-layout preflight:
+`validate_v7_storage.js`. The post-upgrade verification reads the impl slot +
+bytecode length (V5=24423, V6=24448, V7=24528 bytes) because the RPC impl-slot
+read lags right after the tx — the upgrade scripts' "old==new" print is a
+stale read, not a failed upgrade. V7 sits 48 bytes under the 24KB limit: any
+V8 addition must be branch-grafted or move logic into a library.
 
 ### V4 Feature Flags (currently FALSE — admin must enable manually)
 | Flag | Default | What it gates |
@@ -128,6 +147,7 @@ after testing: `setSelfExitParameter(0, 1209600)` (14 days).
 | OpinionCore | (V4 deploy) | **V4** | Self-exit + vacant-slot reclaim + locked stake ✅ |
 | OpinionCore | Jun 24, 2026 | **V5** | `createOpinion` gains optional `link` ✅ |
 | OpinionCore | Jun 24, 2026 | **V6** | Restore `SameOwner` guard (no self-rebuy) ✅ |
+| OpinionCore | Jul 9, 2026 | **V7** | Moderation: deactivate/reactivate via `setSelfExitParameter(9, id*2[+1])` ✅ |
 
 ## Architecture: Modular (5 Contracts + Library)
 

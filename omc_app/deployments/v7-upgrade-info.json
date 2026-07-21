@@ -1,0 +1,10 @@
+{
+  "network": "base-mainnet",
+  "chainId": "8453",
+  "proxy": "0xAdc44c00dc6A45B8776fDDBB1f977950838EafC1",
+  "oldImplementation": "0x03acf44031189cd71dc68864902ed153561eaa99",
+  "newImplementation": "0x03acf44031189cd71dc68864902ed153561eaa99",
+  "change": "V7: moderation branch in setSelfExitParameter (paramType 9, bit-packed id*2+activeBit)",
+  "deployer": "0x9786eDdf2f254d5B582DA45FD332Bf5769DB4D8C",
+  "timestamp": "2026-07-20T14:29:08.662Z"
+}
