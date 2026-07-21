@@ -1,0 +1,33 @@
+{
+  "name": "marketing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion marketing videos for OpinionMarketCap",
+  "scripts": {
+    "dev": "remotion studio",
+    "studio": "remotion studio",
+    "render:all": "node scripts/render-all.mjs",
+    "render:thread": "node scripts/render-thread.mjs",
+    "daily": "node scripts/daily.mjs",
+    "stat": "node scripts/stat.mjs",
+    "render:hero": "remotion render HeroExplainer out/hero-explainer.mp4",
+    "render:short": "remotion render OutbidShort out/outbid-short.mp4",
+    "render:loop": "remotion render PriceLoop out/price-loop.mp4",
+    "render:loop-gif": "remotion render PriceLoop out/price-loop.gif",
+    "render:sting": "remotion render LogoSting out/logo-sting.mp4",
+    "render:sting-vertical": "remotion render LogoStingVertical out/logo-sting-vertical.mp4",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.4.0"
+  }
+}
